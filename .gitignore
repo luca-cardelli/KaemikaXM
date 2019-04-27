@@ -9,7 +9,7 @@
 *.user
 *.userosscache
 *.sln.docstates
-Keystore for upload key
+#Keystore for upload key
 App signing certificate
 
 # User-specific files (MonoDevelop/Xamarin Studio)
@@ -167,7 +167,7 @@ DocProject/Help/Html2
 DocProject/Help/html
 
 # Click-Once directory
-publish/
+# publish/
 
 # Publish Web Output
 *.[Pp]ublish.xml
