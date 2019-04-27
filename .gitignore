@@ -9,8 +9,8 @@
 *.user
 *.userosscache
 *.sln.docstates
-Keystore for upload key
-App signing certificate
+Keystore for upload key/
+App signing certificate/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
