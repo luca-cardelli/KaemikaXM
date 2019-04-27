@@ -1,0 +1,53 @@
+//======================================
+// Sine wave between +1 and -1 produced 
+// as the difference of two species S⁺, S⁻
+//======================================
+
+network Sine(species S⁺ S⁻, number freq ampl phase) {
+    // initialize parameter species S⁺,S⁻ 
+	// based on desired ampl and phase
+	// pos(n) == if n>=0 then n else 0 end
+    number S₀ = ampl*sin(phase)	
+    amount S⁺ @ pos(S₀) M		
+    amount S⁻ @ pos(-S₀) M
+	// initialize also new local species  
+	// C⁺,C⁻ that trace the cosine
+    number C₀ = ampl*cos(phase)	
+    species C⁺ @ pos(C₀) M
+    species C⁻ @ pos(-C₀) M
+	// freq in Hz, cycles per unit time
+	number r = freq*2*pi                      
+
+	// the reactions producing sin and 
+	// cos waves at given freq
+    C⁺ -> C⁺ + S⁺    {r}		
+    C⁻ -> C⁻ + S⁻    {r}
+    S⁺ -> S⁺ + C⁻    {r}
+    S⁻ -> S⁻ + C⁺    {r}
+
+	// dampening to prevent exponential growth
+    C⁺ + C⁻ -> #      {10*r}		
+    S⁺ + S⁻ -> #      {10*r}
+}
+
+number freq = 2.0
+number ampl = 1.0
+number phase = pi/2
+
+// declare two new (uninitialized) species A⁺,A⁻
+
+species {A⁺, A⁻}	
+
+// plot both them and their difference
+
+report A⁺, A⁻, A⁺ - A⁻
+
+// invoke the sine network 
+// (which will initialize A⁺,A⁻)
+
+Sine(A⁺, A⁻, freq, ampl, phase)	
+
+// compare this sine wave to the real one
+// report ampl*sin(freq*2*pi*time+phase)	
+
+equilibrate for 1
