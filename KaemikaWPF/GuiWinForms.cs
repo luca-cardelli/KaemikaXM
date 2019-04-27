@@ -237,7 +237,7 @@ namespace KaemikaWPF
             }
         }
 
-        public override void ChartListboxClear() {
+        public void ChartListboxClear() {
             if (form.checkedListBox_Series.InvokeRequired){
                 VoidArgVoidReturnDelegate d = new VoidArgVoidReturnDelegate(ChartListboxClear);
                 form.Invoke(d, new object[] { });
@@ -246,7 +246,7 @@ namespace KaemikaWPF
             }
         }
 
-        public override void ChartListboxRestore() {
+        public void ChartListboxRestore() {
             if (form.checkedListBox_Series.InvokeRequired){
                 VoidArgVoidReturnDelegate d = new VoidArgVoidReturnDelegate(ChartListboxRestore);
                 form.Invoke(d, new object[] { });
@@ -263,6 +263,7 @@ namespace KaemikaWPF
                 form.ChartListboxAddSeries(legend);
             }
         }
+
         public override void ClipboardSetText(string text) {
             Clipboard.SetText(text);
         }

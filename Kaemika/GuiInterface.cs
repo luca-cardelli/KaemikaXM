@@ -42,9 +42,7 @@ namespace Kaemika
         public abstract bool ContinueEnabled();
         public abstract bool TraceComputational();
         public abstract string Solver();
-        public abstract void ChartListboxClear();
-        public abstract void ChartListboxRestore();
-        public abstract void ChartListboxAddSeries(string legend);
+        public abstract void ChartListboxAddSeries(string name);
         public abstract void ClipboardSetText(string text);
    }
 }

@@ -12,7 +12,7 @@ namespace KaemikaXM.Pages
 
         public ChartPageLandscape() {
             chartView = new Microcharts.Forms.ChartView() {
-                Chart = new Microcharts.Chart(""),
+                Chart = new Microcharts.Chart("", ""),
                 BackgroundColor = Color.White,
             };
             Content = chartView;
@@ -69,7 +69,7 @@ namespace KaemikaXM.Pages
             Icon = "tab_feed.png";
 
             chartView = new Microcharts.Forms.ChartView() {
-                Chart = new Microcharts.Chart(""),
+                Chart = new Microcharts.Chart("", ""),
                 HeightRequest = 300,
                 BackgroundColor = Color.White,
             };
@@ -173,6 +173,7 @@ namespace KaemikaXM.Pages
                 LegendItem item = collectionView.SelectedItem as LegendItem;
                 if (item != null) {
                     MainTabbedPage.theChartPage.chartView.Chart.InvertVisible(item.Name);
+                    (Gui.gui as GUI_Xamarin).VisibilityRemember();
                     Gui.gui.ChartUpdate();
                     Gui.gui.LegendUpdate();
                     collectionView.SelectedItem = null; // avoid some visble flashing of the selection

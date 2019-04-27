@@ -228,6 +228,7 @@ namespace Microcharts {
 
     public class Chart {
         private string title = "";
+        private string model = "";
         private float margin { get; set; } = 20;
         private float textHeight { get; set; } = 20;
         private SKColor backgroundColor { get; set; } = SKColors.White;
@@ -236,28 +237,24 @@ namespace Microcharts {
 
         private List<Series> seriesList = new List<Series>() { };
         private Timecourse timecourse = new Timecourse() { };
-        private Dictionary<string, int> seriesIndex = new Dictionary<string, int>(); //### this will be needed later for the legend handling
+        private Dictionary<string, int> seriesIndex = new Dictionary<string, int>();
 
-        public Chart(string title) {
+        public Chart(string title, string model) {
             this.title = title;
+            this.model = model;
             this.seriesList = new List<Series>() { };
             this.timecourse = new Timecourse() { };
             this.seriesIndex = new Dictionary<string, int>();
         }
 
-        public Chart(string title, List<Series> seriesList, Timecourse timecourse, Dictionary<string, int> seriesIndex) {
+        public Chart(string title, string model, List<Series> seriesList, Timecourse timecourse, Dictionary<string, int> seriesIndex) {
             // after a chart is initialized, seriesList should not change, but timecourse will be changed by a concurrent thread
             this.title = title;
+            this.model = model;
             this.seriesList = seriesList;
             this.timecourse = timecourse;
             this.seriesIndex = seriesIndex;
         }
-        // from Chart:
-        // MinValue (settable)
-        // MaxValue (settable)
-        // Margin
-        // LabelTextSize
-        // BackgroundColor
 
         public void Draw(SKCanvas canvas, int width, int height) {
             canvas.Clear(this.backgroundColor);

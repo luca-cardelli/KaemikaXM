@@ -78,16 +78,19 @@ namespace Kaemika {
         private Dictionary<string, int> seriesIndex;    // maintaining the connection between seriesList and timecourse
 
         public override void ChartUpdate() {
-              MainTabbedPage.theChartPage.SetChart(new Chart(title, seriesList, timecourse, seriesIndex));
-            // this is probably triggering a bindable property that causes the chart to be redrawn
+            VisibilityRestore();
+            MainTabbedPage.theChartPage.SetChart(
+                new Chart(title, MainTabbedPage.theModelEntryPage.modelInfo.title, seriesList, timecourse, seriesIndex));
         }
 
         public void ChartUpdateLandscape() {
-            MainTabbedPage.theChartPageLandscape.SetChart(new Chart(title, seriesList, timecourse, seriesIndex));
+            MainTabbedPage.theChartPageLandscape.SetChart(
+                new Chart(title, MainTabbedPage.theModelEntryPage.modelInfo.title, seriesList, timecourse, seriesIndex));
         }
 
         public override void LegendUpdate() {
-              MainTabbedPage.theChartPage.SetLegend(seriesList);
+            VisibilityRestore();
+            MainTabbedPage.theChartPage.SetLegend(seriesList);
         }
 
         public override void ChartClear(string title) {
@@ -231,20 +234,33 @@ namespace Kaemika {
             return "OSLO RK547M";    // ### implement menu choice
         }
 
-        public override void ChartListboxClear() {
+        private static Dictionary<string, Dictionary<string, bool>> visibilityCache = 
+            new Dictionary<string, Dictionary<string, bool>>();
+
+        private Dictionary<string,bool> Visibility() {
+            string theModel = MainTabbedPage.theModelEntryPage.modelInfo.title;
+            if (!visibilityCache.ContainsKey(theModel)) visibilityCache[theModel] = new Dictionary<string, bool>();
+            return visibilityCache[theModel];
         }
 
-        public override void ChartListboxAddSeries(string legend) {
+        public void VisibilityRemember() {
+            Dictionary<string, bool> visibility = Visibility();
+            foreach (var series in seriesList) visibility[series.name] = series.visible;
         }
 
-        public override void ChartListboxRestore() {
-            //### throw new Error("GUI_Xamarin : not implemented");
+        public void VisibilityRestore() {
+            Dictionary<string, bool> visibility = Visibility();
+            foreach (var keyPair in visibility) {
+                if (seriesIndex.ContainsKey(keyPair.Key))
+                    seriesList[seriesIndex[keyPair.Key]].visible = keyPair.Value;
+            }
+        }
+
+        public override void ChartListboxAddSeries(string legend){
         }
 
         public override void ClipboardSetText(string text) {
-            //### throw new Error("GUI_Xamarin : not implemented");
         }
-
 
     }
 }

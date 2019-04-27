@@ -547,7 +547,6 @@ namespace Kaemika
             Gui.gui.ChartClear(
                 (resultSample.symbol.Raw() == "vessel") ? "" 
                 : "Sample " + resultSample.symbol.Format(style));
-            Gui.gui.ChartListboxClear();
 
             Noise noise = Gui.gui.NoiseSeries();
             List<SpeciesValue> species = sample.Species(out double[] speciesState);
@@ -622,8 +621,6 @@ namespace Kaemika
                     Gui.gui.ChartListboxAddSeries(name);
                 }
             }
-
-            Gui.gui.ChartListboxRestore();
 
             double lastTime = finalTime;
             State lastState = null;

@@ -165,6 +165,7 @@ namespace KaemikaWPF
         }
 
         public void ChartClear(string title) {
+            ChartListboxClear();
             this.chart1.Titles.Clear();
             this.chart1.Series.Clear();
             this.chart1.ChartAreas[0].AxisX.Minimum = 0;
@@ -321,12 +322,10 @@ namespace KaemikaWPF
         private static Dictionary<string, bool> chartListboxRemember = 
             new Dictionary<string, bool>();
         private void ChartListboxRemember() {
-            chartListboxRemember = new Dictionary<string, bool>();
+            foreach (var item in checkedListBox_Series.Items)
+                if (!ChartListboxAll(item.ToString())) chartListboxRemember[item.ToString()] = false;
             foreach (var item in checkedListBox_Series.CheckedItems)
                 if (!ChartListboxAll(item.ToString())) chartListboxRemember[item.ToString()] = true;
-            foreach (var item in checkedListBox_Series.Items) 
-                if (!chartListboxRemember.ContainsKey(item.ToString()))
-                    if (!ChartListboxAll(item.ToString())) chartListboxRemember[item.ToString()] = false;
         }
         public void ChartListboxRestore() {
             foreach (var keyPair in chartListboxRemember) {
@@ -363,6 +362,7 @@ namespace KaemikaWPF
         }
         public void ChartListboxAddSeries(string legend) {
             CheckedListboxAdd(legend);
+            ChartListboxRestore();
         }
 
 
