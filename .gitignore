@@ -11,6 +11,7 @@
 *.sln.docstates
 Keystore for upload key/
 App signing certificate/
+Save.txt
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
