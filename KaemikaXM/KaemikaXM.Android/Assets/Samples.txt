@@ -1,0 +1,79 @@
+﻿//======================================
+// Samples contain concentrations of 
+// species, acted over by reactions.
+// Each sample has a fixed volume and a 
+// fixed temperature through its evolution.
+// Sample concentrations are in units 
+// of M = mol/L. The default sample is 
+// called the 'vessel' {1 mL, 20 C}
+//======================================
+
+// Create a new empty sample 's' with 
+// given volume and temperature:
+
+sample s {1mL, 20C}           
+
+// Declare two new species, but do not 
+// initialize them: they can be used
+// and initialized separately in
+// separate samples:
+
+species {a, b}
+
+// Initialize the amount of 'a' in 's' 
+// at '1' (M), similarly for 'b'.
+
+// 'amount a @ 1M' is an abbreviation 
+// for 'amount a @ 1M in vessel'.
+
+amount a @ 1M in s            
+amount b @ 2M in s      
+
+// Alternatively, declare and initialize 
+// a new species 'c' at '0M' in 's' 
+// then 'c' can be used only in 's'.
+
+ // 'species c @ 0M' is an abbreviation 
+ // for 'species c @ 0M in vessel'.
+
+species c @ 0M in s           
+                              
+// Declare a new temperature-dependant
+// reaction (it can operate in any sample 
+// where all those species initialized).              
+// '2' is collision frequency, and '5' 
+// (J*mol^−1) is activation energy 
+// (default is '{1, 0}').
+
+// The reaction rate is then dependent on 
+// the sample temperature 'T' via the
+// activation energy and the gas constant 'R' 
+// by Arrhenius' formula: 2*e^(-5/(R*T))
+
+a + b -> {2, 5} c             
+
+// Start a simulation. The sample 's' evolves 
+// according to the relevant reactions
+// resulting in a new sample 's1' after time '3'.
+
+equilibrate s1 := s for 3     
+
+// Sample 's' can no longer be used after this: 
+// it has been consumed. Sample 's1' has the 
+// same volume and temperature as 's'.
+// Sample 's1' contains the same species as 's' 
+// in usually altered amounts.
+
+// 'equilibrate s := s for 10' is also legal, 
+// it reuses the old name for the new sample.
+
+// 'equilibrate s for 3' is an abbreviation 
+// for 'equilibrate vessel := s for 3'.
+// 'equilibrate for 3' is an abbreviation 
+// for 'equilibrate vessel := vessel for 3'
+// whenever 'vessel' is so redefined, it 
+// is a different sample with the same name
+// all the abbreviations described above 
+// then apply to the redefined 'vessel'
+
+

@@ -1,0 +1,51 @@
+﻿//======================================
+// Symporters and Antiporters
+//======================================
+
+// Noisy signals:
+
+// super-Poission noise on A 
+// if 'under' < 'over'
+// sub-Poisson noise on A    
+// if 'under' > 'over'
+
+network UberPoisson(species A, number mean under over) {
+    # -> over * A     {under * mean^under} 
+    under * A -> #    {over}
+}
+
+// Poisson noise on A
+// if 'under' = 'over'
+
+network Poisson(species A, number mean) {
+   UberPoisson(A, mean, 1, 1)
+}
+
+// Symporter moving A,B in compartment 1
+// to A,B in compartment 2
+
+network Symport(number a₁, species A₁, number b₁, species B₁, number a₂, species A₂, number b₂, species B₂, number dir rev) {
+   a₁*A₁ + b₁*B₁ {rev}<->{dir} a₂*A₂ + b₂*B₂
+}
+
+// Antiporter moving A,B in compartments 1,2
+// to A,B in compartments 2,1 resp.
+
+network Antiport(number a₁, species A₁, number b₁, species B₁, number a₂, species A₂, number b₂, species B₂, number dir rev) {
+   a₁*A₁ + b₂*B₂ {rev}<->{dir} a₂*A₂ + b₁*B₁
+}
+
+// Coupled transporters:
+// 2K⁺ in exchanged for 3Na⁺ out
+// 2Na⁺, 1Glucose imported in together
+
+species K⁺₁, K⁺₂, Na⁺₁, Na⁺₂, Glucose₁, Glucose₂ @ 0M
+report K⁺₁, K⁺₂, Na⁺₁, Na⁺₂, Glucose₁, Glucose₂
+Poisson(K⁺₁, 1)    
+Poisson(Na⁺₁, 1)      
+Poisson(Glucose₁, 0.1)  
+
+Antiport(2,K⁺₁, 3,Na⁺₁, 2,K⁺₂, 3,Na⁺₂, 2.0, 0.1)                          
+Symport(2,Na⁺₁, 1,Glucose₁, 2,Na⁺₂, 1,Glucose₂, 2.0, 0.1)      
+
+equilibrate for 300

@@ -1,0 +1,164 @@
+
+TODO
+
+export Kaemika
+export Erode
+export hybrid system
+
+
+
+
+
+Gives error on uninitialized species
+
+species {b}
+species a @ 1M
+a -> # {{ sin(b) }}
+equilibrate for 1
+
+===============
+
+EvalFlow an identifier
+
+species a @ 1M
+number n = 3
+a -> # {{ n }}
+equilibrate for 1
+
+EvalFlow a syntactical operator
+
+species a @ 1M
+a -> # {{ a*a }}
+equilibrate for 1
+
+EvalFlow a built-in operator
+
+species a @ 1M
+a -> # {{ sin(a) }}
+equilibrate for 1
+
+EvalFlow a FunctionInstance
+
+species a @ 1M
+function f() { return a*a }
+a -> # {{ f() }}
+equilibrate for 1
+
+species a @ 1M
+function f(flow x, flow n) { return x*n }
+a -> # {{ f(a, 3) }}
+equilibrate for 1
+
+Reporting operators
+
+species A @ 1 M
+report A, exp(time)	 
+equilibrate for 3
+
+FunctionFlow ending up as a result
+
+species a @ 1 M
+function f() { return 3}
+a -> {{ f }} #
+equilibrate for 1
+
+species a @ 1 M
+function f() { return 3}
+a -> {{ sin }} #
+equilibrate for 1
+
+species a @ 1 M
+function f() { return 3}
+report f
+equilibrate for 1
+
+species a @ 1 M
+report sin
+equilibrate for 1
+
+Time and kelvin in a closure
+
+species a @ 1 M
+function f() { return kelvin+time }
+report f()
+a -> {{ f() }} #
+equilibrate for 1
+
+Time and kelving in regular function
+
+species a @ 1 M
+function f() { return kelvin+time }
+number n = f()
+
+Comparisons between species
+
+species a@1M
+species b@0M
+a -> #
+# -> b
+report cond(a<b, a, b), a, b
+equilibrate for 10
+
+Invalid operator in report or rate
+
+species a@1M
+a -> {{ 3>2 }} #
+//report 3>2
+equilibrate for 1
+
+Cond
+
+species a,b@1M
+a -> #
+# -> b
+report cond(true, a, b)
+equilibrate for 10
+
+
+species a,b@ 1M
+a ->#
+# -> a
+b-> #
+# -> b
+report cov(a,b)
+
+equilibrate for 10
+
+species a,b,c@1M
+# -> a + b
+a -> #
+b + b -> #
+# -> c
+c -> #
+report a, b, c, cov(a,a)+var(b)-2*cov(a,b), var(a-b)
+equilibrate for 3
+
+species a@1M
+number n = 3+5
+flow f = var(a)
+function f(flow x) {return var(x)+1}
+report a+f(a)
+function g() {return 1+2}
+
+Flow evaluation of blocks
+
+species a,b@1M
+a -> #
+b->#
+function g(flow n) { return n+1 }
+function f(flow a) {
+   flow x = var(b); 
+   number n = g(3);  
+   bool z = not(true); 
+   string s = "a";
+   return x + n + cond(z,a,b) + cov(a,b) + cond(s="b",a,b) + cond(a>3,a,b)
+}
+report f(a), a
+equilibrate for 3
+
+
+
+
+
+
+

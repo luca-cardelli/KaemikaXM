@@ -1,0 +1,177 @@
+//======================================
+// Building and using Flows
+//======================================
+
+Flows are a powerful expression language
+for representing time series, used in
+rate expressions and in report
+(plotting) expressions. Flows are also
+exactly the labels that appear in chart 
+legends.
+
+A flow is a term (essentially a data
+structure) representing a value at any
+given time t. A flow can be built out of
+a few combinators:
+
+- not a variable 
+(a flow is a closed expressions)
+  
+- a boolean literal, true or false
+
+- a number literal
+
+- 'time'
+the current time
+
+- 'kelvin'
+the current temperature in kelvin
+
+- 'celsius'
+the current temperature in celsius
+
+- a species
+representing its current concentration
+
+- op(f1,...,f2) 
+an operator applied to flows (most 
+arithmetic and boolean operators)
+
+- var(f) 
+variance of a flow (LNA simulation must 
+be active, and f must be a linear 
+combination of species)
+
+- cov(f1,f2) 
+covariance of two flows (LNA simulation 
+must be active, and f1,f2 must be a linear 
+combinations of species)
+
+- poisson(f) 
+a flow representing poisson noise with 
+mean the mean of f (LNA simulation must 
+be active)
+
+- gauss(f1,f2) 
+a flow representing gaussian noise with 
+mean the mean of f1 and variance the mean 
+of f2 (LNA simulation must be active)
+
+- cond(f1,f2,f3) 
+a conditional flow which is either f2 
+or f3 based on f1 being true or false 
+resp. at any given time
+
+
+Examples of flows are:
+
+3.14
+// a reference line in a plot
+
+sin(time+1)
+// a reference curve
+
+2*a - 3*b	
+// linear combination of two species, 
+// this could be used for plotting, or even 
+// as a non-mass-action rate law
+
+poisson(a)
+// poisson noise always centered around 
+// the mean of species a
+
+a^3/(1+a^3)
+// Hill rate law of order 3
+// for catalyst species a
+
+3.25*exp(-50000/(8.3144598*kelvin))
+// Arrhenius rate law with collision 
+// frequency 3.25 and activation
+// energy 50000
+
+cond(a<b, a, b)
+// the min of the concentrations 
+// of species a,b
+
+
+Basic example of usage of flows:
+
+species a @ 1M
+a -> #   {{ 3 }}          
+// 3 here is a (constant) flow: it  gets 
+// sampled at every time point and 
+// used as a rate
+
+report 3
+// 3 here is also a (constant) flow: 
+// it gets sampled at every time point 
+// and used to plot a reference line
+
+equilibrate for 1
+// this causes those flows to be sampled, 
+// '3' is also the label on the chart
+
+
+Although flows are constant expressions,
+we can use variables, functions,
+conditionals, and everything in the
+language to build them.
+This is a two-stage process: a function
+can assemble a flow, then later the flow
+is sampled at time points during
+simulation and plotting.
+
+species a @ 1M
+number n = 3          
+// there is actually an implicit conversion 
+// later between 'number' 3 and 'flow' 3, 
+// because of the context where 'n' is used.
+
+a -> #   {{n*a}}	
+// degradation reaction with rate 
+// 3*molarity(a), i.e. a mass action rate law 
+// written inside {{..}} general rate brackets
+
+report a, n*a
+// report the concentration of a, and the
+// instantaneous rate of the reaction; the
+// label on the chart will be '3*a', not 'n*a'.
+
+equilibrate for 1
+
+species a @ 1M
+function f(flow n) { return n*a }	
+// note that the correct parameter type
+// for n is 'flow', the returned value n*a
+// is also a flow
+
+a -> #   {{f(3)}}
+// same as before
+
+report a, f(3)
+// same as before, the label on the chart 
+// will again be '3*a' because that is the 
+// flow that is built by f
+
+equilibrate for 1
+
+
+Flows can also be stochastic, involving
+variances and covariances of (linear
+combinations of) species.
+In order for this to work, LNA
+simulation must be activated.
+
+species a,b@1M
+# -> a + b;  a -> #;  b + b -> #		
+// building up some non-trivial 
+// noise on a,b species
+
+report var(a-b),
+   var(a)+var(b)-2*cov(a,b)
+// checking that var(a-b) gives the same
+// result as its correct definition
+
+equilibrate for 3				
+// must first activate LNA/noise plotting 
+// in the graphical user interface

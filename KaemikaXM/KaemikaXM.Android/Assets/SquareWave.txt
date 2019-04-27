@@ -1,0 +1,66 @@
+﻿//======================================
+// Square Wave Fourier Series
+//======================================
+
+network SinCos(species S⁺ S⁻ C⁺ C⁻, number freq ampl phase) {
+    number Sinit = ampl*sin(phase)
+    amount S⁺ @ pos(Sinit) M
+    amount S⁻ @ pos(-Sinit) M
+    number Cinit = ampl*cos(phase)
+    amount C⁺ @ pos(Cinit) M
+    amount C⁻ @ pos(-Cinit) M
+    number r = freq*2*pi
+    C⁺ -> C⁺ + S⁺ 	{r}
+    C⁻ -> C⁻ + S⁻ 	{r}
+    S⁺ -> S⁺ + C⁻ 	{r}
+    S⁻ -> S⁻ + C⁺ 	{r}
+    C⁺ + C⁻ -> #      {10*r}
+    S⁺ + S⁻ -> #      {10*r}
+}
+
+network SquareWave(species Q⁺ Q⁻, number n freq ampl phase Q₀) {
+   if n < 0 then
+       // accumulates Q₀ through the 
+	   // recursion and initilizes 
+	   // Q⁺,Q⁻ at the end
+       amount Q⁺ @ pos(Q₀) M
+       amount Q⁻ @ pos(-Q₀) M
+   else
+      // odd number harmonics 2*n+1
+	  // (2*n+2 makes triangular waves)
+      number harm = 2*n+1  
+      number r = freq*2*pi
+      species {S⁺, S⁻, C⁺, C⁻}
+      report S⁺-S⁻ //, C⁺-C⁻
+      SinCos(S⁺, S⁻, C⁺, C⁻, freq*harm, ampl/harm, phase*harm)
+      C⁺ -> C⁺ + Q⁺ {r*harm}
+      C⁻ -> C⁻ + Q⁻ {r*harm}
+      SquareWave(Q⁺, Q⁻, n-1, freq, ampl, phase, Q₀ + (ampl/harm)*sin(phase*harm))
+   end
+}
+
+// lift the whole square wave vertically:
+
+number lift = 0     
+
+// frequence of the square wave:
+
+number freq = 1       
+
+// (4/pi)*n for sq wave of amplitude +-n:
+
+number ampl = (4/pi)*1     
+
+// shift square wave to the right:
+
+number phase = pi/2  
+
+// number of harmonics summing up to the square wave:
+
+number harmonics = 7         
+
+species {Q⁺, Q⁻}
+report Q⁺-Q⁻
+SquareWave(Q⁺, Q⁻, harmonics, freq, ampl, phase, lift)
+
+equilibrate for 2

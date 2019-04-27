@@ -1,0 +1,78 @@
+//======================================
+// Recursive function definition
+//======================================
+
+function factorial(number n) {
+	return 
+		if n <= 0 then 1 
+		else n * factorial(n-1) 
+		end
+}
+
+// Plot results:
+
+species factorialOf2 @ factorial(2) M
+
+
+//======================================
+// Mutually recursive definitions 
+//======================================
+
+function f(number n) {
+	return if n <= 0 then 0 else 1 + g(n-1) end
+}
+function g(number n){
+	return if n <= 0 then 0 else 1 + f(n-1) end
+}
+
+// Plot results:
+
+species mutrec @ f(5)+g(5) M  
+
+// N.B. Mutually recursive function 
+// definitions must form a contiguous group
+// not interrupted by e.g. number definitions
+
+
+//======================================
+// Advanced Recursion: 
+// via self-application 
+//======================================
+
+// Non-recursive selffact:
+
+function selffact(function f, number n) {
+	return if n <= 0 then 1 else n * f(f, n-1) end
+}
+
+// Self-application of selffact:
+
+species factorialOf3 @ selffact(selffact, 3) M
+
+
+//======================================
+// Very Advanced Recursion: 
+// via fixpoint combinator
+//======================================
+
+// Call-by-value recursive fixpoint combinator
+
+function fix(function f)(number n) {
+	return f(fix(f))(n)
+}
+
+// Non-recursive factorial abstraction
+
+function factabs(function fact)(number n) {
+	return if n <= 0 then 1 else n * fact(n-1) end
+}
+
+// Fixpoint of factabs:
+
+species factorialOf4 @ fix(factabs)(4) M
+
+
+// Run this to show results as a plot:
+
+equilibrate for 0.001
+

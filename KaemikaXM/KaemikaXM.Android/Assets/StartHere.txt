@@ -1,0 +1,26 @@
+﻿//======================================
+// Simulating a reaction network
+//======================================
+
+// Declare some species and
+// their molarity (M, mM, ...)
+
+species a,b @ 1 M   
+
+// Make some reactions (# is 'nothing')
+
+a + 2b -> a
+a -> #
+
+// Decide what to plot
+
+report a, b, b-a, sin(time)
+
+// Run a simulation 
+// (or nothing much will happen)
+
+equilibrate for 2*pi
+
+// Optionally display noise (μ, ±σ, ...)
+
+// Press Play

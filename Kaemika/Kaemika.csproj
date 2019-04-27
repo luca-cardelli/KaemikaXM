@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CalithaGOLD\CalithaGOLD.csproj" />
+    <ProjectReference Include="..\Oslo\Oslo.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="GOLD Engine">
+      <HintPath>..\GOLD Engine\GOLD Engine.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

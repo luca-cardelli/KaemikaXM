@@ -1,0 +1,14 @@
+https://www.microsoft.com/en-us/research/project/open-solving-library-for-odes/#!downloads
+
+<Here goes license for Oslo library>
+
+Oslo library samples uses following components that are included in this package.
+
+1. Microsoft Research DynamicDataDisplay library download and license available at:
+http://dynamicdatadisplay.codeplex.com
+
+2. Microsoft Reactive Extensions download and license available at:
+http://msdn.microsoft.com/en-us/data/gg577609
+
+3. F# runtime for Silverlight 4 is a part of Microsoft Silverlight 4 Tools for Visual Studio 2010
+(See http://www.microsoft.com/download/en/details.aspx?id=18149 for download and license)

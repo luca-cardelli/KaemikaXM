@@ -1,0 +1,201 @@
+//======================================
+// Builtin functions and operators
+//======================================
+
+// All numbers are double precision, 
+// illegal operations may produce NAN
+
+// Literals:
+
+true false (integer) (float) (string) 
+
+// Prefix number and bool operators:
+
+-  not
+
+// Infix number and bool operators, 
+// standard math precedence:
+
++  -  *  /  ^  and  or  =  <>  <=  >=  <  > 
+
+// Infix string operators:
+
++  =  <>                                      
+
+// All of the following are normally-bound 
+// variables in the initial environment
+// they can be redefined, resulting in 
+// hiding the built-in functions
+
+pos(n)    // if n >= 0 then n else 0 end
+int(n)    // the integer nearest n
+
+// From the C# Math class:
+
+pi              // 3.14159265358979323846
+e               // 2.7182818284590452354
+abs(n)
+arccos(n)
+arcsin(n)
+arctan(n)
+arctan2(n,m)
+ceiling(n)
+cos(n)
+cosh(n)
+exp(n)
+floor(n)
+log(n)          // base e
+max(n)
+min(n)
+sign(n)
+sin(n)
+sinh(n)
+sqrt(n)
+tan(n)
+tanh(n)
+
+// The default container for species:
+
+vessel
+
+// Volume of sample s, in L = Liters:
+
+volume(s)
+
+// Temperature of sample s, in K = Kelvin:
+
+temperature(s)  
+
+// Molarity of species a in sample s, 
+// in M = mol/L
+
+molarity(s,a)   
+molarity(a) // same as molarity(vessel,a)
+
+
+//======================================
+// Flow-expressions
+//======================================
+
+// Current time:
+
+time
+
+// Current temperature:
+
+kelvin
+celsius
+
+// Noise with mean = mean(a)
+// and variance = mean(a)
+
+poisson(a)    
+
+// Noise with mean = mean(a) 
+// and variance = mean(b)
+
+gauss(a,b)  
+
+// Variance of a linear combination
+// of species:
+
+var(a)
+
+// Covariance of two linear combianations
+// of species:
+
+cov(a,b)
+
+// conditional flow
+// e.g. cond(a<b,a,b) = min(a,b):
+
+cond(a,b,c)
+
+/* Flow-expressions denote time courses
+and are found in 'report ...' statements 
+for plotting and in {{ ... }} special
+rate brackets to express arbitrary
+kinetic  functions. Flow-expressions are
+a subset of expressions that include
+boolean and  numerical operators and
+where species 's' are intepreted as
+'molarity(s)(t)': the  numeric
+concentration value of 's' at time 't'.
+
+More technically, flow-expressions are
+first *evaluated* to produce *flows* 
+(while ordinary expressions are
+evaluated to produce *values*). Flows
+are data  structures consisting
+exclusively of numeric and boolean
+operators over  booleans, numbers,
+species, and some special entities such
+as 'time'. The  process of producing
+flows can involve ordinary function
+invocation and if-then- else conditional
+execution, but those do not appear in
+resulting flows. At a  later stage,
+flows are *reported*, that is evaluated
+at multiple time points,  during
+plotting or in the evaluation of
+reaction rates during simulations. Flows 
+are exactly the labels that appear in
+chart legends.
+
+When using a defined function inside a
+flow-expession (i.e. in a 'report ...'
+or  '{{ ... }}' context), the body of
+the function is interpreted as a flow-
+expression in that context.
+*/
+
+// Ex.: Arrhenius equation
+// (temperature-dependante rates)
+
+function Arrhenius(number cf ae) { 
+   return cf*exp(-ae/(8.3144598*kelvin)) 
+}
+
+// Use the Arrhenius function for 
+// the rate of a reaction
+
+a + b -> #  {{ Arrhenius(2,50)*a*b }}
+
+// plot a, b, and the instantanous 
+// rate of their reaction over time
+
+report a, b, Arrhenius(2,50)*a*b     
+equilibrate for 10                        
+
+
+//======================================
+// If vs. cond
+//======================================
+
+species a @ 1M
+species b @ 0M
+a -> #
+# -> b
+
+// min is built-in; it plots 
+// min(molarity(a)(t), molarity(b)(t)) 
+// at any time t:
+
+report min(a,b) 
+
+// here is the equivalent conditional flow:
+
+report cond(a<b,a,b)
+
+// invalid flow: unlike 'cond', 'if' is not 
+// a flow operator, so it cannot compare flows:
+
+report if a<b then a else b end // ERROR   
+
+// but 'if' can choose between two flows 
+// a or b based on a (timeless) condition:
+
+report if 3>2 then a else b end    
+
+
+

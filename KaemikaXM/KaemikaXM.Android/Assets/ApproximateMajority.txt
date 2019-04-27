@@ -1,0 +1,33 @@
+//======================================
+// Approximate Majority bistable system
+//======================================
+
+// A triplet of species lo <-> md <-> hi 
+// activated from lo to hi by act, 
+// and inhibited from hi to lo by inh
+
+network Triplet(species lo hi act inh, number rate) {
+   species md @ 0M
+   report hi, lo, md, hi+lo+md as "total"
+   act >> lo -> md    {rate}
+   act >> md -> hi    {rate}
+   inh >> hi -> md    {rate}
+   inh >> md -> lo    {rate}
+}
+
+// Approximate Majority bistable circuit: 
+// hi activates hi and inhibits lo, 
+// lo activates lo and inhibits hi
+
+network AM(species lo hi, number rate) {
+   Triplet(lo, hi, hi, lo, rate)
+}
+
+// Example of stabilization
+
+species hi @ 0.51M
+species lo @ 0.49M
+AM(lo, hi, 1.0)
+
+equilibrate for 20
+

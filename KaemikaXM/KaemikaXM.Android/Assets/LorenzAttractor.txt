@@ -1,0 +1,79 @@
+﻿//======================================
+// Lorenz chaotic attractor
+//
+// dx/dt = s y - s x
+// dy/dt = r x - x z - y
+// dz/dt = x y - b z
+//
+// s = 10, b = 8/3, r = 28
+// x₀ = 1, y₀ = 0, z₀ = 28
+//======================================
+
+/*
+  Its dual rail representation:
+x = x⁺ - x⁻
+y = y⁺ - y⁻
+z = z⁺ - z⁻
+   substitute in the first ODE:
+d(x⁺ - x⁻)/dt = s (y⁺ - y⁻) - s (x⁺ - x⁻)
+   separate the monomials
+dx⁺/dt = s y⁺ + s x⁻
+dx⁻/dt = s y⁻ + s x⁺
+   generate one reaction for each monomial
+y⁺ ->{s} y⁺ + x⁺
+x⁻ ->{s} x⁻ + x⁺
+y⁻ ->{s} y⁻ + x⁻
+x⁺ ->{s} x⁺ + x⁻
+   add some dampening (does not change 
+   the original ODE solution)
+2 x⁺ + 2 x⁻ -> #
+
+   initialize x⁺₀ - x⁻₀ = x₀
+   and plot x⁺ - x⁻ over time
+
+   similarly for the other two ODEs
+*/
+
+number s = 10
+number b = 8/3
+number r = 28
+
+species x⁺ @ 1M
+species x⁻ @ 0M
+species y⁺ @ 0M
+species y⁻ @ 0M
+species z⁺ @ 28M
+species z⁻ @ 0M
+
+y⁺ ->{s} y⁺ + x⁺
+x⁻ ->{s} x⁻ + x⁺
+
+y⁻ ->{s} y⁻ + x⁻
+x⁺ ->{s} x⁺ + x⁻
+
+x⁺ ->{r} x⁺ + y⁺
+x⁺ + z⁻ -> x⁺ + z⁻ + y⁺
+x⁻ + z⁺ -> x⁻ + z⁺ + y⁺
+y⁻ -> y⁻ + y⁺
+
+x⁻ ->{r} x⁻ + y⁻
+x⁺ + z⁺ -> x⁺ + z⁺ + y⁻
+x⁻ + z⁻ -> x⁻ + z⁺ + y⁻
+y⁺ -> y⁺ + y⁻
+
+x⁺ + y⁺ -> x⁺ + y⁺ + z⁺
+x⁻ + y⁻ -> x⁻ + y⁻ + z⁺
+z⁻ ->{b} z⁻ + z⁺
+
+x⁺ + y⁻ -> x⁺ + y⁻ + z⁻
+x⁻ + y⁺ -> x⁻ + y⁺ + z⁻
+z⁺ ->{b} z⁺ + z⁻
+
+2 x⁺ + 2 x⁻ -> #
+2 y⁺ + 2 y⁻ -> #
+2 z⁺ + 2 z⁻ -> #
+
+report y⁺ - y⁻ //, x⁺ - x⁻, z⁺ - z⁻
+
+equilibrate for 50
+

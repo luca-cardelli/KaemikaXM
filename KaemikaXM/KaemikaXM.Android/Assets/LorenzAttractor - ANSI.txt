@@ -1,0 +1,76 @@
+/*
+   Lorenz chaotic attractor
+
+   dx/dt = s y - s x
+   dy/dt = r x - x z - y
+   dz/dt = x y - b z
+
+   s = 10, b = 8/3, r = 28
+   x(0) = 1, y(0) = 0, z(0) = 28
+*/
+
+/* 
+	   Dual rail representation:
+	x = x'p - x'm
+	y = y'p - y'm
+	z = z'p - z'm
+	   substitute in the first ODE:
+	d(x'p - x'm)/dt = s (y'p - y'm) - s (x'p - x'm)
+	   separate the monomials
+	dx'p/dt = s y'p + s x'm
+	dx'm/dt = s y'm + s x'p
+	   generate one reaction for each monomial
+	y'p ->{s} y'p + x'p
+	x'm ->{s} x'm + x'p
+	y'm ->{s} y'm + x'm
+	x'p ->{s} x'p + x'm
+	   add some dampening (does not change the original ODE solution)
+	2 x'p + 2 x'm -> #
+	   initialize x'p(0)-x'm(0) = x(0)
+	   plot x'p(t) - x'm(t)
+	   similarly for the other two ODEs
+*/
+
+number s = 10
+number b = 8/3
+number r = 28
+
+species x'p @ 1.0M
+species x'm @ 0.0M
+species y'p @ 0.0M
+species y'm @ 0.0M
+species z'p @ 28.0M
+species z'm @ 0.0M
+
+y'p ->{s} y'p + x'p
+x'm ->{s} x'm + x'p
+
+y'm ->{s} y'm + x'm
+x'p ->{s} x'p + x'm
+
+x'p ->{r} x'p + y'p
+x'p + z'm -> x'p + z'm + y'p
+x'm + z'p -> x'm + z'p + y'p
+y'm -> y'm + y'p
+
+x'm ->{r} x'm + y'm
+x'p + z'p -> x'p + z'p + y'm
+x'm + z'm -> x'm + z'p + y'm
+y'p -> y'p + y'm
+
+x'p + y'p -> x'p + y'p + z'p
+x'm + y'm -> x'm + y'm + z'p
+z'm ->{b} z'm + z'p
+
+x'p + y'm -> x'p + y'm + z'm
+x'm + y'p -> x'm + y'p + z'm
+z'p ->{b} z'p + z'm
+
+2 x'p + 2 x'm -> #
+2 y'p + 2 y'm -> #
+2 z'p + 2 z'm -> #
+
+report y'p - y'm //; x'p - x'm; z'p - z'm
+
+equilibrate for 50
+

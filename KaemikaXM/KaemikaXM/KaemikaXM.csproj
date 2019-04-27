@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <ProduceAssemblyReference>true</ProduceAssemblyReference>
+    <AssemblyName>KaemikaXM</AssemblyName>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Pages\DocListPage - Copy.cs" />
+    <Compile Remove="Pages\MainTabbedPage - Copy.cs" />
+    <Compile Remove="Pages\ModelEntryPage - Copy.cs" />
+    <Compile Remove="Pages\ModelListPage - Copy.cs" />
+    <Compile Remove="Pages\OutputPage - Copy.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp.Views.Forms" Version="1.68.0" />
+    <PackageReference Include="Xamarin.Forms" Version="3.6.0.264807" />  
+    <PackageReference Include="Xamarin.Essentials" Version="1.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+     <ProjectReference Include="..\..\CalithaGOLD\CalithaGOLD.csproj" />
+     <ProjectReference Include="..\..\Kaemika\Kaemika.csproj" />
+     <ProjectReference Include="..\..\Microcharts.Forms\Microcharts.Forms.csproj" />
+    <ProjectReference Include="..\..\Microcharts\Microcharts.csproj" />
+    <ProjectReference Include="..\..\Oslo\Oslo.csproj" />
+  </ItemGroup>
+
+</Project>

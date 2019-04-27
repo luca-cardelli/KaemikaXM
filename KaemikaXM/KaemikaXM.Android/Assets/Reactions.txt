@@ -1,0 +1,161 @@
+//======================================
+// Basic examples of species and reactions
+//======================================
+
+// Declare some species and initialize 
+// each to 1M (mol/L)
+
+species a, b, c, d @ 1M  
+
+// Prepare to report (plot) combinations 
+// of species:
+
+report a, b-c, c+d
+
+// Various syntax for reactions:
+
+a -> b          // simple reaction, rate = 1
+a ->{2} b       // simple reaction, rate = 2
+a -> b {2}      // simple reaction, rate = 2
+# -> b          // no reactants
+a -> #          // no products
+
+a <-> b         // reversible: a -> b; b -> a
+a {1}<->{2} b   // direct (2) and reverse (1) rate
+a <-> b {1} {2} // direct (2) and reverse (1) rate
+
+a + b -> c + d  // bimolecular reaction
+2a -> 3a        // a + a -> a + a + a
+number n = 2
+number m = 3
+n*a -> m*a      // a + a -> a + a + a
+
+a >> b -> c     // catalysis: a + b -> a + c
+
+// Declare the species but do not initialize them:
+
+species {a, b}
+
+// Initialize predeclared species.
+// Must initialize them before using them;
+// even 0M must be initialized explicitly:
+
+amount a @ 1M   
+amount b @ 0M
+
+// Use the species in reports and reactions:
+
+report a, b
+a -> b
+
+// Simulate and plot. This is a statement 
+// executed where it appears in the script.
+// Multiple equilibrate statements will
+// produce multiple successive simulations.
+
+equilibrate for 1     
+
+
+//======================================
+// Advanced examples: Overriding the 
+// default mass action kinetics
+//======================================
+
+// Overriding mass action rates '{ ... }'
+// by general kinetic rates '{{ ... }}'. 
+// Warning: concentrations may then go 
+// negative (they are then reset to 0).
+
+species a, b, c, d @ 1 M
+
+// Default mass action kinetic rate,
+// 2 * molarity(a) * molarity(b):
+
+a + b -> #  { 2 }
+
+// Equivalent representation, using
+// general kinetic rates:
+
+a + b -> #  {{ 2 * a * b }}	
+
+// Arrhenius kinetics (collision 
+// frequency = 2, activation energy = 50)
+// in mass action:
+
+c + d -> #  { 2, 50 }
+
+// Equivalent representation, using
+// general kinetic rates; here 'kelvin'
+// picks up the current sample temperature:
+
+c + d -> #  {{ 2*exp(-50/(8.3144598*kelvin)) * c * d }}	
+
+
+//======================================
+// Advanced examples: Abstracting kinetic
+// rates into reusable functions
+//======================================
+
+// All these functions deal with 'flows',
+// i.e. functions of time / timecourses.
+// See also the documentation on Flows.
+
+species p,q @ 1 M
+
+// Arrhenius function:
+
+function Arrhenius(flow cf ae) { 
+  return cf*exp(-ae/(8.3144598*kelvin)) 
+}
+
+// Using the Arrhenius function in a rate:
+
+p + q -> #  {{ Arrhenius(2,50)*p*q }}
+
+//equilibrate for 10 // uncomment as needed
+
+
+// Hill kinetics:
+
+ // Hill activation for catalyst y and 
+ // Hill coefficient n:
+
+function UpHill(flow y, flow n) { 
+   return y^n/(1+y^n) 
+}   
+
+// Hill inhibition for catalyst y and 
+// Hill coefficient n:
+
+function DnHill(flow y, flow n) { 
+   return 1/(1+y^n) 
+} 
+
+// Using a boolean flag to choose 
+// between them conditionally
+
+function Hill(flow y, flow n, flow up) { 
+   return cond(up, UpHill(y,n), DnHill(y,n)) 
+}  
+
+// Choose a Hill coefficient:
+
+number n = 3  
+
+// y1 activates x1 with Hill kinetics
+// plot the instantaneous Hill rate as well:
+
+species x1, y1 @ 0 M
+# ->{0.1} y1
+y1 -> y1 + x1  {{ Hill(y1,n,true) }}       
+report x1,y1,Hill(y1,n,true)    
+
+// y2 inhibits x2 with Hill kinetics, 
+// plot the instantaneous Hill rate as well:
+
+species x2, y2 @ 0 M
+# ->{0.1} y2
+y2 -> y2 + x2  {{ Hill(y2,n,false) }}      
+report x2,y2,Hill(y2,n,false)    
+
+//equilibrate for 50 // uncomment as needed

@@ -1,0 +1,67 @@
+//======================================
+// A limit cycle oscillator built from 
+// 2 Approximate Majority switches
+//======================================
+
+// A triplet of species lo<->md<->hi 
+// activated from lo to hi by act, 
+// and inhibited from hi to lo by inh
+
+network Triplet(species lo hi act inh, number rate) {
+   species md @ 0M
+   act >> lo -> md    {rate}
+   act >> md -> hi    {rate}
+   inh >> hi -> md    {rate}
+   inh >> md -> lo    {rate}
+}
+
+// Approximate Majority bistable circuit: 
+// hi activates hi and inhibits lo, 
+// lo activates lo and inhibits hi
+
+network AM(species lo hi, number rate) {
+   Triplet(lo, hi, hi, lo, rate)
+}
+
+// Again, a triplet of species lo<->md<->hi 
+// activated independently by act1 and act2, 
+// and inhibited independently by ih1 and inh2
+
+network Triplet2(species lo hi act1 inh1 act2 inh2, number rate1 rate2) {
+   species md @ 0M
+   act1 >> lo -> md    {rate1}
+   act1 >> md -> hi    {rate1}
+   inh1 >> hi -> md    {rate1}
+   inh1 >> md -> lo    {rate1}
+   act2 >> lo -> md    {rate2}
+   act2 >> md -> hi    {rate2}
+   inh2 >> hi -> md    {rate2}
+   inh2 >> md -> lo    {rate2}
+}
+
+// Approximate Majority bistable switch:
+// like the above AM circuit, but with addition 
+// external switching controls act and ihn
+
+network AM2(species lo hi act inh, number rate1 rate2) {
+   Triplet2(lo, hi, hi, lo, act, inh, rate1, rate2)
+}
+
+// Two AM2 switches connected in a Trammel of 
+// Archimedes pattern the internal AM rates should be 
+// stronger than the external interconnection rates
+
+network AMOscillator() {
+   species lo1, hi2 @ 0M
+   species lo2, hi1 @ 5M
+   report lo1, hi1, lo2, hi2
+   AM2(lo1, hi1, hi2, lo2, 1.0, 0.5) 
+   AM2(lo2, hi2, lo1, hi1, 1.0, 0.5)
+}
+
+// Generate the oscillator
+
+AMOscillator()
+
+equilibrate for 10
+
