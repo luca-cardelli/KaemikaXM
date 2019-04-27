@@ -42,15 +42,15 @@ namespace Microcharts {
             this.YpointRange = new float[Yrange.Length];
         }
 
-        public float MinY() {
+        public float MinY(List<Series> seriesList) {
             float min = float.MaxValue;
-            for (int i = 0; i < Y.Length; i++) min = Math.Min(Y[i]-Yrange[i], min);
+            for (int i = 0; i < Y.Length; i++) if (seriesList[i].visible) min = Math.Min(Y[i]-Yrange[i], min);
             return min;
         }
 
-        public float MaxY() {
+        public float MaxY(List<Series> seriesList) {
             float max = float.MinValue;
-            for (int i = 0; i < Y.Length; i++) max = Math.Max(Y[i]+Yrange[i], max);
+            for (int i = 0; i < Y.Length; i++) if (seriesList[i].visible) max = Math.Max(Y[i]+Yrange[i], max);
             return max;
         }
     }
@@ -67,7 +67,7 @@ namespace Microcharts {
             lock (mutex) { list.Add(entry); }
         }
 
-        private void Inner_Bounds(out float minX, out float maxX, out float minY, out float maxY) {
+        private void Inner_Bounds(List<Series> seriesList, out float minX, out float maxX, out float minY, out float maxY) {
             if (list.Count() == 0) { minX = 0; maxX = 0; minY = 0; maxY = 0; return; }
             minX = float.MaxValue;
             maxX = float.MinValue;
@@ -76,8 +76,8 @@ namespace Microcharts {
             for (int i = 0; i < list.Count(); i++) {
                 minX = Math.Min(minX, list[i].X);
                 maxX = Math.Max(maxX, list[i].X);
-                minY = Math.Min(minY, list[i].MinY());
-                maxY = Math.Max(maxY, list[i].MaxY());
+                minY = Math.Min(minY, list[i].MinY(seriesList));
+                maxY = Math.Max(maxY, list[i].MaxY(seriesList));
             }
         }
 
@@ -216,7 +216,7 @@ namespace Microcharts {
 
         public void DrawContent(SKCanvas canvas, SKPoint plotOrigin, SKSize plotSize, List<Series> seriesList, float textHeight, SKColor axisTextColor) {
             lock (mutex) {
-                this.Inner_Bounds(out float minX, out float maxX, out float minY, out float maxY);
+                this.Inner_Bounds(seriesList, out float minX, out float maxX, out float minY, out float maxY);
                 Inner_DrawXLabels(canvas, plotOrigin, plotSize, textHeight, axisTextColor, minX, maxX);
                 Inner_DrawYLabels(canvas, plotOrigin, plotSize, textHeight, axisTextColor, minY, maxY);
                 Inner_CalculatePoints(plotOrigin, plotSize, minX, maxX, minY, maxY);

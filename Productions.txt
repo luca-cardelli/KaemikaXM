@@ -1,0 +1,278 @@
+﻿============================================================
+GOLD Parser Builder
+Version 5.2.0.
+============================================================
+
+
+========================================
+Lexical Groups
+========================================
+
+0    Comment Line
+1    Comment Block
+
+
+
+
+========================================
+Terminals
+========================================
+
+ 0      (EOF)
+ 1      (Error)
+ 2      Comment
+ 3      NewLine
+ 4      Whitespace
+ 5      '*/'
+ 6      '/*'
+ 7      '//'
+ 8      '-'
+ 9      '#'
+ 10     '('
+ 11     ')'
+ 12     '*'
+ 13     ','
+ 14     '/'
+ 15     ':='
+ 16     ';'
+ 17     '@'
+ 18     '['
+ 19     ']'
+ 20     '^'
+ 21     '{'
+ 22     '}'
+ 23     '+'
+ 24     '<'
+ 25     '<='
+ 26     '<>'
+ 27     '<->'
+ 28     '='
+ 29     '>'
+ 30     '->'
+ 31     '>='
+ 32     '>>'
+ 33     amount
+ 34     and
+ 35     as
+ 36     bool
+ 37     by
+ 38     dispose
+ 39     else
+ 40     elseif
+ 41     end
+ 42     equilibrate
+ 43     false
+ 44     Float
+ 45     flow
+ 46     for
+ 47     fun
+ 48     function
+ 49     Id
+ 50     if
+ 51     in
+ 52     Integer
+ 53     mix
+ 54     net
+ 55     network
+ 56     not
+ 57     number
+ 58     or
+ 59     QuotedString
+ 60     report
+ 61     return
+ 62     sample
+ 63     species
+ 64     split
+ 65     string
+ 66     then
+ 67     transfer
+ 68     true
+ 69     with
+
+
+========================================
+Nonterminals
+========================================
+
+70      <Allocation>
+71      <And Exp>
+72      <Args>
+73      <Base Exp>
+74      <Comp Exp>
+75      <Complex>
+76      <Else>
+77      <Else Exp>
+78      <EmptySample>
+79      <Expression>
+80      <Fun>
+81      <Fun Instance>
+82      <Function>
+83      <Header>
+84      <Headers>
+85      <Ids>
+86      <Mult Exp>
+87      <Neg Exp>
+88      <Net>
+89      <Net Instance>
+90      <Network>
+91      <Not Exp>
+92      <Or Exp>
+93      <Param>
+94      <Params>
+95      <Powr Exp>
+96      <Quantity>
+97      <Rate>
+98      <Reaction>
+99      <Report>
+100     <Reports>
+101     <Sample>
+102     <Simplex>
+103     <Species>
+104     <Statement>
+105     <Statements>
+106     <Substance>
+107     <Substances>
+108     <Sum Exp>
+109     <Temperature>
+110     <Top>
+111     <Transition>
+112     <Volume>
+
+
+========================================
+Rules
+========================================
+
+0       <Top> ::= <Statements>
+1       <Function> ::= Id '=' <Expression>
+2       <Function> ::= Id <Fun>
+3       <Fun> ::= <Headers> '{' <Statements> return <Expression> '}'
+4       <Network> ::= Id '=' <Expression>
+5       <Network> ::= Id <Net>
+6       <Net> ::= <Header> '{' <Statements> '}'
+7       <EmptySample> ::= Id '{' <Expression> <Volume> ',' <Expression> <Temperature> '}'
+8       <Sample> ::= Id '=' <Expression>
+9       <Sample> ::= <EmptySample>
+10      <Sample> ::= Id
+11      <Species> ::= Id '=' <Expression>
+12      <Species> ::= '{' <Substances> '}'
+13      <Species> ::= <Substances> '@' <Expression> <Quantity> <Allocation>
+14      <Headers> ::= <Headers> <Header>
+15      <Headers> ::= <Header>
+16      <Header> ::= '(' ')'
+17      <Header> ::= '(' <Params> ')'
+18      <Params> ::= <Params> ',' <Param>
+19      <Params> ::= <Param>
+20      <Param> ::= bool <Ids>
+21      <Param> ::= number <Ids>
+22      <Param> ::= string <Ids>
+23      <Param> ::= flow <Ids>
+24      <Param> ::= species <Ids>
+25      <Param> ::= sample <Ids>
+26      <Param> ::= function <Ids>
+27      <Param> ::= network <Ids>
+28      <Ids> ::= <Ids> Id
+29      <Ids> ::= Id
+30      <Allocation> ::= in <Expression>
+31      <Allocation> ::= 
+32      <Substances> ::= <Substances> ',' <Substance>
+33      <Substances> ::= <Substance>
+34      <Substance> ::= Id '#' <Expression>
+35      <Substance> ::= Id
+36      <Statements> ::= <Statements> <Statement>
+37      <Statements> ::= 
+38      <Statement> ::= <Net Instance>
+39      <Statement> ::= <Reaction>
+40      <Statement> ::= bool Id '=' <Expression>
+41      <Statement> ::= number Id '=' <Expression>
+42      <Statement> ::= string Id '=' <Expression>
+43      <Statement> ::= flow Id '=' <Expression>
+44      <Statement> ::= sample <Sample>
+45      <Statement> ::= species <Species>
+46      <Statement> ::= function <Function>
+47      <Statement> ::= network <Network>
+48      <Statement> ::= amount <Ids> '@' <Expression> <Quantity> <Allocation>
+49      <Statement> ::= report <Reports>
+50      <Statement> ::= if <Expression> then <Statements> <Else>
+51      <Statement> ::= ';'
+52      <Statement> ::= mix Id ':=' <Expression> with <Expression>
+53      <Statement> ::= mix Id with <Expression>
+54      <Statement> ::= split Id ',' Id ':=' <Expression> by <Expression>
+55      <Statement> ::= equilibrate Id ':=' <Expression> for <Expression>
+56      <Statement> ::= equilibrate Id for <Expression>
+57      <Statement> ::= equilibrate for <Expression>
+58      <Statement> ::= transfer <EmptySample> ':=' <Expression>
+59      <Statement> ::= dispose <Expression>
+60      <Net Instance> ::= Id '(' ')'
+61      <Net Instance> ::= Id '(' <Args> ')'
+62      <Else> ::= elseif <Expression> then <Statements> <Else>
+63      <Else> ::= else <Statements> end
+64      <Else> ::= end
+65      <Reaction> ::= <Transition>
+66      <Reaction> ::= <Complex> '>>' <Transition>
+67      <Transition> ::= <Complex> '->' <Complex>
+68      <Transition> ::= <Complex> '->' '{' <Rate> '}' <Complex>
+69      <Transition> ::= <Complex> '->' <Complex> '{' <Rate> '}'
+70      <Transition> ::= <Complex> '<->' <Complex>
+71      <Transition> ::= <Complex> '{' <Rate> '}' '<->' '{' <Rate> '}' <Complex>
+72      <Transition> ::= <Complex> '<->' <Complex> '{' <Rate> '}' '{' <Rate> '}'
+73      <Rate> ::= <Expression>
+74      <Rate> ::= <Expression> ',' <Expression>
+75      <Rate> ::= '{' <Expression> '}'
+76      <Complex> ::= <Complex> '+' <Simplex>
+77      <Complex> ::= <Simplex>
+78      <Simplex> ::= Integer Id
+79      <Simplex> ::= Id '*' Id
+80      <Simplex> ::= Id
+81      <Simplex> ::= '#'
+82      <Expression> ::= <Or Exp>
+83      <Base Exp> ::= <Fun Instance>
+84      <Base Exp> ::= true
+85      <Base Exp> ::= false
+86      <Base Exp> ::= Integer
+87      <Base Exp> ::= Float
+88      <Base Exp> ::= QuotedString
+89      <Base Exp> ::= if <Expression> then <Expression> <Else Exp>
+90      <Base Exp> ::= fun <Fun>
+91      <Base Exp> ::= net <Net>
+92      <Base Exp> ::= '(' <Expression> ')'
+93      <Fun Instance> ::= Id
+94      <Fun Instance> ::= <Fun Instance> '(' ')'
+95      <Fun Instance> ::= <Fun Instance> '(' <Args> ')'
+96      <Else Exp> ::= elseif <Expression> then <Expression> <Else Exp>
+97      <Else Exp> ::= else <Expression> end
+98      <Args> ::= <Args> ',' <Expression>
+99      <Args> ::= <Expression>
+100     <Reports> ::= <Reports> ',' <Report>
+101     <Reports> ::= <Report>
+102     <Report> ::= <Expression> as '[' <Args> ']'
+103     <Report> ::= <Expression> as <Expression>
+104     <Report> ::= <Expression>
+105     <Or Exp> ::= <Or Exp> or <And Exp>
+106     <Or Exp> ::= <And Exp>
+107     <And Exp> ::= <And Exp> and <Not Exp>
+108     <And Exp> ::= <Not Exp>
+109     <Not Exp> ::= not <Comp Exp>
+110     <Not Exp> ::= <Comp Exp>
+111     <Comp Exp> ::= <Sum Exp> '=' <Sum Exp>
+112     <Comp Exp> ::= <Sum Exp> '<>' <Sum Exp>
+113     <Comp Exp> ::= <Sum Exp> '<=' <Sum Exp>
+114     <Comp Exp> ::= <Sum Exp> '>=' <Sum Exp>
+115     <Comp Exp> ::= <Sum Exp> '<' <Sum Exp>
+116     <Comp Exp> ::= <Sum Exp> '>' <Sum Exp>
+117     <Comp Exp> ::= <Sum Exp>
+118     <Sum Exp> ::= <Sum Exp> '+' <Mult Exp>
+119     <Sum Exp> ::= <Sum Exp> '-' <Mult Exp>
+120     <Sum Exp> ::= <Mult Exp>
+121     <Mult Exp> ::= <Mult Exp> '*' <Neg Exp>
+122     <Mult Exp> ::= <Mult Exp> '/' <Neg Exp>
+123     <Mult Exp> ::= <Neg Exp>
+124     <Neg Exp> ::= '-' <Powr Exp>
+125     <Neg Exp> ::= <Powr Exp>
+126     <Powr Exp> ::= <Powr Exp> '^' <Base Exp>
+127     <Powr Exp> ::= <Base Exp>
+128     <Volume> ::= Id
+129     <Temperature> ::= Id
+130     <Quantity> ::= Id
+
+

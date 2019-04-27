@@ -125,6 +125,9 @@ namespace Kaemika {
                 } else if (entry is EquilibrateEntry) {
                     var node = entry as EquilibrateEntry;
                     edges += node.inSample.symbol.Format(style) + " -> " + node.outSample.symbol.Format(style) + "[label=\"equilibrate for " + node.time.Format(style) + "\"];" + Environment.NewLine;
+                } else if (entry is TransferEntry) {
+                    var node = entry as TransferEntry;
+                    edges += node.inSample.symbol.Format(style) + " -> " + node.outSample.symbol.Format(style) + "[label=\"transfer\"];" + Environment.NewLine;
                 } else if (entry is DisposeEntry) {
                     var node = entry as DisposeEntry;
                     edges += node.inSample.symbol.Format(style) + " -> " + "XXX" + "[label=\"dispose\"];" + Environment.NewLine;
@@ -147,13 +150,13 @@ namespace Kaemika {
             List<SampleValue> samples = netlist.AllSamples();
             foreach (SampleValue sample in samples) {
                 string label =
-                    "(" + sample.symbol.Format(style) + ")" + Environment.NewLine
+                    sample.FormatHeader(style) + Environment.NewLine
                     + new CRN(sample, netlist.RelevantReactions(sample, sample.species, style)).FormatAsODE(style, prefixDiff: "", suffixDiff: "'")
                     + ((sample.asConsumed == null) ? sample : sample.asConsumed).FormatContent(style, breaks:true);
                 if (label.Length > 0 && label[label.Length - 1] == '\n') label = label.Substring(0, label.Length - 2);
                 nodes += sample.symbol.Format(style) + "[shape=box, label=" + Parser.FormatString(label) + "];" + Environment.NewLine;
             }   
-            return nodes + "XXX [shape=box, label=\" \"]" + Environment.NewLine; // Dispose node
+            return nodes + "XXX [shape=box, label=\"(dispose)\"]" + Environment.NewLine; // Dispose node
         }
 
     }

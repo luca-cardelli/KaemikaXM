@@ -31,9 +31,10 @@ Comment Block @= { Nesting = All }
                     | Id <Net>                                                 ! network id definition
 <Net>            ::= <Header> '{' <Statements> '}'                           ! networks are nothing but functions that do not return values
 
+<EmptySample>    ::= Id '{' <Expression> <Volume> ',' <Expression> <Temperature> '}'
 <Sample>         ::= Id '=' <Expression>                                     ! binding a sample value to a sample id
-                    | Id '{' <Expression> <Volume> ',' <Expression> <Temperature> '}'       ! empty sample definition, parameterized by volume and temperature
-                    | Id                                                       ! empty sample definition, default volume (1 mL) and temperature (20 Celsius)
+                    | <EmptySample>                                          ! empty sample definition, parameterized by volume and temperature
+                    | Id                                                     ! empty sample definition, default volume (1 mL) and temperature (20 Celsius)
 
 <Species>        ::= Id '=' <Expression>                                     ! binding a species value to a species id
                     | '{' <Substances> '}'                                   ! declaration of multiple species (unallocated)
@@ -93,8 +94,7 @@ Comment Block @= { Nesting = All }
                     | 'equilibrate' Id ':=' <Expression> 'for' <Expression> ! integrate a sample for a time, and name the new sample
                     | 'equilibrate' Id 'for' <Expression>                   ! short for 'integrate' Id ':=' Id 'for' <Expression>
                     | 'equilibrate' 'for' <Expression>                      ! short for 'integrate' 'vessel' ':=' 'vessel' 'for' <Expression>
-                    | 'change' <Expression> '{' <Expression> <Volume> ',' <Expression> <Temperature> '}'   ! change sample volume (evaporate/dilute) and temperature
-                    | 'change' <Expression> '@' <Expression> <Quantity> <Allocation>                       ! change species concentration in sample
+                    | 'transfer' <EmptySample> ':=' <Expression>            ! change sample volume (evaporate/dilute) and temperature
                     | 'dispose' <Expression>                                ! dispose of a sample (sample cannot be reused)
                 
 <Net Instance>    ::= Id  '(' ')'

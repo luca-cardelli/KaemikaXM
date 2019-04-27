@@ -126,10 +126,12 @@ namespace Kaemika {
                 return new List<Statement> { new Equilibrate(id, new Variable(id), ParseExpression(reduction.Nonterminal(3))) };
             } else if ((reduction.Production()               == "<Statement> ::= equilibrate for <Expression>")) {
                 return new List<Statement> { new Equilibrate("vessel", new Variable("vessel"), ParseExpression(reduction.Nonterminal(2))) };
-            } else if ((reduction.Production()               == "<Statement> ::= change <Expression> '{' <Expression> <Volume> ',' <Expression> <Temperature> '}'")) {
-                return new List<Statement> { new ChangeSample(ParseExpression(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(3)), ParseVolume(reduction.Nonterminal(4)), ParseExpression(reduction.Nonterminal(6)), ParseTemperature(reduction.Nonterminal(7))) };
-            } else if ((reduction.Production()               == "<Statement> ::= change <Expression> '@' <Expression> <Quantity> <Allocation>")) {
-                return new List<Statement> { new ChangeSpecies(ParseExpression(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(3)), ParseQuantity(reduction.Nonterminal(4)), ParseAllocation(reduction.Nonterminal(5))) };
+            } else if ((reduction.Production()               == "<Statement> ::= transfer <EmptySample> ':=' <Expression>")) {
+                ParseEmptySample(reduction.Nonterminal(1), out string name, out Expression volume, out string volumeUnit, out Expression temperature, out string temperatureUnit);
+                Expression sample = ParseExpression(reduction.Nonterminal(3));
+                return new List<Statement> { new TransferSample(name, volume, volumeUnit, temperature, temperatureUnit, sample) };
+            //} else if ((reduction.Production()               == "<Statement> ::= change <Expression> '@' <Expression> <Quantity> <Allocation>")) {
+            //    return new List<Statement> { new ChangeSpecies(ParseExpression(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(3)), ParseQuantity(reduction.Nonterminal(4)), ParseAllocation(reduction.Nonterminal(5))) };
             } else if ((reduction.Production()               == "<Statement> ::= report <Reports>")) {
                 return ParseReports(reduction.Nonterminal(1));
             } else if ((reduction.Production()               == "<Statement> ::= <Reaction>")) {
@@ -144,14 +146,23 @@ namespace Kaemika {
         public static Statement ParseSample(IReduction reduction) {
             if (reduction.Production()                   == "<Sample> ::= Id '=' <Expression>") {
                 return new ValueDefinition(reduction.Terminal(0), new Type("sample"), ParseExpression(reduction.Nonterminal(2)));
-            } else if (reduction.Production()            == "<Sample> ::= Id '{' <Expression> <Volume> ',' <Expression> <Temperature> '}'") {
-                return new SampleDefinition(reduction.Terminal(0), ParseExpression(reduction.Nonterminal(2)), ParseVolume(reduction.Nonterminal(3)), 
-                    ParseExpression(reduction.Nonterminal(5)), ParseTemperature(reduction.Nonterminal(6)));
+            } else if (reduction.Production()            == "<Sample> ::= <EmptySample>") {
+                ParseEmptySample(reduction.Nonterminal(0), out string name, out Expression volume, out string volumeUnit, out Expression temperature, out string temperatureUnit);
+                return new SampleDefinition(name, volume, volumeUnit, temperature, temperatureUnit);
             } else if (reduction.Production()            == "<Sample> ::= Id") {
                 return new SampleDefinition(reduction.Terminal(0), new NumberLiteral(1.0), "mL", new NumberLiteral(20.0), "Celsius");
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }
 
+        public static void ParseEmptySample(IReduction reduction, out string name, out Expression volume, out string volumeUnit, out Expression temperature, out string temperatureUnit) {
+            if (reduction.Production() == "<EmptySample> ::= Id '{' <Expression> <Volume> ',' <Expression> <Temperature> '}'") {
+                name = reduction.Terminal(0);
+                volume = ParseExpression(reduction.Nonterminal(2));
+                volumeUnit = ParseVolume(reduction.Nonterminal(3));
+                temperature = ParseExpression(reduction.Nonterminal(5));
+                temperatureUnit = ParseTemperature(reduction.Nonterminal(6));
+            } else { name = null; volume = null; volumeUnit = null; temperature = null; temperatureUnit = null; Gui.Log("UNKNOWN Production " + reduction.Production()); }
+        }
         public static string ParseVolume(IReduction reduction) {
             if (reduction.Production()                   == "<Volume> ::= Id") {
                 return reduction.Terminal(0);

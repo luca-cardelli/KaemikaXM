@@ -475,6 +475,13 @@ namespace Kaemika
             return (result1, result2);
         }
 
+        public static SampleValue Transfer(Symbol symbol, double volume, double temperature, SampleValue inSample, Style style) {
+            inSample.Consume(style);
+            SampleValue result = new SampleValue(symbol, new NumberValue(volume), new NumberValue(temperature));
+            result.AddSpecies(inSample, volume, inSample.Volume());
+            return result;
+        }
+
         public static void Dispose(SampleValue sample, Style style) {
             sample.Consume(style);
         }
@@ -798,7 +805,8 @@ namespace Kaemika
         public void AddSpecies(SampleValue other, double thisVolume, double otherVolume) { // add the species of another sample into this one
             foreach (KeyValuePair<SpeciesValue, NumberValue> keyPair in other.speciesSet) {
                 double newConcentration = (keyPair.Value.value * otherVolume) / thisVolume;
-                if (this.HasSpecies(keyPair.Key.symbol, out NumberValue number)) this.speciesSet[keyPair.Key] = new NumberValue(number.value + newConcentration);
+                if (this.HasSpecies(keyPair.Key.symbol, out NumberValue number))
+                    this.speciesSet[keyPair.Key] = new NumberValue(number.value + newConcentration);
                 else {
                     this.speciesSet.Add(keyPair.Key, new NumberValue(newConcentration));
                     RecomputeSpecies();
@@ -806,26 +814,39 @@ namespace Kaemika
             }
         }
 
+        public double TemperatureOp(Style style) {
+            if (this.disposed) throw new Error("temperature(" + this.symbol.Format(style) + "): sample already disposed");
+            return Temperature();
+        }
         public double Temperature() {
             return this.temperature.value;
         }
-        public void ChangeTemperature(double newTemperature) {
-            this.temperature = new NumberValue(newTemperature);
-        }
+        //public void ChangeTemperature(double newTemperature) {
+        //    this.temperature = new NumberValue(newTemperature);
+        //}
 
+        public double VolumeOp(Style style) {
+            if (this.disposed) throw new Error("volume(" + this.symbol.Format(style) + "): sample already disposed");
+            return Volume();
+        }
         public double Volume() {
             return volume.value;
         }
-        public void ChangeVolume(double newVolume) {  // evaporate or dilute
-            double oldVolume = this.Volume();
-            Dictionary<SpeciesValue, NumberValue> oldspeciesSet = this.speciesSet;
-            this.volume = new NumberValue(newVolume);
-            this.speciesSet = new Dictionary<SpeciesValue, NumberValue> ();
-            double ratio = oldVolume / newVolume;
-            foreach (KeyValuePair<SpeciesValue, NumberValue> keyPair in oldspeciesSet) {
-                this.speciesSet.Add(keyPair.Key, new NumberValue(keyPair.Value.value * ratio));
-            }
-            RecomputeSpecies();
+        //public void ChangeVolume(double newVolume) {  // evaporate or dilute
+        //    double oldVolume = this.Volume();
+        //    Dictionary<SpeciesValue, NumberValue> oldspeciesSet = this.speciesSet;
+        //    this.volume = new NumberValue(newVolume);
+        //    this.speciesSet = new Dictionary<SpeciesValue, NumberValue> ();
+        //    double ratio = oldVolume / newVolume;
+        //    foreach (KeyValuePair<SpeciesValue, NumberValue> keyPair in oldspeciesSet) {
+        //        this.speciesSet.Add(keyPair.Key, new NumberValue(keyPair.Value.value * ratio));
+        //    }
+        //    RecomputeSpecies();
+        //}
+
+        public NumberValue MolarityOp(Symbol species, Style style) {
+            if (this.disposed) throw new Error("molarity(" + this.symbol.Format(style) + ", " + species.Format(style) + "): sample already disposed");
+            return Molarity(species, style);
         }
 
         public NumberValue Molarity(Symbol species, Style style) {
@@ -1084,13 +1105,13 @@ namespace Kaemika
                 throw new Error(BadArguments + name);
             } else if (arguments.Count == 1) {
                 Value arg1 = arguments[0];
-                if (name == "temperature") if (arg1 is SampleValue) return new NumberValue(((SampleValue)arg1).Temperature()); else throw new Error(BadArguments + name);
-                else if (name == "molarity") if (vessel is SampleValue && arg1 is SpeciesValue) return ((SampleValue)vessel).Molarity(((SpeciesValue)arg1).symbol, style); else throw new Error(BadArguments + name);
+                if (name == "temperature") if (arg1 is SampleValue) return new NumberValue(((SampleValue)arg1).TemperatureOp(style)); else throw new Error(BadArguments + name);
+                else if (name == "molarity") if (vessel is SampleValue && arg1 is SpeciesValue) return ((SampleValue)vessel).MolarityOp(((SpeciesValue)arg1).symbol, style); else throw new Error(BadArguments + name);
                 else return ApplyFlow(arguments, style);
             } else if (arguments.Count == 2) {
                 Value arg1 = arguments[0];
                 Value arg2 = arguments[1];
-                if (name == "molarity") if (arg1 is SampleValue && arg2 is SpeciesValue) return ((SampleValue)arg1).Molarity(((SpeciesValue)arg2).symbol, style); else throw new Error(BadArguments + name);
+                if (name == "molarity") if (arg1 is SampleValue && arg2 is SpeciesValue) return ((SampleValue)arg1).MolarityOp(((SpeciesValue)arg2).symbol, style); else throw new Error(BadArguments + name);
                 else return ApplyFlow(arguments, style);
             } else throw new Error(BadArguments + name);
         }
@@ -1120,7 +1141,7 @@ namespace Kaemika
                 else if (name == "sqrt") if (arg1 is NumberValue) return new NumberValue(Math.Sqrt(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
                 else if (name == "tan") if (arg1 is NumberValue) return new NumberValue(Math.Tan(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
                 else if (name == "tanh") if (arg1 is NumberValue) return new NumberValue(Math.Tanh(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
-                else if (name == "volume") if (arg1 is SampleValue) return new NumberValue(((SampleValue)arg1).Volume()); else throw new Error(BadArguments + name);
+                else if (name == "volume") if (arg1 is SampleValue) return new NumberValue(((SampleValue)arg1).VolumeOp(style)); else throw new Error(BadArguments + name);
                 else throw new Error(BadArguments + name);
             } else if (arguments.Count == 2) {
                 Value arg1 = arguments[0];
@@ -2535,82 +2556,81 @@ namespace Kaemika
         }
     }
 
-    public class ChangeSample : Statement {
-        private Expression sample;
+    public class TransferSample : Statement {
+        private string name;
         private Expression volume;
         private string volumeUnit;
         private Expression temperature;
         private string temperatureUnit;
-        public ChangeSample(Expression sample, Expression volume, string volumeUnit, Expression temperature, string temperatureUnit) {
-            this.sample = sample;
+        private Expression sample;
+        public TransferSample(string name, Expression volume, string volumeUnit, Expression temperature, string temperatureUnit, Expression sample) {
+            this.name = name;
             this.volume = volume;
             this.volumeUnit = volumeUnit;
             this.temperature = temperature;
             this.temperatureUnit = temperatureUnit;
-        }
-        public override string Format() {
-            return "change" + sample.Format() + " { " + volume.Format() + volumeUnit + temperature.Format() + temperatureUnit + " }";
-        }
-        public override Scope Scope(Scope scope) {
-            sample.Scope(scope);
-            volume.Scope(scope);
-            temperature.Scope(scope);
-            return scope;
-        }
-        public override Env Eval(Env env, Netlist netlist, Style style) {
-            Value sampleValue = this.sample.Eval(env, netlist, style);
-            if (!(sampleValue is SampleValue)) throw new Error("'change' requires a sample as first value");
-            SampleValue outSample = (SampleValue)sampleValue;
-
-            Value volumeValue = this.volume.Eval(env, netlist, style);
-            if (!(volumeValue is NumberValue)) throw new Error("'change' requires a number for volume");
-            double newVolume = ProtocolActuator.NormalizeVolume(((NumberValue)volumeValue).value, volumeUnit);
-            if (newVolume <= 0) throw new Error("'change' volume must be positive: " + outSample.symbol.Format(style));
-
-            Value temperatureValue = this.temperature.Eval(env, netlist, style);
-            if (!(temperatureValue is NumberValue)) throw new Error("'change' requires a number for temperature");
-            double newTemperature = ProtocolActuator.NormalizeTemperature(((NumberValue)temperatureValue).value, temperatureUnit);
-            if (newTemperature < 0) throw new Error("'change' temperature must be non-negative: " + outSample.symbol.Format(style));
-
-            outSample.ChangeTemperature(newTemperature); // ### these operations must now generate new samples
-            outSample.ChangeVolume(newVolume);
-            netlist.Emit(new ChangeSampleEntry(outSample));
-            return env;
-        }
-    }
-
-    public class ChangeSpecies : Statement {
-        private Expression species;
-        private Expression amount;
-        private string dimension;
-        private Expression sample;
-        public ChangeSpecies(Expression species, Expression amount, string dimension, Expression sample) {
-            this.species = species;
-            this.amount = amount;
-            this.dimension = dimension;
             this.sample = sample;
         }
         public override string Format() {
-            return "change" + species.Format() + " @ " + amount.Format() + dimension + " in " + sample.Format();
+            return "transfer " + name + "{ " + volume.Format() + volumeUnit + ", " + temperature.Format() + temperatureUnit + " } ::= " + sample.Format();
         }
         public override Scope Scope(Scope scope) {
-            species.Scope(scope);
-            amount.Scope(scope);
+            Scope extScope = new ConsScope(name, scope);
+            volume.Scope(scope);
+            temperature.Scope(scope);
             sample.Scope(scope);
-            return scope;
+            return extScope;
         }
         public override Env Eval(Env env, Netlist netlist, Style style) {
-            Value speciesValue = this.species.Eval(env, netlist, style);
-            if (!(speciesValue is SpeciesValue)) throw new Error("'change' requires a species as first value");
-            Value newValue = this.amount.Eval(env, netlist, style);
-            if (!(newValue is NumberValue)) throw new Error("'change' requires a number value for concentration");
-            Value sampleValue = this.sample.Eval(env, netlist, style);
-            if (!(sampleValue is SampleValue)) throw new Error("'change' requires a sample to change");
-            ((SampleValue)sampleValue).ChangeMolarity((SpeciesValue)speciesValue, (NumberValue)newValue, this.dimension, style);
-            netlist.Emit(new ChangeSpeciesEntry((SpeciesValue)speciesValue, (NumberValue)newValue, (SampleValue)sampleValue));
-            return env;
+            Value volume = this.volume.Eval(env, netlist, style);
+            Value temperature = this.temperature.Eval(env, netlist, style);
+            if ((!(volume is NumberValue)) || (!(temperature is NumberValue))) throw new Error("Bad arg types to transfer '" + this.name + "'");
+            double volumeValue = ProtocolActuator.NormalizeVolume(((NumberValue)volume).value, this.volumeUnit);
+            double temperatureValue = ProtocolActuator.NormalizeTemperature(((NumberValue)temperature).value, this.temperatureUnit);
+            if (volumeValue <= 0) throw new Error("Sample volume must be positive on transfer '" + this.name + "'");
+            if (temperatureValue < 0) throw new Error("Sample temperature must be non-negative on transfer '" + this.name + "'");
+            Value inSampleValue = this.sample.Eval(env, netlist, style);
+            if (!(inSampleValue is SampleValue)) throw new Error("transfer '" + name + "' requires a sample");
+            Symbol symbol = new Symbol(name);
+            SampleValue outSampleValue = ProtocolActuator.Transfer(symbol, volumeValue, temperatureValue, (SampleValue)inSampleValue, style);
+            netlist.Emit(new TransferEntry(outSampleValue, (SampleValue)inSampleValue));
+            return new ValueEnv(symbol, null, outSampleValue, env);
         }
     }
+
+    ////                     | 'change' <Expression> '@' <Expression> <Quantity> <Allocation>    
+    //public class ChangeSpecies : Statement {
+    //    private Expression species;
+    //    private Expression amount;
+    //    private string dimension;
+    //    private Expression sample;
+    //    public ChangeSpecies(Expression species, Expression amount, string dimension, Expression sample) {
+    //        this.species = species;
+    //        this.amount = amount;
+    //        this.dimension = dimension;
+    //        this.sample = sample;
+    //    }
+    //    public override string Format() {
+    //        return "change" + species.Format() + " @ " + amount.Format() + dimension + " in " + sample.Format();
+    //    }
+    //    public override Scope Scope(Scope scope) {
+    //        species.Scope(scope);
+    //        amount.Scope(scope);
+    //        sample.Scope(scope);
+    //        return scope;
+    //    }
+    //    public override Env Eval(Env env, Netlist netlist, Style style) {
+    //        Value speciesValue = this.species.Eval(env, netlist, style);
+    //        if (!(speciesValue is SpeciesValue)) throw new Error("'change' requires a species as first value");
+    //        Value newValue = this.amount.Eval(env, netlist, style);
+    //        if (!(newValue is NumberValue)) throw new Error("'change' requires a number value for concentration");
+    //        Value sampleValue = this.sample.Eval(env, netlist, style);
+    //        if (!(sampleValue is SampleValue)) throw new Error("'change' requires a sample to change");
+    //        ((SampleValue)sampleValue).ChangeMolarity((SpeciesValue)speciesValue, (NumberValue)newValue, this.dimension, style);
+    //        netlist.Emit(new ChangeSpeciesEntry((SpeciesValue)speciesValue, (NumberValue)newValue, (SampleValue)sampleValue));
+    //        return env;
+    //    }
+    //}
 
     public class Report : Statement {
         public Expression expression;   // just a subset of numerical arithmetic expressions that can be plotted

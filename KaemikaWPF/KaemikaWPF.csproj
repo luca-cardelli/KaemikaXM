@@ -55,9 +55,6 @@
     <ApplicationIcon>Kaemika 128.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="GOLD Engine">
-      <HintPath>..\GOLD Engine\GOLD Engine.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />

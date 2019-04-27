@@ -253,6 +253,21 @@ namespace Kaemika
         }
     }
 
+    public class TransferEntry : OperationEntry {
+        public SampleValue outSample;
+        public SampleValue inSample;
+        public TransferEntry(SampleValue outSample, SampleValue inSample) {
+            this.outSample = outSample;
+            this.inSample = inSample;
+        }
+        public override string Format(Style style) {
+            if (style.dataFormat == "symbol") return "transfer " + outSample.symbol.Format(style);
+            else if (style.dataFormat == "header") return "transfer " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style)  + " => " + outSample.Format(style);
+            else if (style.dataFormat == "full") return "transfer " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " => " + outSample.Format(style);
+            else return "unknown format: " + style.dataFormat;
+        }
+    }
+
     public class DisposeEntry : OperationEntry {
         public SampleValue inSample;
         public DisposeEntry(SampleValue value) {
@@ -263,29 +278,19 @@ namespace Kaemika
         }
     }
 
-    public class ChangeSampleEntry : OperationEntry {
-        public SampleValue sample;
-        public ChangeSampleEntry(SampleValue sample) {
-            this.sample = sample;
-        }
-        public override string Format(Style style) {
-            return "change volume/temperature " + sample.FormatHeader(style);
-        }
-    }
-
-    public class ChangeSpeciesEntry : OperationEntry {
-        public SpeciesValue species;
-        public NumberValue number;
-        public SampleValue sample;
-        public ChangeSpeciesEntry(SpeciesValue species, NumberValue number, SampleValue sample) {
-            this.species = species;
-            this.number = number;
-            this.sample = sample;
-        }
-        public override string Format(Style style) {
-            return "change molarity" + species.symbol.Format(style) + " @ " + number.Format(style) + " in " + sample.symbol.Format(style);
-        }
-    }
+    //public class ChangeSpeciesEntry : OperationEntry {
+    //    public SpeciesValue species;
+    //    public NumberValue number;
+    //    public SampleValue sample;
+    //    public ChangeSpeciesEntry(SpeciesValue species, NumberValue number, SampleValue sample) {
+    //        this.species = species;
+    //        this.number = number;
+    //        this.sample = sample;
+    //    }
+    //    public override string Format(Style style) {
+    //        return "change molarity" + species.symbol.Format(style) + " @ " + number.Format(style) + " in " + sample.symbol.Format(style);
+    //    }
+    //}
 
     public class CRN {
         private SampleValue sample;
@@ -463,9 +468,8 @@ namespace Kaemika
                 else if (entry is MixEntry) sampleList.Add(((MixEntry)entry).outSample);
                 else if (entry is SplitEntry) { sampleList.Add(((SplitEntry)entry).outSample1); sampleList.Add(((SplitEntry)entry).outSample2); }
                 else if (entry is EquilibrateEntry) sampleList.Add(((EquilibrateEntry)entry).outSample);
+                else if (entry is TransferEntry) sampleList.Add(((TransferEntry)entry).outSample);
                 else if (entry is DisposeEntry) { }
-                else if (entry is ChangeSampleEntry) { }  //### ???
-                else if (entry is ChangeSpeciesEntry) { } //### ???
                 else { } // ignore
             }
             return sampleList;

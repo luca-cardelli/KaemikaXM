@@ -79,6 +79,7 @@ namespace Kaemika {
 
         public override void ChartUpdate() {
               MainTabbedPage.theChartPage.SetChart(new Chart(title, seriesList, timecourse, seriesIndex));
+            // this is probably triggering a bindable property that causes the chart to be redrawn
         }
 
         public void ChartUpdateLandscape() {

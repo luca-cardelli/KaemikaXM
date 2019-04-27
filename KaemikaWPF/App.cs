@@ -13,16 +13,18 @@ namespace KaemikaWPF
         /// </summary>
         /// 
 
-        public static GOLD.Parser CookV5GoldParser() {
-            GOLD.Parser parser = new GOLD.Parser();
-            try {
-                //if (parser.LoadTables(Application.StartupPath + "\\kaemika.egt")) setupDone = true;
-                if (parser.LoadTables(new System.IO.BinaryReader(new System.IO.MemoryStream(Properties.Resources.kaemika)))) return parser;
-                else throw new Error("Parser EGT failed to load");
-            } catch (GOLD.ParserException ex) {
-                throw new Error("Parser loading failed: " + ex.Message);
-            }
-        }
+        // // Need to get rid of GOLD Engine assmembly linking because it seems to interfere with building the Android version, since it requires VisualBasic runtime
+        //public static GOLD.Parser CookV5GoldParser() {
+        //    GOLD.Parser parser = new GOLD.Parser();
+        //    try {
+        //        //if (parser.LoadTables(Application.StartupPath + "\\kaemika.egt")) setupDone = true;
+        //        if (parser.LoadTables(new System.IO.BinaryReader(new System.IO.MemoryStream(Properties.Resources.kaemika)))) return parser;
+        //        else throw new Error("Parser EGT failed to load");
+        //    } catch (GOLD.ParserException ex) {
+        //        throw new Error("Parser loading failed: " + ex.Message);
+        //    }
+        //}
+
        public static LALRParser GoldParser() {
             try {
                 Stream stream = new MemoryStream(Properties.Resources.kaemikaCGT);

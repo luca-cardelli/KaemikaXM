@@ -1,41 +1,198 @@
-//======================================
-// Build a chain of reactions from a to b 
-// with n intermediate species c_i
-// a -> c_0 -> c_1 ->  ... -> c_(n-1) -> b
-//======================================
+"Name"    = Kaemika grammar
+"Author"  = Luca Cardelli
+"Version" = 1
+"About"   = A Language for Modularizing Chemistry
+          
+"Case Sensitive" = True
+"Start Symbol"   = <Top>
 
-network Erlang(species a b, number n) {
-   if n <= 0 then 
-      // just one reaction from a to b
-      a -> b                        
-   else
-      // new intermediate species c, initially 0
-      species c @ 0M
-	  // plot (report) at most 3 of those
-      if n <= 3 then report c end
-	  // build a chain from a to c with n-1 steps
-      Erlang(a, c, n-1) 
-	  // plus one reaction from c to b
-      c -> b                        
-   end
-}
+Id        = {Letter}({AlphaNumeric}|'_'|{Superscripts and Subscripts}|'')*           ! Letter followed by alphanumerics or single-quote, underscore, Unicode sup/sub
+Integer   = {Digit}+
+Float     = {Digit}+ '.' {Digit}+
+{StringChar} = {Printable} - ["\]
+QuotedString = '"' ({StringChar} | '\'{Printable})* '"'
+          
+Comment Line  = '//'
+Comment Start = '/*'
+Comment End   = '*/'
+Comment Block @= { Nesting = All }
+                
+! PREAMBLE --------------------------------------------
 
-// Connect two such chains in a loop
-// to produced a dampened ring oscillator
+<Top>           ::=  <Statements>
+             
+! ABSTRACTIONS  --------------------------------------------
+                          
+<Function>       ::= Id '=' <Expression>                                     ! binding a function value to a function id
+                    | Id <Fun>                                                 ! function id definition
+<Fun>            ::= <Headers> '{' <Statements> 'return' <Expression> '}'    ! function body requires 'return': it disambiguates use of reaction syntax
 
-network RingOscillator(species a b, number n) {
-    Erlang(a,b,n/2)
-    Erlang(b,a,n/2)
-}
+<Network>        ::= Id '=' <Expression>                                     ! binding a network value to a network id
+                    | Id <Net>                                                 ! network id definition
+<Net>            ::= <Header> '{' <Statements> '}'                           ! networks are nothing but functions that do not return values
 
-// Initialize some species and activate the oscillator
+<Sample>         ::= Id '=' <Expression>                                     ! binding a sample value to a sample id
+                    | Id '{' <Expression> <Volume> ',' <Expression> <Temperature> '}'       ! empty sample definition, parameterized by volume and temperature
+                    | Id                                                       ! empty sample definition, default volume (1 mL) and temperature (20 Celsius)
 
-species a @ 1M
-species b @ 0M
-RingOscillator(a, b, 10)
+<Species>        ::= Id '=' <Expression>                                     ! binding a species value to a species id
+                    | '{' <Substances> '}'                                   ! declaration of multiple species (unallocated)
+                    | <Substances> '@' <Expression> <Quantity> <Allocation>  ! allocation of multiple <Ids> species to a sample, 
+                                                                             !     short for '{'<Substances>'}' ';' 'amount' <Ids> '@' <Expression> <Quantity> <Allocation>
+                  
+<Headers>        ::= <Headers> <Header>
+                    | <Header>
+                                      
+<Header>         ::= '(' ')'
+                    | '(' <Params> ')'
+                                                  
+<Params>         ::= <Params> ',' <Param>
+                    | <Param>
 
-// Simulate the reactions and produce a plot
-// the multiple 'c' species are distinguished by a suffix
+<Param>          ::= 'bool' <Ids>                  ! booleans      
+                    | 'number' <Ids>               ! double floating point. use int(n) to round to integers
+                    | 'string' <Ids>               ! strings
+                    | 'species' <Ids>              ! species are values. n.b. individual reactions are not values, but networks are
+                    | 'sample' <Ids>               ! samples are solutions (having volume,temperature) populated with amounts (species having concentrations)
+                    | 'function' <Ids>             ! functions can receive and return values, species, functions, and networks  
+                    | 'network' <Ids>              ! networks can receive values, species, functions, and networks                   
+<Ids>           ::= <Ids> Id
+                    | Id
+                                          
+<Allocation>     ::= 'in' <Expression>     ! allocation of species in a sample
+                    |                      ! short for 'in' 'vessel'
+<Substances>     ::= <Substances> ',' <Substance>
+                    | <Substance>
+<Substance>      ::= Id '#' <Expression>
+                    | Id
+                  
+! STATEMENTS --------------------------------------------
 
-equilibrate for 20           
-                             
+<Statements>    ::= <Statements> <Statement>  
+                    |
+
+<Statement>     ::=   <Net Instance>                          ! there are no obligatory delimiter characters between statements. LALR FTW!
+                    | <Reaction>                              ! reactions are the only statements not prefixed by a keyword (other than instances)
+                    | 'bool' Id '=' <Expression>              ! binding a bool value to a bool id
+                    | 'number' Id '=' <Expression>            ! binding a number value to a number id
+                    | 'string' Id '=' <Expression>            ! binding a string value to a string id
+                    | 'sample' <Sample>                       ! binding a sample to a sample id or sample def
+                    | 'species' <Species>                     ! binding a species to a species id or species def
+                    | 'function' <Function>                   ! binding a function to a function id or function def
+                    | 'network' <Network>                     ! binding a network to a network id or network def
+                    | 'amount' <Ids> '@' <Expression> <Quantity> <Allocation>  ! set initial quantity of species in a sample
+                    | 'report' <Reports>                                       ! report species for plotting (can use arithmetic, but restrictions apply to <Args>)
+                    | 'if' <Expression> 'then' <Statements> <Else>             ! conditional
+                    | ';'                                                      ! rarely used optional syntactic noise for same-line multiple statements
+                    
+                    | 'mix' Id ':=' <Expression> 'with' <Expression>        ! mix two samples, and name the new sample
+                    | 'mix' Id 'with' <Expression>                          ! short for 'mix' Id ':=' Id 'with' <Expression> (reusing the sample name)
+                    | 'split' Id ',' Id ':=' <Expression> 'by' <Expression> ! split a sample in two named samples, the 1st by proportion (0..1), the 2nd by 1-proportion
+                    | 'equilibrate' Id ':=' <Expression> 'for' <Expression> ! integrate a sample for a time, and name the new sample
+                    | 'equilibrate' Id 'for' <Expression>                   ! short for 'integrate' Id ':=' Id 'for' <Expression>
+                    | 'equilibrate' 'for' <Expression>                      ! short for 'integrate' 'vessel' ':=' 'vessel' 'for' <Expression>
+                    | 'change' <Expression> '{' <Expression> <Volume> ',' <Expression> <Temperature> '}'   ! change sample volume (evaporate/dilute) and temperature
+                    | 'change' <Expression> '@' <Expression> <Quantity> <Allocation>                       ! change species concentration in sample
+                    | 'dispose' <Expression>                                ! dispose of a sample (sample cannot be reused)
+                
+<Net Instance>    ::= Id  '(' ')'
+                    | Id  '(' <Args> ')'
+
+<Else>           ::=  'elseif' <Expression> 'then' <Statements> <Else>  ! cascading if statements: else is optional
+                    | 'else' <Statements> 'end'
+                    | 'end'
+                                   
+! REACTIONS --------------------------------------------
+
+<Reaction>      ::= <Transition> 
+                    | <Complex> '>>' <Transition>                 ! optional catalysis notation, A >> B -> C == A + B -> A + C, etc.
+               
+<Transition>    ::= <Complex> '->' <Complex>                                              ! default rate (collision frequncy = 1.0, activation energy = 0.0)
+                    | <Complex> '->' '{' <Rate> '}' <Complex>                             ! rate in the middle of reaction
+                    | <Complex> '->' <Complex> '{' <Rate> '}'                             ! or rate after reaction
+                    | <Complex> '<->' <Complex>                                           ! reversible, default rate (= 1.0, 0.0)
+                    | <Complex> '{' <Rate> '}' '<->' '{' <Rate> '}' <Complex>             ! rate in the middle of reaction
+                    | <Complex> '<->' <Complex> '{' <Rate> '}' '{' <Rate> '}'             ! or rate after reaction, {reverse} then {direct}
+
+<Rate>          ::= <Expression>                                                          ! collision frequency (with activation energy = 0.0)
+                    | <Expression> ',' <Expression>                                       ! collision frequency, activation energy (joules per mole)
+                    | '{' <Expression> '}'                                                ! arbitrary kinetic law: any function from a sample to a non-negative number
+
+<Complex>       ::= <Complex> '+' <Simplex>
+                    | <Simplex>
+                
+<Simplex>       ::= Integer Id                                          ! stoichiometry: '2a' is the same as 'a + a'
+                    | Id '*' Id                                         ! stoichiometry: 'n * a' is the same as 'a + ... + a' n times for integer n>=0
+                    | Id                                                ! a species
+                    | '#'                                               ! zero species: for creation and degradation
+
+! EXPRESSIONS --------------------------------------------
+          
+<Expression>    ::=  <Or Exp>                                               ! see below
+                 
+<Base Exp>      ::= <Fun Instance> 
+                    | 'true'         
+                    | 'false'    
+                    | Integer
+                    | Float
+                    | QuotedString
+                    | 'if' <Expression> 'then' <Expression> <Else Exp>      ! no statements allowed inside if-expressions: uses if-statements for that
+                    | 'fun' <Fun>                                           ! function abstraction
+                    | 'net' <Net>                                           ! network abstraction
+                    | '(' <Expression> ')'
+                  
+<Fun Instance>      ::= Id                                                  ! built-in math library operators, and pi and e, follow this syntax too
+                    | <Fun Instance>  '(' ')'                               ! function invocations can use currying
+                    | <Fun Instance>  '(' <Args> ')'                        
+                     
+<Else Exp>       ::=  'elseif' <Expression> 'then' <Expression> <Else Exp>  ! cascading if expressions: else is compulsory
+                    | 'else' <Expression> 'end'
+                           
+<Args>           ::= <Args> ',' <Expression>
+                    | <Expression>
+                    
+<Reports>        ::= <Reports> ',' <Report>
+                    | <Report>
+                    
+<Report>         ::= <Expression> 'as' '[' <Args> ']'
+                    | <Expression> 'as' <Expression>
+                    | <Expression> 
+
+! OPERATORS  --------------------------------------------                                 
+
+<Or Exp>        ::=  <Or Exp> 'or' <And Exp>                                 ! boring encoding of prefix/infix operator precedence         
+                    | <And Exp> 
+
+<And Exp>       ::=  <And Exp> 'and' <Not Exp>                                          
+                    | <Not Exp>                                          
+
+<Not Exp>       ::= 'not' <Comp Exp>                                          
+                    | <Comp Exp>  
+
+<Comp Exp>      ::= <Sum Exp> '=' <Sum Exp>
+                    | <Sum Exp> '<>' <Sum Exp>
+                    | <Sum Exp> '<=' <Sum Exp>
+                    | <Sum Exp> '>=' <Sum Exp>
+                    | <Sum Exp> '<' <Sum Exp>
+                    | <Sum Exp> '>' <Sum Exp>
+                    | <Sum Exp>
+
+<Sum Exp>       ::= <Sum Exp> '+' <Mult Exp>
+                    | <Sum Exp> '-' <Mult Exp>                                          
+                    | <Mult Exp> 
+
+<Mult Exp>      ::= <Mult Exp> '*' <Neg Exp> 
+                    | <Mult Exp> '/' <Neg Exp>                                           
+                    | <Neg Exp> 
+
+<Neg Exp>       ::= '-' <Powr Exp> 
+                    | <Powr Exp>
+                    
+<Powr Exp>      ::= <Powr Exp> '^' <Base Exp>                               ! -2^2 = -4;  -2^-2 is error, use -2^(-2)
+                    | <Base Exp>
+
+! UNITS  --------------------------------------------                                 
+
+<Volume>        ::= Id     ! 'L' | 'mL' | 'muL' | 'nL'
+<Temperature>   ::= Id     ! 'K' | 'Kelvin' | 'C' | 'Celsius'
+<Quantity>      ::= Id     ! 'kg' | 'g' | 'mg' | 'ug' | 'ng' | 'kM' | 'M' | 'mM' | 'uM' | 'nM' | 'kmol' | 'mol' | 'mmol' | 'umol' | 'nmol'

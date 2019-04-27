@@ -18,11 +18,11 @@ report NaCl, KCl, NA2HPO4, KH2PO4
 
 function Autoclave(sample PBS, number t) {
 	// increase temperature, preserve volume:
-   change PBS { volume(PBS)L, 121C }
+   transfer hot { volume(PBS)L, 121C } := PBS
    // bake
-   equilibrate PBS for t	
+   equilibrate hot for t	
    // decrease temperature, preserve volume:
-   change PBS { volume(PBS)L, 20C }		
+   transfer PBS { volume(hot)L, 20C }	:= hot	
    return PBS
 }
 
@@ -40,10 +40,4 @@ function MakePBS() {
 }
 
 sample PBS = MakePBS()
-
-// In place of mixing with the 'topup' 
-// sample we could instead 
-// 'change PBS {1L, temperature(PBS)K}'
-// Change of volume causes dilution 
-// (or concentration) of the species.
 

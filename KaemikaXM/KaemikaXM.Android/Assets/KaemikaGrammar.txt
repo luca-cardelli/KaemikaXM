@@ -31,9 +31,10 @@ Comment Block @= { Nesting = All }
                     | Id <Net>                                                 ! network id definition
 <Net>            ::= <Header> '{' <Statements> '}'                           ! networks are nothing but functions that do not return values
 
+<EmptySample>    ::= Id '{' <Expression> <Volume> ',' <Expression> <Temperature> '}'
 <Sample>         ::= Id '=' <Expression>                                     ! binding a sample value to a sample id
-                    | Id '{' <Expression> <Volume> ',' <Expression> <Temperature> '}'       ! empty sample definition, parameterized by volume and temperature
-                    | Id                                                       ! empty sample definition, default volume (1 mL) and temperature (20 Celsius)
+                    | <EmptySample>                                          ! empty sample definition, parameterized by volume and temperature
+                    | Id                                                     ! empty sample definition, default volume (1 mL) and temperature (20 Celsius)
 
 <Species>        ::= Id '=' <Expression>                                     ! binding a species value to a species id
                     | '{' <Substances> '}'                                   ! declaration of multiple species (unallocated)
@@ -50,12 +51,13 @@ Comment Block @= { Nesting = All }
                     | <Param>
 
 <Param>          ::= 'bool' <Ids>                  ! booleans      
-                    | 'number' <Ids>               ! double floating point. use int(n) to round to integers
+                    | 'number' <Ids>               ! numbers
                     | 'string' <Ids>               ! strings
+                    | 'flow' <Ids>                 ! for functions parameterized by flows in flow-expressions                   
                     | 'species' <Ids>              ! species are values. n.b. individual reactions are not values, but networks are
-                    | 'sample' <Ids>               ! samples are solutions (having volume,temperature) populated with amounts (species having concentrations)
+                    | 'sample' <Ids>               ! samples are containers that have volume and temperature, populated with species that have concentrations
                     | 'function' <Ids>             ! functions can receive and return values, species, functions, and networks  
-                    | 'network' <Ids>              ! networks can receive values, species, functions, and networks                   
+                    | 'network' <Ids>              ! networks can receive values, species, functions, and networks, and return nothing                  
 <Ids>           ::= <Ids> Id
                     | Id
                                           
@@ -76,6 +78,7 @@ Comment Block @= { Nesting = All }
                     | 'bool' Id '=' <Expression>              ! binding a bool value to a bool id
                     | 'number' Id '=' <Expression>            ! binding a number value to a number id
                     | 'string' Id '=' <Expression>            ! binding a string value to a string id
+                    | 'flow' Id '=' <Expression>              ! binding a flow value to a flow id
                     | 'sample' <Sample>                       ! binding a sample to a sample id or sample def
                     | 'species' <Species>                     ! binding a species to a species id or species def
                     | 'function' <Function>                   ! binding a function to a function id or function def
@@ -91,8 +94,7 @@ Comment Block @= { Nesting = All }
                     | 'equilibrate' Id ':=' <Expression> 'for' <Expression> ! integrate a sample for a time, and name the new sample
                     | 'equilibrate' Id 'for' <Expression>                   ! short for 'integrate' Id ':=' Id 'for' <Expression>
                     | 'equilibrate' 'for' <Expression>                      ! short for 'integrate' 'vessel' ':=' 'vessel' 'for' <Expression>
-                    | 'change' <Expression> '{' <Expression> <Volume> ',' <Expression> <Temperature> '}'   ! change sample volume (evaporate/dilute) and temperature
-                    | 'change' <Expression> '@' <Expression> <Quantity> <Allocation>                       ! change species concentration in sample
+                    | 'transfer' <EmptySample> ':=' <Expression>            ! change sample volume (evaporate/dilute) and temperature
                     | 'dispose' <Expression>                                ! dispose of a sample (sample cannot be reused)
                 
 <Net Instance>    ::= Id  '(' ')'
@@ -131,11 +133,11 @@ Comment Block @= { Nesting = All }
 <Expression>    ::=  <Or Exp>                                               ! see below
                  
 <Base Exp>      ::= <Fun Instance> 
-                    | 'true'         
-                    | 'false'    
-                    | Integer
-                    | Float
-                    | QuotedString
+                    | 'true'                                                ! bool literal
+                    | 'false'                                               ! bool literal
+                    | Integer                                               ! integer literal
+                    | Float                                                 ! double floating point literal. use int(n) to round to integers
+                    | QuotedString                                          ! double-quoted string literal. use \" and \\ to represent " and \
                     | 'if' <Expression> 'then' <Expression> <Else Exp>      ! no statements allowed inside if-expressions: uses if-statements for that
                     | 'fun' <Fun>                                           ! function abstraction
                     | 'net' <Net>                                           ! network abstraction
@@ -195,4 +197,4 @@ Comment Block @= { Nesting = All }
 
 <Volume>        ::= Id     ! 'L' | 'mL' | 'muL' | 'nL'
 <Temperature>   ::= Id     ! 'K' | 'Kelvin' | 'C' | 'Celsius'
-<Quantity>      ::= Id     ! 'kg' | 'g' | 'mg' | 'ug' | 'ng' | 'kM' | 'M' | 'mM' | 'uM' | 'nM' | 'kmol' | 'mol' | 'mmol' | 'umol' | 'nmol'
+<Quantity>      ::= Id     ! 'kg' | 'g' | 'mg' | 'mug' | 'ng' | 'kM' | 'M' | 'mM' | 'muM' | 'nM' | 'kmol' | 'mol' | 'mmol' | 'mumol' | 'nmol'

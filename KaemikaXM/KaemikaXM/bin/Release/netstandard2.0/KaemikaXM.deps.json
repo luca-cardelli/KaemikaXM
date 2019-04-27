@@ -92,8 +92,7 @@
       "Kaemika/1.0.0": {
         "dependencies": {
           "CalithaGOLD": "1.0.0",
-          "Oslo": "1.0.0",
-          "GOLD Engine": "5.0.4337.25397"
+          "Oslo": "1.0.0"
         },
         "runtime": {
           "Kaemika.dll": {}
@@ -115,14 +114,6 @@
       "Oslo/1.0.0": {
         "runtime": {
           "Oslo.dll": {}
-        }
-      },
-      "GOLD Engine.Reference/5.0.4337.25397": {
-        "runtime": {
-          "GOLD Engine.dll": {
-            "assemblyVersion": "5.0.4337.25397",
-            "fileVersion": "5.0.4337.25397"
-          }
         }
       }
     }
@@ -204,11 +195,6 @@
     },
     "Oslo/1.0.0": {
       "type": "project",
-      "serviceable": false,
-      "sha512": ""
-    },
-    "GOLD Engine.Reference/5.0.4337.25397": {
-      "type": "reference",
       "serviceable": false,
       "sha512": ""
     }
