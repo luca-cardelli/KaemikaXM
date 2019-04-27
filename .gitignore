@@ -18,7 +18,7 @@ App signing certificate
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
-[Rr]elease/
+#[Rr]elease/
 [Rr]eleases/
 x64/
 x86/
@@ -167,7 +167,7 @@ DocProject/Help/Html2
 DocProject/Help/html
 
 # Click-Once directory
-# publish/
+publish/
 
 # Publish Web Output
 *.[Pp]ublish.xml
