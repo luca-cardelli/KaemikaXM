@@ -8,10 +8,10 @@ namespace KaemikaXM.Pages
 {
     public class ChartPageLandscape : ContentPage {
 
-        private Microcharts.Forms.ChartView chartView;
+        private Microcharts.ChartView chartView;
 
         public ChartPageLandscape() {
-            chartView = new Microcharts.Forms.ChartView() {
+            chartView = new Microcharts.ChartView() {
                 Chart = new Microcharts.Chart("", ""),
                 BackgroundColor = Color.White,
             };
@@ -45,7 +45,7 @@ namespace KaemikaXM.Pages
     public class ChartPage : ContentPage {
 
         private string title = "";
-        private Microcharts.Forms.ChartView chartView;
+        private Microcharts.ChartView chartView;
         public Picker noisePicker;
         private ImageButton stopButton;
         private CollectionView legendView;
@@ -68,7 +68,7 @@ namespace KaemikaXM.Pages
             Title = "Chart";
             Icon = "tab_feed.png";
 
-            chartView = new Microcharts.Forms.ChartView() {
+            chartView = new Microcharts.ChartView() {
                 Chart = new Microcharts.Chart("", ""),
                 HeightRequest = 300,
                 BackgroundColor = Color.White,

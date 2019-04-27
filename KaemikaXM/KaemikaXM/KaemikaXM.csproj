@@ -28,8 +28,6 @@
   <ItemGroup>
      <ProjectReference Include="..\..\CalithaGOLD\CalithaGOLD.csproj" />
      <ProjectReference Include="..\..\Kaemika\Kaemika.csproj" />
-     <ProjectReference Include="..\..\Microcharts.Forms\Microcharts.Forms.csproj" />
-    <ProjectReference Include="..\..\Microcharts\Microcharts.csproj" />
     <ProjectReference Include="..\..\Oslo\Oslo.csproj" />
   </ItemGroup>
 

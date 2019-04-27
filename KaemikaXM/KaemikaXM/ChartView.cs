@@ -1,20 +1,20 @@
 ﻿// Copyright (c) Aloïs DENIEL. All rights reserved.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
-namespace Microcharts.Forms
+namespace Microcharts
 {
     using Xamarin.Forms;
     using SkiaSharp.Views.Forms;
 
-    public class FormsChartView : SKCanvasView
+    public class ChartView : SKCanvasView
     {
-        public FormsChartView()
+        public ChartView()
         {
             this.BackgroundColor = Color.Transparent;
             this.PaintSurface += OnPaintCanvas;
         }
 
-        public static readonly BindableProperty ChartProperty = BindableProperty.Create(nameof(Chart), typeof(Chart), typeof(FormsChartView), null, propertyChanged: OnChartChanged);
+        public static readonly BindableProperty ChartProperty = BindableProperty.Create(nameof(Chart), typeof(Chart), typeof(ChartView), null, propertyChanged: OnChartChanged);
 
         public Chart Chart
         {
@@ -24,7 +24,7 @@ namespace Microcharts.Forms
 
         private static void OnChartChanged(BindableObject bindable, object oldValue, object newValue)
         {
-            ((FormsChartView)bindable).InvalidateSurface();
+            ((ChartView)bindable).InvalidateSurface();
         }
 
         private void OnPaintCanvas(object sender, SKPaintSurfaceEventArgs e)

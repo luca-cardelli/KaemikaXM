@@ -81,7 +81,6 @@
     <PackageReference Include="Xamarin.Essentials" Version="1.0.1" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ChartView.cs" />
     <Compile Include="CustomRenderers.cs" />
     <Compile Include="MainActivity.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -121,10 +120,6 @@
     <Folder Include="Resources\drawable-xxxhdpi\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Microcharts\Microcharts.csproj">
-      <Project>{3295ae4e-f21b-4c4a-bc05-a097cdb6036c}</Project>
-      <Name>Microcharts</Name>
-    </ProjectReference>
     <ProjectReference Include="..\KaemikaXM\KaemikaXM.csproj">
       <Project>{B40715D2-DFDC-42AF-B779-E319BA385BCD}</Project>
       <Name>KaemikaXM</Name>
