@@ -105,7 +105,7 @@ namespace Kaemika {
         }
 
         public static string GraphViz(Netlist netlist) {
-            Style style = new Style("•", "_", new AlphaMap(), "G3", "symbol", ExportTarget.Standard);
+            Style style = new Style("•", new SwapMap(subsup: true), new AlphaMap(), "G3", "symbol", ExportTarget.Standard);
             string edges = GraphViz_Edges(netlist, style);
             string nodes = GraphViz_Nodes(netlist, style);
             return "digraph G {" + Environment.NewLine + edges + nodes + "}" + Environment.NewLine;
@@ -134,21 +134,22 @@ namespace Kaemika {
 
         public static string GraphViz_Nodes(Netlist netlist, Style style) {
             string nodes = "";
-            List<SampleValue> sources = netlist.SourceSamples();
+            //List<SampleValue> sources = netlist.SourceSamples();
+            //foreach (SampleValue sample in sources) { // report the inital conditions of source samples at the time they were consumed (i.e. when they where fully initialized)
+            //    SampleValue s = (sample.asConsumed == null) ? sample : sample.asConsumed;
+            //    string node_proper = s.symbol.Format(style);
+            //    string node_init = node_proper + "_INITIAL";
+            //    string label = "(" + node_proper + ")" + Environment.NewLine + s.FormatContent(style);
+            //    if (label.Length > 0 && label[label.Length - 1] == '\n') label = label.Substring(0, label.Length - 2);
+            //    nodes += node_init + "[label=" + Parser.FormatString(label) + "];" + Environment.NewLine;
+            //    nodes += node_init + " -> " + node_proper + "[label=\"init\"];";
+            //}
             List<SampleValue> samples = netlist.AllSamples();
-            foreach (SampleValue sample in sources) { // report the inital conditions of source samples at the time they were consumed (i.e. when they where fully initialized)
-                SampleValue s = (sample.asConsumed == null) ? sample : sample.asConsumed;
-                string node_proper = s.symbol.Format(style);
-                string node_init = node_proper + "_INITIAL";
-                string label = "(" + node_proper + ")" + Environment.NewLine + s.FormatContent(style);
-                if (label.Length > 0 && label[label.Length - 1] == '\n') label = label.Substring(0, label.Length - 2);
-                nodes += node_init + "[label=" + Parser.FormatString(label) + "];" + Environment.NewLine;
-                nodes += node_init + " -> " + node_proper + "[label=\"init\"];";
-            }
             foreach (SampleValue sample in samples) {
                 string label =
                     "(" + sample.symbol.Format(style) + ")" + Environment.NewLine
-                    + new CRN(sample, netlist.RelevantReactions(sample, sample.species, style)).FormatAsODE(style, prefixDiff: "", suffixDiff: "'");
+                    + new CRN(sample, netlist.RelevantReactions(sample, sample.species, style)).FormatAsODE(style, prefixDiff: "", suffixDiff: "'")
+                    + ((sample.asConsumed == null) ? sample : sample.asConsumed).FormatContent(style, breaks:true);
                 if (label.Length > 0 && label[label.Length - 1] == '\n') label = label.Substring(0, label.Length - 2);
                 nodes += sample.symbol.Format(style) + "[shape=box, label=" + Parser.FormatString(label) + "];" + Environment.NewLine;
             }   

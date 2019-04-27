@@ -24,6 +24,51 @@ namespace Kaemika
         public string Extract(int key) { return this.map[key]; }
     }
 
+    public class SwapMap {
+        private Dictionary<string, string> map;
+        public SwapMap(bool subsup = false) {
+            this.map = new Dictionary<string, string>();
+            if (subsup) {
+                this.map["'"] = "_";
+                this.map["⁺"] = "_p";
+                this.map["⁻"] = "_n";
+                this.map["⁼"] = "_e";
+                this.map["⁰"] = "_0";
+                this.map["¹"] = "_1";
+                this.map["²"] = "_2";
+                this.map["³"] = "_3";
+                this.map["⁴"] = "_4";
+                this.map["⁵"] = "_5";
+                this.map["⁶"] = "_6";
+                this.map["⁷"] = "_7";
+                this.map["⁸"] = "_8";
+                this.map["⁹"] = "_9";
+                this.map["⁽"] = "_d";
+                this.map["⁾"] = "_b";
+                this.map["₊"] = "__p";
+                this.map["₋"] = "__n";
+                this.map["₌"] = "__e";
+                this.map["₀"] = "__0";
+                this.map["₁"] = "__1";
+                this.map["₂"] = "__2";
+                this.map["₃"] = "__3";
+                this.map["₄"] = "__4";
+                this.map["₅"] = "__5";
+                this.map["₆"] = "__6";
+                this.map["₇"] = "__7";
+                this.map["₈"] = "__8";
+                this.map["₉"] = "__9";
+                this.map["₍"] = "__d";
+                this.map["₎"] = "__b";
+            }
+        }
+        public Dictionary<string, string> Pairs() { return this.map; }
+        public bool ContainsKey(string key) { return this.map.ContainsKey(key); }
+        public bool ContainsValue(string value) { return this.map.ContainsValue(value); }
+        public SwapMap Assign(string key, string value) { this.map[key] = value; return this; }
+        public string Extract(string key) { return (this.map.ContainsKey(key)) ? this.map[key] : null; }
+    }
+
     public abstract class Entry {
         public abstract string Format(Style style);
     }

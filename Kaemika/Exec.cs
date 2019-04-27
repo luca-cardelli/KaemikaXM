@@ -49,18 +49,18 @@ namespace Kaemika
                             string defaultVarchar = "•";  // "•" "≈" "▪"
                             Netlist netlist = new Netlist();
                             netlist.Emit(new SampleEntry(vessel));
-                            Style style = new Style(varchar: Gui.gui.ScopeVariants() ? defaultVarchar : null, prime: null,               
+                            Style style = new Style(varchar: Gui.gui.ScopeVariants() ? defaultVarchar : null, new SwapMap(),               
                                                     map: Gui.gui.RemapVariants() ? new AlphaMap() : null, numberFormat: "G4", dataFormat: "full",  // we want it full for samples, but maybe only headers for functions/networks?
                                                     exportTarget: ExportTarget.Standard);
                                 Env ignoreEnv = statements.Eval(new NullEnv().BuiltIn(vessel), netlist, style);
                             if (doEval) Gui.gui.OutputAppendText(netlist.Format(style));
                             else { // export and copy to clipboard
-                               if (doExport == ExportAs.MSRC_LBS) Gui.gui.OutputAppendText(Export.MSRC_LBS(netlist, vessel, new Style(varchar: "_", prime: "_", map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.LBS)));
-                               else if (doExport == ExportAs.MSRC_CRN) Gui.gui.OutputAppendText(Export.MSRC_CRN(netlist, vessel, new Style(varchar: "_", prime: "_", map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.CRN)));
+                               if (doExport == ExportAs.MSRC_LBS) Gui.gui.OutputAppendText(Export.MSRC_LBS(netlist, vessel, new Style(varchar: "_", new SwapMap(subsup:true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.LBS)));
+                               else if (doExport == ExportAs.MSRC_CRN) Gui.gui.OutputAppendText(Export.MSRC_CRN(netlist, vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.CRN)));
                                else if (doExport == ExportAs.ODE) Gui.gui.OutputAppendText(Export.ODE(vessel, 
                                    new CRN(vessel, netlist.RelevantReactions(vessel, vessel.species, style)), 
-                                   new Style(varchar: "_", prime: "_", map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.Standard)));
-                               else if (doExport == ExportAs.Protocol) Gui.gui.OutputAppendText(Export.Protocol(netlist, new Style(varchar: defaultVarchar, prime: null, map: new AlphaMap(), numberFormat: "G4", dataFormat: "symbol", exportTarget: ExportTarget.Standard)));
+                                   new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.Standard)));
+                               else if (doExport == ExportAs.Protocol) Gui.gui.OutputAppendText(Export.Protocol(netlist, new Style(varchar: defaultVarchar, new SwapMap(), map: new AlphaMap(), numberFormat: "G4", dataFormat: "symbol", exportTarget: ExportTarget.Standard)));
                                else if (doExport == ExportAs.GraphViz) Gui.gui.OutputAppendText(Export.GraphViz(netlist));
                                else { }
                                try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };

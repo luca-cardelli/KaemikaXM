@@ -11,24 +11,21 @@ namespace Kaemika
     public enum ExportTarget : int { LBS, CRN, Standard };
 
     public class Style {
-        private string varchar;         // The non-inputable character used to distinguish symbol variants
-                                            // can be null if we do not show the variants
-        private string prime;           // The string used to replace prime "'" in export to other systems
-                                            // can be null if we do not replace it
-        private string underbar;        // The string used to replace underbar "_" in export to other systems
-                                            // can be null if we do not replace it
-        private AlphaMap map;           // The map used to alpha-convert conflicting symbols in printout
-                                            // can be null if we do not alpha-convert
-        public string numberFormat;     // Number format
-                                            // can be null for default (full precision)
-        public string dataFormat;       // How to display complex data
-                                            // "symbol", "header", or "full"
-        public ExportTarget exportTarget; // How to format for external tools
+        private string varchar;                 // The non-inputable character used to distinguish symbol variants
+                                                    // can be null if we do not show the variants
+        private SwapMap swap;                   // The strings used to replace special chars in export to other systems
+                                                    // cannot be null
+        private AlphaMap map;                   // The map used to alpha-convert conflicting symbols in printout
+                                                    // can be null if we do not alpha-convert
+        public string numberFormat;             // Number format
+                                                    // can be null for default (full precision)
+        public string dataFormat;               // How to display complex data
+                                                    // "symbol", "header", or "full"
+        public ExportTarget exportTarget;       // How to format for external tools
 
-        public Style(string varchar, string prime, AlphaMap map, string numberFormat, string dataFormat, ExportTarget exportTarget) {
+        public Style(string varchar, SwapMap swap, AlphaMap map, string numberFormat, string dataFormat, ExportTarget exportTarget) {
             this.varchar = varchar;
-            this.prime = prime;
-            this.underbar = null;
+            this.swap = swap;
             this.map = map;
             this.numberFormat = numberFormat;
             this.dataFormat = dataFormat;
@@ -37,14 +34,13 @@ namespace Kaemika
         public Style() : this(null, null, null, null, "full", ExportTarget.Standard) {
         }
         public Style RestyleAsDataFormat(string dataFormat) {
-            return new Style(this.varchar, this.prime, this.map, this.numberFormat, dataFormat, this.exportTarget);
+            return new Style(this.varchar, this.swap, this.map, this.numberFormat, dataFormat, this.exportTarget);
         }
         public Style RestyleAsNumberFormat(string numberFormat) {
-            return new Style(this.varchar, this.prime, this.map, numberFormat, this.dataFormat, this.exportTarget);
+            return new Style(this.varchar, this.swap, this.map, numberFormat, this.dataFormat, this.exportTarget);
         }
         public string Varchar() { return this.varchar; }
-        public string Prime() { return this.prime; }
-        public string Underbar() { return this.underbar; }
+        public SwapMap Swap() { return this.swap; }
         public AlphaMap Map() { return this.map; }
         public string FormatDouble(double n) { if (this.numberFormat != null) return n.ToString(this.numberFormat); else return n.ToString(); }
     }
@@ -62,23 +58,19 @@ namespace Kaemika
         public bool SameSymbol(Symbol otherSymbol) {
             return this.variant == otherSymbol.variant;
         }
-        public string DeApostrophe(string name, string replacement) {
-            if (name.Contains("'") && name.Contains(replacement)) throw new Error("Cannot replace \"'\" with '" + replacement + "' in '" + name + "'");
-            else return name.Replace("'", replacement);
+        public string Replace(string name, string content, string replacement) {
+            if (name.Contains(content) && name.Contains(replacement)) throw new Error("Cannot replace '" + content + "' with '" + replacement + "' in '" + name + "'");
+            else return name.Replace(content, replacement);
         }
-        public string DeUnderbar(string name, string replacement) {
-            if (name.Contains("_") && name.Contains(replacement)) throw new Error("Cannot replace '_' with '" + replacement + "' in '" + name + "'");
-            return name.Replace("_", replacement);
+        public string Replace(string name, SwapMap swap) {
+            foreach (var keypair in swap.Pairs()) name = Replace(name, keypair.Key, keypair.Value);
+            return name;
         }
         public string Format(Style style) {
             string varchar = style.Varchar();
             if (varchar == null) return this.name;                                           // don't show the variant
             else {
-                string sname = this.name;
-                string prime = style.Prime();
-                sname = (prime == null) ? sname : DeApostrophe(sname, prime); // use prime to replace apostrophes
-                string underbar = style.Underbar();
-                sname = (underbar == null) ? sname : DeUnderbar(sname, underbar);    // use underbar to replace underbars
+                string sname = Replace(this.name, style.Swap());
                 AlphaMap map = style.Map();
                 if (map == null) return sname + varchar + this.variant.ToString();           // show the variant, don't remap it
                 else {                                                                       // remap the variant
@@ -754,7 +746,7 @@ namespace Kaemika
             return symbol.Format(style)
                 + " {" + style.FormatDouble(vol) + volUnit + ", " + temperature.Format(style) + "K}";
         }
-        public string FormatContent(Style style) {
+        public string FormatContent(Style style, bool breaks = false) {
             string s = "";
             foreach (KeyValuePair<SpeciesValue, NumberValue> keyPair in this.speciesSet) {
                 double molarity = keyPair.Value.value;
@@ -764,7 +756,7 @@ namespace Kaemika
                 else if (Math.Round(molarity*1e3) < 1) { molarity = molarity * 1e6; unit = "uM"; } // this test avoids producing '1000muM'
                 else if (Math.Round(molarity) < 1)     { molarity = molarity * 1e3; unit = "mM"; } // this test avoids producing '1000mM'
                 else { unit = "M"; }
-                s += keyPair.Key.Format(style) + " = " + style.FormatDouble(molarity) + unit + ", ";
+                s += keyPair.Key.Format(style) + " = " + style.FormatDouble(molarity) + unit + ", " + (breaks ? Environment.NewLine : "");
             }
             if (s.Length > 0) s = s.Substring(0, s.Length - 2); // remove last comma
             return s;
