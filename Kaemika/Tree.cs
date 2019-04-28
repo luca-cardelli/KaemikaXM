@@ -432,16 +432,17 @@ namespace Kaemika
         public static bool continueExecution = true;
 
         public static string[] noiseString = new string[7] { " μ", " ±σ", " σ", " σ/μ", " ±σ²", " σ²", " σ²/μ" }; //Enum.GetNames(typeof(Noise)).Length
+        public static string[] longNoiseString = new string[7] { " μ  (mean)", " ±σ  (μ ± standard deviation)", " σ  (μ and standard deviation)", " σ/μ  (μ and coeff of variation)", " ±σ²  (μ ± variance)", " σ²  (μ and variance)", " σ²/μ  (μ and Fano factor)" }; //Enum.GetNames(typeof(Noise)).Length
 
         public static Noise NoiseOfString(string selection) {
             if (selection == null) return Noise.None;
-            if (selection == noiseString[0]) return Noise.None; // " μ"
-            if (selection == noiseString[1]) return Noise.SigmaRange; // " ±σ"
-            if (selection == noiseString[2]) return Noise.Sigma; // " σ"
-            if (selection == noiseString[3]) return Noise.CV; // " σ/μ"
-            if (selection == noiseString[4]) return Noise.SigmaSqRange; // " ±σ²"
-            if (selection == noiseString[5]) return Noise.SigmaSq; // " σ²"
-            if (selection == noiseString[6]) return Noise.Fano; // " σ²/μ"
+            if (selection == noiseString[0] || selection == longNoiseString[0]) return Noise.None; // " μ"
+            if (selection == noiseString[1] || selection == longNoiseString[1]) return Noise.SigmaRange; // " ±σ"
+            if (selection == noiseString[2] || selection == longNoiseString[2]) return Noise.Sigma; // " σ"
+            if (selection == noiseString[3] || selection == longNoiseString[3]) return Noise.CV; // " σ/μ"
+            if (selection == noiseString[4] || selection == longNoiseString[4]) return Noise.SigmaSqRange; // " ±σ²"
+            if (selection == noiseString[5] || selection == longNoiseString[5]) return Noise.SigmaSq; // " σ²"
+            if (selection == noiseString[6] || selection == longNoiseString[6]) return Noise.Fano; // " σ²/μ"
             return Noise.None;
         }
 

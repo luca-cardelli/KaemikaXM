@@ -292,16 +292,6 @@ namespace KaemikaWPF.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] kaemika {
-            get {
-                object obj = ResourceManager.GetObject("kaemika", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
         internal static byte[] kaemikaCGT {
             get {
                 object obj = ResourceManager.GetObject("kaemikaCGT", resourceCulture);

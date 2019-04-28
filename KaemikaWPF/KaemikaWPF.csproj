@@ -104,10 +104,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <None Include="..\kaemika.egt">
-      <Link>Resources\kaemika.egt</Link>
-    </None>
-    <None Include="..\kaemikaCGT.cgt">
+    <None Include="..\KaemikaXM\KaemikaXM.Android\Assets\kaemikaCGT.cgt">
       <Link>Resources\kaemikaCGT.cgt</Link>
     </None>
     <None Include="app.config" />
