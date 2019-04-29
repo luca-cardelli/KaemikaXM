@@ -24,7 +24,12 @@ namespace KaemikaXM.Pages {
             Title = "Tutorial";
             Icon = "icons8usermanual100.png";
 
-            ToolbarItems.Add(KaemikaLogo());
+            ToolbarItem kaemikaLogo = new ToolbarItem("Logo", "kaemikaLogo.png", async () => { });
+            kaemikaLogo.IsEnabled = true;
+            ToolbarItems.Add(kaemikaLogo);
+            ToolbarItem toolbarSpacer = new ToolbarItem("", null, async () => { });
+            toolbarSpacer.IsEnabled = false;
+            ToolbarItems.Add(toolbarSpacer);
 
             listView = CreateGroupedListView();
 
@@ -39,10 +44,6 @@ namespace KaemikaXM.Pages {
         protected override void OnAppearing() {
             base.OnAppearing();
             listView.ItemsSource = docs;
-        }
-
-        public ToolbarItem KaemikaLogo() {
-            return new ToolbarItem("Logo", "kaemikaLogo.png", async () => { });
         }
 
         public ListView CreateGroupedListView () {
@@ -61,7 +62,7 @@ namespace KaemikaXM.Pages {
             listView.ItemSelected += async (object sender, SelectedItemChangedEventArgs e) => {
                 if (e.SelectedItem != null) {
                     ModelInfo modelInfo = e.SelectedItem as ModelInfo;
-                    MainTabbedPage.theModelEntryPage.SetModel(modelInfo.Copy());
+                    MainTabbedPage.theModelEntryPage.SetModel(modelInfo, editable:false);
                     MainTabbedPage.theMainTabbedPage.SwitchToTab("Network");
                 }           
                 listView.SelectedItem = null; // Deselect item (the "ItemSelected" event does not fire if item is alrady selected; the "ItemTapped" event fires even if the item is selected)

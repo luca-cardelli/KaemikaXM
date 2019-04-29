@@ -3,6 +3,21 @@ using Xamarin.Forms;
 using Xamarin.Forms.PlatformConfiguration.AndroidSpecific;
 
 namespace KaemikaXM.Pages {
+
+    public interface ICustomTextEdit {
+        string GetText();
+        void SetText(string text);
+        void SelectAll();
+        void SetSelection(int start, int end);
+        float GetFontSize();
+        void SetFontSize(float size);
+        void SetEditable(bool editable);
+        void OnTextChanged(TextChangedDelegate del);
+        void OnFocusChange(FocusChangeDelegate del);
+    }
+    public delegate void TextChangedDelegate(ICustomTextEdit textEdit);
+    public delegate void FocusChangeDelegate(ICustomTextEdit textEdit);
+
     public class MainTabbedPage : Xamarin.Forms.TabbedPage {
 
         public static MainTabbedPage theMainTabbedPage;
@@ -22,6 +37,8 @@ namespace KaemikaXM.Pages {
             BarTextColor = Color.White;
             specific.SetBarItemColor(Color.FromHex("66FFFFFF"));
             specific.SetBarSelectedItemColor(Color.White);
+            //specific.DisableSmoothScroll(); //??
+            //specific.DisableSwipePaging();  //disables swiping between tabbed pages
 
             // To change tab order, just shuffle these Add calls around.
             Children.Add(new NavigationPage(theDocListPage) { Title = "Tutorial", Icon = "icons8usermanual100.png" });

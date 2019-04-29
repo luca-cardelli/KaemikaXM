@@ -9,8 +9,10 @@ namespace KaemikaXM.Pages {
     public class ModelEntryPage : ContentPage {
 
         public ModelInfo modelInfo;
-        private Editor editor;
-        private int editorFontSize = 12;
+        private View editor; // is a CustomTextEditView and implements ICustomTextEdit
+        public ToolbarItem editItem;
+        public ToolbarItem pasteAllItem;
+        public ToolbarItem copyAllItem;
         public Picker noisePicker;
         public object noisePickerSelectedItem = ProtocolActuator.noiseString[0];
         public Noise noisePickerSelection = Noise.None;
@@ -27,28 +29,71 @@ namespace KaemikaXM.Pages {
         //        });
         //}
 
-        public Button TextUp() {
-            Button button = new Button {
-                Text = "A",
-                FontSize = 10,
-                BorderWidth = 0,
-                BorderColor = Color.FromHex("9999FF"),
-                BackgroundColor = Color.BlanchedAlmond,
-                CornerRadius = 6,
+        public const string secondBarColor = "61D5ff"; // standard blue is "2195F3"; https://www.color-hex.com/
+
+        public ToolbarItem EditItem()  {
+            return
+                new ToolbarItem("Edit", null, async () => {
+                    SetModel(modelInfo.Copy(), editable: true);
+                });
+        }
+        public ToolbarItem PasteAllItem() {
+            return
+                new ToolbarItem("PasteAll", "icons8import96", async () => {
+                    if (Clipboard.HasText) {
+                        string text = await Clipboard.GetTextAsync();
+                        MainTabbedPage.theModelEntryPage.SetText(text);
+                    }
+                });
+        }
+        public ToolbarItem CopyAllItem() {
+            return
+                new ToolbarItem("CopyAll", "icons8export96", async () => {
+                    string text = MainTabbedPage.theModelEntryPage.GetText();
+                    if (text != "") await Clipboard.SetTextAsync(text);
+                });
+        }
+
+        public ImageButton TextUp() {
+            ImageButton button = new ImageButton() {
+                Source = "icons8BigA40.png",
+                HeightRequest = 40,
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                BackgroundColor = Color.FromHex(secondBarColor),
             };
-            button.Clicked += async (object sender, EventArgs e) => { if (editor.FontSize < 128) editor.FontSize++; };
+            //Button button = new Button {
+            //    Text = "A",
+            //    FontSize = 10,
+            //    BorderWidth = 0,
+            //    BorderColor = Color.FromHex(secondBarColor),
+            //    BackgroundColor = Color.BlanchedAlmond,
+            //    CornerRadius = 6,
+            //};
+            button.Clicked += async (object sender, EventArgs e) => {
+                float size = (editor as ICustomTextEdit).GetFontSize();
+                if (size < 128) (editor as ICustomTextEdit).SetFontSize(size+1);
+            };
             return button;
         }
-        public Button TextDn() {
-            Button button = new Button {
-                Text = "A",
-                FontSize = 6,
-                BorderWidth = 0,
-                BorderColor = Color.FromHex("9999FF"),
-                BackgroundColor = Color.BlanchedAlmond,
-                CornerRadius = 6,
+        public ImageButton TextDn() {
+            ImageButton button = new ImageButton() {
+                Source = "icons8SmallA40.png",
+                HeightRequest = 40,
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                BackgroundColor = Color.FromHex(secondBarColor),
             };
-            button.Clicked += async (object sender, EventArgs e) => { if (editor.FontSize > 6) editor.FontSize--; };
+            //Button button = new Button {
+            //    Text = "A",
+            //    FontSize = 6,
+            //    BorderWidth = 0,
+            //    BorderColor = Color.FromHex(secondBarColor),
+            //    BackgroundColor = Color.BlanchedAlmond,
+            //    CornerRadius = 6,
+            //};
+            button.Clicked += async (object sender, EventArgs e) => {
+                float size = (editor as ICustomTextEdit).GetFontSize();
+                if (size > 6) (editor as ICustomTextEdit).SetFontSize(size - 1);
+            };
             return button;
         }
             
@@ -57,7 +102,7 @@ namespace KaemikaXM.Pages {
                 Source = "icons8play40.png",
                 HeightRequest = 40,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = Color.FromHex("9999FF"),
+                BackgroundColor = Color.FromHex(secondBarColor),
             };
             button.Clicked += async (object sender, EventArgs e) => {
                 if (Gui.gui.StopEnabled() && !Gui.gui.ContinueEnabled()) return; // we are already running a simulation, don't start a concurrent one
@@ -92,7 +137,7 @@ namespace KaemikaXM.Pages {
             Picker noisePicker = new Picker {
                 Title = "Noise",
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = Color.FromHex("9999FF"),
+                BackgroundColor = Color.FromHex(secondBarColor),
                 FontSize = 14,
             };
             foreach (string s in ProtocolActuator.noiseString) noisePicker.Items.Add(s);
@@ -114,34 +159,24 @@ namespace KaemikaXM.Pages {
             Icon = "tab_feed.png";
 
             //ToolbarItems.Add(DeleteItem());
-            ToolbarItems.Add(
-                    new ToolbarItem("PasteAll", "icons8import96", async () => {
-                        if (Clipboard.HasText) {
-                            string text = await Clipboard.GetTextAsync();
-                            MainTabbedPage.theModelEntryPage.SetText(text);
-                        }
-                    }));
-            ToolbarItems.Add(
-                    new ToolbarItem("CopyAll", "icons8export96", async () => {
-                        string text = MainTabbedPage.theModelEntryPage.GetText();
-                        if (text != "") await Clipboard.SetTextAsync(text);
-                    }));
 
-            editor = new Editor() {
-                Text = modelInfo.text,
-                AutoSize = EditorAutoSizeOption.Disabled,   //AutoSize = EditorAutoSizeOption.TextChanges,
-                FontSize = editorFontSize,
-                IsSpellCheckEnabled = false,
-                IsTextPredictionEnabled = false,
-                Margin = 8,
-            };
+            editItem = EditItem();
+            ToolbarItems.Add(editItem);
 
-            editor.TextChanged += async (object sender, TextChangedEventArgs e) => {
-                if (e.NewTextValue != e.OldTextValue) modelInfo.modified = true;
-            };
-            editor.Completed += async (object sender, EventArgs e) => {
-                if (modelInfo.modified) SaveEditor();
-            };
+            pasteAllItem = PasteAllItem();
+            pasteAllItem.IsEnabled = false;
+            ToolbarItems.Add(pasteAllItem);
+
+            copyAllItem = CopyAllItem();
+            ToolbarItems.Add(copyAllItem);
+
+            editor = Kaemika.GUI_Xamarin.customTextEditor();
+
+            (editor as ICustomTextEdit).OnTextChanged(
+                async(ICustomTextEdit textEdit) => { modelInfo.modified = true; });
+
+            (editor as ICustomTextEdit).OnFocusChange(
+                async (ICustomTextEdit textEdit) => { if (modelInfo.modified) SaveEditor(); });
 
             noisePicker = NoisePicker();
             startButton = StartButton();
@@ -152,7 +187,7 @@ namespace KaemikaXM.Pages {
             stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) });
             stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) });
             stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            stepper.BackgroundColor = Color.FromHex("9999FF");
+            stepper.BackgroundColor = Color.FromHex(secondBarColor);
 
             stepper.Children.Add(TextDn(), 1, 0);
             stepper.Children.Add(TextUp(), 2, 0);
@@ -163,7 +198,7 @@ namespace KaemikaXM.Pages {
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            bottomBar.BackgroundColor = Color.FromHex("9999FF");
+            bottomBar.BackgroundColor = Color.FromHex(secondBarColor);
 
             bottomBar.Children.Add(stepper, 0, 0);
             bottomBar.Children.Add(noisePicker, 1, 0);
@@ -180,17 +215,21 @@ namespace KaemikaXM.Pages {
             Content = grid;
         }
 
-        public void SetModel(ModelInfo info) {
+        public void SetModel(ModelInfo info, bool editable) {
             modelInfo = info;
-            Load();
+            Title = modelInfo.title;
+            SetText(modelInfo.text);
+            (editor as ICustomTextEdit).SetEditable(editable);
+            editItem.IsEnabled = !editable;
+            pasteAllItem.IsEnabled = editable;
         }
 
         public string GetText() {
-            return editor.Text;
+            return (editor as ICustomTextEdit).GetText();
         }
 
         public void SetText(string text) {
-            editor.Text = text;
+            (editor as ICustomTextEdit).SetText(text);
             modelInfo.modified = true;
         }
 
@@ -199,13 +238,8 @@ namespace KaemikaXM.Pages {
             SetText(GetText() + text);
         }
 
-        public void Load() {
-            Title = modelInfo.title;
-            editor.Text = (modelInfo.text.Length > 0) ? '\a' + modelInfo.text : ""; //communicate that this is brand new non-empty page
-        }
-
         public void SaveEditor() {
-            modelInfo.text = editor.Text;
+            modelInfo.text = GetText();
             if (string.IsNullOrWhiteSpace(modelInfo.filename)) SaveFresh();
             else Overwrite();
         }

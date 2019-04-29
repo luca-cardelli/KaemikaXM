@@ -15,7 +15,7 @@ namespace Kaemika {
         }
     }
 
-    public delegate void SetSelectionDelegate(int lineNumber, int columnNumber);
+    public delegate Xamarin.Forms.View CustomTextEditorDelegate();
 
     public class GUI_Xamarin : GuiInterface {
 
@@ -25,7 +25,7 @@ namespace Kaemika {
             ChartClear("");
         }
 
-        public static SetSelectionDelegate setSelection = null;
+        public static CustomTextEditorDelegate customTextEditor = null;
 
         // INPUT
 
@@ -227,11 +227,11 @@ namespace Kaemika {
         }
 
         public override bool TraceComputational() {
-            return true;             // ### implement radio buttons
+            return true;             // ###
         }
 
         public override string Solver() {
-            return "OSLO RK547M";    // ### implement menu choice
+            return "OSLO RK547M";    // ###
         }
 
         private static Dictionary<string, Dictionary<string, bool>> visibilityCache = 

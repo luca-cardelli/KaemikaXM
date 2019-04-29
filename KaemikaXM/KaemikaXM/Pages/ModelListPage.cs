@@ -29,7 +29,7 @@ namespace KaemikaXM.Pages {
                 if (ok) {
                     if (File.Exists(modelInfo.filename)) {
                             File.Delete(modelInfo.filename);
-                            MainTabbedPage.theModelEntryPage.SetModel(new ModelInfo());
+                            MainTabbedPage.theModelEntryPage.SetModel(new ModelInfo(), editable:true);
                         }
                         MainTabbedPage.theModelListPage.RegenerateList();
                 }
@@ -80,7 +80,7 @@ public class ModelListPage : ContentPage {
 
             listView.ItemSelected += async (object sender, SelectedItemChangedEventArgs e) => {
                 if (e.SelectedItem != null) {
-                    MainTabbedPage.theModelEntryPage.SetModel(e.SelectedItem as ModelInfo);
+                    MainTabbedPage.theModelEntryPage.SetModel(e.SelectedItem as ModelInfo, editable:true);
                     MainTabbedPage.theMainTabbedPage.SwitchToTab("Network");
                 }
                 listView.SelectedItem = null; // Deselect item.
@@ -89,7 +89,7 @@ public class ModelListPage : ContentPage {
             ToolbarItems.Add(
                 new ToolbarItem("Add", "icons8plus32.png",  
                     async () => {
-                        MainTabbedPage.theModelEntryPage.SetModel(new ModelInfo());
+                        MainTabbedPage.theModelEntryPage.SetModel(new ModelInfo(), editable:true);
                         MainTabbedPage.theMainTabbedPage.SwitchToTab("Network");
                     }));
 

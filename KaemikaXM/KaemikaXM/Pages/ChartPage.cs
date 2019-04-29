@@ -56,7 +56,7 @@ namespace KaemikaXM.Pages
                 Source = "icons8stop40.png",
                 HeightRequest = 40,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = Color.FromHex("9999FF"),
+                BackgroundColor = Color.FromHex(ModelEntryPage.secondBarColor),
             };
             button.Clicked += async (object sender, EventArgs e) => {
                 Gui.gui.StopEnable(false); // signals that we should stop
@@ -84,7 +84,7 @@ namespace KaemikaXM.Pages
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            bottomBar.BackgroundColor = Color.FromHex("9999FF");
+            bottomBar.BackgroundColor = Color.FromHex(ModelEntryPage.secondBarColor);
 
             bottomBar.Children.Add(stopButton, 0, 0);
             bottomBar.Children.Add(noisePicker, 1, 0);

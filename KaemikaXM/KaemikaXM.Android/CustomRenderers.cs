@@ -4,7 +4,11 @@ using Xamarin.Forms;
 using Xamarin.Forms.Platform.Android;
 
 //[assembly: ExportRenderer(typeof(Entry), typeof(KaemikaXM.Droid.MyEntryRenderer))]
+
+//===================================
+// This was used for the Editor in v1.0
 [assembly: ExportRenderer(typeof(Editor), typeof(KaemikaXM.Droid.MyEditorRenderer))]
+//=====================================
 
 //[assembly: ExportEffect(typeof(KaemikaXM.Droid.EntrySelectEffect), nameof(KaemikaXM.Droid.EntrySelectEffect))]
 
@@ -38,6 +42,9 @@ namespace KaemikaXM.Droid {
     //    }
     //}
 
+        //===================================
+        // This was used for the Editor in v1.0
+        //=====================================
     public class MyEditorRenderer : EditorRenderer {
         public MyEditorRenderer(Context context) : base(context) {
             AutoPackage = false;
@@ -88,12 +95,13 @@ namespace KaemikaXM.Droid {
                 };
 
                 editor.TextChanged += (object sender, TextChangedEventArgs args) => {
-                    try { 
+                    try {
                         if (editor.Text.Length > 0 && editor.Text[0] == '\a') { //understand that this is a brand new non-empty page page
                             editor.Text = editor.Text.Substring(1, editor.Text.Length - 1);
                             nativeEditText.Touch += handler; // to handle the first touch
                         }
-                    } catch { }
+                    }
+                    catch { }
                 };
 
             }

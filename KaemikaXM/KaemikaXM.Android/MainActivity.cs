@@ -46,7 +46,15 @@ namespace KaemikaXM.Droid {
             foreach (string a in new List<string> { "KaemikaGrammar", "BuiltinFunctions", "Flows", "Functions" }) AddAsset(group4, a);
             groups.Add(group4);
 
-            GUI_Xamarin.setSelection = KaemikaXM.Droid.MyEditorRenderer.SetSelection;
+            // allow the higher level of the package hierarchy to access the device-dependent functionality
+            // without building dependencies on the device packagages
+            GUI_Xamarin.customTextEditor = 
+                () => {
+                    return new CustomTextEditView {
+                        HorizontalOptions = Xamarin.Forms.LayoutOptions.FillAndExpand,
+                        VerticalOptions = Xamarin.Forms.LayoutOptions.FillAndExpand,
+                    };
+            };
 
             global::Xamarin.Forms.Forms.SetFlags("Shell_Experimental", "Visual_Experimental", "CollectionView_Experimental", "FastRenderers_Experimental");
             Xamarin.Essentials.Platform.Init(this, savedInstanceState);
