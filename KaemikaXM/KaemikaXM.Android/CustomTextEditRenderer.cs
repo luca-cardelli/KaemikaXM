@@ -2,6 +2,7 @@
 using Android.Content;
 using Android.Widget;
 using Android.Text;
+using Android.Graphics;
 //using Android.Views; // used, but name clashes
 using Xamarin.Forms;
 using Xamarin.Forms.Platform.Android;
@@ -16,7 +17,7 @@ namespace KaemikaXM.Droid {
         private EditText editText; // set by CustomTextEditRenderer when it creates the EditText control
         private string text;       // cache text content between deallocation/reallocation
         private bool editable;     // cache editable state in case it is set while editText is null
-        public const float defaultFontSize = 14; // Dip
+        public const float defaultFontSize = 12; // Dip
         private float fontSize = defaultFontSize; // cache fontSize state as well
 
         public void SetEditText(EditText newEditText) {
@@ -58,10 +59,12 @@ namespace KaemikaXM.Droid {
             this.editable = editable;
             if (editText == null) return;
             if (editable) {
-                editText.FocusableInTouchMode = true;
+                editText.LongClickable = true;
                 editText.Focusable = true;
+                editText.FocusableInTouchMode = true; // need to reenable this as well as Focusable
             } else {
-                editText.Focusable = false;
+                editText.Focusable = false; // disable answering to clicks
+                editText.LongClickable = false; // disable longclicks (edit popup menu) as well
             }
         }
         public EventHandler<AfterTextChangedEventArgs> textChangedDelegate = null;
@@ -77,12 +80,15 @@ namespace KaemikaXM.Droid {
     // Subclass to handle the disposing of EditText e.g. when the app is suspended
     public class DisEditText : EditText {
         private CustomTextEditView view; // store the view that we need to clean up on dispose
+        private static Typeface typeface = null;
         public DisEditText(Context context, CustomTextEditView view) : base(context) {
             this.view = view;
             // properly set up the EditText:
             this.Gravity = Android.Views.GravityFlags.Top; //first line at top of area, not center
             this.SetPadding(20, 0, 0, 50); // bottom margin needed to stay above the red line
             this.SetTextSize(Android.Util.ComplexUnitType.Dip, CustomTextEditView.defaultFontSize);
+            if (typeface == null) typeface = Typeface.CreateFromAsset(Context.Assets, "DroidSansMono.ttf"); // "CutiveMono-Regular.ttf"
+            this.SetTypeface(typeface, TypefaceStyle.Bold);
         }
         protected override void Dispose(bool disposing)  {
             this.view.ClearEditText();

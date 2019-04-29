@@ -88,6 +88,7 @@
   </ItemGroup>
   <ItemGroup>
     <AndroidAsset Include="Assets\kaemikaCGT.cgt" />
+    <AndroidAsset Include="Assets\DroidSansMono.ttf" />
     <None Include="Resources\AboutResources.txt" />
     <None Include="Assets\AboutAssets.txt" />
     <None Include="Properties\AndroidManifest.xml" />
