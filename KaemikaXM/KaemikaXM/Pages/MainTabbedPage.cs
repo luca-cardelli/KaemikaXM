@@ -8,7 +8,9 @@ namespace KaemikaXM.Pages {
         string GetText();
         void SetText(string text);
         void SelectAll();
+        void SetFocus();
         void SetSelection(int start, int end);
+        void SetSelectionLineChar(int line, int chr); // line >=0, ch >=0
         float GetFontSize();
         void SetFontSize(float size);
         void SetEditable(bool editable);

@@ -68,7 +68,7 @@ equilibrate s1 := s for 3
 // it reuses the old name for the new sample.
 
 // 'equilibrate s for 3' is an abbreviation 
-// for 'equilibrate vessel := s for 3'.
+// for 'equilibrate s := s for 3'.
 // 'equilibrate for 3' is an abbreviation 
 // for 'equilibrate vessel := vessel for 3'
 // whenever 'vessel' is so redefined, it 

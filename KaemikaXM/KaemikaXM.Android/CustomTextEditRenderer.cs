@@ -39,13 +39,36 @@ namespace KaemikaXM.Droid {
             if (editText == null) return;
             editText.Text = text;
         }
+        public void SetFocus() {
+            if (editText == null) return;
+            editText.RequestFocus();
+        }
         public void SelectAll() {
             if (editText == null) return;
             editText.SelectAll();
         }
         public void SetSelection(int start, int end) {
             if (editText == null) return;
+            start = Math.Max(start, 0);
+            end = Math.Min(end, editText.Text.Length - 1);
+            if (end < start) end = start;
             editText.SetSelection(start, end);
+        }
+        public void SetSelectionLineChar(int line, int chr) {
+            if (editText == null) return;
+            if (line < 1) line = 1;
+            if (chr < 1) chr = 1;
+            string text = GetText();
+            int i = 0;
+            while (i < text.Length && line > 0) {
+                if (text[i] == '\n') line--;
+                i++;
+            }
+            if (i < text.Length && text[i] == '\r') i++;
+            int start = i;
+            while (i < text.Length && chr > 0) {chr--; i++; }
+            int end = i;
+            SetSelection(start, end);
         }
         public float GetFontSize() {
             return this.fontSize;

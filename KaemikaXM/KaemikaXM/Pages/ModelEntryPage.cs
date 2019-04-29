@@ -9,7 +9,7 @@ namespace KaemikaXM.Pages {
     public class ModelEntryPage : ContentPage {
 
         public ModelInfo modelInfo;
-        private View editor; // is a CustomTextEditView and implements ICustomTextEdit
+        public View editor; // is a CustomTextEditView and implements ICustomTextEdit
         public ToolbarItem editItem;
         public ToolbarItem pasteAllItem;
         public ToolbarItem copyAllItem;

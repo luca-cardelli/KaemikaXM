@@ -70,7 +70,7 @@ namespace KaemikaXM.Droid {
                     text = new StreamReader(Assets.Open(assetname + ".txt")).ReadToEnd(),
                     date = DateTime.Now,
                 });
-            } catch (Exception e) { }
+            } catch { }
         }
 
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)  {

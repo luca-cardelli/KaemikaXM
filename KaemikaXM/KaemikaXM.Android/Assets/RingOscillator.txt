@@ -11,11 +11,11 @@ network Erlang(species a b, number n) {
    else
       // new intermediate species c, initially 0
       species c @ 0M
-	  // plot (report) at most 3 of those
+      // plot (report) at most 3 of those
       if n <= 3 then report c end
-	  // build a chain from a to c with n-1 steps
+      // build a chain from a to c with n-1 steps
       Erlang(a, c, n-1) 
-	  // plus one reaction from c to b
+      // plus one reaction from c to b
       c -> b                        
    end
 }

@@ -17,7 +17,7 @@ species {NaCl#58.44, KCl#74.5513, NA2HPO4#141.96, KH2PO4#136.086}
 report NaCl, KCl, NA2HPO4, KH2PO4
 
 function Autoclave(sample PBS, number t) {
-	// increase temperature, preserve volume:
+   // increase temperature, preserve volume:
    transfer hot { volume(PBS)L, 121C } := PBS
    // bake
    equilibrate hot for t	

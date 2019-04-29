@@ -43,10 +43,10 @@ namespace Kaemika {
 
         public override async void InputSetErrorSelection(int lineNumber, int columnNumber, string failMessage) {
             Xamarin.Forms.Device.BeginInvokeOnMainThread(async () => {
-                //if (lineNumber >= 0 && columnNumber >= 0)   // little hope this will ever work without Editor support for selection
-                //    setSelection(lineNumber, columnNumber); // applies to the storedNativeEditText, last one used
                 await MainTabbedPage.theModelEntryPage.DisplayAlert("eeek", failMessage, "not ok");
                 MainTabbedPage.theMainTabbedPage.SwitchToTab("Network");
+                (MainTabbedPage.theModelEntryPage.editor as ICustomTextEdit).SetFocus();
+                (MainTabbedPage.theModelEntryPage.editor as ICustomTextEdit).SetSelectionLineChar(lineNumber, columnNumber);
             });
         }
 

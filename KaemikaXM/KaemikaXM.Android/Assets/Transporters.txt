@@ -45,7 +45,7 @@ Poisson(K⁺₁, 1)
 Poisson(Na⁺₁, 1)      
 Poisson(Glucose₁, 0.1)  
 
-Antiport(2,K⁺₁, 3,Na⁺₁, 2,K⁺₂, 3,Na⁺₂, 2.0, 0.1)                          
-Symport(2,Na⁺₁, 1,Glucose₁, 2,Na⁺₂, 1,Glucose₂, 2.0, 0.1)      
+Antiport(2,K⁺₁, 3,Na⁺₁, 2,K⁺₂, 3,Na⁺₂, 2.0, 0.1)
+Symport(2,Na⁺₁, 1,Glucose₁, 2,Na⁺₂, 1,Glucose₂, 2.0, 0.1)
 
 equilibrate for 300
