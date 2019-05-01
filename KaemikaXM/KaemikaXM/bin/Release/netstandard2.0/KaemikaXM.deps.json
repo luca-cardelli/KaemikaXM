@@ -11,8 +11,6 @@
         "dependencies": {
           "CalithaGOLD": "1.0.0",
           "Kaemika": "1.0.0",
-          "Microcharts": "1.0.0",
-          "Microcharts.Forms": "1.0.0",
           "NETStandard.Library": "2.0.3",
           "Oslo": "1.0.0",
           "SkiaSharp.Views.Forms": "1.68.0",
@@ -98,19 +96,6 @@
           "Kaemika.dll": {}
         }
       },
-      "Microcharts/1.0.0": {
-        "runtime": {
-          "Microcharts.dll": {}
-        }
-      },
-      "Microcharts.Forms/1.0.0": {
-        "dependencies": {
-          "Microcharts": "1.0.0"
-        },
-        "runtime": {
-          "Microcharts.Forms.dll": {}
-        }
-      },
       "Oslo/1.0.0": {
         "runtime": {
           "Oslo.dll": {}
@@ -179,16 +164,6 @@
       "sha512": ""
     },
     "Kaemika/1.0.0": {
-      "type": "project",
-      "serviceable": false,
-      "sha512": ""
-    },
-    "Microcharts/1.0.0": {
-      "type": "project",
-      "serviceable": false,
-      "sha512": ""
-    },
-    "Microcharts.Forms/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
