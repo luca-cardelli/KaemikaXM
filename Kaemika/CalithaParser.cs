@@ -68,19 +68,17 @@ namespace Kaemika {
             failLineNumber = args.Token.Location.LineNr;
             failColumnNumber = args.Token.Location.ColumnNr;
             failLength = args.Token.Text.Length;
-            failMessage = "Lexical Error:" + Environment.NewLine +
-                          "Line " + (failLineNumber + 1) + ", Column " + (failColumnNumber + 1) + Environment.NewLine +
-                          "Read: " + args.Token.ToString();
+            failMessage = "Lexical Error: '" + args.Token.ToString() + "'" + Environment.NewLine +
+                          "Line " + (failLineNumber + 1) + ", Column " + (failColumnNumber + 1) + ", Length " + failLength + Environment.NewLine;
         }
 
         private void ParseErrorEvent(LALRParser parser, ParseErrorEventArgs args) {
             failLineNumber = args.UnexpectedToken.Location.LineNr;
             failColumnNumber = args.UnexpectedToken.Location.ColumnNr;
-            failMessage = "Parse error caused by token: '" + args.UnexpectedToken.ToString()+"'";
-            failMessage = "Syntax Error:" + Environment.NewLine +
-                          "Line " + (failLineNumber + 1) + ", Column " + (failColumnNumber + 1) + Environment.NewLine +
-                          "Read: " + args.UnexpectedToken.ToString() + Environment.NewLine +
-                          "Expecting one of: " + args.ExpectedTokens.ToString();
+            failLength = args.UnexpectedToken.Text.Length;
+            failMessage = "Syntax Error: '" + args.UnexpectedToken.ToString() + "'" + Environment.NewLine +
+                          "Line " + (failLineNumber + 1) + ", Column " + (failColumnNumber + 1) + ", Length " + failLength + Environment.NewLine +
+                          "Expecting one of: '" + args.ExpectedTokens.ToString()+"'";
         }
 
     };

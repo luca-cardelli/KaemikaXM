@@ -29,7 +29,8 @@ A -> #
 // note that this invokes a simulation
 // each time in each solution
 
-network test(sample s) {        
+network test(sample s) { 
+          
    equilibrate s for 10
    dispose s
 }

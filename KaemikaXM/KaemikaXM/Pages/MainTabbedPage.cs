@@ -10,7 +10,7 @@ namespace KaemikaXM.Pages {
         void SelectAll();
         void SetFocus();
         void SetSelection(int start, int end);
-        void SetSelectionLineChar(int line, int chr); // line >=0, ch >=0
+        void SetSelectionLineChar(int line, int chr, int length); // line >=0, ch >=0
         float GetFontSize();
         void SetFontSize(float size);
         void SetEditable(bool editable);
@@ -20,17 +20,26 @@ namespace KaemikaXM.Pages {
     public delegate void TextChangedDelegate(ICustomTextEdit textEdit);
     public delegate void FocusChangeDelegate(ICustomTextEdit textEdit);
 
+    public abstract class KaemikaPage : ContentPage { // the children of the main tabbed page
+        public abstract void OnSwitchedTo(); // called by hand since OnAppearing is flakey
+    }
+
     public class MainTabbedPage : Xamarin.Forms.TabbedPage {
 
         public static MainTabbedPage theMainTabbedPage;
+        public static ChartPageLandscape theChartPageLandscape = new ChartPageLandscape();      // this page is never pushed, there is only one
+
         public static DocListPage theDocListPage = new DocListPage();                           // this page is never pushed, there is only one
         public static ModelListPage theModelListPage = new ModelListPage();                     // this page is never pushed, there is only one
         public static ModelEntryPage theModelEntryPage = new ModelEntryPage();                  // this page is never pushed, there is only one
         public static OutputPage theOutputPage = new OutputPage();                              // this page is never pushed, there is only one
         public static ChartPage theChartPage = new ChartPage();                                 // this page is never pushed, there is only one
-        public static ChartPageLandscape theChartPageLandscape = new ChartPageLandscape();      // this page is never pushed, there is only one
 
-        public static NavigationPage theModelListPageNavigation;
+        public static NavigationPage theDocListPageNavigation = new NavigationPage(theDocListPage) { Title = "Tutorial", Icon = "icons8usermanual100.png" };
+        public static NavigationPage theModelListPageNavigation = new NavigationPage(theModelListPage) { Title = "Networks", Icon = "icons8openedfolder96.png" };
+        public static NavigationPage theModelEntryPageNavigation = new NavigationPage(theModelEntryPage) { Title = "Network", Icon = "icons8mindmap96.png" };
+        public static NavigationPage theOutputPageNavigation = new NavigationPage(theOutputPage) { Title = "Output", Icon = "icons8truefalse100.png" };
+        public static NavigationPage theChartPageNavigation = new NavigationPage(theChartPage) { Title = "Chart", Icon = "icons8combochart48.png" };
 
         public MainTabbedPage() {
             var specific = this.On<Xamarin.Forms.PlatformConfiguration.Android>();
@@ -43,24 +52,25 @@ namespace KaemikaXM.Pages {
             //specific.DisableSwipePaging();  //disables swiping between tabbed pages
 
             // To change tab order, just shuffle these Add calls around.
-            Children.Add(new NavigationPage(theDocListPage) { Title = "Tutorial", Icon = "icons8usermanual100.png" });
-            theModelListPageNavigation = new NavigationPage(theModelListPage) { Title = "Networks", Icon = "icons8openedfolder96.png" }; Children.Add(theModelListPageNavigation);
-            Children.Add(new NavigationPage(theModelEntryPage) { Title = "Network", Icon = "icons8mindmap96.png" });
-            Children.Add(new NavigationPage(theOutputPage) { Title = "Output", Icon = "icons8truefalse100.png" });
-            Children.Add(new NavigationPage(theChartPage) { Title = "Chart", Icon = "icons8combochart48.png" });
+            Children.Add(theDocListPageNavigation);
+            Children.Add(theModelListPageNavigation);
+            Children.Add(theModelEntryPageNavigation);
+            Children.Add(theOutputPageNavigation);
+            Children.Add(theChartPageNavigation);
         }
 
-        public void SwitchToTab(string title) {
-            foreach (Page child in theMainTabbedPage.Children) {
-                if (child.Title == title) {
-                    theMainTabbedPage.CurrentPage = child;
-                    if (title == "My Networks" || title == "Networks") theModelListPage.RegenerateList(); // OnAppearing() seems to miss
+        public static void SwitchToTab(NavigationPage page) {
+            foreach (NavigationPage child in theMainTabbedPage.Children) {
+                if (child == page) {
+                    (page.CurrentPage as KaemikaPage).OnSwitchedTo();
+                    Xamarin.Forms.Device.BeginInvokeOnMainThread(() => {
+                        theMainTabbedPage.CurrentPage = page;
+                    });
                     return;
                 }
             }
         }
-
-        
+       
         // Device rotation handling
 
         private double width = 0;

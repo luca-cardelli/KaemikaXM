@@ -15,7 +15,7 @@ namespace KaemikaXM.Pages {
         }
     }
 
-    public class DocListPage : ContentPage {
+    public class DocListPage : KaemikaPage {
 
         public static List<ModelInfoGroup> docs;
         private ListView listView;
@@ -41,9 +41,13 @@ namespace KaemikaXM.Pages {
             Content = layout;
         }
 
+        public override void OnSwitchedTo() {
+            listView.ItemsSource = docs;
+        }
+
         protected override void OnAppearing() {
             base.OnAppearing();
-            listView.ItemsSource = docs;
+            OnSwitchedTo();
         }
 
         public ListView CreateGroupedListView () {
@@ -63,7 +67,7 @@ namespace KaemikaXM.Pages {
                 if (e.SelectedItem != null) {
                     ModelInfo modelInfo = e.SelectedItem as ModelInfo;
                     MainTabbedPage.theModelEntryPage.SetModel(modelInfo, editable:false);
-                    MainTabbedPage.theMainTabbedPage.SwitchToTab("Network");
+                    MainTabbedPage.SwitchToTab(MainTabbedPage.theModelEntryPageNavigation);
                 }           
                 listView.SelectedItem = null; // Deselect item (the "ItemSelected" event does not fire if item is alrady selected; the "ItemTapped" event fires even if the item is selected)
             };

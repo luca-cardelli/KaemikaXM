@@ -105,10 +105,12 @@ namespace Kaemika {
         }
 
         public static string GraphViz(Netlist netlist) {
-            Style style = new Style("•", new SwapMap(subsup: true), new AlphaMap(), "G3", "symbol", ExportTarget.Standard);
+            Style style = new Style("•", new SwapMap(subsup: true), new AlphaMap(), "G3", "symbol", ExportTarget.Standard, false);
             string edges = GraphViz_Edges(netlist, style);
             string nodes = GraphViz_Nodes(netlist, style);
-            return "digraph G {" + Environment.NewLine + edges + nodes + "}" + Environment.NewLine;
+            return
+                "// Copy and paste into https://dreampuf.github.io/GraphvizOnline" + Environment.NewLine
+                + "digraph G {" + Environment.NewLine + edges + nodes + "}" + Environment.NewLine;
         }
 
         public static string GraphViz_Edges(Netlist netlist, Style style) {
@@ -153,11 +155,44 @@ namespace Kaemika {
                     sample.FormatHeader(style) + Environment.NewLine
                     + new CRN(sample, netlist.RelevantReactions(sample, sample.species, style)).FormatAsODE(style, prefixDiff: "", suffixDiff: "'")
                     + ((sample.asConsumed == null) ? sample : sample.asConsumed).FormatContent(style, breaks:true);
-                if (label.Length > 0 && label[label.Length - 1] == '\n') label = label.Substring(0, label.Length - 2);
+                if (label.Length > 0 && label[label.Length - 1] == '\n') label = label.Substring(0, label.Length - 1);
                 nodes += sample.symbol.Format(style) + "[shape=box, label=" + Parser.FormatString(label) + "];" + Environment.NewLine;
             }   
-            return nodes + "XXX [shape=box, label=\"(dispose)\"]" + Environment.NewLine; // Dispose node
+            return nodes + "XXX [shape=box, label=\"(dispose)\"]" // Dispose node
+               // + Environment.NewLine    // www.webgraphviz.com complains if there is an empty line before the last '}'
+               ;  
         }
+
+        ////###MSAGL
+        //public static Microsoft.Msagl.Drawing.Graph MSAGL(Netlist netlist) {
+        //    Style style = new Style("•", new SwapMap(subsup: true), new AlphaMap(), "G3", "symbol", ExportTarget.Standard);
+        //    Microsoft.Msagl.Drawing.Graph graph = new Microsoft.Msagl.Drawing.Graph("graph");
+        //    MSAGL_Edges(graph, netlist, style);
+        //    // MSAGL_GraphViz_Nodes(graph, netlist, style);
+        //    return graph;
+        //}
+
+        //public static void MSAGL_Edges(Microsoft.Msagl.Drawing.Graph graph, Netlist netlist, Style style) {
+        //    foreach (ProtocolEntry entry in netlist.AllOperations())
+        //        if (entry is MixEntry) {
+        //            var node = entry as MixEntry;
+        //            graph.AddEdge(node.inSample1.symbol.Format(style), "mix", node.outSample.symbol.Format(style));
+        //            graph.AddEdge(node.inSample2.symbol.Format(style), "mix", node.outSample.symbol.Format(style));
+        //        } else if (entry is SplitEntry) {
+        //            var node = entry as SplitEntry;
+        //            graph.AddEdge(node.inSample.symbol.Format(style), "split", node.outSample1.symbol.Format(style));
+        //            graph.AddEdge(node.inSample.symbol.Format(style), "split", node.outSample2.symbol.Format(style));
+        //        } else if (entry is EquilibrateEntry) {
+        //            var node = entry as EquilibrateEntry;
+        //            graph.AddEdge(node.inSample.symbol.Format(style), "equilibrate for " + node.time.Format(style), node.outSample.symbol.Format(style));
+        //        } else if (entry is TransferEntry) {
+        //            var node = entry as TransferEntry;
+        //            graph.AddEdge(node.inSample.symbol.Format(style), "transfer", node.outSample.symbol.Format(style));
+        //        } else if (entry is DisposeEntry) {
+        //            var node = entry as DisposeEntry;
+        //            graph.AddEdge(node.inSample.symbol.Format(style), "dispose", "XXX");
+        //        }
+        //}
 
     }
 }

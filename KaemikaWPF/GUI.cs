@@ -75,14 +75,30 @@ namespace KaemikaWPF
             this.txtInput.SelectedText = text;
         }
 
-        public void InputSetErrorSelection(int lineNumber, int columnNumber) {
-            int lineBeg = this.richTextBox.GetFirstCharIndexFromLine(lineNumber);
-            int lineEnd = this.richTextBox.GetFirstCharIndexFromLine(lineNumber+1);
-            if (lineBeg < 0) lineBeg = this.richTextBox.Text.Length; // lineNumber is too big
-            if (lineEnd < 0) lineEnd = this.richTextBox.Text.Length;
+        public void SetSelectionLineChar(int line, int chr, int tokenlength) {
+            if (line < 0 || chr < 0) return;
+            string text = this.richTextBox.Text;
+            int i = 0;
+            while (i < text.Length && line > 0) {
+                if (text[i] == '\n') line--;
+                i++;
+            }
+            if (i < text.Length && text[i] == '\r') i++;
+            int linestart = i;
+            while (i < text.Length && chr > 0) {chr--; i++; }
+            int tokenstart = i;
             this.richTextBox.HideSelection = false; // keep selection highlight on loss of focus
-            this.richTextBox.Select(lineBeg, lineEnd - lineBeg);
+            this.richTextBox.Select(tokenstart, tokenlength);
         }
+
+        //public void InputSetErrorSelection(int lineNumber, int columnNumber, int length) {
+        //    int lineBeg = this.richTextBox.GetFirstCharIndexFromLine(lineNumber);
+        //    int lineEnd = this.richTextBox.GetFirstCharIndexFromLine(lineNumber+1);
+        //    if (lineBeg < 0) lineBeg = this.richTextBox.Text.Length; // lineNumber is too big
+        //    if (lineEnd < 0) lineEnd = this.richTextBox.Text.Length;
+        //    this.richTextBox.HideSelection = false; // keep selection highlight on loss of focus
+        //    this.richTextBox.Select(lineBeg, lineEnd - lineBeg);
+        //}
 
         public void SaveInput() {
             try {
@@ -116,6 +132,10 @@ namespace KaemikaWPF
             //txtTarget.SelectionStart = txtTarget.Text.Length;
             //txtTarget.SelectionLength = 0;
             //txtTarget.ScrollToCaret();
+        }
+
+        public void OutputAppendComputation(string chemicalTrace, string computationalTrace, string graphViz) {
+            if (TraceComputational()) OutputAppendText(computationalTrace); else OutputAppendText(chemicalTrace);
         }
 
         public void StopEnable(bool b) {
@@ -796,6 +816,13 @@ namespace KaemikaWPF
         {
         }
 
+        // MSAGL Viewer
+
+        private void GViewer1_Load(object sender, EventArgs e)
+        {
+
+        }
+
 
         // Overrides system Ctrl-V, which would paste a picture instead of text from clipboard
         // no need to add this method as an event handler in the form
@@ -810,6 +837,5 @@ namespace KaemikaWPF
             }
             base.OnKeyDown(e);
         }
-
     }
 } 

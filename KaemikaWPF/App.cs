@@ -52,6 +52,27 @@ namespace KaemikaWPF
             // TheParser.parser = new CookV5Parser(CookV5GoldParser());  // Linked dll, official V5 engine, written in Visual Basic (requires VB runtime which may be non-portable)
             TheParser.parser = new CalithaParser(GoldParser());  // Compiled project, pre-V5 engine, written in C#. NOTE!!! Rule.ToString has been modified for compatibility.
 
+//###MSAGL            ////================== MSAGL TEST
+
+            ////create a viewer object 
+            ////Microsoft.Msagl.GraphViewerGdi.GViewer viewer = new Microsoft.Msagl.GraphViewerGdi.GViewer();
+            //////create a graph object 
+            //Microsoft.Msagl.Drawing.Graph graph = new Microsoft.Msagl.Drawing.Graph("graph");
+            ////create the graph content 
+            //graph.AddEdge("A", "B");
+            //graph.AddEdge("B", "C");
+            //graph.AddEdge("A", "C").Attr.Color = Microsoft.Msagl.Drawing.Color.Green;
+            //graph.FindNode("A").Attr.FillColor = Microsoft.Msagl.Drawing.Color.Magenta;
+            //graph.FindNode("B").Attr.FillColor = Microsoft.Msagl.Drawing.Color.MistyRose;
+            //Microsoft.Msagl.Drawing.Node c = graph.FindNode("C");
+            //c.Attr.FillColor = Microsoft.Msagl.Drawing.Color.PaleGreen;
+            //c.Attr.Shape = Microsoft.Msagl.Drawing.Shape.Diamond;
+            ////bind the graph to the viewer 
+            //gui.form.gViewer1.Graph = graph;
+
+
+            //================== MSAGL TEST
+
             // gui.TxtTargetAppendText("Kaemika starts in " + Application.StartupPath + Environment.NewLine);
             Application.Run(gui.form);
         }

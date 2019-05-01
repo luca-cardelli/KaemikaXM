@@ -42,7 +42,7 @@ namespace KaemikaXM.Pages
         }
     }
 
-    public class ChartPage : ContentPage {
+    public class ChartPage : KaemikaPage {
 
         private string title = "";
         private Microcharts.ChartView chartView;
@@ -183,11 +183,15 @@ namespace KaemikaXM.Pages
             return collectionView;
         }
 
-        protected override void OnAppearing() {
-            base.OnAppearing();
+        public override void OnSwitchedTo() {
             SetTitle(this.title);
             MainTabbedPage.theModelEntryPage.SyncNoisePicker(noisePicker);
             Gui.gui.ChartUpdate();
+        }
+
+        protected override void OnAppearing() {
+            base.OnAppearing();
+            OnSwitchedTo();
         }
 
     }

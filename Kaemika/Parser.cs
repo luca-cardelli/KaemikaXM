@@ -11,9 +11,9 @@ namespace Kaemika {
 
     public abstract class IParser {
         public abstract bool Parse(string source, out IReduction reduction);
-        public abstract string FailMessage();
-        public abstract int FailLineNumber();
-        public abstract int FailColumnNumber();
+        public abstract string FailMessage(); // line zero reported as 1, column zero reported as 1
+        public abstract int FailLineNumber(); // first line is 0
+        public abstract int FailColumnNumber(); // first column is 0
         public abstract int FailLength();
     }
 

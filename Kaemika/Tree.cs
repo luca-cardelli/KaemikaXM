@@ -23,21 +23,27 @@ namespace Kaemika
                                                     // "symbol", "header", or "full"
         public ExportTarget exportTarget;       // How to format for external tools
 
-        public Style(string varchar, SwapMap swap, AlphaMap map, string numberFormat, string dataFormat, ExportTarget exportTarget) {
+        public bool traceComputational;         // Weather to format of TraceComputational or TraceChemical
+
+        public Style(string varchar, SwapMap swap, AlphaMap map, string numberFormat, string dataFormat, ExportTarget exportTarget, bool traceComputational) {
             this.varchar = varchar;
             this.swap = swap;
             this.map = map;
             this.numberFormat = numberFormat;
             this.dataFormat = dataFormat;
             this.exportTarget = exportTarget;
+            this.traceComputational = traceComputational;
         }
-        public Style() : this(null, null, null, null, "full", ExportTarget.Standard) {
+        public Style() : this(null, null, null, null, "full", ExportTarget.Standard, false) {
         }
         public Style RestyleAsDataFormat(string dataFormat) {
-            return new Style(this.varchar, this.swap, this.map, this.numberFormat, dataFormat, this.exportTarget);
+            return new Style(this.varchar, this.swap, this.map, this.numberFormat, dataFormat, this.exportTarget, this.traceComputational);
         }
         public Style RestyleAsNumberFormat(string numberFormat) {
-            return new Style(this.varchar, this.swap, this.map, numberFormat, this.dataFormat, this.exportTarget);
+            return new Style(this.varchar, this.swap, this.map, numberFormat, this.dataFormat, this.exportTarget, this.traceComputational);
+        }
+        public Style RestyleAsTraceComputational(bool traceComputational) {
+            return new Style(this.varchar, this.swap, this.map, this.numberFormat, this.dataFormat, this.exportTarget, traceComputational);
         }
         public string Varchar() { return this.varchar; }
         public SwapMap Swap() { return this.swap; }
@@ -1813,13 +1819,13 @@ namespace Kaemika
                 FunctionValue closure = (FunctionValue)value;
                 List<Value> arguments = this.arguments.Eval(env, netlist, style);
                 string invocation = "";
-                if (Gui.gui.TraceComputational()) {
+                if (style.traceComputational) {
                     Style restyle = style.RestyleAsDataFormat("symbol");
                     invocation = closure.Format(restyle) + "(" + this.arguments.FormatValues(arguments, restyle) + ")";
                     netlist.Emit(new CommentEntry("BEGIN " + invocation));
                 }
                 Value result = closure.Apply(arguments, netlist, style);
-                if (Gui.gui.TraceComputational()) {
+                if (style.traceComputational) {
                     netlist.Emit(new CommentEntry("END " + invocation));
                 }
                 return result;
@@ -2289,13 +2295,13 @@ namespace Kaemika
             if (value is NetworkValue) {
                 NetworkValue closure = (NetworkValue)value;
                 string invocation = "";
-                if (Gui.gui.TraceComputational()) {
+                if (style.traceComputational) {
                     Style restyle = style.RestyleAsDataFormat("symbol");
                     invocation = closure.Format(restyle) + "(" + this.arguments.FormatValues(arguments, restyle) + ")";
                     netlist.Emit(new CommentEntry("BEGIN " + invocation));
                 }
                 closure.Apply(arguments, netlist, style);
-                if (Gui.gui.TraceComputational()) {
+                if (style.traceComputational) {
                     netlist.Emit(new CommentEntry("END " + invocation));
                 }
                 return env;
@@ -2548,6 +2554,7 @@ namespace Kaemika
             double forTime = ((NumberValue)forTimeValue).value;
             if (forTime < 0) throw new Error("equilibrate '" + name + "' requires a nonnegative number second value");
             Symbol symbol = new Symbol(name);
+            Gui.gui.ChartOutput();
             SampleValue outSample = ProtocolActuator.Equilibrate(symbol, inSample, forTime, netlist, style);
             netlist.Emit(new EquilibrateEntry(outSample, inSample, (NumberValue)forTimeValue));
             return new ValueEnv(symbol, null, outSample, env);

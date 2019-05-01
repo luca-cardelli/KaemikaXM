@@ -41,12 +41,12 @@ namespace Kaemika {
             MainTabbedPage.theModelEntryPage.InsertText(text);
         }
 
-        public override async void InputSetErrorSelection(int lineNumber, int columnNumber, string failMessage) {
+        public override async void InputSetErrorSelection(int lineNumber, int columnNumber, int length, string failMessage) {
             Xamarin.Forms.Device.BeginInvokeOnMainThread(async () => {
                 await MainTabbedPage.theModelEntryPage.DisplayAlert("eeek", failMessage, "not ok");
-                MainTabbedPage.theMainTabbedPage.SwitchToTab("Network");
+                MainTabbedPage.SwitchToTab(MainTabbedPage.theModelEntryPageNavigation);
                 (MainTabbedPage.theModelEntryPage.editor as ICustomTextEdit).SetFocus();
-                (MainTabbedPage.theModelEntryPage.editor as ICustomTextEdit).SetSelectionLineChar(lineNumber, columnNumber);
+                (MainTabbedPage.theModelEntryPage.editor as ICustomTextEdit).SetSelectionLineChar(lineNumber, columnNumber, length);
             });
         }
 
@@ -64,7 +64,13 @@ namespace Kaemika {
 
         public override void OutputAppendText(string text) {
             Xamarin.Forms.Device.BeginInvokeOnMainThread(() => {
-                MainTabbedPage.theOutputPage.SetText(MainTabbedPage.theOutputPage.GetText() + text);
+                MainTabbedPage.theOutputPage.AppendText(text);
+            });
+        }
+
+         public override void OutputAppendComputation(string chemicalTrace, string computationalTrace, string graphViz) {
+            Xamarin.Forms.Device.BeginInvokeOnMainThread(() => {
+                MainTabbedPage.theOutputPage.AppendTraceComputational(chemicalTrace, computationalTrace, graphViz);
             });
         }
 
@@ -91,6 +97,10 @@ namespace Kaemika {
         public override void LegendUpdate() {
             VisibilityRestore();
             MainTabbedPage.theChartPage.SetLegend(seriesList);
+        }
+
+        public bool IsChartClear() {
+            return this.timecourse.IsClear();
         }
 
         public override void ChartClear(string title) {
@@ -226,10 +236,6 @@ namespace Kaemika {
             return continueButtonIsEnabled;
         }
 
-        public override bool TraceComputational() {
-            return true;             // ###
-        }
-
         public override string Solver() {
             return "OSLO RK547M";    // ###
         }
@@ -256,11 +262,18 @@ namespace Kaemika {
             }
         }
 
-        public override void ChartListboxAddSeries(string legend){
+        public override void ChartListboxAddSeries(string legend){ }
+
+        public override void ClipboardSetText(string text) { }
+
+        public override void TextOutput() {
+            if (MainTabbedPage.theMainTabbedPage.CurrentPage != MainTabbedPage.theOutputPageNavigation && IsChartClear())
+                MainTabbedPage.SwitchToTab(MainTabbedPage.theOutputPageNavigation);
         }
 
-        public override void ClipboardSetText(string text) {
+        public override void ChartOutput() {
+            if (MainTabbedPage.theMainTabbedPage.CurrentPage != MainTabbedPage.theChartPageNavigation)
+                MainTabbedPage.SwitchToTab(MainTabbedPage.theChartPageNavigation);
         }
-
     }
 }

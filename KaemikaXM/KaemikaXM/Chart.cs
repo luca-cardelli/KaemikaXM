@@ -63,6 +63,10 @@ namespace Microcharts {
             list = new List<ChartEntry>();
         }
 
+        public bool IsClear()  {
+            lock (mutex) { return list.Count == 0; }
+        }
+
         public void Add(ChartEntry entry) {
             lock (mutex) { list.Add(entry); }
         }
@@ -97,7 +101,7 @@ namespace Microcharts {
             return (YvalRange * plotSize.Height) / (maxY - minY);
         }
 
-        private SKRect Inner_DrawLabel(SKCanvas canvas, string text, float X, float Y, float textSize, SKColor textColor) {
+        private SKRect Inner_DrawLabel(SKCanvas canvas, string text, float X, float Y, bool hor, float textSize, SKColor textColor) {
             using (var paint = new SKPaint()) {
                 paint.TextSize = textSize;
                 paint.IsAntialias = true;
@@ -105,8 +109,9 @@ namespace Microcharts {
                 paint.IsStroke = false;
                 var bounds = new SKRect();
                 paint.MeasureText(text, ref bounds);
-                canvas.DrawRect(new SKRect(X - 1, Y - 1, X + 1, Y + 1), paint);
-                canvas.DrawText(text, X + 3, Y - 3, paint);
+                if (hor) canvas.DrawRect(new SKRect(X - 1, Y - 30, X + 1, Y + 1), paint);
+                else canvas.DrawRect(new SKRect(X - 1, Y - 1, X + 30, Y + 1), paint);
+                canvas.DrawText(text, X + 6, Y - 6, paint);
                 return bounds;
             }
         }
@@ -189,7 +194,7 @@ namespace Microcharts {
             do {
                 float Xval = XvalOfXlocInPlotarea(Xloc, minX, maxX, plotSize);
                 if (Xval < 0.0001 && Xval > -0.0001) Xval = 0;
-                SKRect bounds = Inner_DrawLabel(canvas, Xval.ToString("G3"), plotOrigin.X + Xloc, plotOrigin.Y + plotSize.Height, textHeight, axisTextColor);
+                SKRect bounds = Inner_DrawLabel(canvas, Xval.ToString("G3"), plotOrigin.X + Xloc, plotOrigin.Y + plotSize.Height, true, textHeight, axisTextColor);
                 Xloc += bounds.Width + 2 * textHeight; //using textHeigth for horizontal spacing
             } while (Xloc < plotSize.Width - plotOrigin.X);
         }
@@ -201,7 +206,7 @@ namespace Microcharts {
             while (Yloc > textHeight) {
                 float Yval = YvalOfYlocInPlotarea(Yloc, minY, maxY, plotSize);
                 if (Yval < 0.0001 && Yval > -0.0001) Yval = 0;
-                Inner_DrawLabel(canvas, Yval.ToString("G3"), plotOrigin.X, plotOrigin.Y + Yloc, textHeight, axisTextColor);
+                Inner_DrawLabel(canvas, Yval.ToString("G3"), plotOrigin.X, plotOrigin.Y + Yloc, false, textHeight, axisTextColor);
                 Yloc -= 3 * textHeight;
             }
             // draw <=0 labels goind downwards from 0 or maxY
@@ -209,7 +214,7 @@ namespace Microcharts {
             while (Yloc < plotSize.Height - 2 * textHeight) {
                 float Yval = YvalOfYlocInPlotarea(Yloc, minY, maxY, plotSize);
                 if (Yval < 0.0001 && Yval > -0.0001) Yval = 0;
-                Inner_DrawLabel(canvas, Yval.ToString("G3"), plotOrigin.X, plotOrigin.Y + Yloc, textHeight, axisTextColor);
+                Inner_DrawLabel(canvas, Yval.ToString("G3"), plotOrigin.X, plotOrigin.Y + Yloc, false, textHeight, axisTextColor);
                 Yloc += 3 * textHeight;
             }
         }

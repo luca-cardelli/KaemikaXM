@@ -20,10 +20,11 @@ namespace Kaemika
         public abstract string InputGetText();
         public abstract void InputSetText(string text);
         public abstract void InputInsertText(string text);
-        public abstract void InputSetErrorSelection(int lineNumber, int columnNumber, string failMessage);
+        public abstract void InputSetErrorSelection(int lineNumber, int columnNumber, int length, string failMessage);
         public abstract void OutputSetText(string text);
         public abstract string OutputGetText();
         public abstract void OutputAppendText(string text);
+        public abstract void OutputAppendComputation(string chemicalTrace, string computationalTrace, string graphViz);
         public abstract void ChartClear(string title);
         public abstract void ChartUpdate();
         public abstract void LegendUpdate();
@@ -40,9 +41,11 @@ namespace Kaemika
         public abstract bool StopEnabled();
         public abstract void ContinueEnable(bool b);
         public abstract bool ContinueEnabled();
-        public abstract bool TraceComputational();
         public abstract string Solver();
         public abstract void ChartListboxAddSeries(string name);
         public abstract void ClipboardSetText(string text);
-   }
+        public abstract void TextOutput();
+        public abstract void ChartOutput();
+        //###MSAGL        public abstract void DrawGraph(Microsoft.Msagl.Drawing.Graph graph);
+    }
 }

@@ -93,7 +93,7 @@ namespace Kaemika
             this.value = value;
         }
         public override string Format(Style style) {
-            if (Gui.gui.TraceComputational()) {
+            if (style.traceComputational) {
                 return type.Format() + " " + symbol.Format(style) + " = " + value.Format(style);
             } else return "";
         }
@@ -107,7 +107,7 @@ namespace Kaemika
             this.value = value;
         }
         public override string Format(Style style) {
-            if (Gui.gui.TraceComputational()) {
+            if (style.traceComputational) {
                 return "new function " + symbol.Format(style) + " = " + value.Format(style);
             } else return "";
         }
@@ -121,7 +121,7 @@ namespace Kaemika
             this.value = value;
         }
         public override string Format(Style style) {
-            if (Gui.gui.TraceComputational()) {
+            if (style.traceComputational) {
                 return "new network " + symbol.Format(style) + " = " + value.Format(style);
             } else return "";
         }
@@ -133,7 +133,7 @@ namespace Kaemika
             this.species = species;
         }
         public override string Format(Style style) {
-            if (Gui.gui.TraceComputational()) {
+            if (style.traceComputational) {
                 return "new species " + species.symbol.Format(style);
             } else return "";
         }
@@ -157,7 +157,7 @@ namespace Kaemika
             this.asLabel = asLabel;
         }
         public override string Format(Style style) {
-            if (Gui.gui.TraceComputational()) {
+            if (style.traceComputational) {
                 string s = "report " + flow.Format(style);
                 if (asLabel != null) { s += " as '" + asLabel + "'"; }
                 return s;
@@ -176,7 +176,7 @@ namespace Kaemika
         public override string Format(Style style) {
             if (style.dataFormat == "symbol") return value.symbol.Format(style);
             else if (style.dataFormat == "header") return "sample " + value.FormatHeader(style);
-            else if (style.dataFormat == "full") return (Gui.gui.TraceComputational() ? "new " : "") + value.Format(style);
+            else if (style.dataFormat == "full") return (style.traceComputational ? "new " : "") + value.Format(style);
             else return "unknown format: " + style.dataFormat;
         }
     }

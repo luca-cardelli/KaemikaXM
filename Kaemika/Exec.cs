@@ -51,25 +51,28 @@ namespace Kaemika
                             netlist.Emit(new SampleEntry(vessel));
                             Style style = new Style(varchar: Gui.gui.ScopeVariants() ? defaultVarchar : null, new SwapMap(),               
                                                     map: Gui.gui.RemapVariants() ? new AlphaMap() : null, numberFormat: "G4", dataFormat: "full",  // we want it full for samples, but maybe only headers for functions/networks?
-                                                    exportTarget: ExportTarget.Standard);
+                                                    exportTarget: ExportTarget.Standard, traceComputational: false);
                                 Env ignoreEnv = statements.Eval(new NullEnv().BuiltIn(vessel), netlist, style);
-                            if (doEval) Gui.gui.OutputAppendText(netlist.Format(style));
-                            else { // export and copy to clipboard
-                               if (doExport == ExportAs.MSRC_LBS) Gui.gui.OutputAppendText(Export.MSRC_LBS(netlist, vessel, new Style(varchar: "_", new SwapMap(subsup:true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.LBS)));
-                               else if (doExport == ExportAs.MSRC_CRN) Gui.gui.OutputAppendText(Export.MSRC_CRN(netlist, vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.CRN)));
+                            if (doEval) {
+                                    Gui.gui.TextOutput();
+                               Gui.gui.OutputAppendComputation(netlist.Format(style), netlist.Format(style.RestyleAsTraceComputational(true)), Export.GraphViz(netlist));
+//###MSAGL                               Gui.gui.DrawGraph(Export.MSAGL(netlist));
+                            } else { // export and copy to clipboard
+                               if (doExport == ExportAs.MSRC_LBS) Gui.gui.OutputAppendText(Export.MSRC_LBS(netlist, vessel, new Style(varchar: "_", new SwapMap(subsup:true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.LBS, traceComputational: false)));
+                               else if (doExport == ExportAs.MSRC_CRN) Gui.gui.OutputAppendText(Export.MSRC_CRN(netlist, vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.CRN, traceComputational: false)));
                                else if (doExport == ExportAs.ODE) Gui.gui.OutputAppendText(Export.ODE(vessel, 
                                    new CRN(vessel, netlist.RelevantReactions(vessel, vessel.species, style)), 
-                                   new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.Standard)));
-                               else if (doExport == ExportAs.Protocol) Gui.gui.OutputAppendText(Export.Protocol(netlist, new Style(varchar: defaultVarchar, new SwapMap(), map: new AlphaMap(), numberFormat: "G4", dataFormat: "symbol", exportTarget: ExportTarget.Standard)));
+                                   new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.Standard, traceComputational: false)));
+                               else if (doExport == ExportAs.Protocol) Gui.gui.OutputAppendText(Export.Protocol(netlist, new Style(varchar: defaultVarchar, new SwapMap(), map: new AlphaMap(), numberFormat: "G4", dataFormat: "symbol", exportTarget: ExportTarget.Standard, traceComputational: false)));
                                else if (doExport == ExportAs.GraphViz) Gui.gui.OutputAppendText(Export.GraphViz(netlist));
                                else { }
                                try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
                             }
                         }
                     }
-                } catch (Error ex) { Gui.gui.InputSetErrorSelection(-1, -1, ex.Message); }
+                } catch (Error ex) { Gui.gui.InputSetErrorSelection(-1, -1, 0, ex.Message); }
             } else {
-                Gui.gui.InputSetErrorSelection(TheParser.parser.FailLineNumber(), TheParser.parser.FailColumnNumber(), TheParser.parser.FailMessage());
+                Gui.gui.InputSetErrorSelection(TheParser.parser.FailLineNumber(), TheParser.parser.FailColumnNumber(), TheParser.parser.FailLength(), TheParser.parser.FailMessage());
             }
             Gui.gui.StopEnable(false); 
         }

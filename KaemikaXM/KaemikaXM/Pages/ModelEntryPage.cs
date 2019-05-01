@@ -6,7 +6,7 @@ using Kaemika;
 
 namespace KaemikaXM.Pages {
 
-    public class ModelEntryPage : ContentPage {
+    public class ModelEntryPage : KaemikaPage {
 
         public ModelInfo modelInfo;
         public View editor; // is a CustomTextEditView and implements ICustomTextEdit
@@ -33,7 +33,7 @@ namespace KaemikaXM.Pages {
 
         public ToolbarItem EditItem()  {
             return
-                new ToolbarItem("Edit", null, async () => {
+                new ToolbarItem("Edit", "icons8pencil96", async () => {
                     SetModel(modelInfo.Copy(), editable: true);
                 });
         }
@@ -54,45 +54,29 @@ namespace KaemikaXM.Pages {
                 });
         }
 
-        public ImageButton TextUp() {
+        public ImageButton TextUp(ICustomTextEdit editor) {
             ImageButton button = new ImageButton() {
                 Source = "icons8BigA40.png",
                 HeightRequest = 40,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
                 BackgroundColor = Color.FromHex(secondBarColor),
             };
-            //Button button = new Button {
-            //    Text = "A",
-            //    FontSize = 10,
-            //    BorderWidth = 0,
-            //    BorderColor = Color.FromHex(secondBarColor),
-            //    BackgroundColor = Color.BlanchedAlmond,
-            //    CornerRadius = 6,
-            //};
             button.Clicked += async (object sender, EventArgs e) => {
-                float size = (editor as ICustomTextEdit).GetFontSize();
-                if (size < 128) (editor as ICustomTextEdit).SetFontSize(size+1);
+                float size = editor.GetFontSize();
+                if (size < 128) editor.SetFontSize(size+1);
             };
             return button;
         }
-        public ImageButton TextDn() {
+        public ImageButton TextDn(ICustomTextEdit editor) {
             ImageButton button = new ImageButton() {
                 Source = "icons8SmallA40.png",
                 HeightRequest = 40,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
                 BackgroundColor = Color.FromHex(secondBarColor),
             };
-            //Button button = new Button {
-            //    Text = "A",
-            //    FontSize = 6,
-            //    BorderWidth = 0,
-            //    BorderColor = Color.FromHex(secondBarColor),
-            //    BackgroundColor = Color.BlanchedAlmond,
-            //    CornerRadius = 6,
-            //};
             button.Clicked += async (object sender, EventArgs e) => {
-                float size = (editor as ICustomTextEdit).GetFontSize();
-                if (size > 6) (editor as ICustomTextEdit).SetFontSize(size - 1);
+                float size = editor.GetFontSize();
+                if (size > 6) editor.SetFontSize(size - 1);
             };
             return button;
         }
@@ -108,12 +92,12 @@ namespace KaemikaXM.Pages {
                 if (Gui.gui.StopEnabled() && !Gui.gui.ContinueEnabled()) return; // we are already running a simulation, don't start a concurrent one
                 if (Gui.gui.ContinueEnabled()) {
                     ProtocolActuator.continueExecution = true; // make start button work as continue button
-                    MainTabbedPage.theMainTabbedPage.SwitchToTab("Chart");
+                    MainTabbedPage.SwitchToTab(MainTabbedPage.theChartPageNavigation);
                 } else { // do a start
                     MainTabbedPage.theOutputPage.SetTitle(modelInfo.title);
                     MainTabbedPage.theChartPage.SetTitle(modelInfo.title);
                     Exec.Execute_Starter(forkWorker: true, doEval: true); // This is where it all happens
-                    MainTabbedPage.theMainTabbedPage.SwitchToTab("Chart");
+                    MainTabbedPage.SwitchToTab(MainTabbedPage.theChartPageNavigation);
                 }
             };
             return button;
@@ -148,6 +132,20 @@ namespace KaemikaXM.Pages {
             return noisePicker;
         }
 
+        public Grid stepper;
+        public Grid TextSizeStepper(ICustomTextEdit editor) {
+            Grid stepper = new Grid { RowSpacing = 0, Margin = 0 };
+            stepper.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) });
+            stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) });
+            stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            stepper.BackgroundColor = Color.FromHex(secondBarColor);
+            stepper.Children.Add(TextDn(editor), 1, 0);
+            stepper.Children.Add(TextUp(editor), 2, 0);
+            return stepper;
+        }
+
         public void SyncNoisePicker(Picker noisePicker) {
             noisePicker.SelectedItem = noisePickerSelectedItem;
         }
@@ -180,17 +178,7 @@ namespace KaemikaXM.Pages {
 
             noisePicker = NoisePicker();
             startButton = StartButton();
-
-            Grid stepper = new Grid { RowSpacing = 0 , Margin = 0};
-            stepper.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) });
-            stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) });
-            stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            stepper.BackgroundColor = Color.FromHex(secondBarColor);
-
-            stepper.Children.Add(TextDn(), 1, 0);
-            stepper.Children.Add(TextUp(), 2, 0);
+            stepper = TextSizeStepper(editor as ICustomTextEdit);
 
             int bottomBarPadding = 4;
             Grid bottomBar = new Grid { RowSpacing = 0, Padding = bottomBarPadding };
@@ -253,9 +241,13 @@ namespace KaemikaXM.Pages {
             File.WriteAllText(modelInfo.filename, modelInfo.title + Environment.NewLine + modelInfo.text);
         }
 
+        public override void OnSwitchedTo() {
+            SyncNoisePicker(noisePicker);
+        }
+
         protected override void OnAppearing() {
             base.OnAppearing();
-            SyncNoisePicker(noisePicker);
+            OnSwitchedTo();
         }
 
         public async void ErrorMessage(string msg) {

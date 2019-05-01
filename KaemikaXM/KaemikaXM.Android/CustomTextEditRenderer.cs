@@ -14,13 +14,15 @@ using KaemikaXM.Pages;
 namespace KaemikaXM.Droid {
 
     public class CustomTextEditView : View, ICustomTextEdit {
+        private Android.Widget.ScrollView scrollView; //
         private EditText editText; // set by CustomTextEditRenderer when it creates the EditText control
         private string text;       // cache text content between deallocation/reallocation
         private bool editable;     // cache editable state in case it is set while editText is null
         public const float defaultFontSize = 12; // Dip
         private float fontSize = defaultFontSize; // cache fontSize state as well
 
-        public void SetEditText(EditText newEditText) {
+        public void SetEditText(Android.Widget.ScrollView scrollView, EditText newEditText) {
+            this.scrollView = scrollView;
             this.editText = newEditText;
             SetText(this.text);
             SetEditable(this.editable);
@@ -29,6 +31,7 @@ namespace KaemikaXM.Droid {
         public void ClearEditText() {
             this.text = editText.Text; // save the last text before deallocation
             this.editText = null;
+            this.scrollView = null;
         }
         public string GetText() {
             if (editText == null) return "";
@@ -36,8 +39,9 @@ namespace KaemikaXM.Droid {
         }
         public void SetText(string text) {
             this.text = text;
-            if (editText == null) return;
+            if (scrollView == null || editText == null) return;
             editText.Text = text;
+            scrollView.ScrollTo(0, 0);
         }
         public void SetFocus() {
             if (editText == null) return;
@@ -54,10 +58,9 @@ namespace KaemikaXM.Droid {
             if (end < start) end = start;
             editText.SetSelection(start, end);
         }
-        public void SetSelectionLineChar(int line, int chr) {
+        public void SetSelectionLineChar(int line, int chr, int tokenlength) {
             if (editText == null) return;
-            if (line < 1) line = 1;
-            if (chr < 1) chr = 1;
+            if (line < 0 || chr < 0) return;
             string text = GetText();
             int i = 0;
             while (i < text.Length && line > 0) {
@@ -65,10 +68,12 @@ namespace KaemikaXM.Droid {
                 i++;
             }
             if (i < text.Length && text[i] == '\r') i++;
-            int start = i;
+            int linestart = i;
             while (i < text.Length && chr > 0) {chr--; i++; }
-            int end = i;
-            SetSelection(start, end);
+            int tokenstart = i;
+            //SetSelection(linestart, tokenstart);
+            SetSelection(tokenstart, tokenstart + tokenlength);
+            //SetSelection(tokenstart, text.Length - 1);
         }
         public float GetFontSize() {
             return this.fontSize;
@@ -119,7 +124,7 @@ namespace KaemikaXM.Droid {
         }
     }
 
-    public class CustomTextEditRenderer : ViewRenderer<CustomTextEditView, EditText>  {
+    public class CustomTextEditRenderer : ViewRenderer<CustomTextEditView, Android.Widget.ScrollView>  {
 
         private Android.Widget.EditText editText;
         private Android.Widget.ScrollView scrollView;
@@ -135,14 +140,10 @@ namespace KaemikaXM.Droid {
             if (Control == null) {
                 CustomTextEditView view = Element as CustomTextEditView;
                 editText = new DisEditText(Context, view);
-                view.SetEditText(editText); // export editText so we can use it from CustomTextEditView methods
-                SetNativeControl(editText);
-
-                //###
-                //scrollView = new Android.Widget.ScrollView(Context);
-                ////nestedScrollView = new Android.Support.V4.Widget.NestedScrollView(Context);
-                //scrollView.AddView(editText);
-                //SetNativeControl(scrollView);
+                scrollView = new Android.Widget.ScrollView(Context);
+                scrollView.AddView(editText);
+                view.SetEditText(scrollView, editText); // export editText so we can use it from CustomTextEditView methods
+                SetNativeControl(scrollView);
             }
             if (e.OldElement != null) {
                 // Unsubscribe events

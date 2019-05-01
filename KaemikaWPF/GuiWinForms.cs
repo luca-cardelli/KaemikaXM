@@ -14,8 +14,10 @@ namespace KaemikaWPF
         delegate void VoidArgVoidReturnDelegate();
         delegate void BoolArgVoidReturnDelegate(bool b);
         delegate void StringArgVoidReturnDelegate(string s);
+        delegate void StringStringArgVoidReturnDelegate(string s1, string s2);
+        delegate void StringStringStringArgVoidReturnDelegate(string s1, string s2, string s3);
         delegate void IntIntArgVoidReturnDelegate(int i, int j);
-        delegate void IntIntStringArgVoidReturnDelegate(int i, int j, string s);
+        delegate void IntIntIntStringArgVoidReturnDelegate(int i, int j, int n, string s);
         delegate void IntDoubleDoubleArgVoidReturn(int i, double x, double y);
         delegate int VoidArgIntReturnDelegate();
         delegate Noise VoidArgNoiseReturnDelegate();
@@ -56,13 +58,13 @@ namespace KaemikaWPF
                 form.InputInsertText(text);
             }
         }
-        public override void InputSetErrorSelection(int lineNumber, int columnNumber, string failMessage) {
+        public override void InputSetErrorSelection(int lineNumber, int columnNumber, int length, string failMessage) {
             if (form.txtInput.InvokeRequired) {
-                IntIntStringArgVoidReturnDelegate d = new IntIntStringArgVoidReturnDelegate(InputSetErrorSelection);
-                form.Invoke(d, new object[] { lineNumber, columnNumber, failMessage });
+                IntIntIntStringArgVoidReturnDelegate d = new IntIntIntStringArgVoidReturnDelegate(InputSetErrorSelection);
+                form.Invoke(d, new object[] { lineNumber, columnNumber, length, failMessage });
             } else {
                 OutputAppendText(failMessage);
-                if (lineNumber >=0 && columnNumber>=0) form.InputSetErrorSelection(lineNumber, columnNumber);
+                if (lineNumber >=0 && columnNumber>=0) form.SetSelectionLineChar(lineNumber, columnNumber, length);
             }
         }
      
@@ -108,6 +110,14 @@ namespace KaemikaWPF
                 form.Invoke(d, new object[] { text });
             } else {
                 form.OutputAppendText(text);
+            }
+        }
+        public override void OutputAppendComputation(string chemicalTrace, string computationalTrace, string graphViz) {
+            if (form.txtTarget.InvokeRequired) {
+                StringStringStringArgVoidReturnDelegate d = new StringStringStringArgVoidReturnDelegate(OutputAppendComputation);
+                form.Invoke(d, new object[] { chemicalTrace, computationalTrace, graphViz });
+            } else {
+                form.OutputAppendComputation(chemicalTrace, computationalTrace, graphViz);
             }
         }
 
@@ -220,14 +230,6 @@ namespace KaemikaWPF
             }
         }
 
-        public override bool TraceComputational() {
-            if (form.radioButton_TraceComputational.InvokeRequired) {
-                VoidArgBoolReturnDelegate d = new VoidArgBoolReturnDelegate(TraceComputational);
-                return (bool)form.Invoke(d, new object[] {});
-            } else {
-                return form.TraceComputational();
-            }
-        }
         public override string Solver() {
             if (form.comboBox_Solvers.InvokeRequired) {
                 VoidArgStringReturnDelegate d = new VoidArgStringReturnDelegate(Solver);
@@ -267,6 +269,14 @@ namespace KaemikaWPF
         public override void ClipboardSetText(string text) {
             Clipboard.SetText(text);
         }
+
+        public override void TextOutput() { }
+
+        public override void ChartOutput() { }
+
+//###MSAGL        //public override void DrawGraph(Microsoft.Msagl.Drawing.Graph graph) { 
+        //    form.gViewer1.Graph = graph;
+        //}
 
     }
 }

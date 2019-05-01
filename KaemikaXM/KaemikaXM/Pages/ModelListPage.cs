@@ -62,7 +62,7 @@ namespace KaemikaXM.Pages {
         }
     }
 
-public class ModelListPage : ContentPage {
+public class ModelListPage : KaemikaPage {
 
     public async Task NavigationPushModalAsync(Page page) {
             await Navigation.PushModalAsync(page);
@@ -81,7 +81,7 @@ public class ModelListPage : ContentPage {
             listView.ItemSelected += async (object sender, SelectedItemChangedEventArgs e) => {
                 if (e.SelectedItem != null) {
                     MainTabbedPage.theModelEntryPage.SetModel(e.SelectedItem as ModelInfo, editable:true);
-                    MainTabbedPage.theMainTabbedPage.SwitchToTab("Network");
+                    MainTabbedPage.SwitchToTab(MainTabbedPage.theModelEntryPageNavigation);
                 }
                 listView.SelectedItem = null; // Deselect item.
             };
@@ -90,7 +90,7 @@ public class ModelListPage : ContentPage {
                 new ToolbarItem("Add", "icons8plus32.png",  
                     async () => {
                         MainTabbedPage.theModelEntryPage.SetModel(new ModelInfo(), editable:true);
-                        MainTabbedPage.theMainTabbedPage.SwitchToTab("Network");
+                        MainTabbedPage.SwitchToTab(MainTabbedPage.theModelEntryPageNavigation);
                     }));
 
             AbsoluteLayout layout = new AbsoluteLayout();
@@ -127,9 +127,13 @@ public class ModelListPage : ContentPage {
             foreach (ModelInfo model in models.OrderByDescending(d => d.date)) source.Add(model);
         }
 
+        public override void OnSwitchedTo() {
+            RegenerateList();
+        }
+
         protected override void OnAppearing() {
             base.OnAppearing();
-            RegenerateList();
+            OnSwitchedTo();
         }
 
     }
