@@ -184,14 +184,10 @@ namespace KaemikaXM.Pages
         }
 
         public override void OnSwitchedTo() {
+            MainTabbedPage.OnAnySwitchedTo(this);
             SetTitle(this.title);
             MainTabbedPage.theModelEntryPage.SyncNoisePicker(noisePicker);
             Gui.gui.ChartUpdate();
-        }
-
-        protected override void OnAppearing() {
-            base.OnAppearing();
-            OnSwitchedTo();
         }
 
     }

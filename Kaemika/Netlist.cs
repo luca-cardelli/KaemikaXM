@@ -475,6 +475,19 @@ namespace Kaemika
             return sampleList;
         }
 
+        public List<OperationEntry> AllOperations() {
+            List<OperationEntry> operations = new List<OperationEntry> { };
+            foreach (Entry entry in this.entries) {
+                if (entry is MixEntry) operations.Add((OperationEntry)entry);
+                else if (entry is SplitEntry) operations.Add((OperationEntry)entry);
+                else if (entry is EquilibrateEntry) operations.Add((OperationEntry)entry);
+                else if (entry is TransferEntry) operations.Add((OperationEntry)entry);
+                else if (entry is DisposeEntry) operations.Add((OperationEntry)entry);
+                else { } // ignore
+            }
+            return operations;
+        }
+
         public List<ReactionValue> AllReactions() {
             List<ReactionValue> reactionList = new List<ReactionValue> { };
             foreach (Entry entry in this.entries) {
@@ -526,15 +539,6 @@ namespace Kaemika
                 else { } // ignore
             }
             return reportList;
-        }
-
-        public List<OperationEntry> AllOperations() {
-            List<OperationEntry> entries = new List<OperationEntry> { };
-            foreach (Entry entry in this.entries) {
-                if (entry is OperationEntry) entries.Add(entry as OperationEntry);
-                else { } // ignore
-            }
-            return entries;
         }
 
 

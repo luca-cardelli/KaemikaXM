@@ -14,6 +14,8 @@ namespace KaemikaXM.Pages {
         public ToolbarItem pasteAllItem;
         public ToolbarItem copyAllItem;
         public Picker noisePicker;
+        public Picker subPicker;
+        public Picker supPicker;
         public object noisePickerSelectedItem = ProtocolActuator.noiseString[0];
         public Noise noisePickerSelection = Noise.None;
         public ImageButton startButton;
@@ -35,6 +37,7 @@ namespace KaemikaXM.Pages {
             return
                 new ToolbarItem("Edit", "icons8pencil96", async () => {
                     SetModel(modelInfo.Copy(), editable: true);
+                    // ToolbarItems.Remove(editItem);
                 });
         }
         public ToolbarItem PasteAllItem() {
@@ -132,6 +135,54 @@ namespace KaemikaXM.Pages {
             return noisePicker;
         }
 
+        // https://www.c-sharpcorner.com/article/xamarin-forms-mvvm-how-to-set-icon-titlecolor-borderstyle-for-picker-using-c/
+
+        string[] subscripts = new string[] { "_", "₊", "₋", "₌", "₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉", "₍", "₎"};
+        string[] superscripts = new string[] { "\'", "⁺", "⁻", "⁼", "⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹", "⁽", "⁾"};
+        public Picker SubPicker() {
+            Picker charPicker = new Picker {
+                Title = "Sub",
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                BackgroundColor = Color.FromHex(secondBarColor),
+                FontSize = 9,
+                TextColor = Color.Black,
+            };
+            foreach (string s in subscripts) charPicker.Items.Add(s);
+            charPicker.Unfocused += async (object sender, FocusEventArgs e) => {
+                if (charPicker.SelectedItem != null)
+                    (editor as ICustomTextEdit).InsertText(charPicker.SelectedItem as string);
+                charPicker.SelectedItem = null;
+            };
+            return charPicker;
+        }
+        public Picker SupPicker() {
+            Picker charPicker = new Picker {
+                Title = "Sup",
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                BackgroundColor = Color.FromHex(secondBarColor),
+                FontSize = 9,
+                TextColor = Color.Black,
+            };
+            foreach (string s in superscripts) charPicker.Items.Add(s);
+            charPicker.Unfocused += async (object sender, FocusEventArgs e) => {
+                if (charPicker.SelectedItem != null)
+                    (editor as ICustomTextEdit).InsertText(charPicker.SelectedItem as string);
+                charPicker.SelectedItem = null;
+            };
+            return charPicker;
+        }
+        public Grid CharPickers(Picker subPicker, Picker supPicker, Picker noisePicker) {
+            Grid charPickers = new Grid { RowSpacing = 0, Margin = 0 };
+            charPickers.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            charPickers.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            charPickers.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            charPickers.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });
+            charPickers.Children.Add(subPicker, 0, 0);
+            charPickers.Children.Add(supPicker, 1, 0);
+            charPickers.Children.Add(noisePicker, 2, 0);
+            return charPickers;
+        }
+
         public Grid stepper;
         public Grid TextSizeStepper(ICustomTextEdit editor) {
             Grid stepper = new Grid { RowSpacing = 0, Margin = 0 };
@@ -177,6 +228,8 @@ namespace KaemikaXM.Pages {
                 async (ICustomTextEdit textEdit) => { if (modelInfo.modified) SaveEditor(); });
 
             noisePicker = NoisePicker();
+            subPicker = SubPicker();
+            supPicker = SupPicker();
             startButton = StartButton();
             stepper = TextSizeStepper(editor as ICustomTextEdit);
 
@@ -189,7 +242,8 @@ namespace KaemikaXM.Pages {
             bottomBar.BackgroundColor = Color.FromHex(secondBarColor);
 
             bottomBar.Children.Add(stepper, 0, 0);
-            bottomBar.Children.Add(noisePicker, 1, 0);
+            //bottomBar.Children.Add(noisePicker, 1, 0);
+            bottomBar.Children.Add(CharPickers(subPicker, supPicker, noisePicker), 1, 0);
             bottomBar.Children.Add(startButton, 2, 0);
 
             Grid grid = new Grid { ColumnSpacing = 0 };
@@ -208,8 +262,11 @@ namespace KaemikaXM.Pages {
             Title = modelInfo.title;
             SetText(modelInfo.text);
             (editor as ICustomTextEdit).SetEditable(editable);
+            // if (!editable) if (!ToolbarItems.Contains(editItem)) ToolbarItems.Insert(0, editItem);
             editItem.IsEnabled = !editable;
             pasteAllItem.IsEnabled = editable;
+            subPicker.IsEnabled = editable;
+            supPicker.IsEnabled = editable;
         }
 
         public string GetText() {
@@ -222,8 +279,7 @@ namespace KaemikaXM.Pages {
         }
 
         public void InsertText(string text) {
-            //### for now we just append it
-            SetText(GetText() + text);
+            (editor as ICustomTextEdit).InsertText(text);
         }
 
         public void SaveEditor() {
@@ -242,12 +298,8 @@ namespace KaemikaXM.Pages {
         }
 
         public override void OnSwitchedTo() {
+            MainTabbedPage.OnAnySwitchedTo(this);
             SyncNoisePicker(noisePicker);
-        }
-
-        protected override void OnAppearing() {
-            base.OnAppearing();
-            OnSwitchedTo();
         }
 
         public async void ErrorMessage(string msg) {

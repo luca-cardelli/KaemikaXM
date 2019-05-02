@@ -459,7 +459,7 @@ namespace Kaemika
             double sndVolume = mixSnd.Volume();
             NumberValue volume = new NumberValue(fstVolume + sndVolume);
             NumberValue temperature = new NumberValue((fstVolume * mixFst.Temperature() + sndVolume * mixSnd.Temperature()) / (fstVolume + sndVolume));
-            SampleValue result = new SampleValue(symbol, volume, temperature);
+            SampleValue result = new SampleValue(symbol, volume, temperature, produced:true);
             result.AddSpecies(mixFst, volume.value, fstVolume);
             result.AddSpecies(mixSnd, volume.value, sndVolume);
             return result;
@@ -471,12 +471,12 @@ namespace Kaemika
 
             NumberValue volume1 = new NumberValue(sampleVolume * proportion);
             NumberValue temperature1 = new NumberValue(sample.Temperature());
-            SampleValue result1 = new SampleValue(symbol1, volume1, temperature1);
+            SampleValue result1 = new SampleValue(symbol1, volume1, temperature1, produced: true);
             result1.AddSpecies(sample, sampleVolume, sampleVolume); // add species from other sample without changing their concentations
 
             NumberValue volume2 = new NumberValue(sampleVolume * (1-proportion));
             NumberValue temperature2 = new NumberValue(sample.Temperature());
-            SampleValue result2 = new SampleValue(symbol2, volume2, temperature2);
+            SampleValue result2 = new SampleValue(symbol2, volume2, temperature2, produced: true);
             result2.AddSpecies(sample, sampleVolume, sampleVolume); // add species from other sample without changing their concentations
 
             return (result1, result2);
@@ -484,7 +484,7 @@ namespace Kaemika
 
         public static SampleValue Transfer(Symbol symbol, double volume, double temperature, SampleValue inSample, Style style) {
             inSample.Consume(style);
-            SampleValue result = new SampleValue(symbol, new NumberValue(volume), new NumberValue(temperature));
+            SampleValue result = new SampleValue(symbol, new NumberValue(volume), new NumberValue(temperature), produced: true);
             result.AddSpecies(inSample, volume, inSample.Volume());
             return result;
         }
@@ -548,7 +548,7 @@ namespace Kaemika
             sample.Consume(style);
             NumberValue volume = new NumberValue(sample.Volume());
             NumberValue temperature = new NumberValue(sample.Temperature());
-            SampleValue resultSample = new SampleValue(symbol, volume, temperature);
+            SampleValue resultSample = new SampleValue(symbol, volume, temperature, produced: true);
 
             Gui.gui.OutputSetText(""); // clear last results in preparation for the next
             Gui.gui.ChartClear(
@@ -723,9 +723,10 @@ namespace Kaemika
         private Dictionary<SpeciesValue, NumberValue> speciesSet;   // mol/L
         public List<SpeciesValue> species;
         public Dictionary<Symbol, int> speciesIndex;
-        private bool disposed;
+        private bool produced; // produced by an operation as opposed as being created as a sample
+        private bool consumed; // consumed by an operation, including dispose
         public SampleValue asConsumed;
-        public SampleValue(Symbol symbol, NumberValue volume, NumberValue temperature) {
+        public SampleValue(Symbol symbol, NumberValue volume, NumberValue temperature, bool produced) {
             this.type = new Type("sample");
             this.symbol = symbol;
             this.volume = volume;           // mL
@@ -733,19 +734,25 @@ namespace Kaemika
             this.speciesSet = new Dictionary<SpeciesValue, NumberValue> { };
             this.species = new List<SpeciesValue> { };
             this.speciesIndex = new Dictionary<Symbol, int> { };
-            this.disposed = false;
+            this.produced = produced;
+            this.consumed = false;
             this.asConsumed = null;
         }
         public void Consume(Style style) {
-            if (this.disposed) throw new Error("Sample already used: '" + this.symbol.Format(style) + "'");
+            if (this.consumed) throw new Error("Sample already used: '" + this.symbol.Format(style) + "'");
             this.asConsumed = this.Copy(); // save it for export purposes
-            this.disposed = true;
+            this.consumed = true;
         }
+        public bool IsProduced() { return this.produced; }
+        public bool IsConsumed() { return this.consumed; }
         public SampleValue Copy() {
-            SampleValue copy = new SampleValue(this.symbol, this.volume, this.temperature);
+            SampleValue copy = new SampleValue(this.symbol, this.volume, this.temperature, this.produced);
             foreach (var pair in this.speciesSet) copy.SetMolarity(pair.Key, pair.Value, null, recompute: false);
             copy.RecomputeSpecies();
             return copy;
+        }
+        public string FormatSymbol(Style style) {
+            return symbol.Format(style);
         }
         public string FormatHeader(Style style) {
             double vol = this.Volume();
@@ -819,7 +826,7 @@ namespace Kaemika
         }
 
         public double TemperatureOp(Style style) {
-            if (this.disposed) throw new Error("temperature(" + this.symbol.Format(style) + "): sample already disposed");
+            if (this.consumed) throw new Error("temperature(" + this.symbol.Format(style) + "): sample already disposed");
             return Temperature();
         }
         public double Temperature() {
@@ -830,7 +837,7 @@ namespace Kaemika
         //}
 
         public double VolumeOp(Style style) {
-            if (this.disposed) throw new Error("volume(" + this.symbol.Format(style) + "): sample already disposed");
+            if (this.consumed) throw new Error("volume(" + this.symbol.Format(style) + "): sample already disposed");
             return Volume();
         }
         public double Volume() {
@@ -849,7 +856,7 @@ namespace Kaemika
         //}
 
         public NumberValue MolarityOp(Symbol species, Style style) {
-            if (this.disposed) throw new Error("molarity(" + this.symbol.Format(style) + ", " + species.Format(style) + "): sample already disposed");
+            if (this.consumed) throw new Error("molarity(" + this.symbol.Format(style) + ", " + species.Format(style) + "): sample already disposed");
             return Molarity(species, style);
         }
 
@@ -2101,7 +2108,7 @@ namespace Kaemika
             if (volumeValue <= 0) throw new Error("Sample volume must be positive: " + this.name);
             if (temperatureValue < 0) throw new Error("Sample temperature must be non-negative: " + this.name);
             Symbol symbol = new Symbol(name);
-            SampleValue sample = new SampleValue(symbol, new NumberValue(volumeValue), new NumberValue(temperatureValue)); 
+            SampleValue sample = new SampleValue(symbol, new NumberValue(volumeValue), new NumberValue(temperatureValue), produced: false); 
             netlist.Emit(new SampleEntry(sample));
             return new ValueEnv(symbol, null, sample, env);
         }

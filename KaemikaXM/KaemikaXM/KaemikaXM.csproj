@@ -12,6 +12,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Pages\ChartPage %28Surface2017%27s conflicted copy 2019-05-01%29.cs" />
+    <Compile Remove="Pages\ChartPage old.cs" />
     <Compile Remove="Pages\DocListPage - Copy.cs" />
     <Compile Remove="Pages\MainTabbedPage - Copy.cs" />
     <Compile Remove="Pages\ModelEntryPage - Copy.cs" />

@@ -38,8 +38,11 @@ namespace KaemikaXM
             TheParser.parser = new CalithaParser(GoldParser(cgtStream));
             DocListPage.docs = docs;
             MainTabbedPage.theMainTabbedPage = new MainTabbedPage();
-            MainPage = MainTabbedPage.theMainTabbedPage;
+            MainTabbedPage.theMainTabbedPage.CurrentPageChanged += MainTabbedPage.currentPageChangedDelegate;
+
             theApp = this;
+            MainPage = MainTabbedPage.theMainTabbedPage;
+            MainTabbedPage.SwitchToTab(MainTabbedPage.theDocListPageNavigation);
         }
 
         private static Application theApp;
@@ -58,6 +61,8 @@ namespace KaemikaXM
 
         protected override void OnSleep() {
             // Handle when your app sleeps
+            if (MainTabbedPage.theMainTabbedPage.CurrentPage == MainTabbedPage.theModelEntryPageNavigation)
+                MainTabbedPage.theModelEntryPage.SaveEditor();
         }
 
         protected override void OnResume() {

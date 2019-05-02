@@ -22,7 +22,7 @@ namespace Kaemika {
         // INITIALIZE
 
         public GUI_Xamarin() {
-            ChartClear("");
+            ChartInit();
         }
 
         public static CustomTextEditorDelegate customTextEditor = null;
@@ -103,13 +103,18 @@ namespace Kaemika {
             return this.timecourse.IsClear();
         }
 
-        public override void ChartClear(string title) {
-            this.title = title;
+        private void ChartInit() {
+            this.title = "";
             this.seriesList = new List<Series>() { };
             this.timecourse = new Timecourse() { };
             this.seriesIndex = new Dictionary<string, int>();
             this.lastEntry = null;
             this.lastEntryCount = 0;
+        }
+
+        public override void ChartClear(string title) {
+            ChartInit();
+            this.title = title;
             ChartUpdate();
             LegendUpdate();
         }

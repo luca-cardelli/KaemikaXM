@@ -73,7 +73,6 @@ namespace KaemikaXM.Droid {
             } catch { }
         }
 
-
         public string ReadAsset(string asset)  {
             StreamReader sr = new StreamReader(Assets.Open("AboutAssets"+".txt"));
             return sr.ReadToEnd();

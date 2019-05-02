@@ -656,6 +656,8 @@ namespace KaemikaWPF
 
         private void comboBox_Export_SelectedIndexChanged(object sender, EventArgs e) {
             if (comboBox_Export.Text == "Protocol") Exec.Execute_Starter(forkWorker: true, doExport: ExportAs.Protocol);
+            else if (comboBox_Export.Text == "PDMP") Exec.Execute_Starter(forkWorker: true, doExport: ExportAs.PDMP);
+            else if (comboBox_Export.Text == "PDMP Sequential") Exec.Execute_Starter(forkWorker: true, doExport: ExportAs.PDMP_Sequential);
             else if (comboBox_Export.Text == "GraphViz") Exec.Execute_Starter(forkWorker: true, doExport: ExportAs.GraphViz);
             else if (comboBox_Export.Text == "CRN (LBS silverlight)") Exec.Execute_Starter(forkWorker: true, doExport: ExportAs.MSRC_LBS);
             else if (comboBox_Export.Text == "CRN (LBS html5)") Exec.Execute_Starter(forkWorker: true, doExport: ExportAs.MSRC_CRN);

@@ -43,6 +43,14 @@ namespace KaemikaXM.Droid {
             editText.Text = text;
             scrollView.ScrollTo(0, 0);
         }
+        public void InsertText(string insertion) {
+            if (scrollView == null || editText == null) return;
+            GetSelection(out int start, out int end);
+            text = editText.Text;
+            text = text.Substring(0, start) + insertion + text.Substring(end, text.Length - end);
+            editText.Text = text;
+            SetSelection(start + insertion.Length, start + insertion.Length);
+        }
         public void SetFocus() {
             if (editText == null) return;
             editText.RequestFocus();
@@ -50,6 +58,11 @@ namespace KaemikaXM.Droid {
         public void SelectAll() {
             if (editText == null) return;
             editText.SelectAll();
+        }
+        public void GetSelection(out int start, out int end) {
+            if (editText == null) { start = 0; end = 0; return; }
+            start = editText.SelectionStart;
+            end = editText.SelectionEnd;
         }
         public void SetSelection(int start, int end) {
             if (editText == null) return;

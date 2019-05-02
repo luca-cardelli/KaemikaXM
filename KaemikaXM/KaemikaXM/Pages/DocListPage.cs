@@ -42,12 +42,8 @@ namespace KaemikaXM.Pages {
         }
 
         public override void OnSwitchedTo() {
+            MainTabbedPage.OnAnySwitchedTo(this);
             listView.ItemsSource = docs;
-        }
-
-        protected override void OnAppearing() {
-            base.OnAppearing();
-            OnSwitchedTo();
         }
 
         public ListView CreateGroupedListView () {

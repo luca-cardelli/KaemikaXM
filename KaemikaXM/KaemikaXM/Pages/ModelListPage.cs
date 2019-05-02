@@ -116,7 +116,7 @@ public class ModelListPage : KaemikaPage {
                         date = File.GetCreationTime(filename)
                     });
                 }
-            } catch (Exception e) { }
+            } catch { }
             DisplayList(models);
         }
 
@@ -128,12 +128,8 @@ public class ModelListPage : KaemikaPage {
         }
 
         public override void OnSwitchedTo() {
+            MainTabbedPage.OnAnySwitchedTo(this);
             RegenerateList();
-        }
-
-        protected override void OnAppearing() {
-            base.OnAppearing();
-            OnSwitchedTo();
         }
 
     }

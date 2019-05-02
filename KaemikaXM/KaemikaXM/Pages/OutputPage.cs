@@ -153,7 +153,7 @@ namespace KaemikaXM.Pages {
         public void AppendText(string text) {
             chemicalOutput = chemicalOutput + text;
             computationalOutput = computationalOutput + text;
-            graphVizOutput = graphVizOutput;
+            // graphVizOutput unchanged
             ShowExport();
         }
 
@@ -170,12 +170,9 @@ namespace KaemikaXM.Pages {
         }
 
         public override void OnSwitchedTo() {
+            MainTabbedPage.OnAnySwitchedTo(this);
             SetTitle(this.title);
         }
 
-        protected override void OnAppearing() {
-            base.OnAppearing();
-            OnSwitchedTo();
-        }
     }
 }

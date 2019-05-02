@@ -1,5 +1,5 @@
 ﻿//======================================
-// Simulating a reaction network
+// Build a reaction network
 //======================================
 
 // Declare some species and
@@ -21,6 +21,8 @@ report a, b, b-a, sin(time)
 
 equilibrate for 2*pi
 
-// Optionally display noise (μ, ±σ, ...)
+// Optionally select noise (μ, ±σ, ...)
 
-// Press Play
+//----------------------
+// Press the Play button
+//----------------------

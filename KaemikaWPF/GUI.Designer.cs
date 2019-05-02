@@ -562,6 +562,8 @@
             "   Export",
             "Protocol",
             "GraphViz",
+            "PDMP",
+            "PDMP Sequential",
             "ODE (Oscill8)",
             "CRN (LBS html5)",
             "CRN (LBS silverlight)",
@@ -695,7 +697,7 @@
             "⁵",
             "⁶",
             "⁷",
-            "⁸\t",
+            "⁸",
             "⁹",
             "⁽",
             "⁾"});

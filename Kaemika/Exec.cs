@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Kaemika
 {
-    public enum ExportAs : int { None, MSRC_LBS, MSRC_CRN, ODE, Protocol, GraphViz }
+    public enum ExportAs : int { None, MSRC_LBS, MSRC_CRN, ODE, Protocol, GraphViz, PDMP, PDMP_Sequential }
 
     public class Exec { // what runs when we press the "Start" button
 
@@ -65,7 +65,9 @@ namespace Kaemika
                                    new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.Standard, traceComputational: false)));
                                else if (doExport == ExportAs.Protocol) Gui.gui.OutputAppendText(Export.Protocol(netlist, new Style(varchar: defaultVarchar, new SwapMap(), map: new AlphaMap(), numberFormat: "G4", dataFormat: "symbol", exportTarget: ExportTarget.Standard, traceComputational: false)));
                                else if (doExport == ExportAs.GraphViz) Gui.gui.OutputAppendText(Export.GraphViz(netlist));
-                               else { }
+                               else if (doExport == ExportAs.PDMP) Gui.gui.OutputAppendText(Export.PDMP(netlist, style, sequential:false));
+                               else if (doExport == ExportAs.PDMP_Sequential) Gui.gui.OutputAppendText(Export.PDMP(netlist, style, sequential:true));
+                                    else { }
                                try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
                             }
                         }
@@ -78,7 +80,7 @@ namespace Kaemika
         }
 
         public static SampleValue Vessel() {
-            return new SampleValue(new Symbol("vessel"), new NumberValue(1.0), new NumberValue(293.15));
+            return new SampleValue(new Symbol("vessel"), new NumberValue(1.0), new NumberValue(293.15), produced: false);
         }
 
     }
