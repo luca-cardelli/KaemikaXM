@@ -1,52 +1,36 @@
-//======================================
-// Single-rail Derivative.
-// This network computes the derivative 
-// on an input signal A as the difference 
-// of two output signals B⁺ B⁻.
-// I.e. the (positive or negative) output 
-// is represented as the difference of 
-// two positive signals.
-//======================================
+// Hill kinetics:
 
-// input A, output B⁺ - B⁻
+ // Hill activation for catalyst y and 
+ // Hill coefficient n:
 
-network deriv1(species A B⁺ B⁻) {         
-	number r = 1000
-	number s = 1000
-	amount B⁺ B⁻ @ 0 M
-	species A' @ molarity(A) M
-	
-	// A' tracks A by r 
-	A ->{r} A + A';   A' ->{r} # 	 
-	
-	// B⁺ traks r*A by s
-	A ->{r*s} A + B⁺;   B⁺ ->{s} #	
+function UpHill(flow y, flow n) { 
+   return y^n/(1+y^n) 
+}   
 
-	// B⁻ tracks r*A' by s
-	A' ->{r*s} A' + B⁻;   B⁻ ->{s} #	
+// Hill inhibition for catalyst y and 
+// Hill coefficient n:
 
-	// Normalization
-	B⁺ + B⁻ -> #
-}
+function DnHill(flow y, flow n) { 
+   return 1/(1+y^n) 
+} 
 
-// Example: computing the derivative 
-// of the exponential function: 
-// d(e^t)/dt  ( = e^t )
+// Using a boolean flag to choose 
+// between them conditionally
 
-// Input: A grows exponentially 
-// from 1: A(t) = e^t
+function Hill(flow y, flow n, flow up) { 
+   return cond(up, UpHill(y,n), DnHill(y,n)) 
+}  
 
-species A @ 1M
-A -> 2 A
+// Choose a Hill coefficient:
 
-// Output: differentiate A into B⁺ - B⁻
+number n = 3  
 
-species {B⁺, B⁻}
-deriv1(A, B⁺, B⁻)
+// y1 activates x1 with Hill kinetics
+// plot the instantaneous Hill rate as well:
 
-// plot input, output, and also the true 
-// exponential function for comparison
+species x1, y1 @ 0 M
+# ->{0.1} y1
+y1 -> y1 + x1  {{ Hill(y1,n,true) }}       
+report x1,y1,Hill(y1,n,true)    
 
-report A, B⁺ - B⁻, exp(time)
-equilibrate for 3
-
+equilibrate for 10

@@ -54,9 +54,10 @@ namespace Kaemika
                                                     exportTarget: ExportTarget.Standard, traceComputational: false);
                                 Env ignoreEnv = statements.Eval(new NullEnv().BuiltIn(vessel), netlist, style);
                             if (doEval) {
-                                    Gui.gui.TextOutput();
-                               Gui.gui.OutputAppendComputation(netlist.Format(style), netlist.Format(style.RestyleAsTraceComputational(true)), Export.GraphViz(netlist));
-//###MSAGL                               Gui.gui.DrawGraph(Export.MSAGL(netlist));
+                                Gui.gui.TextOutput();
+                                string graphViz = ""; try { graphViz = Export.GraphViz(netlist); } catch { }; // graphViz node printout does not support non-mass-action rates
+                                Gui.gui.OutputAppendComputation(netlist.Format(style), netlist.Format(style.RestyleAsTraceComputational(true)), graphViz);
+//###MSAGL                       Gui.gui.DrawGraph(Export.MSAGL(netlist));
                             } else { // export and copy to clipboard
                                if (doExport == ExportAs.MSRC_LBS) Gui.gui.OutputAppendText(Export.MSRC_LBS(netlist, vessel, new Style(varchar: "_", new SwapMap(subsup:true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.LBS, traceComputational: false)));
                                else if (doExport == ExportAs.MSRC_CRN) Gui.gui.OutputAppendText(Export.MSRC_CRN(netlist, vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.CRN, traceComputational: false)));
