@@ -240,107 +240,6 @@ namespace Kaemika {
 
         //}
 
-        //class Closure {
-        //    private List<State> states; // closure of generated states
-
-        //    public Netlist netlist;
-        //    private List<ReactionValue> allReactions;
-        //    private Dictionary<ReactionValue, int> globalReactionIndex;
-
-        //    private List<Location> allLocations;
-        //    private Dictionary<Location, int> globalLocationIndex;
-
-        //    public Closure(Netlist netlist) {
-        //        this.netlist = netlist;
-        //        this.allReactions = netlist.AllReactions();
-        //        int i = 0;
-        //        foreach (ReactionValue reaction in allReactions) {
-        //            globalReactionIndex[reaction] = i; i++;
-        //        }
-        //        this.globalLocationIndex = new Dictionary<Location, int>();
-        //        this.states = new List<State> ();
-        //    }
-
-        //    public int ReactionIndex(ReactionValue reaction) {
-        //        return globalReactionIndex[reaction];
-        //    }
-
-        //    public int LocationIndex(Location location) {
-        //        if (KnownLocation(location)) return globalLocationIndex[location];
-        //        else { int newIndex = globalLocationIndex.Count;
-        //               globalLocationIndex[location] = newIndex;
-        //               return newIndex;
-        //        }
-        //    }
-        //    public bool KnownLocation(Location location) {
-        //        foreach (var keyPair in globalLocationIndex) {
-        //            if (keyPair.Key.EqualLocation(location)) return true;
-        //        }
-        //        return false;
-        //    }
-
-        //    public void Plus(State state) {
-        //        if (!ContainsState(states, state)) states.Add(state);
-        //    }
-        //    private bool ContainsState(List<State> states, State state) {
-        //        foreach (State s in states) if (s.EqualState(state)) return true;
-        //        return false;
-        //    }
-        //}
-
-        //class State {
-        //    public HashSet<int> locationSpectrum;
-
-        //    public State() {
-        //        this.locationSpectrum = new HashSet<int>();
-        //    }
-        //    public State(HashSet<int> spectrum) {
-        //        this.locationSpectrum = spectrum;
-        //    }
-        //    public State Plus(Location location) {
-        //        int locationIndex = closure.LocationIndex(location);
-        //        if (locationSpectrum.Contains(locationIndex)) return this;
-        //        else {
-        //            HashSet<int> newSpectrum = CopySpectrum(locationSpectrum);
-        //            newSpectrum.Add(locationIndex);
-        //            return new State(newSpectrum);
-        //        }
-        //    }
-        //    public State Minus(Location location) {
-        //        int locationIndex = closure.LocationIndex(location);
-        //        if (!locationSpectrum.Contains(locationIndex)) return this;
-        //        else {
-        //            HashSet<int> newSpectrum = CopySpectrum(locationSpectrum);
-        //            newSpectrum.Remove(locationIndex);
-        //            return new State(newSpectrum);
-        //        }
-        //    }
-        //    public bool EqualState(State other) {
-        //        return locationSpectrum.SetEquals(other.locationSpectrum);
-        //    }
-        //}
-
-        //class Location {
-        //    private Closure closure;
-        //    public List<SpeciesValue> species;
-        //    public HashSet<int> reactionSpectrum;
-
-        //    public Location(Closure closure, List<SpeciesValue> species, List<ReactionValue> reactions) {
-        //        this.closure = closure;
-        //        this.species = species;
-        //        this.reactionSpectrum = ReactionSpectrum(reactions);
-        //    }
-
-        //    private HashSet<int> ReactionSpectrum(List<ReactionValue> reactions) {
-        //        HashSet<int> id = new HashSet<int>();
-        //        foreach (ReactionValue reaction in reactions) id.Add(closure.ReactionIndex(reaction));
-        //        return id;
-        //    }
-
-        //    public bool EqualLocation(Location other) {
-        //        return reactionSpectrum.SetEquals(other.reactionSpectrum);
-        //    }
-        //}
 
         public class Closure {
             private StateSet states;
@@ -478,25 +377,20 @@ namespace Kaemika {
             }
         }
 
-        //   state.Add(new Location(closure, sample.species, closure.netlist.RelevantReactions(sample, sample.species, style)));
+        //   To extract the ODEs: closure.netlist.RelevantReactions(sample, sample.species, style)));
 
         public static string PDMP(Netlist netlist, Style style, bool sequential) {
             Closure closure = new Closure(netlist);
             State current = PDMP_InitialState(closure, style);
 
-            //if (sequential) {
-            //    do { current = PDMP_Transition(closure, current, style); }
-            //    while (current != null);
-            //} else {
-                StateSet currentStates = new StateSet();
-                currentStates.AddUnique(current, style);
-                while (currentStates.Count() > 0) {
-                    StateSet nextStates = new StateSet();
-                    foreach (State state in currentStates.states)
-                        nextStates.AddUnique(PDMP_MultiTransition(closure, state, style, sequential), style);
-                    currentStates = nextStates;
-                }
-            //}
+            StateSet currentStates = new StateSet();
+            currentStates.AddUnique(current, style);
+            while (currentStates.Count() > 0) {
+                StateSet nextStates = new StateSet();
+                foreach (State state in currentStates.states)
+                    nextStates.AddUnique(PDMP_MultiTransition(closure, state, style, sequential), style);
+                currentStates = nextStates;
+            }
 
             return closure.GraphViz(style);
         }
@@ -509,75 +403,6 @@ namespace Kaemika {
             closure.AddUnique(state, style);
             return state;
         }
-
-        //public static State PDMP_Transition(Closure closure, State state, Style style) {
-        //    foreach (OperationEntry entry in closure.netlist.AllOperations()) {
-        //        if (entry is MixEntry) {
-        //            if (state.Contains((entry as MixEntry).inSample1) && state.Contains((entry as MixEntry).inSample2)) {
-        //                SampleValue inSample1 = (entry as MixEntry).inSample1;
-        //                SampleValue inSample2 = (entry as MixEntry).inSample2;
-        //                SampleValue outSample = (entry as MixEntry).outSample;
-        //                State newState = state.Copy();
-        //                newState.Remove(inSample1);
-        //                newState.Remove(inSample2);
-        //                newState.Add(outSample);
-        //                newState = closure.AddUnique(newState, style);
-        //                closure.AddTransition(new Transition(state, newState,
-        //                    outSample.FormatSymbol(style) + " := mix " + inSample1.FormatSymbol(style) + ", " + inSample2.FormatSymbol(style)));
-        //                return newState;
-        //            }
-        //        }  else if (entry is SplitEntry)  {
-        //            if (state.Contains((entry as SplitEntry).inSample)) {
-        //                SampleValue inSample = (entry as SplitEntry).inSample;
-        //                SampleValue outSample2 = (entry as SplitEntry).outSample2;
-        //                SampleValue outSample1 = (entry as SplitEntry).outSample1;
-        //                State newState = state.Copy();
-        //                newState.Remove(inSample);
-        //                newState.Add(outSample1);
-        //                newState.Add(outSample2);
-        //                closure.AddUnique(newState, style);
-        //                closure.AddTransition(new Transition(state, newState,
-        //                    outSample1.FormatSymbol(style) + ", " + outSample2.FormatSymbol(style) + " := split " + inSample.FormatSymbol(style) + " by " + (entry as SplitEntry).proportion.value));
-        //                return newState;
-        //            }
-        //        } else if (entry is EquilibrateEntry) {
-        //            if (state.Contains((entry as EquilibrateEntry).inSample)) {
-        //                SampleValue inSample = (entry as EquilibrateEntry).inSample;
-        //                SampleValue outSample = (entry as EquilibrateEntry).outSample;
-        //                State newState = state.Copy();
-        //                newState.Remove(inSample);
-        //                newState.Add(outSample);
-        //                closure.AddUnique(newState, style);
-        //                closure.AddTransition(new Transition(state, newState,
-        //                    outSample.FormatSymbol(style) + " := equilibrate " + inSample.FormatSymbol(style) + " for " + (entry as EquilibrateEntry).time.value));
-        //                return newState;
-        //            }
-        //        } else if (entry is TransferEntry) {
-        //            if (state.Contains((entry as TransferEntry).inSample)) {
-        //                SampleValue inSample = (entry as TransferEntry).inSample;
-        //                SampleValue outSample = (entry as TransferEntry).outSample;
-        //                State newState = state.Copy();
-        //                newState.Remove(inSample);
-        //                newState.Add(outSample);
-        //                closure.AddUnique(newState, style);
-        //                closure.AddTransition(new Transition(state, newState, 
-        //                    outSample.FormatSymbol(style) + " := transfer " + inSample.FormatSymbol(style)));
-        //                return newState;
-        //            }
-        //        } else if (entry is DisposeEntry) {
-        //            if (state.Contains((entry as DisposeEntry).inSample)) {
-        //                SampleValue inSample = (entry as DisposeEntry).inSample;
-        //                State newState = state.Copy();
-        //                newState.Remove(inSample);
-        //                closure.AddUnique(newState, style);
-        //                closure.AddTransition(new Transition(state, newState, 
-        //                    "dispose " + inSample.FormatSymbol(style)));
-        //                return newState;
-        //            }
-        //        } else { }
-        //    }
-        //    return null;
-        //}
 
         public static StateSet PDMP_MultiTransition(Closure closure, State state, Style style, bool sequential) {
             StateSet nextStates = new StateSet();
@@ -593,7 +418,7 @@ namespace Kaemika {
                         newState.Add(outSample);
                         newState = closure.AddUnique(newState, style); // may replace it with an existing state
                         closure.AddTransition(new Transition(state, newState,
-                            outSample.FormatSymbol(style) + " := mix " + inSample1.FormatSymbol(style) + ", " + inSample2.FormatSymbol(style)));
+                            "mix " + outSample.FormatSymbol(style) + " := " + inSample1.FormatSymbol(style) + " with " + inSample2.FormatSymbol(style)));
                         nextStates.AddUnique(newState, style);
                         if (sequential) return nextStates; // otherwise keep accumulating
                     }
@@ -608,7 +433,7 @@ namespace Kaemika {
                         newState.Add(outSample2);
                         newState = closure.AddUnique(newState, style); // may replace it with an existing state
                         closure.AddTransition(new Transition(state, newState,
-                            outSample1.FormatSymbol(style) + ", " + outSample2.FormatSymbol(style) + " := split " + inSample.FormatSymbol(style) + " by " + (entry as SplitEntry).proportion.value));
+                            "split " + outSample1.FormatSymbol(style) + ", " + outSample2.FormatSymbol(style) + " := " + inSample.FormatSymbol(style) + " by " + (entry as SplitEntry).proportion.value));
                         nextStates.AddUnique(newState, style);
                         if (sequential) return nextStates; // otherwise keep accumulating
                     }
@@ -621,7 +446,7 @@ namespace Kaemika {
                         newState.Add(outSample);
                         newState = closure.AddUnique(newState, style); // may replace it with an existing state
                         closure.AddTransition(new Transition(state, newState,
-                            outSample.FormatSymbol(style) + " := equilibrate " + inSample.FormatSymbol(style) + " for " + (entry as EquilibrateEntry).time.value));
+                            "equilibrate " + outSample.FormatSymbol(style) + " := " + inSample.FormatSymbol(style) + " for " + (entry as EquilibrateEntry).time.value));
                         nextStates.AddUnique(newState, style);
                         if (sequential) return nextStates; // otherwise keep accumulating
                     }
@@ -633,8 +458,8 @@ namespace Kaemika {
                         newState.Remove(inSample);
                         newState.Add(outSample);
                         newState = closure.AddUnique(newState, style); // may replace it with an existing state
-                        closure.AddTransition(new Transition(state, newState, 
-                            outSample.FormatSymbol(style) + " := transfer " + inSample.FormatSymbol(style)));
+                        closure.AddTransition(new Transition(state, newState,
+                            "transfer " + outSample.FormatSymbol(style) + " := " + inSample.FormatSymbol(style)));
                         nextStates.AddUnique(newState, style);
                         if (sequential) return nextStates; // otherwise keep accumulating
                     }
