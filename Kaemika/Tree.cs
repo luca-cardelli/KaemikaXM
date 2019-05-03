@@ -414,12 +414,14 @@ namespace Kaemika
             string s = "";
             for (int i = 0; i < reports.Count; i++) {
                 if (series[i] != null) { // if a series was actually generated from this report
-                    if ((noise == Noise.None && reports[i].flow.HasDeterministicMean()) ||
+                    // generate deterministic series
+                    if ((noise == Noise.None && reports[i].flow.HasDeterministicValue()) ||
                         (noise != Noise.None && reports[i].flow.HasStochasticMean())) {
                         double mean = reports[i].flow.ReportMean(sample, time, this, style);
                         s += Gui.gui.ChartAddPointAsString(series[i], time, mean, 0.0, Noise.None) + ", ";
                     }
-                    if (noise != Noise.None && reports[i].flow.HasStochasticMean() && !reports[i].flow.HasNullVariance()) {
+                    // generate LNA-dependent series
+                    if (noise != Noise.None && reports[i].flow.HasStochasticVariance() && !reports[i].flow.HasNullVariance()) {
                         double mean = reports[i].flow.ReportMean(sample, time, this, style);
                         double variance = reports[i].flow.ReportVariance(sample, time, this, style);
                         s += Gui.gui.ChartAddPointAsString(seriesLNA[i], time, mean, variance, noise) + ", ";
@@ -600,8 +602,9 @@ namespace Kaemika
             string[] seriesLNA = new string[reports.Count]; // can contain nulls if series are duplicates
             paletteNo = (reports.Count-1) % palette.Length; // because we scan palette backwards
             for (int i = reports.Count-1; i >= 0; i--) {    // add series backwards so that Red is in front
+                // generate LNA-dependent series
                 ReportEntry entry = reports[i];
-                if ((noise != Noise.None) && entry.flow.HasStochasticMean() && !entry.flow.HasNullVariance()) {
+                if ((noise != Noise.None) && entry.flow.HasStochasticVariance() && !entry.flow.HasNullVariance()) {
                     string reportName = (entry.asLabel != null) ? entry.asLabel : entry.flow.TopFormat(style.RestyleAsNumberFormat("G4"));
                     string seriesName = reportName + noiseString[(int)noise];
                     seriesLNA[i] = Gui.gui.ChartAddSeries(seriesName, palette[paletteNo % palette.Length], noise);
@@ -612,8 +615,9 @@ namespace Kaemika
             string[] series = new string[reports.Count]; // can contain nulls if series are duplicates
             paletteNo = (reports.Count - 1) % palette.Length; // because we scan palette backwards
             for (int i = reports.Count-1; i >= 0; i--) {      // add series backwards so that Red is in front
+                // generate deterministic series
                 ReportEntry entry = reports[i];
-                if ((noise == Noise.None && entry.flow.HasDeterministicMean()) || 
+                if ((noise == Noise.None && entry.flow.HasDeterministicValue()) || 
                     ((noise != Noise.None) && entry.flow.HasStochasticMean())) {
                     string reportName = (entry.asLabel != null) ? entry.asLabel : entry.flow.TopFormat(style.RestyleAsNumberFormat("G4"));
                     string seriesName = reportName + ((noise == Noise.None) ? "" : noiseString[(int)Noise.None]);
@@ -676,12 +680,14 @@ namespace Kaemika
                 State state = new State(sample.species.Count, noise != Noise.None).InitAll(solPoint.X);
                 if (solPoint.T >= densityTick) { // avoid drawing too many points
                     for (int i = 0; i < reports.Count; i++) {
-                        if ((noise == Noise.None && reports[i].flow.HasDeterministicMean()) ||
+                        // generate deterministic series
+                        if ((noise == Noise.None && reports[i].flow.HasDeterministicValue()) ||
                             (noise != Noise.None && reports[i].flow.HasStochasticMean())) {
                             double mean = reports[i].flow.ReportMean(sample, solPoint.T, state, style);
                             Gui.gui.ChartAddPoint(series[i], solPoint.T, mean, 0.0, Noise.None);
                         }
-                        if (noise != Noise.None && reports[i].flow.HasStochasticMean() && !reports[i].flow.HasNullVariance()) {
+                        // generate LNA-dependent series
+                        if (noise != Noise.None && reports[i].flow.HasStochasticVariance() && !reports[i].flow.HasNullVariance()) {
                             double mean = reports[i].flow.ReportMean(sample, solPoint.T, state, style);
                             double variance = reports[i].flow.ReportVariance(sample, solPoint.T, state, style);
                             Gui.gui.ChartAddPoint(seriesLNA[i], solPoint.T, mean, variance, noise);
@@ -1254,15 +1260,19 @@ namespace Kaemika
         public abstract double ReportMean(SampleValue sample, double time, State state, Style style); // for numeric flow-subexpressions
         public abstract double ReportVariance(SampleValue sample, double time, State state, Style style);
         public abstract double ReportCovariance(Flow other, SampleValue sample, double time, State state, Style style);
-        public abstract bool HasDeterministicMean();
-        // = Can appear in non-LNA charts and in generalized rates {{ ... }}. Excludes var/cov, poisson/gauss.
+        public abstract bool HasDeterministicValue();
+        // = Can appear in non-LNA charts and in generalized rates {{ ... }}. 
+        // Excludes var/cov, poisson/gauss.
         public abstract bool HasStochasticMean();
-        // = Can appear in LNA charts as means and variance. Includes everyting except that inside var/cov only linear combinations 
-        // of species are allowed, also because of issues like cov(poisson(X),poisson(X)) =? var(poisson(X))
+        // = Can appear in LNA charts as means and variance. 
+        // Inside var/cov only linear combinations of species are allowed, also because of issues like cov(poisson(X),poisson(X)) =? var(poisson(X))
+        public bool HasStochasticVariance() { return LinearCombination(); } // currently defined as LinearCombination
+        // = Can appear in LNA charts as means and variance. 
+        // Includes only those things for which var(...) makes sense.
         public abstract bool LinearCombination();
         // = Is a linear combination of species and time/kelvin/celsius flows only
         public abstract bool HasNullVariance();
-        // Has stochastic variance identically zero, used to detect and rule out non-linear products.  
+        // = Has stochastic variance identically zero, used to detect and rule out non-linear products.  
     }
 
     public class BoolFlow : Flow {
@@ -1275,7 +1285,7 @@ namespace Kaemika
         public override double ReportMean(SampleValue sample, double time, State state, Style style) { throw new Error("Flow expression: number expected instead of bool: " + Format(style)); }
         public override double ReportVariance(SampleValue sample, double time, State state, Style style) { throw new Error("Flow expression: number expected instead of bool: " + Format(style)); }
         public override double ReportCovariance(Flow other, SampleValue sample, double time, State state, Style style) { throw new Error("Flow expression: number expected instead of bool: " + Format(style)); }
-        public override bool HasDeterministicMean() { return true; } // can appear in rate-expressions in a cond
+        public override bool HasDeterministicValue() { return true; } // can appear in rate-expressions in a cond
         public override bool HasStochasticMean() { return true; }
         public override bool LinearCombination() { return true; } // but if it appears in a cond it will not be a linear combination anyway
         public override bool HasNullVariance() { return true; }
@@ -1291,7 +1301,7 @@ namespace Kaemika
         public override double ReportMean(SampleValue sample, double time, State state, Style style) { return this.value; }
         public override double ReportVariance(SampleValue sample, double time, State state, Style style) { return 0.0; } // Var(number) = 0
         public override double ReportCovariance(Flow other, SampleValue sample, double time, State state, Style style) { return 0.0; } // Cov(number,Y) = 0
-        public override bool HasDeterministicMean() { return true; }
+        public override bool HasDeterministicValue() { return true; }
         public override bool HasStochasticMean() { return true; }
         public override bool LinearCombination() { return true; }
         public override bool HasNullVariance() { return true; }
@@ -1307,7 +1317,7 @@ namespace Kaemika
         public override double ReportMean(SampleValue sample, double time, State state, Style style) { throw new Error("Flow expression: number expected instead of string: " + Format(style)); }
         public override double ReportVariance(SampleValue sample, double time, State state, Style style) { throw new Error("Flow expression: number expected instead of string: " + Format(style)); }
         public override double ReportCovariance(Flow other, SampleValue sample, double time, State state, Style style) { throw new Error("Flow expression: number expected instead of string: " + Format(style)); }
-        public override bool HasDeterministicMean() { return true; }
+        public override bool HasDeterministicValue() { return true; }
         public override bool HasStochasticMean() { return true; }
         public override bool LinearCombination() { return true; }
         public override bool HasNullVariance() { return true; }
@@ -1346,7 +1356,7 @@ namespace Kaemika
                 return state.Covar(sample.speciesIndex[this.species], sample.speciesIndex[((SpeciesFlow)other).species]);
             else return other.ReportCovariance(this, sample, time, state, style);
         }
-        public override bool HasDeterministicMean() { return true; }
+        public override bool HasDeterministicValue() { return true; }
         public override bool HasStochasticMean() { return true; }
         public override bool LinearCombination() { return true; }
         public override bool HasNullVariance() { return false; }
@@ -1498,19 +1508,19 @@ namespace Kaemika
                 } else throw new Error(BadResult + op);
             } else throw new Error(BadArguments + op);
         }
-        public override bool HasDeterministicMean() {
+        public override bool HasDeterministicValue() {
             if (arity == 0) {
                 return true; // "time", "kelvin", "celsius"
             }  else if (arity == 1) {
-                return (op != "var" && op != "poisson") && args[0].HasDeterministicMean();
+                return (op != "var" && op != "poisson") && args[0].HasDeterministicValue();
                 // Although var(X) is a number, we need the LNA info to compute it, so we say it is not deterministic
                 // poisson is not allowed in determinstic plots or general rates
             } else if (arity == 2) {
-                return (op != "cov" && op != "gauss") && args[0].HasDeterministicMean() && args[1].HasDeterministicMean();
+                return (op != "cov" && op != "gauss") && args[0].HasDeterministicValue() && args[1].HasDeterministicValue();
                 // Although cov(X,Y) is a number, we need the LNA info to compute it, so we say it is not deterministic
                 // gauss is not allowed in determinstic plots or general rates
             }  else if (arity == 3) { // including "cond"
-                return args[0].HasDeterministicMean() && args[1].HasDeterministicMean() && args[2].HasDeterministicMean();
+                return args[0].HasDeterministicValue() && args[1].HasDeterministicValue() && args[2].HasDeterministicValue();
             }  else throw new Error("HasDeterministicMean: " + op);
         }
         public override bool HasStochasticMean() {
@@ -2363,7 +2373,7 @@ namespace Kaemika
         }
         public override RateValue Eval(Env env, Netlist netlist, Style style) {
             Flow flow = rateFunction.BuildFlow(env, style);  // whether this is a numeric flow is checked later
-            if (!flow.HasDeterministicMean()) throw new Error("This flow-expression cannot appear in {{ ... }} rate: " + rateFunction.Format());
+            if (!flow.HasDeterministicValue()) throw new Error("This flow-expression cannot appear in {{ ... }} rate: " + rateFunction.Format());
             return new GeneralRateValue(flow); 
         }
     }

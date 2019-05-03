@@ -23,14 +23,14 @@ function Hill(flow y, flow n, flow up) {
 
 // Choose a Hill coefficient:
 
-number n = 3  
+number n = 2 
 
 // y1 activates x1 with Hill kinetics
 // plot the instantaneous Hill rate as well:
 
 species x1, y1 @ 0 M
 # ->{0.1} y1
-y1 -> y1 + x1  {{ Hill(y1,n,true) }}       
-report x1,y1,Hill(y1,n,true)    
+y1 -> y1 + x1  {{ UpHill(y1,n) }}       
+report x1,y1, var(x1), UpHill(y1,n)
 
-equilibrate for 10
+equilibrate for 30
