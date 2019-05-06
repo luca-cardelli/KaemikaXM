@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Research.Oslo;
-using System.Drawing;
+using System.Drawing; //###
 using System.Threading;
 
 namespace Kaemika
@@ -2403,12 +2403,12 @@ namespace Kaemika
         public override RateValue Eval(Env env, Netlist netlist, Style style) {
             Value cf = collisionFrequency.Eval(env, netlist, style);
             Value ae = activationEnergy.Eval(env, netlist, style);
-            if (!(cf is NumberValue)) throw new Error("Reaction rate collision frequency must be a number");
-            if (!(ae is NumberValue)) throw new Error("Reaction rate activation energy must be a number");
+            if (!(cf is NumberValue)) throw new Error("Reaction rate collision frequency must be a number: " + collisionFrequency.Format());
+            if (!(ae is NumberValue)) throw new Error("Reaction rate activation energy must be a number: " + activationEnergy.Format());
             double cfv = ((NumberValue)cf).value;
             double aev = ((NumberValue)ae).value;
-            if (cfv < 0) throw new Error("Reaction rate collision frequency must be non-negative");
-            if (aev < 0) throw new Error("Reaction rate activation energy must be non-negative");
+            if (cfv < 0) throw new Error("Reaction rate collision frequency must be non-negative: " + collisionFrequency.Format());
+            if (aev < 0) throw new Error("Reaction rate activation energy must be non-negative: " + activationEnergy.Format());
             return new MassActionRateValue(cfv, aev);
         }
     }

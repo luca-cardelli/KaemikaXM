@@ -175,11 +175,11 @@ namespace KaemikaXM.Pages {
             Grid charPickers = new Grid { RowSpacing = 0, Margin = 0 };
             charPickers.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             charPickers.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            charPickers.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             charPickers.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });
+            charPickers.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             charPickers.Children.Add(subPicker, 0, 0);
-            charPickers.Children.Add(supPicker, 1, 0);
-            charPickers.Children.Add(noisePicker, 2, 0);
+            charPickers.Children.Add(noisePicker, 1, 0);
+            charPickers.Children.Add(supPicker, 2, 0);
             return charPickers;
         }
 
@@ -228,8 +228,8 @@ namespace KaemikaXM.Pages {
                 async (ICustomTextEdit textEdit) => { if (modelInfo.modified) SaveEditor(); });
 
             noisePicker = NoisePicker();
-            subPicker = SubPicker();
-            supPicker = SupPicker();
+            subPicker = SubPicker(); subPicker.IsVisible = false;
+            supPicker = SupPicker(); supPicker.IsVisible = false;
             startButton = StartButton();
             stepper = TextSizeStepper(editor as ICustomTextEdit);
 
@@ -265,8 +265,8 @@ namespace KaemikaXM.Pages {
             // if (!editable) if (!ToolbarItems.Contains(editItem)) ToolbarItems.Insert(0, editItem);
             editItem.IsEnabled = !editable;
             pasteAllItem.IsEnabled = editable;
-            subPicker.IsEnabled = editable;
-            supPicker.IsEnabled = editable;
+            subPicker.IsVisible = editable;
+            supPicker.IsVisible = editable;
         }
 
         public string GetText() {
