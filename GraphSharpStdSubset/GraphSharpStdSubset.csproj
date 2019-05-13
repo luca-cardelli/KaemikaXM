@@ -5,6 +5,22 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Algorithms\Layout\Simple\FDP\**" />
+    <EmbeddedResource Remove="Algorithms\Layout\Simple\FDP\**" />
+    <None Remove="Algorithms\Layout\Simple\FDP\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Algorithms\Layout\Simple\Hierarchical\SugiyamaLayoutAlgorithm.cs" />
+    <Compile Remove="Algorithms\Layout\Simple\Hierarchical\SugiyamaLayoutAlgorithm.Enums.cs" />
+    <Compile Remove="Algorithms\Layout\Simple\Hierarchical\SugiyamaLayoutAlgorithm.SugiEdge.cs" />
+    <Compile Remove="Algorithms\Layout\Simple\Hierarchical\SugiyamaLayoutAlgorithm.SugiVertex.cs" />
+    <Compile Remove="Algorithms\Layout\Simple\Hierarchical\SugiyamaLayoutAlgorithm.VertexLayer.cs" />
+    <Compile Remove="Algorithms\Layout\Simple\Hierarchical\SugiyamaLayoutAlgorithm.VertexLayerCollection.cs" />
+    <Compile Remove="Algorithms\Layout\Simple\Hierarchical\SugiyamaLayoutParameters.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\QuickGraphStd\QuickGraphStd.csproj" />
   </ItemGroup>
 

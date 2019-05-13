@@ -4226,44 +4226,44 @@ namespace KaemikaXM.Droid
 		public partial class Color
 		{
 			
-			// aapt resource value: 0x7f0d005e
-			public const int abc_background_cache_hint_selector_material_dark = 2131558494;
-			
 			// aapt resource value: 0x7f0d005f
-			public const int abc_background_cache_hint_selector_material_light = 2131558495;
+			public const int abc_background_cache_hint_selector_material_dark = 2131558495;
 			
 			// aapt resource value: 0x7f0d0060
-			public const int abc_btn_colored_borderless_text_material = 2131558496;
+			public const int abc_background_cache_hint_selector_material_light = 2131558496;
 			
 			// aapt resource value: 0x7f0d0061
-			public const int abc_btn_colored_text_material = 2131558497;
+			public const int abc_btn_colored_borderless_text_material = 2131558497;
 			
 			// aapt resource value: 0x7f0d0062
-			public const int abc_color_highlight_material = 2131558498;
+			public const int abc_btn_colored_text_material = 2131558498;
 			
 			// aapt resource value: 0x7f0d0063
-			public const int abc_hint_foreground_material_dark = 2131558499;
+			public const int abc_color_highlight_material = 2131558499;
 			
 			// aapt resource value: 0x7f0d0064
-			public const int abc_hint_foreground_material_light = 2131558500;
+			public const int abc_hint_foreground_material_dark = 2131558500;
+			
+			// aapt resource value: 0x7f0d0065
+			public const int abc_hint_foreground_material_light = 2131558501;
 			
 			// aapt resource value: 0x7f0d0004
 			public const int abc_input_method_navigation_guard = 2131558404;
 			
-			// aapt resource value: 0x7f0d0065
-			public const int abc_primary_text_disable_only_material_dark = 2131558501;
-			
 			// aapt resource value: 0x7f0d0066
-			public const int abc_primary_text_disable_only_material_light = 2131558502;
+			public const int abc_primary_text_disable_only_material_dark = 2131558502;
 			
 			// aapt resource value: 0x7f0d0067
-			public const int abc_primary_text_material_dark = 2131558503;
+			public const int abc_primary_text_disable_only_material_light = 2131558503;
 			
 			// aapt resource value: 0x7f0d0068
-			public const int abc_primary_text_material_light = 2131558504;
+			public const int abc_primary_text_material_dark = 2131558504;
 			
 			// aapt resource value: 0x7f0d0069
-			public const int abc_search_url_text = 2131558505;
+			public const int abc_primary_text_material_light = 2131558505;
+			
+			// aapt resource value: 0x7f0d006a
+			public const int abc_search_url_text = 2131558506;
 			
 			// aapt resource value: 0x7f0d0005
 			public const int abc_search_url_text_normal = 2131558405;
@@ -4274,29 +4274,29 @@ namespace KaemikaXM.Droid
 			// aapt resource value: 0x7f0d0007
 			public const int abc_search_url_text_selected = 2131558407;
 			
-			// aapt resource value: 0x7f0d006a
-			public const int abc_secondary_text_material_dark = 2131558506;
-			
 			// aapt resource value: 0x7f0d006b
-			public const int abc_secondary_text_material_light = 2131558507;
+			public const int abc_secondary_text_material_dark = 2131558507;
 			
 			// aapt resource value: 0x7f0d006c
-			public const int abc_tint_btn_checkable = 2131558508;
+			public const int abc_secondary_text_material_light = 2131558508;
 			
 			// aapt resource value: 0x7f0d006d
-			public const int abc_tint_default = 2131558509;
+			public const int abc_tint_btn_checkable = 2131558509;
 			
 			// aapt resource value: 0x7f0d006e
-			public const int abc_tint_edittext = 2131558510;
+			public const int abc_tint_default = 2131558510;
 			
 			// aapt resource value: 0x7f0d006f
-			public const int abc_tint_seek_thumb = 2131558511;
+			public const int abc_tint_edittext = 2131558511;
 			
 			// aapt resource value: 0x7f0d0070
-			public const int abc_tint_spinner = 2131558512;
+			public const int abc_tint_seek_thumb = 2131558512;
 			
 			// aapt resource value: 0x7f0d0071
-			public const int abc_tint_switch_track = 2131558513;
+			public const int abc_tint_spinner = 2131558513;
+			
+			// aapt resource value: 0x7f0d0072
+			public const int abc_tint_switch_track = 2131558514;
 			
 			// aapt resource value: 0x7f0d0008
 			public const int accent_material_dark = 2131558408;
@@ -4364,14 +4364,14 @@ namespace KaemikaXM.Droid
 			// aapt resource value: 0x7f0d0003
 			public const int cardview_shadow_start_color = 2131558403;
 			
-			// aapt resource value: 0x7f0d005d
-			public const int colorAccent = 2131558493;
-			
-			// aapt resource value: 0x7f0d005b
-			public const int colorPrimary = 2131558491;
+			// aapt resource value: 0x7f0d005e
+			public const int colorAccent = 2131558494;
 			
 			// aapt resource value: 0x7f0d005c
-			public const int colorPrimaryDark = 2131558492;
+			public const int colorPrimary = 2131558492;
+			
+			// aapt resource value: 0x7f0d005d
+			public const int colorPrimaryDark = 2131558493;
 			
 			// aapt resource value: 0x7f0d0041
 			public const int design_bottom_navigation_shadow_color = 2131558465;
@@ -4382,8 +4382,8 @@ namespace KaemikaXM.Droid
 			// aapt resource value: 0x7f0d0043
 			public const int design_default_color_primary_dark = 2131558467;
 			
-			// aapt resource value: 0x7f0d0072
-			public const int design_error = 2131558514;
+			// aapt resource value: 0x7f0d0073
+			public const int design_error = 2131558515;
 			
 			// aapt resource value: 0x7f0d0044
 			public const int design_fab_shadow_end_color = 2131558468;
@@ -4409,8 +4409,8 @@ namespace KaemikaXM.Droid
 			// aapt resource value: 0x7f0d004b
 			public const int design_snackbar_background_color = 2131558475;
 			
-			// aapt resource value: 0x7f0d0073
-			public const int design_tint_password_toggle = 2131558515;
+			// aapt resource value: 0x7f0d0074
+			public const int design_tint_password_toggle = 2131558516;
 			
 			// aapt resource value: 0x7f0d0016
 			public const int dim_foreground_disabled_material_dark = 2131558422;
@@ -4442,8 +4442,8 @@ namespace KaemikaXM.Droid
 			// aapt resource value: 0x7f0d001f
 			public const int highlighted_text_material_light = 2131558431;
 			
-			// aapt resource value: 0x7f0d005a
-			public const int launcher_background = 2131558490;
+			// aapt resource value: 0x7f0d005b
+			public const int launcher_background = 2131558491;
 			
 			// aapt resource value: 0x7f0d0020
 			public const int material_blue_grey_800 = 2131558432;
@@ -4481,71 +4481,71 @@ namespace KaemikaXM.Droid
 			// aapt resource value: 0x7f0d002b
 			public const int material_grey_900 = 2131558443;
 			
-			// aapt resource value: 0x7f0d0074
-			public const int mtrl_bottom_nav_colored_item_tint = 2131558516;
-			
 			// aapt resource value: 0x7f0d0075
-			public const int mtrl_bottom_nav_item_tint = 2131558517;
+			public const int mtrl_bottom_nav_colored_item_tint = 2131558517;
+			
+			// aapt resource value: 0x7f0d0076
+			public const int mtrl_bottom_nav_item_tint = 2131558518;
 			
 			// aapt resource value: 0x7f0d004c
 			public const int mtrl_btn_bg_color_disabled = 2131558476;
 			
-			// aapt resource value: 0x7f0d0076
-			public const int mtrl_btn_bg_color_selector = 2131558518;
-			
 			// aapt resource value: 0x7f0d0077
-			public const int mtrl_btn_ripple_color = 2131558519;
+			public const int mtrl_btn_bg_color_selector = 2131558519;
 			
 			// aapt resource value: 0x7f0d0078
-			public const int mtrl_btn_stroke_color_selector = 2131558520;
+			public const int mtrl_btn_ripple_color = 2131558520;
 			
 			// aapt resource value: 0x7f0d0079
-			public const int mtrl_btn_text_btn_ripple_color = 2131558521;
+			public const int mtrl_btn_stroke_color_selector = 2131558521;
+			
+			// aapt resource value: 0x7f0d007a
+			public const int mtrl_btn_text_btn_ripple_color = 2131558522;
 			
 			// aapt resource value: 0x7f0d004d
 			public const int mtrl_btn_text_color_disabled = 2131558477;
 			
-			// aapt resource value: 0x7f0d007a
-			public const int mtrl_btn_text_color_selector = 2131558522;
+			// aapt resource value: 0x7f0d007b
+			public const int mtrl_btn_text_color_selector = 2131558523;
 			
 			// aapt resource value: 0x7f0d004e
 			public const int mtrl_btn_transparent_bg_color = 2131558478;
 			
-			// aapt resource value: 0x7f0d007b
-			public const int mtrl_chip_background_color = 2131558523;
-			
 			// aapt resource value: 0x7f0d007c
-			public const int mtrl_chip_close_icon_tint = 2131558524;
+			public const int mtrl_chip_background_color = 2131558524;
 			
 			// aapt resource value: 0x7f0d007d
-			public const int mtrl_chip_ripple_color = 2131558525;
+			public const int mtrl_chip_close_icon_tint = 2131558525;
 			
 			// aapt resource value: 0x7f0d007e
-			public const int mtrl_chip_text_color = 2131558526;
+			public const int mtrl_chip_ripple_color = 2131558526;
 			
 			// aapt resource value: 0x7f0d007f
-			public const int mtrl_fab_ripple_color = 2131558527;
+			public const int mtrl_chip_text_color = 2131558527;
+			
+			// aapt resource value: 0x7f0d0080
+			public const int mtrl_fab_ripple_color = 2131558528;
 			
 			// aapt resource value: 0x7f0d004f
 			public const int mtrl_scrim_color = 2131558479;
 			
-			// aapt resource value: 0x7f0d0080
-			public const int mtrl_tabs_colored_ripple_color = 2131558528;
-			
 			// aapt resource value: 0x7f0d0081
-			public const int mtrl_tabs_icon_color_selector = 2131558529;
+			public const int mtrl_tabs_colored_ripple_color = 2131558529;
 			
 			// aapt resource value: 0x7f0d0082
-			public const int mtrl_tabs_icon_color_selector_colored = 2131558530;
+			public const int mtrl_tabs_icon_color_selector = 2131558530;
 			
 			// aapt resource value: 0x7f0d0083
-			public const int mtrl_tabs_legacy_text_color_selector = 2131558531;
+			public const int mtrl_tabs_icon_color_selector_colored = 2131558531;
 			
 			// aapt resource value: 0x7f0d0084
-			public const int mtrl_tabs_ripple_color = 2131558532;
+			public const int mtrl_tabs_legacy_text_color_selector = 2131558532;
 			
 			// aapt resource value: 0x7f0d0085
-			public const int mtrl_text_btn_text_color_selector = 2131558533;
+			public const int mtrl_tabs_ripple_color = 2131558533;
+			
+			// aapt resource value: 0x7f0d0086
+			public const int mtrl_text_btn_text_color_selector = 2131558534;
 			
 			// aapt resource value: 0x7f0d0050
 			public const int mtrl_textinput_default_box_stroke_color = 2131558480;
@@ -4616,11 +4616,11 @@ namespace KaemikaXM.Droid
 			// aapt resource value: 0x7f0d003b
 			public const int switch_thumb_disabled_material_light = 2131558459;
 			
-			// aapt resource value: 0x7f0d0086
-			public const int switch_thumb_material_dark = 2131558534;
-			
 			// aapt resource value: 0x7f0d0087
-			public const int switch_thumb_material_light = 2131558535;
+			public const int switch_thumb_material_dark = 2131558535;
+			
+			// aapt resource value: 0x7f0d0088
+			public const int switch_thumb_material_light = 2131558536;
 			
 			// aapt resource value: 0x7f0d003c
 			public const int switch_thumb_normal_material_dark = 2131558460;
@@ -4633,6 +4633,9 @@ namespace KaemikaXM.Droid
 			
 			// aapt resource value: 0x7f0d003f
 			public const int tooltip_background_light = 2131558463;
+			
+			// aapt resource value: 0x7f0d005a
+			public const int white = 2131558490;
 			
 			static Color()
 			{
@@ -5596,26 +5599,26 @@ namespace KaemikaXM.Droid
 			// aapt resource value: 0x7f020054
 			public const int avd_hide_password = 2130837588;
 			
-			// aapt resource value: 0x7f020152
-			public const int avd_hide_password_1 = 2130837842;
-			
-			// aapt resource value: 0x7f020153
-			public const int avd_hide_password_2 = 2130837843;
-			
 			// aapt resource value: 0x7f020154
-			public const int avd_hide_password_3 = 2130837844;
+			public const int avd_hide_password_1 = 2130837844;
+			
+			// aapt resource value: 0x7f020155
+			public const int avd_hide_password_2 = 2130837845;
+			
+			// aapt resource value: 0x7f020156
+			public const int avd_hide_password_3 = 2130837846;
 			
 			// aapt resource value: 0x7f020055
 			public const int avd_show_password = 2130837589;
 			
-			// aapt resource value: 0x7f020155
-			public const int avd_show_password_1 = 2130837845;
-			
-			// aapt resource value: 0x7f020156
-			public const int avd_show_password_2 = 2130837846;
-			
 			// aapt resource value: 0x7f020157
-			public const int avd_show_password_3 = 2130837847;
+			public const int avd_show_password_1 = 2130837847;
+			
+			// aapt resource value: 0x7f020158
+			public const int avd_show_password_2 = 2130837848;
+			
+			// aapt resource value: 0x7f020159
+			public const int avd_show_password_3 = 2130837849;
 			
 			// aapt resource value: 0x7f020056
 			public const int design_bottom_navigation_item_background = 2130837590;
@@ -6346,11 +6349,11 @@ namespace KaemikaXM.Droid
 			// aapt resource value: 0x7f020148
 			public const int notification_icon_background = 2130837832;
 			
-			// aapt resource value: 0x7f020150
-			public const int notification_template_icon_bg = 2130837840;
+			// aapt resource value: 0x7f020152
+			public const int notification_template_icon_bg = 2130837842;
 			
-			// aapt resource value: 0x7f020151
-			public const int notification_template_icon_low_bg = 2130837841;
+			// aapt resource value: 0x7f020153
+			public const int notification_template_icon_low_bg = 2130837843;
 			
 			// aapt resource value: 0x7f020149
 			public const int notification_tile_bg = 2130837833;
@@ -6359,19 +6362,25 @@ namespace KaemikaXM.Droid
 			public const int notify_panel_notification_icon_bg = 2130837834;
 			
 			// aapt resource value: 0x7f02014b
-			public const int tab_about = 2130837835;
+			public const int splash = 2130837835;
 			
 			// aapt resource value: 0x7f02014c
-			public const int tab_feed = 2130837836;
+			public const int splash_screen = 2130837836;
 			
 			// aapt resource value: 0x7f02014d
-			public const int tooltip_frame_dark = 2130837837;
+			public const int tab_about = 2130837837;
 			
 			// aapt resource value: 0x7f02014e
-			public const int tooltip_frame_light = 2130837838;
+			public const int tab_feed = 2130837838;
 			
 			// aapt resource value: 0x7f02014f
-			public const int xamarin_logo = 2130837839;
+			public const int tooltip_frame_dark = 2130837839;
+			
+			// aapt resource value: 0x7f020150
+			public const int tooltip_frame_light = 2130837840;
+			
+			// aapt resource value: 0x7f020151
+			public const int xamarin_logo = 2130837841;
 			
 			static Drawable()
 			{
@@ -8911,6 +8920,9 @@ namespace KaemikaXM.Droid
 			
 			// aapt resource value: 0x7f0c0006
 			public const int Theme_MediaRouter_LightControlPanel = 2131492870;
+			
+			// aapt resource value: 0x7f0c0202
+			public const int Theme_Splash = 2131493378;
 			
 			// aapt resource value: 0x7f0c0112
 			public const int ThemeOverlay_AppCompat = 2131493138;

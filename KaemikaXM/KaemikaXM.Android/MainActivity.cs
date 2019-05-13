@@ -10,7 +10,7 @@ using Kaemika;
 namespace KaemikaXM.Droid {
 
     // This label determines the application name, overriding the manifest and the project properties sheet
-    [Activity(Label = "Kaemika", Icon = "@mipmap/icon", Theme = "@style/MainTheme", MainLauncher = true, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation)]
+    [Activity(Label = "Kaemika", Icon = "@mipmap/icon", Theme = "@style/MainTheme", ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation)] // MainLauncher = true, replaced by SplashScreen
 
     public class MainActivity : global::Xamarin.Forms.Platform.Android.FormsAppCompatActivity {
 
@@ -38,7 +38,7 @@ namespace KaemikaXM.Droid {
             groups.Add(group2);
 
             var group3 = new KaemikaXM.Pages.ModelInfoGroup("Protocols");
-            foreach (string a in new List<string> { "Samples", "MolarMass", "PBS", "SerialDilution" }) AddAsset(group3, a);
+            foreach (string a in new List<string> { "Samples", "MolarMass", "MixAndSplit", "PBS", "SerialDilution" }) AddAsset(group3, a);
             groups.Add(group3);
 
             var group4 = new KaemikaXM.Pages.ModelInfoGroup("Documentation");

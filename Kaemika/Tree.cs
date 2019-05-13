@@ -501,7 +501,7 @@ namespace Kaemika
         public static double NormalizeVolume(double volume, string unit) {
             if (unit == "L") { return volume;  } // ok
             else if (unit == "mL") { return volume * 1e-3; }
-            else if (unit == "muL") { return volume * 1e-6; }
+            else if (unit == "uL") { return volume * 1e-6; }
             else if (unit == "nL") { return volume * 1e-9; }
             else throw new Error("Invalid volume unit '" + unit + "'");
         }
@@ -764,7 +764,7 @@ namespace Kaemika
             double vol = this.Volume();
             string volUnit;
             if (Math.Round(vol * 1e6) < 1) { vol = vol * 1e9; volUnit = "nL"; } // this test avoids producing '1000nL'
-            else if (Math.Round(vol * 1e3) < 1) { vol = vol * 1e6; volUnit = "muL"; } // this test avoids producing '1000muL'
+            else if (Math.Round(vol * 1e3) < 1) { vol = vol * 1e6; volUnit = "uL"; } // this test avoids producing '1000muL'
             else if (Math.Round(vol) < 1) { vol = vol * 1e3; volUnit = "mL"; } // this test avoids producing '1000mL'
             else { volUnit = "L"; }
             return symbol.Format(style)
@@ -2571,7 +2571,7 @@ namespace Kaemika
             double forTime = ((NumberValue)forTimeValue).value;
             if (forTime < 0) throw new Error("equilibrate '" + name + "' requires a nonnegative number second value");
             Symbol symbol = new Symbol(name);
-            Gui.gui.ChartOutput();
+//            Gui.gui.ChartOutput();
             SampleValue outSample = ProtocolActuator.Equilibrate(symbol, inSample, forTime, netlist, style);
             netlist.Emit(new EquilibrateEntry(outSample, inSample, (NumberValue)forTimeValue));
             return new ValueEnv(symbol, null, outSample, env);

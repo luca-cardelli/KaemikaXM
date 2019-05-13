@@ -652,16 +652,16 @@ namespace KaemikaWPF
         private void btnParse_Click(object sender, EventArgs e) { Exec.Execute_Starter(forkWorker: true, doParse: true); }
         private void btnConstruct_Click(object sender, EventArgs e) { Exec.Execute_Starter(forkWorker: true, doAST: true); }
         private void btnScope_Click(object sender, EventArgs e) { Exec.Execute_Starter(forkWorker: true, doScope: true); }
-        private void btnEval_Click(object sender, EventArgs e) { Exec.Execute_Starter(forkWorker: true, doEval: true); }
+        private void btnEval_Click(object sender, EventArgs e) { Exec.Execute_Starter(forkWorker: true); }
 
         private void comboBox_Export_SelectedIndexChanged(object sender, EventArgs e) {
-            if (comboBox_Export.Text == "Protocol") Exec.Execute_Starter(forkWorker: true, doExport: ExportAs.Protocol);
-            else if (comboBox_Export.Text == "PDMP") Exec.Execute_Starter(forkWorker: true, doExport: ExportAs.PDMP);
-            else if (comboBox_Export.Text == "PDMP Sequential") Exec.Execute_Starter(forkWorker: true, doExport: ExportAs.PDMP_Sequential);
-            else if (comboBox_Export.Text == "GraphViz") Exec.Execute_Starter(forkWorker: true, doExport: ExportAs.GraphViz);
-            else if (comboBox_Export.Text == "CRN (LBS silverlight)") Exec.Execute_Starter(forkWorker: true, doExport: ExportAs.MSRC_LBS);
-            else if (comboBox_Export.Text == "CRN (LBS html5)") Exec.Execute_Starter(forkWorker: true, doExport: ExportAs.MSRC_CRN);
-            else if (comboBox_Export.Text == "ODE (Oscill8)") Exec.Execute_Starter(forkWorker: true, doExport: ExportAs.ODE);
+            if (comboBox_Export.Text == "Protocol") Exec.Execute_Exporter(false, ExportAs.Protocol);
+            else if (comboBox_Export.Text == "PDMP") Exec.Execute_Exporter(false, ExportAs.PDMP);
+            else if (comboBox_Export.Text == "PDMP Sequential") Exec.Execute_Exporter(false, ExportAs.PDMP_Sequential);
+            else if (comboBox_Export.Text == "GraphViz") Exec.Execute_Exporter(false, ExportAs.GraphViz);
+            else if (comboBox_Export.Text == "CRN (LBS silverlight)") Exec.Execute_Exporter(false, ExportAs.MSRC_LBS);
+            else if (comboBox_Export.Text == "CRN (LBS html5)") Exec.Execute_Exporter(false, ExportAs.MSRC_CRN);
+            else if (comboBox_Export.Text == "ODE (Oscill8)") Exec.Execute_Exporter(false, ExportAs.ODE);
             else if (comboBox_Export.Text == "Last simulation state") {
                 string s = Exec.lastReport + Environment.NewLine + Exec.lastState + Environment.NewLine;
                 this.OutputAppendText(s);
@@ -722,10 +722,12 @@ namespace KaemikaWPF
 
         private void radioButton_TraceChemical_CheckedChanged(object sender, EventArgs e)
         {
+            Exec.Execute_Exporter(false, ExportAs.ChemicalTrace);
         }
 
         private void radioButton_TraceComputational_CheckedChanged(object sender, EventArgs e)
         {
+            Exec.Execute_Exporter(false, ExportAs.ComputationalTrace);
         }
 
         private void comboBox_Sub_SelectedIndexChanged(object sender, EventArgs e)
@@ -776,6 +778,8 @@ namespace KaemikaWPF
                 InputSetText(Properties.Resources.Samples);
             } else if (comboBox_Examples.Text == "   Molar Mass") {
                 InputSetText(Properties.Resources.MolarMass);
+            } else if (comboBox_Examples.Text == "   Mix and Split") {
+                InputSetText(Properties.Resources.MixAndSplit);
             } else if (comboBox_Examples.Text == "   PBS") {
                 InputSetText(Properties.Resources.PBS);
             } else if (comboBox_Examples.Text == "   Serial Dilution") {

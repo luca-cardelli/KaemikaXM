@@ -21,12 +21,25 @@ namespace GraphSharp
         public static VectorStd operator /(VectorStd v, float f) { return new VectorStd(v.X / f, v.Y / f); }
 
         public static SKPoint operator +(SKPoint v1, VectorStd v2) { return new SKPoint(v1.X + v2.X, v1.Y + v2.Y); }         // Point Translation
-        public static SKPoint Zoom(SKPoint v, float f) { return new SKPoint(v.X * f, v.Y * f); }                             // Point Zoom
-        public static SKPoint Zoom(float f, SKPoint v) { return new SKPoint(f * v.X, f * v.Y); }
-        public static SKSize Zoom(SKSize s, float f) { return new SKSize(s.Width * f, s.Height * f); }                             // Size Zoom
-        public static SKSize Zoom(float f, SKSize s) { return new SKSize(f * s.Width, f * s.Height); }
         public static VectorStd DifferenceVector(SKPoint v1, SKPoint v2) { return new VectorStd(v1.X - v2.X, v1.Y - v2.Y); }
+    }
 
+    public class Swipe {
+        public float scale;
+        public SKPoint translate;
+        public Swipe (float scale, SKPoint translate) {
+            this.scale = scale;
+            this.translate = translate;
+        }
+        // Apply a transformation to things
+        public static float operator %(Swipe w, float f) { return f * w.scale; }
+        public static SKPoint operator %(Swipe w, SKPoint p) { return new SKPoint(p.X * w.scale + w.translate.X, p.Y * w.scale + w.translate.Y); }
+        public static SKSize operator %(Swipe w, SKSize s) { return new SKSize(s.Width * w.scale, s.Height * w.scale); }
+        public static SKRect operator %(Swipe w, SKRect r) { return new SKRect(r.Left * w.scale + w.translate.X, r.Top * w.scale + w.translate.Y, r.Right * w.scale + w.translate.X, r.Bottom * w.scale + w.translate.Y); }
+        // Modify a transformation
+        public static Swipe operator *(float f, Swipe w) { return new Swipe(f * w.scale, w.translate); }
+        public static Swipe operator +(SKPoint p, Swipe w) { return new Swipe(w.scale, new SKPoint(p.X+w.translate.X, p.Y + w.translate.Y)); }
+        public static Swipe operator *(Swipe w1, Swipe w2) { return new Swipe(w1.scale * w2.scale, new SKPoint(w1.translate.X*w2.scale + w2.translate.X, w1.translate.Y * w2.scale + w2.translate.Y)); }
     }
 
     public class MatrixStd {

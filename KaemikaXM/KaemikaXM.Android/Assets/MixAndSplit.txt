@@ -1,0 +1,13 @@
+//======================================
+// Example of Sample Manipulation
+//======================================
+
+sample A 
+sample D
+
+split B,C := A by 0.5
+equilibrate E := D for 3
+mix F := B with E
+dispose C
+dispose F
+

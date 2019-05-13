@@ -85,6 +85,16 @@ namespace KaemikaWPF
                 form.RestoreInput();
             }
         }
+
+        public override void OutputClear(string text) {
+            OutputSetText("");
+            //### also clear any graph
+        }
+
+        public override void ProcessGraph(string text) {
+            //### 
+        }
+
        
         public override void OutputSetText(string text) {
             if (form.txtTarget.InvokeRequired) {
@@ -110,14 +120,6 @@ namespace KaemikaWPF
                 form.Invoke(d, new object[] { text });
             } else {
                 form.OutputAppendText(text);
-            }
-        }
-        public override void OutputAppendComputation(string chemicalTrace, string computationalTrace, string graphViz) {
-            if (form.txtTarget.InvokeRequired) {
-                StringStringStringArgVoidReturnDelegate d = new StringStringStringArgVoidReturnDelegate(OutputAppendComputation);
-                form.Invoke(d, new object[] { chemicalTrace, computationalTrace, graphViz });
-            } else {
-                form.OutputAppendComputation(chemicalTrace, computationalTrace, graphViz);
             }
         }
 
@@ -270,13 +272,10 @@ namespace KaemikaWPF
             Clipboard.SetText(text);
         }
 
-        public override void TextOutput() { }
-
-        public override void ChartOutput() { }
-
-//###MSAGL        //public override void DrawGraph(Microsoft.Msagl.Drawing.Graph graph) { 
-        //    form.gViewer1.Graph = graph;
-        //}
+        public override void ProcessOutput() {
+            if (form.TraceComputational()) Exec.Execute_Exporter(false, ExportAs.ComputationalTrace);
+            else Exec.Execute_Exporter(false, ExportAs.ChemicalTrace);
+        }
 
     }
 }

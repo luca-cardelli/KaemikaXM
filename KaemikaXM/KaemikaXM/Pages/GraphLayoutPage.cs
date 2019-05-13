@@ -1,6 +1,8 @@
 ﻿using Xamarin.Forms;
 using Xamarin.Essentials;
+using QuickGraph;
 using GraphSharp;
+using Kaemika;
 
 namespace KaemikaXM.Pages {
 
@@ -23,7 +25,7 @@ namespace KaemikaXM.Pages {
             (editor as ICustomTextEdit).SetEditable(false);
 
             plot = new GraphLayoutView() {
-                GraphLayout = new GraphLayout("Graph Layout"),
+                GraphLayout = null,
                 HeightRequest = 300, //####
                 BackgroundColor = Color.White,
             };
@@ -42,16 +44,21 @@ namespace KaemikaXM.Pages {
             bottomBar.Children.Add(stepper, 0, 0);
 
             Grid grid = new Grid { ColumnSpacing = 0 };
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(3, GridUnitType.Star) });
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(startButton.HeightRequest + 2 * bottomBarPadding) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            grid.Children.Add(editor, 0, 0);
-            grid.Children.Add(plot, 0, 1);
+            grid.Children.Add(plot, 0, 0);
+            grid.Children.Add(editor, 0, 1);
             grid.Children.Add(bottomBar, 0, 2);
 
             Content = grid;
+        }
+
+        public void SetTitle(string title) { 
+            this.title = title;
+            MainTabbedPage.theGraphLayoutPage.Title = this.title;
         }
 
         public string GetText() {
@@ -62,14 +69,14 @@ namespace KaemikaXM.Pages {
             (editor as ICustomTextEdit).SetText(text);
         }
 
-        public void SetTitle(string title) { 
-            this.title = title;
-            MainTabbedPage.theGraphLayoutPage.Title = this.title;
+        public void SetGraph(AdjacencyGraph<Vertex, Kaemika.Edge<Vertex>> graph) {
+            (plot as GraphLayoutView).GraphLayout = new GraphLayout("Graph Layout", graph); // This property assignment should trigger redrawing the graph
         }
 
         public override void OnSwitchedTo() {
             MainTabbedPage.OnAnySwitchedTo(this);
             SetTitle(this.title);
+            Gui.gui.GraphUpdate();
         }
 
     }

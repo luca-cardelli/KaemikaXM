@@ -24,8 +24,10 @@ namespace Kaemika
         public abstract void OutputSetText(string text);
         public abstract string OutputGetText();
         public abstract void OutputAppendText(string text);
-        public abstract void OutputAppendComputation(string chemicalTrace, string computationalTrace, string graphViz);
+        public abstract void ProcessOutput();
+        public abstract void ProcessGraph(string graphFamily);  // deliver execution output in graph form
         public abstract void ChartClear(string title);
+        public abstract void OutputClear(string title);
         public abstract void ChartUpdate();
         public abstract void LegendUpdate();
         public abstract string ChartAddSeries(string legend, Color color, Noise noise);
@@ -44,8 +46,5 @@ namespace Kaemika
         public abstract string Solver();
         public abstract void ChartListboxAddSeries(string name);
         public abstract void ClipboardSetText(string text);
-        public abstract void TextOutput();
-        public abstract void ChartOutput();
-        //###MSAGL        public abstract void DrawGraph(Microsoft.Msagl.Drawing.Graph graph);
     }
 }

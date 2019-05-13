@@ -54,6 +54,14 @@ namespace KaemikaXM.Pages {
             date = DateTime.Now;
             datestring = DateTime.Now.ToString();
         }
+        public ModelInfo(string sample) {
+            title = "Untitled";
+            text = sample;
+            modified = false;
+            filename = "";
+            date = DateTime.Now;
+            datestring = DateTime.Now.ToString();
+        }
         public ModelInfo Copy() {
             ModelInfo copy = new ModelInfo();
             copy.title = this.title + " (copy)";
@@ -68,7 +76,23 @@ public class ModelListPage : KaemikaPage {
             await Navigation.PushModalAsync(page);
     }
 
-    private ListView listView;
+        public static string sample =
+@"species a,b @ 1 M
+species c @ 0 M
+
+a + b -> 2c
+
+equilibrate for 10
+";
+        //@"species H₂O @ 1 M
+        //species H₂, O₂ @ 0 M
+
+        //2H₂O -> 2H₂ + O₂
+
+        //equilibrate for 10
+        //";
+
+        private ListView listView;
         public ModelListPage() {
             Title = "My Networks";
             Icon = "tab_feed.png";
@@ -89,7 +113,7 @@ public class ModelListPage : KaemikaPage {
             ToolbarItems.Add(
                 new ToolbarItem("Add", "icons8plus32.png",  
                     async () => {
-                        MainTabbedPage.theModelEntryPage.SetModel(new ModelInfo(), editable:true);
+                        MainTabbedPage.theModelEntryPage.SetModel(new ModelInfo(sample), editable:true);
                         MainTabbedPage.SwitchToTab(MainTabbedPage.theModelEntryPageNavigation);
                     }));
 

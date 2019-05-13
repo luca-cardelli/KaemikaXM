@@ -444,7 +444,7 @@ namespace Kaemika
             return format;
         }
 
-        public List<Symbol> Species() {
+        public List<Symbol> AllSpecies() {
             List<Symbol> speciesList = new List<Symbol> { };
             foreach (Entry entry in this.entries) {
                 if (entry is SpeciesEntry) speciesList.Add(((SpeciesEntry)entry).species.symbol);

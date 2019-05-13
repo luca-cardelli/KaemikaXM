@@ -191,9 +191,9 @@ namespace KaemikaWPF.Properties {
         ///	species A&apos;⁻ @ molarity(A⁻)M
         ///	
         ///	// A&apos;⁺ tracks A⁺ by r
-        ///	A⁺ -&gt;{r} A⁺ + A&apos;⁺;   A&apos;⁺ -&gt;{r} # 
+        ///	A⁺ -&gt;{r} A⁺ + A&apos;⁺;   A&apos;⁺ -&gt;{r} #
         ///	
-        /// [rest of string was truncated]&quot;;.
+        ///	 [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Derivative2 {
             get {
@@ -353,6 +353,33 @@ namespace KaemikaWPF.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to //======================================
+        ///// Example of Sample Manipulation
+        /////======================================
+        ///
+        ///sample A 
+        ///sample D
+        ///
+        ///split B,C := A by 0.5
+        ///equilibrate E := D for 3
+        ///mix F := B with E
+        ///dispose C
+        ///dispose F
+        ///
+        ///// try:  Play button to execute
+        ///// then: Output Page &gt; Bottom Menu 
+        /////       &gt; Protocol State Graph
+        ///// then: copy to clipboard (top right)
+        ///// and paste in any GraphViz viewer, e.g.
+        ///// https://dreampuf.github.io/GraphvizOnline.
+        /// </summary>
+        internal static string MixAndSplit {
+            get {
+                return ResourceManager.GetString("MixAndSplit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
         ///// Assigning sample concentration 
         ///// via Molar Mass
         /////======================================
@@ -450,9 +477,9 @@ namespace KaemikaWPF.Properties {
         ///   else
         ///      // new intermediate species c, initially 0
         ///      species c @ 0M
-        ///	  // plot (report) at most 3 of those
+        ///      // plot (report) at most 3 of those
         ///      if n &lt;= 3 then report c end
-        ///	  // b [rest of string was truncated]&quot;;.
+        ///     [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string RingOscillator {
             get {
@@ -520,13 +547,13 @@ namespace KaemikaWPF.Properties {
         ///
         ///network Sine(species S⁺ S⁻, number freq ampl phase) {
         ///    // initialize parameter species S⁺,S⁻ 
-        ///	// based on desired ampl and phase
-        ///	// pos(n) == if n&gt;=0 then n else 0 end
+        ///    // based on desired ampl and phase
+        ///    // pos(n) == if n&gt;=0 then n else 0 end
         ///    number S₀ = ampl*sin(phase)	
         ///    amount S⁺ @ pos(S₀) M		
         ///    amount S⁻ @ pos(-S₀) M
-        ///	// initialize also new local species  
-        ///	// C⁺,C⁻ that trace the cosine [rest of string was truncated]&quot;;.
+        ///    // initialize also new local species  
+        ///    // C⁺,C⁻ that trac [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string SineWave {
             get {
@@ -561,7 +588,7 @@ namespace KaemikaWPF.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to //======================================
-        ///// Simulating a reaction network
+        ///// Build a reaction network
         /////======================================
         ///
         ///// Declare some species and
@@ -583,10 +610,11 @@ namespace KaemikaWPF.Properties {
         ///
         ///equilibrate for 2*pi
         ///
-        ///// Optionally display noise (μ, ±σ, ...)
+        ///// Optionally select noise (μ, ±σ, ...)
         ///
-        ///// Press Play
-        ///.
+        /////----------------------
+        ///// Press the Play button
+        /////-------- [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string StartHere {
             get {

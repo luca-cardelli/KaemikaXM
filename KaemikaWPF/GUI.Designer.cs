@@ -299,6 +299,7 @@
             "►Protocols",
             "   Samples",
             "   Molar Mass",
+            "   Mix and Split",
             "   PBS",
             "   Serial Dilution",
             "►Documentation",

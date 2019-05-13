@@ -34,7 +34,6 @@ namespace KaemikaXM.Pages {
         public static ModelListPage theModelListPage;                     // this page is never pushed, there is only one
         public static ModelEntryPage theModelEntryPage;                  // this page is never pushed, there is only one
         public static OutputPage theOutputPage;                              // this page is never pushed, there is only one
-        public static GraphLayoutPage theGraphLayoutPage;                       // this page is never pushed, there is only one
         public static ChartPage theChartPage;                                 // this page is never pushed, there is only one
 
         public static NavigationPage theDocListPageNavigation;
@@ -58,23 +57,23 @@ namespace KaemikaXM.Pages {
             theModelListPage = new ModelListPage();
             theModelEntryPage = new ModelEntryPage();
             theOutputPage = new OutputPage();
-            theGraphLayoutPage = new GraphLayoutPage();
             theChartPage = new ChartPage();
 
             theDocListPageNavigation = new NavigationPage(theDocListPage) { Title = "Tutorial", Icon = "icons8usermanual100.png" };
             theModelListPageNavigation = new NavigationPage(theModelListPage) { Title = "Networks", Icon = "icons8openedfolder96.png" };
             theModelEntryPageNavigation = new NavigationPage(theModelEntryPage) { Title = "Network", Icon = "icons8mindmap96.png" };
             theOutputPageNavigation = new NavigationPage(theOutputPage) { Title = "Output", Icon = "icons8truefalse100.png" };
-            theGraphLayoutPageNavigation = new NavigationPage(theGraphLayoutPage) { Title = "Graph", Icon = "icons8activedirectoryfilled100.png" };
             theChartPageNavigation = new NavigationPage(theChartPage) { Title = "Chart", Icon = "icons8combochart48.png" };
+
+            // disable left-right swiping of pages
+            this.On<Xamarin.Forms.PlatformConfiguration.Android>().SetIsSwipePagingEnabled(false);
 
             // To change tab order, just shuffle these Add calls around.
             // with more than 5 tabs the app will must crash on load
             Children.Add(theDocListPageNavigation);
             Children.Add(theModelListPageNavigation);
             Children.Add(theModelEntryPageNavigation);
-      //      Children.Add(theOutputPageNavigation);
-            Children.Add(theGraphLayoutPageNavigation);
+            Children.Add(theOutputPageNavigation);
             Children.Add(theChartPageNavigation);
         }
 

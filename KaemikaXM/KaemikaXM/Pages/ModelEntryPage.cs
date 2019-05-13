@@ -83,26 +83,29 @@ namespace KaemikaXM.Pages {
             };
             return button;
         }
+
+        public void StartAction(bool forkWorker, bool switchToChart, bool switchToOutput) {
+            if (Gui.gui.StopEnabled() && !Gui.gui.ContinueEnabled()) return; // we are already running a simulation, don't start a concurrent one
+            if (Gui.gui.ContinueEnabled()) {
+                ProtocolActuator.continueExecution = true; // make start button work as continue button
+                MainTabbedPage.SwitchToTab(MainTabbedPage.theChartPageNavigation);
+            } else { // do a start
+                MainTabbedPage.theOutputPage.SetModel(modelInfo);
+                MainTabbedPage.theChartPage.SetModel(modelInfo);
+                Exec.Execute_Starter(forkWorker); // This is where it all happens
+                if (switchToChart) MainTabbedPage.SwitchToTab(MainTabbedPage.theChartPageNavigation);
+                else if (switchToOutput) MainTabbedPage.SwitchToTab(MainTabbedPage.theOutputPageNavigation);
+            }
+        }
             
-        public ImageButton StartButton() {
+        public ImageButton StartButton(bool switchToChart, bool switchToOutput) {
             ImageButton button = new ImageButton() {
                 Source = "icons8play40.png",
                 HeightRequest = 40,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
                 BackgroundColor = Color.FromHex(secondBarColor),
             };
-            button.Clicked += async (object sender, EventArgs e) => {
-                if (Gui.gui.StopEnabled() && !Gui.gui.ContinueEnabled()) return; // we are already running a simulation, don't start a concurrent one
-                if (Gui.gui.ContinueEnabled()) {
-                    ProtocolActuator.continueExecution = true; // make start button work as continue button
-                    MainTabbedPage.SwitchToTab(MainTabbedPage.theChartPageNavigation);
-                } else { // do a start
-                    MainTabbedPage.theOutputPage.SetTitle(modelInfo.title);
-                    MainTabbedPage.theChartPage.SetTitle(modelInfo.title);
-                    Exec.Execute_Starter(forkWorker: true, doEval: true); // This is where it all happens
-                    MainTabbedPage.SwitchToTab(MainTabbedPage.theChartPageNavigation);
-                }
-            };
+            button.Clicked += async (object sender, EventArgs e) => { StartAction(forkWorker: true, switchToChart, switchToOutput); };
             return button;
         }
 
@@ -230,7 +233,7 @@ namespace KaemikaXM.Pages {
             noisePicker = NoisePicker();
             subPicker = SubPicker(); subPicker.IsVisible = false;
             supPicker = SupPicker(); supPicker.IsVisible = false;
-            startButton = StartButton();
+            startButton = StartButton(switchToChart: true, switchToOutput: false);
             stepper = TextSizeStepper(editor as ICustomTextEdit);
 
             int bottomBarPadding = 4;

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microcharts;
 using KaemikaXM.Pages;
+using QuickGraph;
 
 namespace Kaemika {
 
@@ -68,10 +69,12 @@ namespace Kaemika {
             });
         }
 
-         public override void OutputAppendComputation(string chemicalTrace, string computationalTrace, string graphViz) {
-            Xamarin.Forms.Device.BeginInvokeOnMainThread(() => {
-                MainTabbedPage.theOutputPage.AppendTraceComputational(chemicalTrace, computationalTrace, graphViz);
-            });
+        public override void ProcessOutput() {
+            MainTabbedPage.theOutputPage.ProcessOutput();
+        }
+
+        public override void ProcessGraph(string graphFamily) {
+            MainTabbedPage.theOutputPage.ProcessGraph(graphFamily);
         }
 
         // CHART
@@ -86,12 +89,13 @@ namespace Kaemika {
         public override void ChartUpdate() {
             VisibilityRestore();
             MainTabbedPage.theChartPage.SetChart(
-                new Chart(title, MainTabbedPage.theModelEntryPage.modelInfo.title, seriesList, timecourse, seriesIndex));
+                new Chart(title, MainTabbedPage.theModelEntryPage.modelInfo.title, seriesList, timecourse),
+                MainTabbedPage.theModelEntryPage.modelInfo);
         }
 
         public void ChartUpdateLandscape() {
             MainTabbedPage.theChartPageLandscape.SetChart(
-                new Chart(title, MainTabbedPage.theModelEntryPage.modelInfo.title, seriesList, timecourse, seriesIndex));
+                new Chart(title, MainTabbedPage.theModelEntryPage.modelInfo.title, seriesList, timecourse));
         }
 
         public override void LegendUpdate() {
@@ -117,6 +121,11 @@ namespace Kaemika {
             this.title = title;
             ChartUpdate();
             LegendUpdate();
+        }
+
+        public override void OutputClear(string title) {
+            MainTabbedPage.theOutputPage.OutputClear();
+            this.title = title;
         }
 
         private void UpdateIndexes() {
@@ -271,14 +280,5 @@ namespace Kaemika {
 
         public override void ClipboardSetText(string text) { }
 
-        public override void TextOutput() {
-            if (MainTabbedPage.theMainTabbedPage.CurrentPage != MainTabbedPage.theOutputPageNavigation && IsChartClear())
-                MainTabbedPage.SwitchToTab(MainTabbedPage.theOutputPageNavigation);
-        }
-
-        public override void ChartOutput() {
-            if (MainTabbedPage.theMainTabbedPage.CurrentPage != MainTabbedPage.theChartPageNavigation)
-                MainTabbedPage.SwitchToTab(MainTabbedPage.theChartPageNavigation);
-        }
     }
 }

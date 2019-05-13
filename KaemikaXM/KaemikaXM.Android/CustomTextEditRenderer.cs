@@ -130,6 +130,7 @@ namespace KaemikaXM.Droid {
             this.SetTextSize(Android.Util.ComplexUnitType.Dip, CustomTextEditView.defaultFontSize);
             if (typeface == null) typeface = Typeface.CreateFromAsset(Context.Assets, "DroidSansMono.ttf"); // "CutiveMono-Regular.ttf"
             this.SetTypeface(typeface, TypefaceStyle.Bold);
+            this.SetBackgroundColor(Android.Graphics.Color.White); // by default it is transparent and shows through overlapping views
         }
         protected override void Dispose(bool disposing)  {
             this.view.ClearEditText();

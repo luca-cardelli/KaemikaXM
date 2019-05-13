@@ -7,15 +7,13 @@
   "targets": {
     ".NETStandard,Version=v2.0": {},
     ".NETStandard,Version=v2.0/": {
-      "Kaemika/1.0.0": {
+      "QuickGraphStd/1.0.0": {
         "dependencies": {
-          "CalithaGOLD": "1.0.0",
           "NETStandard.Library": "2.0.3",
-          "Oslo": "1.0.0",
-          "QuickGraphStd": "1.0.0"
+          "SkiaSharp": "1.68.0"
         },
         "runtime": {
-          "Kaemika.dll": {}
+          "QuickGraphStd.dll": {}
         }
       },
       "Microsoft.NETCore.Platforms/1.1.0": {},
@@ -31,29 +29,11 @@
             "fileVersion": "1.68.0.0"
           }
         }
-      },
-      "CalithaGOLD/1.0.0": {
-        "runtime": {
-          "CalithaGOLD.dll": {}
-        }
-      },
-      "Oslo/1.0.0": {
-        "runtime": {
-          "Oslo.dll": {}
-        }
-      },
-      "QuickGraphStd/1.0.0": {
-        "dependencies": {
-          "SkiaSharp": "1.68.0"
-        },
-        "runtime": {
-          "QuickGraphStd.dll": {}
-        }
       }
     }
   },
   "libraries": {
-    "Kaemika/1.0.0": {
+    "QuickGraphStd/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
@@ -78,21 +58,6 @@
       "sha512": "sha512-ptuxAKk9FiClNnAgWM8hVMCYw/B0hUJWZ8W6efnIAtJmJn/Xl4jvxxDF5WOqfQYCLVzxXw5gvBPVxvTLblFp0g==",
       "path": "skiasharp/1.68.0",
       "hashPath": "skiasharp.1.68.0.nupkg.sha512"
-    },
-    "CalithaGOLD/1.0.0": {
-      "type": "project",
-      "serviceable": false,
-      "sha512": ""
-    },
-    "Oslo/1.0.0": {
-      "type": "project",
-      "serviceable": false,
-      "sha512": ""
-    },
-    "QuickGraphStd/1.0.0": {
-      "type": "project",
-      "serviceable": false,
-      "sha512": ""
     }
   }
 }

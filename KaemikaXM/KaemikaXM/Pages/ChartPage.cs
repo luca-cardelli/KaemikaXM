@@ -46,6 +46,7 @@ namespace KaemikaXM.Pages
 
         private string title = "";
         private Microcharts.ChartView chartView;
+        private ModelInfo currentModelInfo;
         public Picker noisePicker;
         private ImageButton stopButton;
         private CollectionView legendView;
@@ -76,7 +77,7 @@ namespace KaemikaXM.Pages
 
             stopButton = StopButton();
             noisePicker = MainTabbedPage.theModelEntryPage.NoisePicker();
-            startButton = MainTabbedPage.theModelEntryPage.StartButton();
+            startButton = MainTabbedPage.theModelEntryPage.StartButton(switchToChart:false, switchToOutput:false);
 
             int bottomBarPadding = 4;
             Grid bottomBar = new Grid { RowSpacing = 0, Padding = bottomBarPadding };
@@ -105,13 +106,14 @@ namespace KaemikaXM.Pages
             Content = grid;
         }
 
-        public void SetChart(Microcharts.Chart chart) {
+        public void SetChart(Microcharts.Chart chart, ModelInfo modelInfo) {
             chartView.Chart = chart;
         }
 
-        public void SetTitle(string title) { 
-            this.title = title;
+        public void SetModel(ModelInfo modelInfo) { 
+            this.title = modelInfo.title;
             MainTabbedPage.theChartPage.Title = this.title;
+            currentModelInfo = modelInfo;
         }
 
         public void SetLegend(List<Microcharts.Series> legend) {
@@ -185,8 +187,9 @@ namespace KaemikaXM.Pages
 
         public override void OnSwitchedTo() {
             MainTabbedPage.OnAnySwitchedTo(this);
-            SetTitle(this.title);
             MainTabbedPage.theModelEntryPage.SyncNoisePicker(noisePicker);
+            if (currentModelInfo != MainTabbedPage.theModelEntryPage.modelInfo) // forkWorker: we can compute the chart concurrently
+                MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: false, switchToOutput: false);
             Gui.gui.ChartUpdate();
         }
 

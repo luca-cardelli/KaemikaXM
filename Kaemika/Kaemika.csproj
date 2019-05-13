@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CalithaGOLD\CalithaGOLD.csproj" />
     <ProjectReference Include="..\Oslo\Oslo.csproj" />
+    <ProjectReference Include="..\QuickGraphStd\QuickGraphStd.csproj" />
   </ItemGroup>
 
 </Project>
