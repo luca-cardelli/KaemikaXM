@@ -449,9 +449,11 @@ namespace Kaemika {
                        (reduction.Production() == "<Base Exp> ::= false")) {
                 return new BoolLiteral(bool.Parse(reduction.Terminal(0)));
             } else  if (reduction.Production()       == "<Base Exp> ::= Integer") {
-                return new NumberLiteral(int.Parse(reduction.Terminal(0)));
+                try { return new NumberLiteral(int.Parse(reduction.Terminal(0))); } catch { throw new Error("Invalid number: " + reduction.Terminal(0)); }
             } else  if (reduction.Production()       == "<Base Exp> ::= Float") {
-                return new NumberLiteral(double.Parse(reduction.Terminal(0)));
+                try { return new NumberLiteral(double.Parse(reduction.Terminal(0))); } catch { throw new Error("Invalid number: " + reduction.Terminal(0)); }
+            } else  if (reduction.Production()       == "<Base Exp> ::= Double") {
+                try { return new NumberLiteral(double.Parse(reduction.Terminal(0), System.Globalization.NumberStyles.AllowDecimalPoint | System.Globalization.NumberStyles.AllowExponent)); } catch { throw new Error("Invalid number: " + reduction.Terminal(0)); }
             } else  if (reduction.Production()       == "<Base Exp> ::= QuotedString") {
                 return new StringLiteral(ParseString(reduction.Terminal(0)));
             } else  if (reduction.Production()       == "<Base Exp> ::= fun <Fun>") {

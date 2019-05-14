@@ -9,6 +9,7 @@
 Id        = {Letter}({AlphaNumeric}|'_'|{Superscripts and Subscripts}|'')*           ! Letter followed by alphanumerics or single-quote, underscore, Unicode sup/sub
 Integer   = {Digit}+
 Float     = {Digit}+ '.' {Digit}+
+Double    = {Digit}+ ('.' {Digit}+)? [Ee] [+-]? {Digit}+
 {StringChar} = {Printable} - ["\]
 QuotedString = '"' ({StringChar} | '\'{Printable})* '"'
           
@@ -58,6 +59,7 @@ Comment Block @= { Nesting = All }
                     | 'sample' <Ids>               ! samples are containers that have volume and temperature, populated with species that have concentrations
                     | 'function' <Ids>             ! functions can receive and return values, species, functions, and networks  
                     | 'network' <Ids>              ! networks can receive values, species, functions, and networks, and return nothing                  
+
 <Ids>           ::= <Ids> Id
                     | Id
                                           
@@ -133,10 +135,8 @@ Comment Block @= { Nesting = All }
 <Expression>    ::=  <Or Exp>                                               ! see below
                  
 <Base Exp>      ::= <Fun Instance> 
-                    | 'true'                                                ! bool literal
-                    | 'false'                                               ! bool literal
-                    | Integer                                               ! integer literal
-                    | Float                                                 ! double floating point literal. use int(n) to round to integers
+                    | 'true' | 'false'                                      ! bool literal
+                    | Integer | Float | Double                              ! double floating point literal. use int(n) to round to integers
                     | QuotedString                                          ! double-quoted string literal. use \" and \\ to represent " and \
                     | 'if' <Expression> 'then' <Expression> <Else Exp>      ! no statements allowed inside if-expressions: uses if-statements for that
                     | 'fun' <Fun>                                           ! function abstraction
