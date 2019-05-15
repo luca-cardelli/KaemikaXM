@@ -262,10 +262,14 @@ namespace Kaemika {
                 Vertex reaction = new Vertex_Rectangle(new SKSize(0.5f, 0.5f), true); // size proportional to label text height
                 graph.AddVertex(reaction);
 
-                //foreach (Symbol reactant in r.reactants)
-                //    GraphAddEdge(graph, names[reactant.Format(style)], reaction, null, Directed.Pointy);
-                //foreach (Symbol product in r.products)
-                //   GraphAddEdge(graph, reaction, names[product.Format(style)], null, Directed.Solid);
+                //foreach (Symbol reactant in r.reactants) {
+                //    int n = r.Stoichiometry(reactant, r.reactants);
+                //    GraphAddEdge(graph, names[reactant.Format(style)], reaction, (n==1) ? null : n.ToString(), Directed.Pointy);
+                //}
+                //foreach (Symbol product in r.products) {
+                //    int n = r.Stoichiometry(product, r.products);
+                //    GraphAddEdge(graph, reaction, names[product.Format(style)], (n == 1) ? null : n.ToString(), Directed.Solid);
+                //}
 
                 foreach (Symbol reactant in r.reactants) {
                     Vertex incoming = new Vertex_Routing();

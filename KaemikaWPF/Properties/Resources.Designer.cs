@@ -203,6 +203,31 @@ namespace KaemikaWPF.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to //======================================
+        ///// Enzyme Kinetics
+        /////======================================
+        ///
+        /////======================================
+        ///// Mass Action Kinetics
+        /////======================================
+        ///
+        ///number on = 1      // enzyme-to-substrate binding rate
+        ///number off = 1     // enzyme-to-substrate unbinding rate
+        ///number cat = 1     // product production rate
+        ///number Etot = 1    // initial and total amount of enzyme
+        ///
+        ///// Enzyme, Substrate, Product, 
+        ///// and Enzyme-Substrate complex:
+        ///
+        ///speci [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string EnzymeKinetics {
+            get {
+                return ResourceManager.GetString("EnzymeKinetics", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
         ///// Building and using Flows
         /////======================================
         ///
@@ -311,9 +336,9 @@ namespace KaemikaWPF.Properties {
         ///Id        = {Letter}({AlphaNumeric}|&apos;_&apos;|{Superscripts and Subscripts}|&apos;&apos;)*           ! Letter followed by alphanumerics or single-quote, underscore, Unicode sup/sub
         ///Integer   = {Digit}+
         ///Float     = {Digit}+ &apos;.&apos; {Digit}+
+        ///Double    = {Digit}+ (&apos;.&apos; {Digit}+)? [Ee] [+-]? {Digit}+
         ///{StringChar} = {Printable} - [&quot;\]
-        ///QuotedString = &apos;&quot;&apos; ({StringChar} | &apos;\&apos;{Printable})* &apos;&quot;&apos;
-        ///           [rest of string was truncated]&quot;;.
+        ///QuotedStr [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string KaemikaGrammar {
             get {
@@ -365,12 +390,7 @@ namespace KaemikaWPF.Properties {
         ///dispose C
         ///dispose F
         ///
-        ///// try:  Play button to execute
-        ///// then: Output Page &gt; Bottom Menu 
-        /////       &gt; Protocol State Graph
-        ///// then: copy to clipboard (top right)
-        ///// and paste in any GraphViz viewer, e.g.
-        ///// https://dreampuf.github.io/GraphvizOnline.
+        ///.
         /// </summary>
         internal static string MixAndSplit {
             get {

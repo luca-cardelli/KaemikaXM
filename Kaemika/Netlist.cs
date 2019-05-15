@@ -211,8 +211,10 @@ namespace Kaemika
         }
         public override string Format(Style style) {
             if (style.dataFormat == "symbol") return "mix " + outSample.symbol.Format(style);
-            else if (style.dataFormat == "header") return "mix " + outSample.symbol.Format(style) + " := " + inSample1.symbol.Format(style) + " with " + inSample2.symbol.Format(style) + " => " + outSample.Format(style);
-            else if (style.dataFormat == "full") return "mix " + outSample.symbol.Format(style) + " := " + inSample1.symbol.Format(style) + " with " + inSample2.symbol.Format(style) + " => " + outSample.Format(style);
+            else if (style.dataFormat == "header") return "mix " + outSample.symbol.Format(style) + " := " + inSample1.symbol.Format(style) + " with " + inSample2.symbol.Format(style) + Environment.NewLine
+                    + " => " + outSample.Format(style);
+            else if (style.dataFormat == "full") return "mix " + outSample.symbol.Format(style) + " := " + inSample1.symbol.Format(style) + " with " + inSample2.symbol.Format(style) + Environment.NewLine
+                    + " => " + outSample.Format(style);
             else return "unknown format: " + style.dataFormat;
         }
     }
@@ -230,8 +232,10 @@ namespace Kaemika
         }
         public override string Format(Style style) {
             if (style.dataFormat == "symbol") return "split " + outSample1.symbol.Format(style) + ", " + outSample2.symbol.Format(style);
-            else if (style.dataFormat == "header") return "split " + outSample1.symbol.Format(style) + ", " + outSample2.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " by " + proportion.Format(style) + " => " + outSample1.Format(style) + ", " + outSample2.Format(style);
-            else if (style.dataFormat == "full") return "split " + outSample1.symbol.Format(style) + ", " + outSample2.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " by " + proportion.Format(style) + " => " + outSample1.Format(style) + ", " + outSample2.Format(style);
+            else if (style.dataFormat == "header") return "split " + outSample1.symbol.Format(style) + ", " + outSample2.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " by " + proportion.Format(style) + Environment.NewLine
+                    + " => " + outSample1.Format(style) + ", " + outSample2.Format(style);
+            else if (style.dataFormat == "full") return "split " + outSample1.symbol.Format(style) + ", " + outSample2.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " by " + proportion.Format(style) + Environment.NewLine
+                    + " => " + outSample1.Format(style) + ", " + outSample2.Format(style);
             else return "unknown format: " + style.dataFormat;
         }
     }
@@ -247,8 +251,10 @@ namespace Kaemika
         }
         public override string Format(Style style) {
             if (style.dataFormat == "symbol") return "equilibrate " + outSample.symbol.Format(style);
-            else if (style.dataFormat == "header") return "equilibrate " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " for " + time.Format(style) + " => " + outSample.Format(style);
-            else if (style.dataFormat == "full") return "equilibrate " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " for " + time.Format(style) + " => " + outSample.Format(style);
+            else if (style.dataFormat == "header") return "equilibrate " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " for " + time.Format(style) + Environment.NewLine
+                    + " => " + outSample.Format(style);
+            else if (style.dataFormat == "full") return "equilibrate " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " for " + time.Format(style) + Environment.NewLine
+                    + " => " + outSample.Format(style);
             else return "unknown format: " + style.dataFormat;
         }
     }
@@ -262,8 +268,10 @@ namespace Kaemika
         }
         public override string Format(Style style) {
             if (style.dataFormat == "symbol") return "transfer " + outSample.symbol.Format(style);
-            else if (style.dataFormat == "header") return "transfer " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style)  + " => " + outSample.Format(style);
-            else if (style.dataFormat == "full") return "transfer " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " => " + outSample.Format(style);
+            else if (style.dataFormat == "header") return "transfer " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style) + Environment.NewLine
+                    + " => " + outSample.Format(style);
+            else if (style.dataFormat == "full") return "transfer " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style) + Environment.NewLine
+                    + " => " + outSample.Format(style);
             else return "unknown format: " + style.dataFormat;
         }
     }
@@ -511,6 +519,9 @@ namespace Kaemika
                     }
                 }
             }
+            //string s = "Relevant Reactions for sample " + sample.Format(style) + ":" + Environment.NewLine;       
+            //foreach (ReactionValue r in reactionList) s += r.Format(style) + Environment.NewLine;
+            //Gui.Log(s);
             return reactionList;
         }
 

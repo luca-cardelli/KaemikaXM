@@ -286,6 +286,7 @@
             "►Basic",
             "   RingOscillator",
             "   Reactions",
+            "   Enzyme Kinetics",
             "   Approximate Majority",
             "   2AM Oscillator",
             "   Transporters",

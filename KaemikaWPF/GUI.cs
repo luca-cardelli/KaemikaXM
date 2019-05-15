@@ -752,6 +752,8 @@ namespace KaemikaWPF
                 InputSetText(Properties.Resources.RingOscillator);
             } else if (comboBox_Examples.Text == "   Reactions") {
                 InputSetText(Properties.Resources.Reactions);
+            } else if (comboBox_Examples.Text == "   Enzyme Kinetics") {
+                InputSetText(Properties.Resources.EnzymeKinetics);
             } else if (comboBox_Examples.Text == "   Approximate Majority") {
                 InputSetText(Properties.Resources.ApproximateMajority);
             } else if (comboBox_Examples.Text == "   2AM Oscillator") {

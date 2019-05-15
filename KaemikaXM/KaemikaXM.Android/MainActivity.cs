@@ -30,7 +30,7 @@ namespace KaemikaXM.Droid {
             var groups = new List<KaemikaXM.Pages.ModelInfoGroup>();
 
             var group1 = new KaemikaXM.Pages.ModelInfoGroup("Basic Models");
-            foreach (string a in new List<string> { "StartHere", "RingOscillator", "Reactions", "ApproximateMajority", "2AM Oscillator", "Transporters" }) AddAsset(group1, a);
+            foreach (string a in new List<string> { "StartHere", "RingOscillator", "Reactions", "EnzymeKinetics", "ApproximateMajority", "2AM Oscillator", "Transporters" }) AddAsset(group1, a);
             groups.Add(group1);
 
             var group2 = new KaemikaXM.Pages.ModelInfoGroup("Differential Signals");
