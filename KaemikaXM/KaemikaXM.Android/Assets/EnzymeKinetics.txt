@@ -27,7 +27,8 @@ ES ->{cat} E + P
 
 // Plot P production in mass action (MA):
 
-report E,S,ES,P as "P (MA)"
+report E as "E (MA)", S as "S (MA)",
+   ES as "ES (MA)", P as "P (MA)"
 
 //======================================
 // Michaelis-Menten Kinetics
@@ -64,7 +65,7 @@ E' + S' -> {{ MM(S') }} E' + P'
 // the MM rate law, hence can deviate from mass action:
 
 report MM(S') as "Michaelis-Menten rate", 
-  E',S',P' as "P (M-M)"
+  E' as "E (M-M)", S' as "S (M-M)", P' as "P (M-M)"
 
 // Reactions in the previous mass action system are 
 // progressing by "true" mass action, and the values
@@ -94,7 +95,7 @@ amount E'' @ Etot M
 amount S'' @ 10M
 amount P'' @0M
 
-report E'',S'',P'' as "P (Morr)"
+report E'' as "E (Morr)", S'' as "S (Morr)", P'' as "P (Morr)"
 
 // and with a single overall reaction 
 // with Morrison(S'') as rate kinetics:
@@ -107,7 +108,7 @@ E'' + S'' -> {{ Morrison(S'') }} E'' + P''
 report Morrison(S'') as "Morrison rate"
 
 // Now we can directly compare the "true" mass action 
-// kinetics to the two approximations; which one is best 
-// depends on the ratio between Vmax and KM
+// kinetics to the two approximations; which one is 
+// best depends on the ratio between Vmax and KM
 
 equilibrate for 30

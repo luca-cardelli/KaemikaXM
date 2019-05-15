@@ -10,9 +10,11 @@
       "KaemikaXM/1.0.0": {
         "dependencies": {
           "CalithaGOLD": "1.0.0",
+          "GraphSharpStdSubset": "1.0.0",
           "Kaemika": "1.0.0",
           "NETStandard.Library": "2.0.3",
           "Oslo": "1.0.0",
+          "QuickGraphStd": "1.0.0",
           "SkiaSharp.Views.Forms": "1.68.0",
           "Xamarin.Essentials": "1.0.1",
           "Xamarin.Forms": "3.6.0.264807"
@@ -87,10 +89,19 @@
           "CalithaGOLD.dll": {}
         }
       },
+      "GraphSharpStdSubset/1.0.0": {
+        "dependencies": {
+          "QuickGraphStd": "1.0.0"
+        },
+        "runtime": {
+          "GraphSharpStdSubset.dll": {}
+        }
+      },
       "Kaemika/1.0.0": {
         "dependencies": {
           "CalithaGOLD": "1.0.0",
-          "Oslo": "1.0.0"
+          "Oslo": "1.0.0",
+          "QuickGraphStd": "1.0.0"
         },
         "runtime": {
           "Kaemika.dll": {}
@@ -99,6 +110,14 @@
       "Oslo/1.0.0": {
         "runtime": {
           "Oslo.dll": {}
+        }
+      },
+      "QuickGraphStd/1.0.0": {
+        "dependencies": {
+          "SkiaSharp": "1.68.0"
+        },
+        "runtime": {
+          "QuickGraphStd.dll": {}
         }
       }
     }
@@ -163,12 +182,22 @@
       "serviceable": false,
       "sha512": ""
     },
+    "GraphSharpStdSubset/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
     "Kaemika/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
     },
     "Oslo/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "QuickGraphStd/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
