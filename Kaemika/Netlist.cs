@@ -414,7 +414,7 @@ namespace Kaemika
             return result.ToArray();
         }
 
-        // Gillespie (eq 21): Linear noise appoximation is valid over limited times
+        // Gillespie (eq 21): Linear noise appoximation is valid over limited times 
         // Performance critical inner loop
         private static double[][] w = null;                           // if indexed like this, OSLO will not copy it again on new Matrix(w)
         private Matrix Drift(double[] actionA) {                      // pass an array to avoid expensive Vector accesses
