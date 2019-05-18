@@ -250,8 +250,9 @@ namespace Kaemika {
             return continueButtonIsEnabled;
         }
 
+        public static string currentSolver = "OSLO RK547M"; // "OSLO GearBDF" or "OSLO RK547M"
         public override string Solver() {
-            return "OSLO RK547M";    // ###
+            return currentSolver;
         }
 
         private static Dictionary<string, Dictionary<string, bool>> visibilityCache = 

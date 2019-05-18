@@ -1,113 +1,168 @@
-//======================================
-// Enzyme Kinetics
-//======================================
+//--------------------------------------------------//
+//------------------- PID Controller ------------------//
+//--------------------------------------------------//
 
-//======================================
-// Mass Action Kinetics
-//======================================
 
-number on = 1      // enzyme-to-substrate binding rate
-number off = 1     // enzyme-to-substrate unbinding rate
-number cat = 1     // product production rate
-number Etot = 1    // initial and total amount of enzyme
-
-// Enzyme, Substrate, Product, 
-// and Enzyme-Substrate complex:
-
-species {E,S,P,ES}    
-amount E @ Etot M
-amount S @ 10M
-amount ES @ 0M
-amount P @ 0M
-
-// The classical mass-action kinetics reactions:
-
-E + S {off}<->{on} ES  
-ES ->{cat} E + P
-
-// Plot P production in mass action (MA):
-
-report E,S,ES,P as "P (MA)"
-
-//======================================
-// Michaelis-Menten Kinetics
-//======================================
-
-// Michaelis-Menten kinetics is an approximation 
-// based on the following constants:
-
-number Vmax = cat * Etot
-number KM = (off+cat)/on
-
-report Vmax as "Vmax", KM as "KM"
-
-// The Michaelis-Menten (overall) reaction rate is the 
-// following function of the concentration of S:
-
-function MM(flow S) { 
-   return (Vmax*S)/(KM+S) 
-}  
-
-// This is a copy of the previous sytem without ES:
-
-species {E',S',P'}                         
-amount E' @ Etot M
-amount S' @ 10M
-amount P' @0M
-
-// and with a single overall reaction 
-// with MM(S') as rate kinetics:
-
-E' + S' -> {{ MM(S') }} E' + P'    
-
-// The reactions in this system are progressing by 
-// the MM rate law, hence can deviate from mass action:
-
-report MM(S') as "Michaelis-Menten rate", 
-  E',S',P' as "P (M-M)"
-
-// Reactions in the previous mass action system are 
-// progressing by "true" mass action, and the values
-// of S and S' will deviate. For comparison 
-// we plot what would be the instantenous value 
-// of the MM rate based on the "true" mass action 
-// concentration of S, that is MM(S):
-
-report MM(S) as "MassAction rate" 
-
-//======================================
-// Morrison Kinetics
-//======================================
-
-// The Morrison (overall) reaction rate is the 
-// following function of the concentration of S:
-
-function Morrison(flow S) { 
-   return (Vmax/2*Etot) * 
-        ((Etot+S+KM) - sqrt((Etot+S+KM)^2 - 4*Etot*S)) 
+//----------------- Proportional Block ------------------
+network PBlock (species E⁺ E⁻ P⁺ P⁻) {
+       E⁺ -> E⁺ + P⁺
+       E⁻ -> E⁻ + P⁻ 
+       P⁺ -> #
+       P⁻ -> #
+       P⁻ + P⁺ -> #
 }
 
-// This is another copy of the previous sytem without ES
+//------------------- Integral Block --------------------
+network IBlock (species E⁺ E⁻ I⁺ I⁻) {
+       E⁺ -> E⁺ + I⁺ 
+       E⁻ -> E⁻ + I⁻ 
+       I⁻ + I⁺ -> #
+}
 
-species {E'',S'',P''}
-amount E'' @ Etot M
-amount S'' @ 10M
-amount P'' @0M
+//------------------ Derivative Block -------------------
+network DBlock(species E⁺ E⁻ D⁺ D⁻) {
+       species A⁺ @ 0M  // D block auxiliary species +
+       species A⁻ @ 0M  // D block auxiliary species -
 
-report E'',S'',P'' as "P (Morr)"
+       E⁺-> E⁺ + A⁺ 
+       A⁺ -> #
+       E⁻ -> E⁻ + A⁻ 
+       A⁻ -> #
+       E⁺ ->{10} E⁺ + D⁺ 
+       A⁻ ->{10} A⁻ + D⁺ 
+       D⁺ -> #
+       E⁻ ->{10} E⁻ + D⁻ 
+       A⁺ ->{10} A⁺ + D⁻ 
+       D⁻ -> #
+       D⁺ + D⁻ -> #
+}
 
-// and with a single overall reaction 
-// with Morrison(S'') as rate kinetics:
+//----------------- Addition Block -----------------
+network SummationBlock (species I⁺ I⁻ P⁺ P⁻ B⁺ B⁻,
+                        number iR pR bR) {
+       I⁺ ->{iR} I⁺ + B⁺ 
+       I⁻ ->{iR} I⁻ + B⁻ 
+       P⁺ ->{pR} P⁺ + B⁺ 
+       P⁻ ->{pR} P⁻ + B⁻ 
+       B⁺ ->{bR} #
+       B⁻ ->{bR} #
+       B⁻ + B⁺ ->{bR} #
+}
 
-E'' + S'' -> {{ Morrison(S'') }} E'' + P''  
+//-------------- Actuator Species Production--------------
+network CopyBlock (species PID⁺ PID⁻ U⁺ U⁻) {
+       number copyRate = 100
 
-// The reactions in this system are progressing by 
-// the Morrison rate law:
+       PID⁻ ->{copyRate} PID⁻ + U⁻ 
+       PID⁺ ->{copyRate} PID⁺ + U⁺ 
+       U⁻ ->{copyRate}  #
+       U⁺ ->{copyRate} #
+       U⁻ + U⁺ ->{copyRate} #
+}
 
-report Morrison(S'') as "Morrison rate"
+//----------------- Actuation Method 1 ------------------
+network Actuator1(species U⁺ U⁻ mRNA microRNA) {
+       U⁺->{0.8} U⁺+ mRNA 
+       U⁻ ->{0.8} U⁻ + microRNA 
+}
 
-// Now we can directly compare the "true" mass action 
-// kinetics to the two approximations; which one is best 
-// depends on the ratio between Vmax and KM
+//----------------- Actuation Method 2 ------------------
+network Actuator2 (species U⁺ mRNA U⁻ ) {
+       U⁺ ->{0.8} U⁺ + mRNA 
+       U⁻ + mRNA ->{0.8} U⁻ 
+}
 
-equilibrate for 30
+//----------------- Actuation Method 3 ------------------
+network Actuator3 (species U⁺ Pro U⁻) {
+       U⁺ ->{0.8} U⁺ + Pro 
+       U⁻ + Pro ->{0.8} U⁻ 
+}
+
+//----------------------- Plant ------------------------
+network Plant (species mRNA microRNA Prot) {
+       # -> mRNA  
+       mRNA -> mRNA + Prot  
+       mRNA -> #
+       Prot -> #
+       mRNA + microRNA -> #
+}
+
+//--------------- Dual Rail Converter Block----------------
+network DualRail (species Y Y'⁺ Y'⁻) {
+       Y -> Y + Y'⁺ 
+       Y'⁺ -> #
+       Y'⁺ + Y'⁻ -> #
+}
+
+//------------------ Substraction Block ------------------
+network SubtractionBlock (species Y'⁺ Y'⁻ R⁺ R⁻ E⁺ E⁻) {
+       Y'⁺ -> Y'⁺ + E⁺
+       Y'⁻ -> Y'⁻ + E⁻
+       R⁻ -> R⁻ + E⁺
+       R⁺ -> R⁺ + E⁻
+       E⁺ -> #
+       E⁻ -> #
+       E⁺ + E⁻-> #
+}
+
+//----------------- Sine Wave Generator------------------
+network SineWave (species A⁺ A⁻ Const Cp ) {
+       species R⁺, R⁻ @ 0 M
+       
+       A⁺ ->{0.01} A⁺ + R⁺     // A: cosine species/
+       A⁻ ->{0.01} A⁻ + R⁻ 
+       R⁺ ->{0.01} R⁺ + A⁻  // R: sine species
+       R⁻ ->{0.01} R⁻ + A⁺ 
+       A⁺ + A⁻ ->{0.01} #
+       R⁺ + R⁻ ->{0.01} #
+       
+       Const ->{100} Const + Cp  // Injecting Poisson noise into Cp?
+       Cp->{100} #
+       
+       A⁺ ->{100} A⁺ + Cp         // Cp copied from A
+}
+
+//--------------------- Full PID Control Applied to the Plant -----------------------
+network PIDController (species Y'⁺ Y'⁻ E⁺ E⁻ P⁺ P⁻ I⁺ I⁻ PI⁺ PI⁻ D⁺ D⁻ PID⁺ PID⁻ Prot mRNA microRNA U⁺ U⁻ R⁺ R⁻ yp constantp) {
+       PBlock(E⁺, E⁻, P⁺, P⁻)
+       IBlock(E⁺, E⁻, I⁺, I⁻)
+       DBlock(E⁺, E⁻, D⁺, D⁻)
+       SummationBlock(I⁺, I⁻, P⁺, P⁻, PI⁺, PI⁻, 0.3, 0.8, 1.1)
+       SummationBlock(D⁺, D⁻, PI⁺, PI⁻, PID⁺, PID⁻, 0.2, 1.1, 1.4)
+       CopyBlock(PID⁺, PID⁻, U⁺, U⁻)
+       Actuator1(U⁺, U⁻, mRNA, microRNA)
+       Plant(mRNA, microRNA, Prot)
+       DualRail(Prot, R⁺, R⁻)
+       SubtractionBlock(Y'⁺, Y'⁻, R⁺, R⁻, E⁺, E⁻)
+       SineWave(yp, Y'⁻, constantp, Y'⁺)  // weird
+}
+
+//------------------------- Initial Number of Species --------------------------
+species {Y'⁺, Y'⁻, E⁺, E⁻, P⁺, P⁻, I⁺, I⁻, PI⁺, PI⁻, D⁺, D⁻, PID⁺, PID⁻, Prot, mRNA, microRNA, U⁺, U⁻, R⁺, R⁻, yp, constantp}
+amount Y'⁺ @ 10M      // Constant reference species +
+amount Y'⁻ @ 0M       // Constant reference species -
+amount E⁺ @ 0M        // Error species +
+amount E⁻ @ 0M        // Error species -
+amount P⁺ @ 0M        // P block output species +
+amount P⁻ @ 0M        // P block output species -
+amount I⁺ @ 0M        // I block output species +
+amount I⁻ @ 0M        // I block output species -
+amount PI⁺ @ 0M       // PI summation output species +
+amount PI⁻ @ 0M       // PI summation output species -
+amount D⁺ @ 0M        // D block output species +
+amount D⁻ @ 0M        // D block output species -
+amount PID⁺ @ 0M      // PID summation species +
+amount PID⁻ @ 0M      // PID summation species -
+amount Prot @ 1M      // Protein species
+amount mRNA @ 0M      // mRNA species
+amount microRNA @ 0M  // microRNA species
+amount U⁺ @ 0.5M      // Actuator species +
+amount U⁻ @ 0.5M      // Actuator species -
+amount R⁺ @ 0M        // Converter species +
+amount R⁻ @ 0M        // Converter species -
+amount yp @ 10M
+amount constantp @ 10M
+
+PIDController(Y'⁺, Y'⁻, E⁺, E⁻, P⁺, P⁻, I⁺, I⁻, PI⁺, PI⁻, D⁺, D⁻, PID⁺, PID⁻, Prot, mRNA, microRNA, U⁺, U⁻, R⁺, R⁻, yp, constantp) 
+report Y'⁺-Y'⁻, Prot
+equilibrate for 450

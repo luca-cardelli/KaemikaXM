@@ -561,7 +561,7 @@ namespace Kaemika
             List<SpeciesValue> species = sample.Species(out double[] speciesState);
             State initialState = new State(species.Count, noise != Noise.None).InitMeans(speciesState);
             List<ReactionValue> reactions = netlist.RelevantReactions(sample, species, style);
-            CRN crn = new CRN(sample, reactions);
+            CRN crn = new CRN(sample, reactions, precomputeLNA: (noise != Noise.None) && Gui.gui.PrecomputeLNA());
             List<ReportEntry> reports = netlist.Reports(species);
 
             // Program.Log(sample.Format(netlist.style));
@@ -664,12 +664,14 @@ namespace Kaemika
             Gui.gui.LegendUpdate();
 
             // BEGIN foreach (SolPoint solPoint in solution)  -- done by hand to catch exceptions in MoveNext()
+            SolPoint solPoint = new SolPoint(0, new Vector());
+            bool hasSolPoint = false;
             var enumerator = solution.GetEnumerator();
             do {
-                SolPoint solPoint;
                 try {
                     if (!enumerator.MoveNext()) break;
-                    solPoint = enumerator.Current;
+                    solPoint = enumerator.Current;       // get next step of integration from solver
+                    hasSolPoint = true;
                 }
                 catch (Error e) { throw new Error(e.Message); }
                 catch (Exception e) { throw new Error("ODE Solver FAILED: " + e.Message); }
@@ -677,8 +679,8 @@ namespace Kaemika
 
                 // LOOP BODY of foreach (SolPoint solPoint in solution):
                 if (!Gui.gui.StopEnabled()) break; // clicking the Stop button disables it
-                State state = new State(sample.species.Count, noise != Noise.None).InitAll(solPoint.X);
                 if (solPoint.T >= densityTick) { // avoid drawing too many points
+                    State state = new State(sample.species.Count, noise != Noise.None).InitAll(solPoint.X);
                     for (int i = 0; i < reports.Count; i++) {
                         // generate deterministic series
                         if ((noise == Noise.None && reports[i].flow.HasDeterministicValue()) ||
@@ -701,11 +703,11 @@ namespace Kaemika
                     redrawTick += redrawStep;
                 }
                 lastTime = solPoint.T;
-                lastState = state;
 
             // END foreach (SolPoint solPoint in solution)
             } while (true);
 
+            if (hasSolPoint) lastState = new State(sample.species.Count, noise != Noise.None).InitAll(solPoint.X);
             Gui.gui.ChartUpdate();
         }
     }
@@ -1062,17 +1064,14 @@ namespace Kaemika
             return "{" + cf + ", " + ae + "}";
         }
         public double Rate(double temperature) {
-            return this.Arrhenius(temperature);
+            // Program.Log("Arrhenius " + collisionFrequency + ", " + activationEnergy + " = " + collisionFrequency * Math.Exp(-(activationEnergy / (R * temperature))));
+            if (activationEnergy == 0.0) return collisionFrequency;
+            else return collisionFrequency * Math.Exp(-(activationEnergy / (R * temperature)));
         }
         public override double Action(SampleValue sample, List<Symbol> reactants, double time, Vector state, double temperature, Style style) {
             double action = this.Rate(temperature);
             foreach (Symbol rs in reactants) action = action * state[sample.speciesIndex[rs]];
             return action;
-        }
-        public double Arrhenius(double temperature) { // temperature in Kelvin
-            // Program.Log("Arrhenius " + collisionFrequency + ", " + activationEnergy + " = " + collisionFrequency * Math.Exp(-(activationEnergy / (R * temperature))));
-            if (activationEnergy == 0.0) return collisionFrequency;
-            else return collisionFrequency * Math.Exp(-(activationEnergy/(R*temperature)));
         }
         public override bool Involves(List<SpeciesValue> species) { return false; }
         public override bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered) { notCovered = null; return true; }
@@ -1260,7 +1259,7 @@ namespace Kaemika
         public abstract double ReportMean(SampleValue sample, double time, State state, Style style); // for numeric flow-subexpressions
         public abstract double ReportVariance(SampleValue sample, double time, State state, Style style);
         public abstract double ReportCovariance(Flow other, SampleValue sample, double time, State state, Style style);
-        public abstract bool HasDeterministicValue();
+        public abstract bool HasDeterministicValue(); //########### turn these into precomputed properties
         // = Can appear in non-LNA charts and in generalized rates {{ ... }}. 
         // Excludes var/cov, poisson/gauss.
         public abstract bool HasStochasticMean();
@@ -1367,12 +1366,20 @@ namespace Kaemika
         public int arity;
         public bool infix;
         public List<Flow> args;
+        private bool hasDeterministicValue;
+        private bool hasStochasticMean;
+        private bool linearCombination;
+        private bool hasNullVariance;
         public OpFlow(string op, int arity, bool infix, List<Flow> args) {
             this.type = new Type("flow");
             this.op = op;
             this.arity = arity;
             this.infix = infix;
             this.args = args;
+            this.hasDeterministicValue = CacheHasDeterministicValue();
+            this.hasStochasticMean = CacheHasStochasticMean();
+            this.linearCombination = CacheLinearCombination();
+            this.hasNullVariance = CacheHasNullVariance();
         }
         public override bool Involves(List<SpeciesValue> species) {
             if (this.arity == 0) return false;
@@ -1509,6 +1516,9 @@ namespace Kaemika
             } else throw new Error(BadArguments + op);
         }
         public override bool HasDeterministicValue() {
+            return this.hasDeterministicValue;
+        }
+        private bool CacheHasDeterministicValue() {
             if (arity == 0) {
                 return true; // "time", "kelvin", "celsius"
             }  else if (arity == 1) {
@@ -1521,9 +1531,12 @@ namespace Kaemika
                 // gauss is not allowed in determinstic plots or general rates
             }  else if (arity == 3) { // including "cond"
                 return args[0].HasDeterministicValue() && args[1].HasDeterministicValue() && args[2].HasDeterministicValue();
-            }  else throw new Error("HasDeterministicMean: " + op);
+            }  else throw new Error("HasDeterministicValue: " + op);
         }
         public override bool HasStochasticMean() {
+            return this.hasStochasticMean;
+        }
+        private bool CacheHasStochasticMean() {
             if (arity == 0) {
                 return true; // "time", "kelvin", "celsius"
             } else if (arity == 1) {                                     // exclude (op == "var" || op == "poisson")
@@ -1534,9 +1547,12 @@ namespace Kaemika
                     else return args[0].HasStochasticMean() && args[1].HasStochasticMean();
             } else if (arity == 3) { // including "cond"
                 return args[0].HasStochasticMean() && args[1].HasStochasticMean() && args[2].HasStochasticMean();
-            } else throw new Error("LinearCombination: " + op);
+            } else throw new Error("HasStochasticMean: " + op);
         }
         public override bool LinearCombination() { // returns true for linear combinations of species and zero-variance flows (time, kelvin, celsius)
+            return this.linearCombination;
+        }
+        private bool CacheLinearCombination() {
             if (arity == 0) {
                 return true; // "time", "kelvin", "celsius"
             } else if (arity == 1) {                                     // exclude (op == "var" || op == "poisson")
@@ -1552,6 +1568,9 @@ namespace Kaemika
             } else throw new Error("LinearCombination: " + op);
         }
         public override bool HasNullVariance() {
+            return this.hasNullVariance;
+        }
+        private bool CacheHasNullVariance() {
             if (arity == 0) {
                 return true; // "time", "kelvin", "celsius"
             } else if (arity == 1) {

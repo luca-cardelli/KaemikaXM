@@ -197,7 +197,10 @@ namespace KaemikaWPF
             }
         }
 
+        // this-thread cache of main-thread state
+        private bool stopButtonIsEnabled = false;
         public override void StopEnable(bool b) {
+            stopButtonIsEnabled = b;
             if (form.btnStop.InvokeRequired) {
                 BoolArgVoidReturnDelegate d = new BoolArgVoidReturnDelegate(StopEnable);
                 form.Invoke(d, new object[] { b });
@@ -206,12 +209,13 @@ namespace KaemikaWPF
             }
         }
         public override bool StopEnabled() {
-            if (form.btnStop.InvokeRequired) {
-                VoidArgBoolReturnDelegate d = new VoidArgBoolReturnDelegate(StopEnabled);
-                return (bool)form.Invoke(d, new object[] {});
-            } else {
-                return form.StopEnabled();
-            }
+            return stopButtonIsEnabled;
+            //if (form.btnStop.InvokeRequired) {
+            //    VoidArgBoolReturnDelegate d = new VoidArgBoolReturnDelegate(StopEnabled);
+            //    return (bool)form.Invoke(d, new object[] {});
+            //} else {
+            //    return form.StopEnabled();
+            //}
         }
 
         public override void ContinueEnable(bool b) {
@@ -238,6 +242,14 @@ namespace KaemikaWPF
                 return (string)form.Invoke(d, new object[] {});
             } else {
                 return form.Solver();
+            }
+        }
+        public override bool PrecomputeLNA() {
+            if (form.checkBox_precomputeLNA.InvokeRequired) {
+                VoidArgBoolReturnDelegate d = new VoidArgBoolReturnDelegate(PrecomputeLNA);
+                return (bool)form.Invoke(d, new object[] {});
+            } else {
+                return form.checkBox_precomputeLNA.Checked;
             }
         }
 

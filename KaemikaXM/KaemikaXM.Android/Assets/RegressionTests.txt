@@ -84,7 +84,7 @@ report f()
 a -> {{ f() }} #
 equilibrate for 1
 
-Time and kelving in regular function
+Time and kelvin in regular function
 
 species a @ 1 M
 function f() { return kelvin+time }

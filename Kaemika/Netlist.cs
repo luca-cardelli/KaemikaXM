@@ -305,19 +305,34 @@ namespace Kaemika
         private List<ReactionValue> reactions;
         private double temperature;
         private Matrix stoichio;   // for each species s and reaction r the net stoichiometry of s in r
+
+        //private Matrix[] stoichioR; // for each reaction r, an rx1 matrix (vector) that for each species s ...
+        //private Matrix[] stoichio_stoichioT;
+        //private double[,,] precomp;
+
+        private double[,,] driftFactor; // LNA precomputation
         public bool trivial;       // try to identify trivial stoichiometry (no change to any species), but not guaranteed
 
-        public CRN(SampleValue sample, List<ReactionValue> reactions) {
+        public CRN(SampleValue sample, List<ReactionValue> reactions, bool precomputeLNA = false) {
             this.sample = sample;
             this.temperature = sample.Temperature();
             this.reactions = reactions;
-            this.stoichio = new Matrix(new double[sample.species.Count, this.reactions.Count]);
             this.trivial = true;
+            this.stoichio = new Matrix(new double[sample.species.Count, this.reactions.Count]);
             for (int s = 0; s < sample.species.Count; s++) {
                 for (int r = 0; r < reactions.Count; r++) {
-                    stoichio[s, r] = this.reactions[r].NetStoichiometry(sample.species[s].symbol);
+                    stoichio[s, r] = reactions[r].NetStoichiometry(sample.species[s].symbol);
                     if (stoichio[s, r] != 0) this.trivial = false;
                 }
+            }
+            this.driftFactor = null;
+            if (precomputeLNA) {
+                int speciesCount = sample.species.Count;
+                driftFactor = new double[speciesCount, speciesCount, reactions.Count];
+                for (int i = 0; i < speciesCount; i++)
+                    for (int j = 0; j < speciesCount; j++)
+                        for (int r = 0; r < reactions.Count; r++)
+                            driftFactor[i, j, r] = stoichio[i, r] * stoichio[j, r];
             }
         }
 
@@ -378,14 +393,15 @@ namespace Kaemika
         }
 
         public double[] Flux(double time, double[] state, Style style) {
-            return stoichio * Action(time, state, style);
+            return stoichio * Action(time, state, style);                      // this line takes 64% of CPU for non-LNA runs, with 38% for Action
         }
 
         public double[] LNAFlux(double time, double[] state, Style style) {  
             State allState = new State(sample.species.Count, true).InitAll(state);
             Vector meanState = allState.MeanVector();                                             // first part of state is the means
             Matrix covarState = allState.CovarMatrix();                                           // second part of state is the covariances
-            Vector action = Action(time, meanState, style);                                                    // the mass action of all reactions in this state
+            Vector action = Action(time, meanState, style);                                       // the mass action of all reactions in this state
+            double[] actionA = action.ToArray();
             State result = new State(sample.species.Count, true).InitZero();
 
             // fill the first part of deriv - the means     
@@ -393,23 +409,146 @@ namespace Kaemika
 
             // fill the second part of deriv - the covariances                                
             Matrix J = NordsieckState.Jacobian((t, x) => Flux(t, x, style), meanState, 0.0);       // The Jacobian of the flux in this state
-            result.AddCovar((J * covarState) + (covarState * J.Transpose()) + Drift(action));      // LNA equation
+            result.AddCovar((J * covarState) + (covarState * J.Transpose()) + Drift(actionA));      // LNA equation
 
             return result.ToArray();
         }
 
         // Gillespie (eq 21): Linear noise appoximation is valid over limited times
-        private Matrix Drift(Vector action) {
+        // Performance critical inner loop
+        private static double[][] w = null;                           // if indexed like this, OSLO will not copy it again on new Matrix(w)
+        private Matrix Drift(double[] actionA) {                      // pass an array to avoid expensive Vector accesses
             int speciesCount = sample.species.Count;
-            Matrix w = new Matrix(new double[speciesCount, speciesCount]);
-            for (int i = 0; i < speciesCount; i++) {
-                for (int j = 0; j < speciesCount; j++) {
-                    for (int r = 0; r < reactions.Count; r++)
-                        w[i,j] += stoichio[i,r] * stoichio[j,r] * action[r];
-                }
+            int reactionsCount = reactions.Count;
+            if (w == null || w.GetLength(0) != speciesCount) {
+                w = new double[speciesCount][]; for (int i = 0; i < speciesCount; i++) w[i] = new double[speciesCount];
             }
-            return w;
+            for (int i = 0; i < speciesCount; i++) Array.Clear(w[i], 0, speciesCount); // for (int j = 0; j < speciesCount; j++) w[i][j] = 0;
+
+            if (driftFactor == null) {  // slower, less memory
+                for (int i = 0; i < speciesCount; i++)
+                    for (int j = 0; j < speciesCount; j++)
+                        for (int r = 0; r < reactionsCount; r++)
+                            w[i][j] += stoichio[i,r] * stoichio[j,r] * actionA[r];     // this line takes 48% of CPU time on LNA runs
+            } else {  // faster, more memory (driftFactor matrix)
+                for (int i = 0; i < speciesCount; i++)
+                    for (int j = 0; j < speciesCount; j++)
+                        for (int r = 0; r < reactionsCount; r++)
+                            w[i][j] += driftFactor[i, j, r] * actionA[r];               // this line takes 20% of CPU time on LNA runs
+            }
+            return new Matrix(w, speciesCount, speciesCount);          // by providing the bounds, OSLO will not check them nor copy w again
+
+
+
+            //this.stoichioR = new Matrix[reactions.Count];
+            //for (int r = 0; r < reactions.Count; r++) {
+            //    stoichioR[r] = new Matrix(new double[sample.species.Count,1]);
+            //    for (int s = 0; s < sample.species.Count; s++) {
+            //        stoichioR[r][s,0] = stoichio[s, r];
+            //    }
+            //}
+            //this.stoichio_stoichioT = new Matrix[reactions.Count];
+            //for (int r = 0; r < reactions.Count; r++) {
+            //    stoichio_stoichioT[r] = stoichioR[r] * stoichioR[r].Transpose();
+            //}
+            //this.precomp = new double[reactions.Count, sample.species.Count, sample.species.Count];
+            //for (int r = 0; r < reactions.Count; r++) {
+            //    Matrix m = stoichio_stoichioT[r];
+            //    for (int i = 0; i < sample.species.Count; i++)
+            //        for (int j = 0; j < sample.species.Count; j++)
+            //            precomp[r,i,j] = m[i,j];
+            //}
+
+            //int speciesCount = sample.species.Count;
+            //int reactionsCount = reactions.Count;
+            //double[][] w = new double[speciesCount][];                 // if indexed like this, OSLO will not copy it again on new
+            //if (driftFactor == null) {  // slower, less memory
+            //    for (int i = 0; i < speciesCount; i++) {
+            //        w[i] = new double[speciesCount];
+            //        for (int j = 0; j < speciesCount; j++)
+            //            for (int r = 0; r < reactionsCount; r++)
+            //                w[i][j] += stoichio[i,r] * stoichio[j,r] * actionA[r];     // this line takes 44% of CPU time on LNA runs
+            //    }
+            //} else {  // faster, more memory (driftFactor matrix)
+            //    for (int i = 0; i < speciesCount; i++) {
+            //        w[i] = new double[speciesCount];
+            //        for (int j = 0; j < speciesCount; j++)
+            //            for (int r = 0; r < reactionsCount; r++)
+            //                w[i][j] += driftFactor[i, j, r] * actionA[r];               // this line takes 20% of CPU time on LNA runs
+            //    }
+            //}
+            //return new Matrix(w, speciesCount, speciesCount);          // by providing the bounds, OSLO will not check them nor copy w again
+
+            //if (driftFactor == null) {  // slower, less memory
+            //    int speciesCount = sample.species.Count;
+            //    Matrix w = new Matrix(new double[speciesCount, speciesCount]);
+            //    for (int i = 0; i < speciesCount; i++) {
+            //        for (int j = 0; j < speciesCount; j++) {
+            //            for (int r = 0; r < reactions.Count; r++)
+            //                w[i,j] += stoichio[i,r] * stoichio[j,r] * actionA[r];     // this line takes 58% of CPU time on LNA runs
+            //        }
+            //    }
+            //    return w;
+            //} else {  // faster, more memory (driftFactor matrix)
+            //    int speciesCount = sample.species.Count;
+            //    double[][] w = new double[speciesCount][];                 // if indexed like this, OSLO will not copy it again on new
+            //    for (int i = 0; i < speciesCount; i++) {
+            //        w[i] = new double[speciesCount];
+            //        for (int j = 0; j < speciesCount; j++)
+            //            for (int r = 0; r < reactions.Count; r++) {
+            //                w[i][j] += driftFactor[i, j, r] * actionA[r];    // this line takes 26% of CPU time on LNA runs, and little GC
+            //        }
+            //    }
+            //    return new Matrix(w, speciesCount, speciesCount);          // by providing the bounds, OSLO will not check them nor copy w again
+            //}
         }
+
+        //private Matrix Drift(Vector action) {
+        //    int speciesCount = sample.species.Count;
+        //    Matrix w = new Matrix(new double[speciesCount, speciesCount]);
+        //    for (int r = 0; r < reactions.Count; r++)
+        //        w += stoichioR[r] * (stoichioR[r].Transpose() * action[r]);          // this line takes 55% of CPU time on LNA runs
+        //    return w;
+        //}
+        //private Matrix Drift(Vector action) {
+        //    int speciesCount = sample.species.Count;
+        //    Matrix w = new Matrix(new double[speciesCount, speciesCount]);
+        //    for (int r = 0; r < reactions.Count; r++)
+        //        w += (stoichioR[r] * stoichioR[r].Transpose()) * action[r];          // this line takes 62% of CPU time on LNA runs
+        //    return w;
+        //}
+        //private Matrix Drift(Vector action) {
+        //    int speciesCount = sample.species.Count;
+        //    Matrix w = new Matrix(new double[speciesCount, speciesCount]);              // this line takes 50.88% of CPU time on LNA runs
+        //    for (int r = 0; r < reactions.Count; r++)
+        //        w += stoichio_stoichioT[r] * action[r];          
+        //    return w;
+        //}
+        //private Matrix Drift(Vector action) {
+        //    int speciesCount = sample.species.Count;
+        //    Matrix w = new Matrix(new double[speciesCount, speciesCount]);
+        //    for (int i = 0; i < speciesCount; i++) {
+        //        for (int j = 0; j < speciesCount; j++) {
+        //            for (int r = 0; r < reactions.Count; r++)
+        //                w[i,j] += stoichio_stoichioT[r][i,j] * action[r];    // this line takes 62% of CPU time on LNA runs, mostly overhead in accessing Oslo.Matix elements
+        //        }
+        //    }
+        //    return w;
+        //}
+
+        //private Matrix Drift(Vector action) {
+        //    int speciesCount = sample.species.Count;
+        //    Matrix w = new Matrix(new double[speciesCount, speciesCount]);
+        //    for (int r = 0; r < reactions.Count; r++) { 
+        //        double action_r = action[r];
+        //        for (int i = 0; i < speciesCount; i++)
+        //           for (int j = 0; j < speciesCount; j++) {
+        //                w[i,j] += driftFactor[r,i,j] * action_r;     // this line takes 45% of CPU time on LNA runs, and a lot less GC. Still significant Oslo.Matrix element access times
+        //            }
+        //    }
+        //    return w;
+        //}
+
 
         public string FormatScalar(string name, double X) {
             return name + " " + X.ToString();

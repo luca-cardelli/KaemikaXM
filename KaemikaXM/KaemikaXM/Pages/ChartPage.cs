@@ -51,6 +51,26 @@ namespace KaemikaXM.Pages
         private ImageButton stopButton;
         private CollectionView legendView;
         public ImageButton startButton;
+        private ToolbarItem solverRK547MButton;
+        private ToolbarItem solverGearBDFButton;
+
+        private ToolbarItem SolverRK547MButton() {
+            return new ToolbarItem("OSLO RK547M", "icons8refresh96solver1", () => {
+                solverRK547MButton.IsEnabled = false;
+                GUI_Xamarin.currentSolver = "OSLO RK547M";
+                MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: false, switchToOutput: false);
+                solverGearBDFButton.IsEnabled = true;
+            });
+        }
+
+        private ToolbarItem SolverGearBDFButton() {
+            return new ToolbarItem("OSLO GearBDF", "icons8refresh96solver2", () => {
+                solverGearBDFButton.IsEnabled = false;
+                GUI_Xamarin.currentSolver = "OSLO GearBDF";
+                MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: false, switchToOutput: false);
+                solverRK547MButton.IsEnabled = true;
+            });
+        }
 
         public ImageButton StopButton() {
             ImageButton button = new ImageButton() {
@@ -74,6 +94,13 @@ namespace KaemikaXM.Pages
                 HeightRequest = 300,
                 BackgroundColor = Color.White,
             };
+
+            solverRK547MButton = SolverRK547MButton();
+            ToolbarItems.Add(solverRK547MButton);
+            solverRK547MButton.IsEnabled = false;
+            solverGearBDFButton = SolverGearBDFButton();
+            ToolbarItems.Add(solverGearBDFButton);
+            solverGearBDFButton.IsEnabled = true;
 
             stopButton = StopButton();
             noisePicker = MainTabbedPage.theModelEntryPage.NoisePicker();

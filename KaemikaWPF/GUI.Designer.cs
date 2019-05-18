@@ -85,6 +85,7 @@
             this.tableLayoutPanel_RightColumn = new System.Windows.Forms.TableLayoutPanel();
             this.tableLayoutPanel_Columns = new System.Windows.Forms.TableLayoutPanel();
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
+            this.checkBox_precomputeLNA = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.chart1)).BeginInit();
             this.groupBox_LNA.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_Transparency)).BeginInit();
@@ -388,7 +389,7 @@
             this.radioButton_LNA_Fano.AutoSize = true;
             this.radioButton_LNA_Fano.Enabled = false;
             this.radioButton_LNA_Fano.Location = new System.Drawing.Point(146, 27);
-            this.radioButton_LNA_Fano.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.radioButton_LNA_Fano.Margin = new System.Windows.Forms.Padding(2);
             this.radioButton_LNA_Fano.Name = "radioButton_LNA_Fano";
             this.radioButton_LNA_Fano.Size = new System.Drawing.Size(46, 17);
             this.radioButton_LNA_Fano.TabIndex = 35;
@@ -401,7 +402,7 @@
             this.radioButton_LNA_VarRange.AutoSize = true;
             this.radioButton_LNA_VarRange.Enabled = false;
             this.radioButton_LNA_VarRange.Location = new System.Drawing.Point(57, 27);
-            this.radioButton_LNA_VarRange.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.radioButton_LNA_VarRange.Margin = new System.Windows.Forms.Padding(2);
             this.radioButton_LNA_VarRange.Name = "radioButton_LNA_VarRange";
             this.radioButton_LNA_VarRange.Size = new System.Drawing.Size(44, 17);
             this.radioButton_LNA_VarRange.TabIndex = 34;
@@ -417,7 +418,7 @@
             this.radioButton_LNA_SDRange.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.radioButton_LNA_SDRange.ForeColor = System.Drawing.SystemColors.ControlText;
             this.radioButton_LNA_SDRange.Location = new System.Drawing.Point(57, 10);
-            this.radioButton_LNA_SDRange.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.radioButton_LNA_SDRange.Margin = new System.Windows.Forms.Padding(2);
             this.radioButton_LNA_SDRange.Name = "radioButton_LNA_SDRange";
             this.radioButton_LNA_SDRange.Size = new System.Drawing.Size(41, 17);
             this.radioButton_LNA_SDRange.TabIndex = 33;
@@ -460,7 +461,7 @@
             this.checkedListBox_Series.Font = new System.Drawing.Font("Lucida Sans Unicode", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkedListBox_Series.FormattingEnabled = true;
             this.checkedListBox_Series.Location = new System.Drawing.Point(898, 435);
-            this.checkedListBox_Series.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.checkedListBox_Series.Margin = new System.Windows.Forms.Padding(2);
             this.checkedListBox_Series.MultiColumn = true;
             this.checkedListBox_Series.Name = "checkedListBox_Series";
             this.checkedListBox_Series.Size = new System.Drawing.Size(350, 156);
@@ -486,7 +487,7 @@
             this.radioButton_TraceComputational.AutoSize = true;
             this.radioButton_TraceComputational.ForeColor = System.Drawing.Color.DarkGreen;
             this.radioButton_TraceComputational.Location = new System.Drawing.Point(5, 27);
-            this.radioButton_TraceComputational.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.radioButton_TraceComputational.Margin = new System.Windows.Forms.Padding(2);
             this.radioButton_TraceComputational.Name = "radioButton_TraceComputational";
             this.radioButton_TraceComputational.Size = new System.Drawing.Size(123, 17);
             this.radioButton_TraceComputational.TabIndex = 1;
@@ -501,7 +502,7 @@
             this.radioButton_TraceChemical.Checked = true;
             this.radioButton_TraceChemical.ForeColor = System.Drawing.Color.DarkGreen;
             this.radioButton_TraceChemical.Location = new System.Drawing.Point(5, 8);
-            this.radioButton_TraceChemical.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.radioButton_TraceChemical.Margin = new System.Windows.Forms.Padding(2);
             this.radioButton_TraceChemical.Name = "radioButton_TraceChemical";
             this.radioButton_TraceChemical.Size = new System.Drawing.Size(99, 17);
             this.radioButton_TraceChemical.TabIndex = 0;
@@ -635,7 +636,7 @@
             this.groupBox_Trace.Location = new System.Drawing.Point(487, 1);
             this.groupBox_Trace.Margin = new System.Windows.Forms.Padding(0);
             this.groupBox_Trace.Name = "groupBox_Trace";
-            this.groupBox_Trace.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.groupBox_Trace.Padding = new System.Windows.Forms.Padding(2);
             this.groupBox_Trace.Size = new System.Drawing.Size(133, 46);
             this.groupBox_Trace.TabIndex = 39;
             this.groupBox_Trace.TabStop = false;
@@ -663,7 +664,7 @@
             "₍",
             "₎"});
             this.comboBox_Sub.Location = new System.Drawing.Point(559, 27);
-            this.comboBox_Sub.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.comboBox_Sub.Margin = new System.Windows.Forms.Padding(2);
             this.comboBox_Sub.Name = "comboBox_Sub";
             this.comboBox_Sub.Size = new System.Drawing.Size(21, 21);
             this.comboBox_Sub.TabIndex = 43;
@@ -704,7 +705,7 @@
             "⁽",
             "⁾"});
             this.comboBox_Sup.Location = new System.Drawing.Point(585, 16);
-            this.comboBox_Sup.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.comboBox_Sup.Margin = new System.Windows.Forms.Padding(2);
             this.comboBox_Sup.Name = "comboBox_Sup";
             this.comboBox_Sup.Size = new System.Drawing.Size(21, 21);
             this.comboBox_Sup.TabIndex = 45;
@@ -770,6 +771,7 @@
             // 
             this.panel_Controls.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel_Controls.Controls.Add(this.checkBox_precomputeLNA);
             this.panel_Controls.Controls.Add(this.checkBoxButton_EditChart);
             this.panel_Controls.Controls.Add(this.label_Transparency);
             this.panel_Controls.Controls.Add(this.label_Legend);
@@ -816,7 +818,7 @@
             this.tableLayoutPanel_LeftColumn.Controls.Add(this.panel_richTextBoxPadding, 0, 1);
             this.tableLayoutPanel_LeftColumn.Controls.Add(this.panel_Header, 0, 0);
             this.tableLayoutPanel_LeftColumn.Location = new System.Drawing.Point(2, 2);
-            this.tableLayoutPanel_LeftColumn.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.tableLayoutPanel_LeftColumn.Margin = new System.Windows.Forms.Padding(2);
             this.tableLayoutPanel_LeftColumn.Name = "tableLayoutPanel_LeftColumn";
             this.tableLayoutPanel_LeftColumn.RowCount = 2;
             this.tableLayoutPanel_LeftColumn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 49F));
@@ -850,7 +852,7 @@
             this.tableLayoutPanel_RightColumn.Controls.Add(this.chart1, 0, 3);
             this.tableLayoutPanel_RightColumn.Controls.Add(this.txtTarget, 0, 1);
             this.tableLayoutPanel_RightColumn.Location = new System.Drawing.Point(633, 2);
-            this.tableLayoutPanel_RightColumn.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.tableLayoutPanel_RightColumn.Margin = new System.Windows.Forms.Padding(2);
             this.tableLayoutPanel_RightColumn.Name = "tableLayoutPanel_RightColumn";
             this.tableLayoutPanel_RightColumn.RowCount = 4;
             this.tableLayoutPanel_RightColumn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 49F));
@@ -872,7 +874,7 @@
             this.tableLayoutPanel_Columns.Controls.Add(this.tableLayoutPanel_RightColumn, 1, 0);
             this.tableLayoutPanel_Columns.Controls.Add(this.tableLayoutPanel_LeftColumn, 0, 0);
             this.tableLayoutPanel_Columns.Location = new System.Drawing.Point(0, 0);
-            this.tableLayoutPanel_Columns.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.tableLayoutPanel_Columns.Margin = new System.Windows.Forms.Padding(2);
             this.tableLayoutPanel_Columns.Name = "tableLayoutPanel_Columns";
             this.tableLayoutPanel_Columns.RowCount = 1;
             this.tableLayoutPanel_Columns.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
@@ -883,6 +885,19 @@
             // 
             this.notifyIcon1.Text = "notifyIcon1";
             this.notifyIcon1.Visible = true;
+            // 
+            // checkBox_precomputeLNA
+            // 
+            this.checkBox_precomputeLNA.AutoSize = true;
+            this.checkBox_precomputeLNA.Checked = true;
+            this.checkBox_precomputeLNA.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBox_precomputeLNA.Location = new System.Drawing.Point(210, 19);
+            this.checkBox_precomputeLNA.Name = "checkBox_precomputeLNA";
+            this.checkBox_precomputeLNA.Size = new System.Drawing.Size(15, 14);
+            this.checkBox_precomputeLNA.TabIndex = 45;
+            this.toolTip1.SetToolTip(this.checkBox_precomputeLNA, "Precompute LNA drift matrix (big)");
+            this.checkBox_precomputeLNA.UseVisualStyleBackColor = false;
+            this.checkBox_precomputeLNA.CheckedChanged += new System.EventHandler(this.CheckBox_precomputeLNA_CheckedChanged);
             // 
             // GUI
             // 
@@ -978,7 +993,7 @@
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel_Columns;
         private System.Windows.Forms.Panel panel_richTextBoxPadding;
         private System.Windows.Forms.NotifyIcon notifyIcon1;
-//###MSAGL        public Microsoft.Msagl.GraphViewerGdi.GViewer gViewer1;
+        public System.Windows.Forms.CheckBox checkBox_precomputeLNA;
     }
 }
 

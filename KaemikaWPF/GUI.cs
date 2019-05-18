@@ -158,9 +158,9 @@ namespace KaemikaWPF
             btnStop.BackColor = (btnStop.Enabled) ? Color.Tomato : Color.Gainsboro;
             btnEval.BackColor = (btnEval.Enabled) ? Color.LightSalmon : Color.Gainsboro;
         }
-        public bool StopEnabled() {
-            return btnStop.Enabled;
-        }
+        //public bool StopEnabled() {
+        //    return btnStop.Enabled;
+        //}
 
         public void ContinueEnable(bool b) {
             this.button_Continue.Enabled = b;
@@ -281,6 +281,9 @@ namespace KaemikaWPF
 
         public string Solver() {
             return this.comboBox_Solvers.Text;
+        }
+
+        private void CheckBox_precomputeLNA_CheckedChanged(object sender, EventArgs e) {
         }
 
         public bool TraceComputational() {
@@ -675,7 +678,8 @@ namespace KaemikaWPF
 
         private void btnStop_Click(object sender, EventArgs e)
         {
-            StopEnable(false); // signals that we should stop
+            //StopEnable(false); // signals that we should stop
+            Gui.gui.StopEnable(false); // signals that we should stop
         }
 
         private void button_Continue_Click(object sender, EventArgs e)
@@ -845,5 +849,6 @@ namespace KaemikaWPF
             }
             base.OnKeyDown(e);
         }
+
     }
 } 

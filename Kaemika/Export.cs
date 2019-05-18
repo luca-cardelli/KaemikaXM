@@ -398,7 +398,7 @@ namespace Kaemika {
             foreach (SampleValue sample in samples) {
                 string label =
                     sample.FormatHeader(style) + Environment.NewLine
-                    + new CRN(sample, netlist.RelevantReactions(sample, sample.species, style)).FormatAsODE(style, prefixDiff: "", suffixDiff: "'")
+                    + new CRN(sample, netlist.RelevantReactions(sample, sample.species, style), precomputeLNA: false).FormatAsODE(style, prefixDiff: "", suffixDiff: "'")
                     + ((sample.asConsumed == null) ? sample : sample.asConsumed).FormatContent(style, breaks:true);
                 if (label.Length > 0 && label[label.Length - 1] == '\n') label = label.Substring(0, label.Length - 1);
                 nodes += sample.symbol.Format(style) + "[shape=box, label=" + Parser.FormatString(label) + "];" + Environment.NewLine;
@@ -702,7 +702,7 @@ namespace Kaemika {
                         newState.Add(outSample2);
                         newState = closure.AddUnique(newState, style); // may replace it with an existing state
                         closure.AddTransition(new Transition(state, newState,
-                            "split " + outSample1.FormatSymbol(style) + ", " + outSample2.FormatSymbol(style) + " := " + inSample.FormatSymbol(style) + " by " + (entry as SplitEntry).proportion.value));
+                            "split " + outSample1.FormatSymbol(style) + ", " + outSample2.FormatSymbol(style) + " := " + inSample.FormatSymbol(style) + " by " + (entry as SplitEntry).proportion.value.ToString("G3")));
                         nextStates.AddUnique(newState, style);
                         if (sequential) return nextStates; // otherwise keep accumulating
                     }
@@ -715,7 +715,7 @@ namespace Kaemika {
                         newState.Add(outSample);
                         newState = closure.AddUnique(newState, style); // may replace it with an existing state
                         closure.AddTransition(new Transition(state, newState,
-                            "eq " + outSample.FormatSymbol(style) + " := " + inSample.FormatSymbol(style) + " for " + (entry as EquilibrateEntry).time.value));
+                            "eq " + outSample.FormatSymbol(style) + " := " + inSample.FormatSymbol(style) + " for " + (entry as EquilibrateEntry).time.value.ToString("G3")));
                         nextStates.AddUnique(newState, style);
                         if (sequential) return nextStates; // otherwise keep accumulating
                     }
@@ -748,36 +748,5 @@ namespace Kaemika {
             return nextStates;
         }
 
-        ////###MSAGL
-        //public static Microsoft.Msagl.Drawing.Graph MSAGL(Netlist netlist) {
-        //    Style style = new Style("•", new SwapMap(subsup: true), new AlphaMap(), "G3", "symbol", ExportTarget.Standard);
-        //    Microsoft.Msagl.Drawing.Graph graph = new Microsoft.Msagl.Drawing.Graph("graph");
-        //    MSAGL_Edges(graph, netlist, style);
-        //    // MSAGL_GraphViz_Nodes(graph, netlist, style);
-        //    return graph;
-        //}
-
-        //public static void MSAGL_Edges(Microsoft.Msagl.Drawing.Graph graph, Netlist netlist, Style style) {
-        //    foreach (ProtocolEntry entry in netlist.AllOperations())
-        //        if (entry is MixEntry) {
-        //            var node = entry as MixEntry;
-        //            graph.AddEdge(node.inSample1.symbol.Format(style), "mix", node.outSample.symbol.Format(style));
-        //            graph.AddEdge(node.inSample2.symbol.Format(style), "mix", node.outSample.symbol.Format(style));
-        //        } else if (entry is SplitEntry) {
-        //            var node = entry as SplitEntry;
-        //            graph.AddEdge(node.inSample.symbol.Format(style), "split", node.outSample1.symbol.Format(style));
-        //            graph.AddEdge(node.inSample.symbol.Format(style), "split", node.outSample2.symbol.Format(style));
-        //        } else if (entry is EquilibrateEntry) {
-        //            var node = entry as EquilibrateEntry;
-        //            graph.AddEdge(node.inSample.symbol.Format(style), "equilibrate for " + node.time.Format(style), node.outSample.symbol.Format(style));
-        //        } else if (entry is TransferEntry) {
-        //            var node = entry as TransferEntry;
-        //            graph.AddEdge(node.inSample.symbol.Format(style), "transfer", node.outSample.symbol.Format(style));
-        //        } else if (entry is DisposeEntry) {
-        //            var node = entry as DisposeEntry;
-        //            graph.AddEdge(node.inSample.symbol.Format(style), "dispose", "XXX");
-        //        }
-        //}
-
     }
-    }
+}

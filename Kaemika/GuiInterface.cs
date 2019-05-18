@@ -44,6 +44,7 @@ namespace Kaemika
         public abstract void ContinueEnable(bool b);
         public abstract bool ContinueEnabled();
         public abstract string Solver();
+        public abstract bool PrecomputeLNA();
         public abstract void ChartListboxAddSeries(string name);
         public abstract void ClipboardSetText(string text);
     }

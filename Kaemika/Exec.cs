@@ -124,7 +124,7 @@ namespace Kaemika {
                 Gui.gui.OutputSetText(Export.MSRC_CRN(execution.netlist, execution.vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.CRN, traceComputational: false)));
                 try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
             } else if (exportAs == ExportAs.ODE) {
-                Gui.gui.OutputSetText(Export.ODE(execution.vessel, new CRN(execution.vessel, execution.netlist.RelevantReactions(execution.vessel, execution.vessel.species, execution.style)),
+                Gui.gui.OutputSetText(Export.ODE(execution.vessel, new CRN(execution.vessel, execution.netlist.RelevantReactions(execution.vessel, execution.vessel.species, execution.style), precomputeLNA: false),
                     new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.Standard, traceComputational: false)));
                 try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
             } else if (exportAs == ExportAs.Protocol) {
