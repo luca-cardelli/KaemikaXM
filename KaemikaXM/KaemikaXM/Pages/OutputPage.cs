@@ -46,6 +46,7 @@ namespace KaemikaXM.Pages {
                 new OutputAction(this, "Reaction Complex Graph", OutputKind.Graph, ExportAs.ComplexGraph),
                 new OutputAction(this, "Protocol Step Graph", OutputKind.Graph, ExportAs.ProtocolGraph),
                 new OutputAction(this, "Protocol State Graph", OutputKind.Graph, ExportAs.PDMPGraph),
+                //new OutputAction(this, "Protocol State Graph (Par.)", OutputKind.Graph, ExportAs.PDMPGraph_Parallel),
             };
         }
 
@@ -82,9 +83,9 @@ namespace KaemikaXM.Pages {
 
         public Picker OutputPicker() {
             Picker outputPicker = new Picker {
-                Title = "Output and Export",
+                Title = "Output and Export", TitleColor = MainTabbedPage.barColor,
                 HorizontalOptions = LayoutOptions.FillAndExpand,
-                BackgroundColor = Color.FromHex(ModelEntryPage.secondBarColor),
+                BackgroundColor = MainTabbedPage.pickerColor,
                 FontSize = 14,
             };
 
@@ -152,7 +153,7 @@ namespace KaemikaXM.Pages {
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            bottomBar.BackgroundColor = Color.FromHex(ModelEntryPage.secondBarColor);
+            bottomBar.BackgroundColor = MainTabbedPage.secondBarColor; 
 
             bottomBar.Children.Add(stepper, 0, 0);
             bottomBar.Children.Add(outputPicker, 1, 0);

@@ -86,7 +86,7 @@ namespace Kaemika {
         private int lastEntryCount;                     // to know when we have completed the last entry
         private Dictionary<string, int> seriesIndex;    // maintaining the connection between seriesList and timecourse
 
-        public override void ChartUpdate() {
+        public override void ChartUpdate() {  // after a ChartUpdate we should be sure that seriesList is not changed, because a Chart.Draw can start from a gui refresh
             VisibilityRestore();
             MainTabbedPage.theChartPage.SetChart(
                 new Chart(title, MainTabbedPage.theModelEntryPage.modelInfo.title, seriesList, timecourse),
@@ -220,30 +220,23 @@ namespace Kaemika {
         public override void RestoreInput() {
             //### throw new Error("GUI_Xamarin : not implemented");
         }
-
-        // this-thread cache of main-thread state
-        private bool stopButtonIsEnabled = false;
-
-        public override void StopEnable(bool b) {
-            stopButtonIsEnabled = b;
-            // calling BeginInvokeOnMainThread here often causes a deadlock
-            // maybe because the main thread has called StopEnable via the Stop button callback and is waiting for it to return?
-            // so just avoid changing the appearance of the Stop/Start buttons, but remember their intended state in this thread
-
-            //Xamarin.Forms.Device.BeginInvokeOnMainThread(() => {
-            //    MainTabbedPage.theModelEntryPage.startButton.IsEnabled = !b;
-            //    MainTabbedPage.theChartPage.stopButton.IsEnabled = b;
-            //});
+       
+        public override void BeginningExecution() {
+            Xamarin.Forms.Device.BeginInvokeOnMainThread(() => {
+                MainTabbedPage.Executing(true);
+            });
         }
 
-        public override bool StopEnabled() {
-            return stopButtonIsEnabled;
+        public override void EndingExecution() {
+            Xamarin.Forms.Device.BeginInvokeOnMainThread(() => {
+                MainTabbedPage.Executing(false);
+            });
         }
 
         private bool continueButtonIsEnabled = false;
         public override void ContinueEnable(bool b) {
             continueButtonIsEnabled = b;
-            if (continueButtonIsEnabled) MainTabbedPage.theModelEntryPage.SetStartButtonToContinue(); else MainTabbedPage.theModelEntryPage.SetStartButtonToStart();
+            if (continueButtonIsEnabled) MainTabbedPage.theModelEntryPage.SetStartButtonToContinue(); else MainTabbedPage.theModelEntryPage.SetContinueButtonToStart();
         }
 
         public override bool ContinueEnabled() {
@@ -253,6 +246,10 @@ namespace Kaemika {
         public static string currentSolver = "OSLO RK547M"; // "OSLO GearBDF" or "OSLO RK547M"
         public override string Solver() {
             return currentSolver;
+        }
+
+        public override bool PrecomputeLNA() {
+            return false; // appaarently zero benefit in precomputing the drift matrix
         }
 
         private static Dictionary<string, Dictionary<string, bool>> visibilityCache = 

@@ -27,6 +27,7 @@ namespace KaemikaXM.Droid {
             SetText(this.text);
             SetEditable(this.editable);
             SetFontSize(this.fontSize);
+            this.editText.SetTextColor(Android.Graphics.Color.Rgb(98, 00, 237)); // "6200ED"
         }
         public void ClearEditText() {
             this.text = editText.Text; // save the last text before deallocation

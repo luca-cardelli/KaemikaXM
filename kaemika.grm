@@ -78,7 +78,8 @@ Comment Block @= { Nesting = All }
 <Statement>     ::=   <Net Instance>                          ! there are no obligatory delimiter characters between statements. LALR FTW!
                     | <Reaction>                              ! reactions are the only statements not prefixed by a keyword (other than instances)
                     | 'bool' Id '=' <Expression>              ! binding a bool value to a bool id
-                    | 'number' Id '=' <Expression>            ! binding a number value to a number id
+                    | 'number' Id '=' <Expression>            ! binding a number value (to a number id
+                    | 'number' Id '=?' <Distribution>         ! binding a number value drawn from a distribution to a number id
                     | 'string' Id '=' <Expression>            ! binding a string value to a string id
                     | 'flow' Id '=' <Expression>              ! binding a flow value to a flow id
                     | 'sample' <Sample>                       ! binding a sample to a sample id or sample def
@@ -160,6 +161,8 @@ Comment Block @= { Nesting = All }
                     | <Expression> 'as' <Expression>
                     | <Expression> 
 
+<Distribution>   ::= Id '(' <Args> ')'     ! uniform(lo,hi), normal(mean,stdev), exponential(lambda), bernoulli(p)
+                  
 ! OPERATORS  --------------------------------------------                                 
 
 <Or Exp>        ::=  <Or Exp> 'or' <And Exp>                                 ! boring encoding of prefix/infix operator precedence         

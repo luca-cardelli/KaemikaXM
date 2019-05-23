@@ -8,8 +8,11 @@ using Xamarin.Forms;
 
 namespace KaemikaXM.Pages {
 
-    public class MyCell : TextCell {
-        public MyCell() {
+    public class MyModelListCell : TextCell {
+        public MyModelListCell() {
+            TextColor = MainTabbedPage.barColor;
+            // DetailColor = Color.Brown;
+
             var renameAction = new MenuItem { Text = "Rename" };
             renameAction.SetBinding(MenuItem.CommandParameterProperty, new Binding("."));
             renameAction.Clicked += async (object sender, EventArgs e) => {
@@ -45,11 +48,13 @@ namespace KaemikaXM.Pages {
         public string filename; // this will be a randomly generated filename that is never shown
         public string text; // make sure to initialize to "", not null
         public bool modified;
+        public bool executable;
         public DateTime date;
         public ModelInfo() {
             title = "Untitled";
             text = "";
             modified = false;
+            executable = true;
             filename = "";
             date = DateTime.Now;
             datestring = DateTime.Now.ToString();
@@ -58,6 +63,7 @@ namespace KaemikaXM.Pages {
             title = "Untitled";
             text = sample;
             modified = false;
+            executable = true;
             filename = "";
             date = DateTime.Now;
             datestring = DateTime.Now.ToString();
@@ -98,9 +104,9 @@ equilibrate for 10
             Icon = "tab_feed.png";
 
             listView = new ListView { Margin = 20, };
-            listView.ItemTemplate = new DataTemplate(typeof(MyCell));                   // use MyCell here to activate context menus on (ModelInfo) list items
-            listView.ItemTemplate.SetBinding(MyCell.TextProperty, "title");             // binds property in ModelInfo
-            listView.ItemTemplate.SetBinding(MyCell.DetailProperty, "datestring");      // binds property in ModelInfo
+            listView.ItemTemplate = new DataTemplate(typeof(MyModelListCell));                   // use MyModelListCell here to activate context menus on (ModelInfo) list items
+            listView.ItemTemplate.SetBinding(MyModelListCell.TextProperty, "title");             // binds property in ModelInfo
+            listView.ItemTemplate.SetBinding(MyModelListCell.DetailProperty, "datestring");      // binds property in ModelInfo
 
             listView.ItemSelected += async (object sender, SelectedItemChangedEventArgs e) => {
                 if (e.SelectedItem != null) {

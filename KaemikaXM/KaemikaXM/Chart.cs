@@ -253,7 +253,7 @@ namespace Microcharts {
         private SKColor axisTextColor { get; set; } = SKColors.Gray;
         public static byte transparency { get; set; } = 32;
 
-        private List<Series> seriesList;
+        private List<Series> seriesList;  
         private Timecourse timecourse;
 
         public Chart(string title, string model) {

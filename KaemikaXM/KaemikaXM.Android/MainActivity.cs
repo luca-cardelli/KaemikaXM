@@ -42,7 +42,7 @@ namespace KaemikaXM.Droid {
             groups.Add(group3);
 
             var group4 = new KaemikaXM.Pages.ModelInfoGroup("Documentation");
-            foreach (string a in new List<string> { "KaemikaGrammar", "BuiltinFunctions", "Flows", "Functions" }) AddAsset(group4, a);
+            foreach (string a in new List<string> { "KaemikaGrammar", "BuiltinFunctions", "Flows", "Functions" }) AddAsset(group4, a, executable: false);
             groups.Add(group4);
 
             // allow the higher level of the package hierarchy to access the device-dependent functionality
@@ -62,13 +62,14 @@ namespace KaemikaXM.Droid {
             LoadApplication(new App(cgtStream, groups));
         }
 
-        private void AddAsset(KaemikaXM.Pages.ModelInfoGroup group, string assetname) {
+        private void AddAsset(KaemikaXM.Pages.ModelInfoGroup group, string assetname, bool executable = true) {
             try {
                 group.Add(new KaemikaXM.Pages.ModelInfo {
                     filename = "",
                     title = assetname,
                     text = new StreamReader(Assets.Open(assetname + ".txt")).ReadToEnd(),
                     date = DateTime.Now,
+                    executable = executable,
                 });
             } catch { }
         }

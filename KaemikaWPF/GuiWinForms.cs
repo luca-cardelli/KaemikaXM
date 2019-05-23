@@ -13,7 +13,10 @@ namespace KaemikaWPF
 
         delegate void VoidArgVoidReturnDelegate();
         delegate void BoolArgVoidReturnDelegate(bool b);
+        delegate void BoolBoolArgVoidReturnDelegate(bool b1, bool b2);
         delegate void StringArgVoidReturnDelegate(string s);
+        delegate void StringDoubleStringDoubleArrayArgVoidReturnDelegate(string parameter, double drawn, string distribution, double[] arguments);
+        delegate double StringArgDoubleReturnDelegate(string parameter);
         delegate void StringStringArgVoidReturnDelegate(string s1, string s2);
         delegate void StringStringStringArgVoidReturnDelegate(string s1, string s2, string s3);
         delegate void IntIntArgVoidReturnDelegate(int i, int j);
@@ -161,14 +164,14 @@ namespace KaemikaWPF
             } else {
                 Series series = form.ChartSeriesNamed(seriesName);
                 if (series != null) form.ChartAddPoint(series, t, mean, variance, noise);
-                else throw new Error("ChartAddPoint series name not found: " + seriesName);
+                else throw new Error("ChartAddPoint series null");
             }
         }
 
         public override string ChartAddPointAsString(string seriesName, double t, double mean, double variance, Noise noise) {
             Series series = form.ChartSeriesNamed(seriesName);
             if (series != null) return form.ChartAddPointAsString(series, t, mean, variance, noise);
-            else throw new Error("ChartAddPointAsString series name not found: " + seriesName);
+            else throw new Error("ChartAddPoint series null");
         }
 
         public override Noise NoiseSeries() {
@@ -196,26 +199,23 @@ namespace KaemikaWPF
                 return form.RemapVariants();
             }
         }
-
-        // this-thread cache of main-thread state
-        private bool stopButtonIsEnabled = false;
-        public override void StopEnable(bool b) {
-            stopButtonIsEnabled = b;
+        
+        public override void BeginningExecution() {
             if (form.btnStop.InvokeRequired) {
-                BoolArgVoidReturnDelegate d = new BoolArgVoidReturnDelegate(StopEnable);
-                form.Invoke(d, new object[] { b });
+                VoidArgVoidReturnDelegate d = new VoidArgVoidReturnDelegate(BeginningExecution);
+                form.Invoke(d, new object[] { });
             } else {
-                form.StopEnable(b);
+                form.StopEnable(true);
             }
         }
-        public override bool StopEnabled() {
-            return stopButtonIsEnabled;
-            //if (form.btnStop.InvokeRequired) {
-            //    VoidArgBoolReturnDelegate d = new VoidArgBoolReturnDelegate(StopEnabled);
-            //    return (bool)form.Invoke(d, new object[] {});
-            //} else {
-            //    return form.StopEnabled();
-            //}
+        
+        public override void EndingExecution() {
+            if (form.btnStop.InvokeRequired) {
+                VoidArgVoidReturnDelegate d = new VoidArgVoidReturnDelegate(EndingExecution);
+                form.Invoke(d, new object[] { });
+            } else {
+                form.StopEnable(false);
+            }
         }
 
         public override void ContinueEnable(bool b) {
@@ -278,6 +278,25 @@ namespace KaemikaWPF
             } else {
                 form.ChartListboxAddSeries(legend);
             }
+        }
+
+        public override void ChartAddParameter(string parameter, double drawn, string distribution, double[] arguments) {
+            if (form.flowLayoutPanel_Parameters.InvokeRequired){
+                StringDoubleStringDoubleArrayArgVoidReturnDelegate d = new StringDoubleStringDoubleArrayArgVoidReturnDelegate(ChartAddParameter);
+                form.Invoke(d, new object[] { parameter, drawn, distribution, arguments });
+            } else {
+                form.ChartSetParameter(parameter, drawn, distribution, arguments);
+            }
+        }
+
+        public override double ParameterOracle(string parameter) {
+            if (form.flowLayoutPanel_Parameters.InvokeRequired){
+                StringArgDoubleReturnDelegate d = new StringArgDoubleReturnDelegate(ParameterOracle);
+                return (double)form.Invoke(d, new object[] { parameter });
+            } else {
+                return form.ParameterOracle(parameter);
+            }
+
         }
 
         public override void ClipboardSetText(string text) {

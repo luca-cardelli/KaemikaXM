@@ -29,9 +29,9 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea8 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend8 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series8 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.btnConstruct = new System.Windows.Forms.Button();
             this.txtTarget = new System.Windows.Forms.TextBox();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
@@ -67,6 +67,7 @@
             this.comboBox_Export = new System.Windows.Forms.ComboBox();
             this.checkBox_ChartGrid = new System.Windows.Forms.CheckBox();
             this.checkBox_CharAxes = new System.Windows.Forms.CheckBox();
+            this.checkBox_precomputeLNA = new System.Windows.Forms.CheckBox();
             this.richTextBox = new System.Windows.Forms.RichTextBox();
             this.button_Continue = new System.Windows.Forms.Button();
             this.groupBox_Trace = new System.Windows.Forms.GroupBox();
@@ -78,14 +79,16 @@
             this.panel_Simulate = new System.Windows.Forms.Panel();
             this.label_Solvers = new System.Windows.Forms.Label();
             this.panel_Controls = new System.Windows.Forms.Panel();
+            this.checkBoxButton_Parameters = new System.Windows.Forms.CheckBox();
             this.label_Transparency = new System.Windows.Forms.Label();
             this.label_Legend = new System.Windows.Forms.Label();
             this.tableLayoutPanel_LeftColumn = new System.Windows.Forms.TableLayoutPanel();
             this.panel_richTextBoxPadding = new System.Windows.Forms.Panel();
+            this.flowLayoutPanel_Parameters = new System.Windows.Forms.FlowLayoutPanel();
             this.tableLayoutPanel_RightColumn = new System.Windows.Forms.TableLayoutPanel();
             this.tableLayoutPanel_Columns = new System.Windows.Forms.TableLayoutPanel();
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
-            this.checkBox_precomputeLNA = new System.Windows.Forms.CheckBox();
+            this.label_Parameters = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.chart1)).BeginInit();
             this.groupBox_LNA.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_Transparency)).BeginInit();
@@ -246,30 +249,30 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.chart1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.chart1.BorderSkin.PageColor = System.Drawing.SystemColors.Control;
-            chartArea1.AxisX.MajorGrid.LineColor = System.Drawing.Color.Gray;
-            chartArea1.AxisX.MajorGrid.LineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dot;
-            chartArea1.AxisX.ScrollBar.BackColor = System.Drawing.Color.White;
-            chartArea1.AxisX.ScrollBar.ButtonColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            chartArea1.AxisY.MajorGrid.LineColor = System.Drawing.Color.Gray;
-            chartArea1.AxisY.MajorGrid.LineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dot;
-            chartArea1.AxisY.ScrollBar.BackColor = System.Drawing.Color.White;
-            chartArea1.AxisY.ScrollBar.ButtonColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            chartArea1.BorderWidth = 10;
-            chartArea1.Name = "ChartArea1";
-            this.chart1.ChartAreas.Add(chartArea1);
-            legend1.Font = new System.Drawing.Font("Lucida Sans Unicode", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            legend1.IsTextAutoFit = false;
-            legend1.Name = "Legend1";
-            this.chart1.Legends.Add(legend1);
+            chartArea8.AxisX.MajorGrid.LineColor = System.Drawing.Color.Gray;
+            chartArea8.AxisX.MajorGrid.LineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dot;
+            chartArea8.AxisX.ScrollBar.BackColor = System.Drawing.Color.White;
+            chartArea8.AxisX.ScrollBar.ButtonColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            chartArea8.AxisY.MajorGrid.LineColor = System.Drawing.Color.Gray;
+            chartArea8.AxisY.MajorGrid.LineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dot;
+            chartArea8.AxisY.ScrollBar.BackColor = System.Drawing.Color.White;
+            chartArea8.AxisY.ScrollBar.ButtonColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            chartArea8.BorderWidth = 10;
+            chartArea8.Name = "ChartArea1";
+            this.chart1.ChartAreas.Add(chartArea8);
+            legend8.Font = new System.Drawing.Font("Lucida Sans Unicode", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            legend8.IsTextAutoFit = false;
+            legend8.Name = "Legend1";
+            this.chart1.Legends.Add(legend8);
             this.chart1.Location = new System.Drawing.Point(6, 386);
             this.chart1.Margin = new System.Windows.Forms.Padding(6, 4, 6, 4);
             this.chart1.Name = "chart1";
             this.chart1.Palette = System.Windows.Forms.DataVisualization.Charting.ChartColorPalette.Bright;
-            series1.ChartArea = "ChartArea1";
-            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series1.Legend = "Legend1";
-            series1.Name = "-";
-            this.chart1.Series.Add(series1);
+            series8.ChartArea = "ChartArea1";
+            series8.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series8.Legend = "Legend1";
+            series8.Name = "-";
+            this.chart1.Series.Add(series8);
             this.chart1.Size = new System.Drawing.Size(615, 287);
             this.chart1.TabIndex = 24;
             this.chart1.Text = "chart1";
@@ -319,13 +322,14 @@
             // comboBox_Solvers
             // 
             this.comboBox_Solvers.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBox_Solvers.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.comboBox_Solvers.FormattingEnabled = true;
             this.comboBox_Solvers.Items.AddRange(new object[] {
-            "OSLO RK547M",
-            "OSLO GearBDF"});
-            this.comboBox_Solvers.Location = new System.Drawing.Point(231, 14);
+            "RK547M",
+            "GearBDF"});
+            this.comboBox_Solvers.Location = new System.Drawing.Point(313, 14);
             this.comboBox_Solvers.Name = "comboBox_Solvers";
-            this.comboBox_Solvers.Size = new System.Drawing.Size(121, 21);
+            this.comboBox_Solvers.Size = new System.Drawing.Size(66, 20);
             this.comboBox_Solvers.TabIndex = 27;
             this.comboBox_Solvers.SelectedIndexChanged += new System.EventHandler(this.comboBox_Solvers_SelectedIndexChanged);
             // 
@@ -460,11 +464,11 @@
             this.checkedListBox_Series.CheckOnClick = true;
             this.checkedListBox_Series.Font = new System.Drawing.Font("Lucida Sans Unicode", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkedListBox_Series.FormattingEnabled = true;
-            this.checkedListBox_Series.Location = new System.Drawing.Point(898, 435);
+            this.checkedListBox_Series.Location = new System.Drawing.Point(919, 421);
             this.checkedListBox_Series.Margin = new System.Windows.Forms.Padding(2);
             this.checkedListBox_Series.MultiColumn = true;
             this.checkedListBox_Series.Name = "checkedListBox_Series";
-            this.checkedListBox_Series.Size = new System.Drawing.Size(350, 156);
+            this.checkedListBox_Series.Size = new System.Drawing.Size(329, 213);
             this.checkedListBox_Series.TabIndex = 33;
             this.checkedListBox_Series.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.checkedListBox_Series_ItemCheck);
             this.checkedListBox_Series.SelectedIndexChanged += new System.EventHandler(this.checkedListBox_Series_SelectedIndexChanged);
@@ -472,7 +476,7 @@
             // button_ChartSnap
             // 
             this.button_ChartSnap.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.button_ChartSnap.Location = new System.Drawing.Point(463, 5);
+            this.button_ChartSnap.Location = new System.Drawing.Point(483, 5);
             this.button_ChartSnap.Name = "button_ChartSnap";
             this.button_ChartSnap.Size = new System.Drawing.Size(75, 32);
             this.button_ChartSnap.TabIndex = 35;
@@ -514,7 +518,7 @@
             // 
             // numericUpDown_Transparency
             // 
-            this.numericUpDown_Transparency.Location = new System.Drawing.Point(417, 17);
+            this.numericUpDown_Transparency.Location = new System.Drawing.Point(437, 17);
             this.numericUpDown_Transparency.Maximum = new decimal(new int[] {
             255,
             0,
@@ -548,7 +552,7 @@
             this.checkBoxButton_EditChart.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkBoxButton_EditChart.AutoSize = true;
             this.checkBoxButton_EditChart.BackColor = System.Drawing.Color.Linen;
-            this.checkBoxButton_EditChart.Location = new System.Drawing.Point(544, 14);
+            this.checkBoxButton_EditChart.Location = new System.Drawing.Point(564, 14);
             this.checkBoxButton_EditChart.Name = "checkBoxButton_EditChart";
             this.checkBoxButton_EditChart.Size = new System.Drawing.Size(53, 23);
             this.checkBoxButton_EditChart.TabIndex = 34;
@@ -564,9 +568,8 @@
             this.comboBox_Export.Items.AddRange(new object[] {
             "   Export",
             "Protocol",
-            "GraphViz",
             "PDMP",
-            "PDMP Sequential",
+            "PDMP GraphViz",
             "ODE (Oscill8)",
             "CRN (LBS html5)",
             "CRN (LBS silverlight)",
@@ -581,7 +584,7 @@
             // checkBox_ChartGrid
             // 
             this.checkBox_ChartGrid.AutoSize = true;
-            this.checkBox_ChartGrid.Location = new System.Drawing.Point(365, 21);
+            this.checkBox_ChartGrid.Location = new System.Drawing.Point(385, 21);
             this.checkBox_ChartGrid.Name = "checkBox_ChartGrid";
             this.checkBox_ChartGrid.Size = new System.Drawing.Size(43, 17);
             this.checkBox_ChartGrid.TabIndex = 41;
@@ -595,7 +598,7 @@
             this.checkBox_CharAxes.AutoSize = true;
             this.checkBox_CharAxes.Checked = true;
             this.checkBox_CharAxes.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_CharAxes.Location = new System.Drawing.Point(365, 4);
+            this.checkBox_CharAxes.Location = new System.Drawing.Point(385, 4);
             this.checkBox_CharAxes.Name = "checkBox_CharAxes";
             this.checkBox_CharAxes.Size = new System.Drawing.Size(48, 17);
             this.checkBox_CharAxes.TabIndex = 42;
@@ -603,6 +606,19 @@
             this.toolTip1.SetToolTip(this.checkBox_CharAxes, "Show/hide axes");
             this.checkBox_CharAxes.UseVisualStyleBackColor = true;
             this.checkBox_CharAxes.CheckedChanged += new System.EventHandler(this.checkBox_CharAxes_CheckedChanged);
+            // 
+            // checkBox_precomputeLNA
+            // 
+            this.checkBox_precomputeLNA.AutoSize = true;
+            this.checkBox_precomputeLNA.Checked = true;
+            this.checkBox_precomputeLNA.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBox_precomputeLNA.Location = new System.Drawing.Point(292, 19);
+            this.checkBox_precomputeLNA.Name = "checkBox_precomputeLNA";
+            this.checkBox_precomputeLNA.Size = new System.Drawing.Size(15, 14);
+            this.checkBox_precomputeLNA.TabIndex = 45;
+            this.toolTip1.SetToolTip(this.checkBox_precomputeLNA, "Precompute LNA drift matrix (big)");
+            this.checkBox_precomputeLNA.UseVisualStyleBackColor = false;
+            this.checkBox_precomputeLNA.CheckedChanged += new System.EventHandler(this.CheckBox_precomputeLNA_CheckedChanged);
             // 
             // richTextBox
             // 
@@ -761,7 +777,7 @@
             // 
             this.label_Solvers.AutoSize = true;
             this.label_Solvers.ForeColor = System.Drawing.Color.DarkGreen;
-            this.label_Solvers.Location = new System.Drawing.Point(229, 0);
+            this.label_Solvers.Location = new System.Drawing.Point(313, 0);
             this.label_Solvers.Name = "label_Solvers";
             this.label_Solvers.Size = new System.Drawing.Size(42, 13);
             this.label_Solvers.TabIndex = 28;
@@ -771,6 +787,8 @@
             // 
             this.panel_Controls.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel_Controls.Controls.Add(this.label_Parameters);
+            this.panel_Controls.Controls.Add(this.checkBoxButton_Parameters);
             this.panel_Controls.Controls.Add(this.checkBox_precomputeLNA);
             this.panel_Controls.Controls.Add(this.checkBoxButton_EditChart);
             this.panel_Controls.Controls.Add(this.label_Transparency);
@@ -789,10 +807,23 @@
             this.panel_Controls.Size = new System.Drawing.Size(627, 39);
             this.panel_Controls.TabIndex = 49;
             // 
+            // checkBoxButton_Parameters
+            // 
+            this.checkBoxButton_Parameters.Appearance = System.Windows.Forms.Appearance.Button;
+            this.checkBoxButton_Parameters.AutoSize = true;
+            this.checkBoxButton_Parameters.BackColor = System.Drawing.Color.Linen;
+            this.checkBoxButton_Parameters.Location = new System.Drawing.Point(216, 14);
+            this.checkBoxButton_Parameters.Name = "checkBoxButton_Parameters";
+            this.checkBoxButton_Parameters.Size = new System.Drawing.Size(70, 23);
+            this.checkBoxButton_Parameters.TabIndex = 46;
+            this.checkBoxButton_Parameters.Text = "Parameters";
+            this.checkBoxButton_Parameters.UseVisualStyleBackColor = false;
+            this.checkBoxButton_Parameters.CheckedChanged += new System.EventHandler(this.CheckBoxButton_Parameters_CheckedChanged);
+            // 
             // label_Transparency
             // 
             this.label_Transparency.AutoSize = true;
-            this.label_Transparency.Location = new System.Drawing.Point(413, 4);
+            this.label_Transparency.Location = new System.Drawing.Point(433, 4);
             this.label_Transparency.Name = "label_Transparency";
             this.label_Transparency.Size = new System.Drawing.Size(33, 13);
             this.label_Transparency.TabIndex = 44;
@@ -801,7 +832,7 @@
             // label_Legend
             // 
             this.label_Legend.AutoSize = true;
-            this.label_Legend.Location = new System.Drawing.Point(561, 1);
+            this.label_Legend.Location = new System.Drawing.Point(571, 1);
             this.label_Legend.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label_Legend.Name = "label_Legend";
             this.label_Legend.Size = new System.Drawing.Size(25, 13);
@@ -839,6 +870,20 @@
             this.panel_richTextBoxPadding.Padding = new System.Windows.Forms.Padding(4, 0, 0, 0);
             this.panel_richTextBoxPadding.Size = new System.Drawing.Size(621, 622);
             this.panel_richTextBoxPadding.TabIndex = 35;
+            // 
+            // flowLayoutPanel_Parameters
+            // 
+            this.flowLayoutPanel_Parameters.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.flowLayoutPanel_Parameters.AutoScroll = true;
+            this.flowLayoutPanel_Parameters.BackColor = System.Drawing.Color.Linen;
+            this.flowLayoutPanel_Parameters.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.flowLayoutPanel_Parameters.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            this.flowLayoutPanel_Parameters.Location = new System.Drawing.Point(525, 421);
+            this.flowLayoutPanel_Parameters.Margin = new System.Windows.Forms.Padding(5);
+            this.flowLayoutPanel_Parameters.Name = "flowLayoutPanel_Parameters";
+            this.flowLayoutPanel_Parameters.Size = new System.Drawing.Size(290, 213);
+            this.flowLayoutPanel_Parameters.TabIndex = 49;
+            this.flowLayoutPanel_Parameters.WrapContents = false;
             // 
             // tableLayoutPanel_RightColumn
             // 
@@ -886,18 +931,14 @@
             this.notifyIcon1.Text = "notifyIcon1";
             this.notifyIcon1.Visible = true;
             // 
-            // checkBox_precomputeLNA
+            // label_Parameters
             // 
-            this.checkBox_precomputeLNA.AutoSize = true;
-            this.checkBox_precomputeLNA.Checked = true;
-            this.checkBox_precomputeLNA.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_precomputeLNA.Location = new System.Drawing.Point(210, 19);
-            this.checkBox_precomputeLNA.Name = "checkBox_precomputeLNA";
-            this.checkBox_precomputeLNA.Size = new System.Drawing.Size(15, 14);
-            this.checkBox_precomputeLNA.TabIndex = 45;
-            this.toolTip1.SetToolTip(this.checkBox_precomputeLNA, "Precompute LNA drift matrix (big)");
-            this.checkBox_precomputeLNA.UseVisualStyleBackColor = false;
-            this.checkBox_precomputeLNA.CheckedChanged += new System.EventHandler(this.CheckBox_precomputeLNA_CheckedChanged);
+            this.label_Parameters.AutoSize = true;
+            this.label_Parameters.Location = new System.Drawing.Point(233, 1);
+            this.label_Parameters.Name = "label_Parameters";
+            this.label_Parameters.Size = new System.Drawing.Size(25, 13);
+            this.label_Parameters.TabIndex = 47;
+            this.label_Parameters.Text = "↑↑↑";
             // 
             // GUI
             // 
@@ -906,6 +947,7 @@
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(1264, 681);
             this.Controls.Add(this.checkedListBox_Series);
+            this.Controls.Add(this.flowLayoutPanel_Parameters);
             this.Controls.Add(this.btnParse);
             this.Controls.Add(this.checkBox_RemapVariants);
             this.Controls.Add(this.checkBox_ScopeVariants);
@@ -994,6 +1036,9 @@
         private System.Windows.Forms.Panel panel_richTextBoxPadding;
         private System.Windows.Forms.NotifyIcon notifyIcon1;
         public System.Windows.Forms.CheckBox checkBox_precomputeLNA;
+        public System.Windows.Forms.FlowLayoutPanel flowLayoutPanel_Parameters;
+        private System.Windows.Forms.CheckBox checkBoxButton_Parameters;
+        private System.Windows.Forms.Label label_Parameters;
     }
 }
 

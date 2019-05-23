@@ -27,6 +27,11 @@ namespace KaemikaXM.Pages {
 
     public class MainTabbedPage : Xamarin.Forms.TabbedPage {
 
+        public static Color barColor = Color.FromHex("6200ED"); // standard blue: "2195F3"; https://www.color-hex.com/
+        public static Color secondBarColor = Color.FromHex("E8F2FC"); // formerly "61D5ff"; 
+        public static Color pickerColor = Color.FromHex("E0F2FC");
+        public static int buttonHeightRequest = 40;
+
         public static MainTabbedPage theMainTabbedPage;
         public static ChartPageLandscape theChartPageLandscape = new ChartPageLandscape();      // this page is never pushed, there is only one
 
@@ -40,18 +45,18 @@ namespace KaemikaXM.Pages {
         public static NavigationPage theModelListPageNavigation;
         public static NavigationPage theModelEntryPageNavigation;
         public static NavigationPage theOutputPageNavigation;
-        public static NavigationPage theGraphLayoutPageNavigation;
         public static NavigationPage theChartPageNavigation;
 
         public MainTabbedPage() {
             var specific = this.On<Xamarin.Forms.PlatformConfiguration.Android>();
             specific.SetToolbarPlacement(ToolbarPlacement.Bottom);
-            BarBackgroundColor = Color.FromHex("2195F3");
+            BarBackgroundColor = barColor;
             BarTextColor = Color.White;
-            specific.SetBarItemColor(Color.FromHex("66FFFFFF"));
+            specific.SetBarItemColor(Color.White); // Color.FromHex("66FFFFFF")
             specific.SetBarSelectedItemColor(Color.White);
             //specific.DisableSmoothScroll(); //??
-            //specific.DisableSwipePaging();  //disables swiping between tabbed pages
+            specific.DisableSwipePaging();  //disables swiping between tabbed pages
+            // this.On<Xamarin.Forms.PlatformConfiguration.Android>().SetIsSwipePagingEnabled(false); // disables swiping between tabbed pages
 
             theDocListPage = new DocListPage();
             theModelListPage = new ModelListPage();
@@ -59,17 +64,14 @@ namespace KaemikaXM.Pages {
             theOutputPage = new OutputPage();
             theChartPage = new ChartPage();
 
-            theDocListPageNavigation = new NavigationPage(theDocListPage) { Title = "Tutorial", Icon = "icons8usermanual100.png" };
-            theModelListPageNavigation = new NavigationPage(theModelListPage) { Title = "Networks", Icon = "icons8openedfolder96.png" };
-            theModelEntryPageNavigation = new NavigationPage(theModelEntryPage) { Title = "Network", Icon = "icons8mindmap96.png" };
-            theOutputPageNavigation = new NavigationPage(theOutputPage) { Title = "Output", Icon = "icons8truefalse100.png" };
-            theChartPageNavigation = new NavigationPage(theChartPage) { Title = "Chart", Icon = "icons8combochart48.png" };
-
-            // disable left-right swiping of pages
-            this.On<Xamarin.Forms.PlatformConfiguration.Android>().SetIsSwipePagingEnabled(false);
+            theDocListPageNavigation = new NavigationPage(theDocListPage) { Title = "Tutorial", Icon = "icons8usermanual100.png", BarBackgroundColor = barColor};
+            theModelListPageNavigation = new NavigationPage(theModelListPage) { Title = "Networks", Icon = "icons8openedfolder96.png", BarBackgroundColor = barColor };
+            theModelEntryPageNavigation = new NavigationPage(theModelEntryPage) { Title = "Network", Icon = "icons8mindmap96.png", BarBackgroundColor = barColor };
+            theOutputPageNavigation = new NavigationPage(theOutputPage) { Title = "Output", Icon = "icons8truefalse100.png", BarBackgroundColor = barColor };
+            theChartPageNavigation = new NavigationPage(theChartPage) { Title = "Chart", Icon = "icons8combochart48.png", BarBackgroundColor = barColor };
 
             // To change tab order, just shuffle these Add calls around.
-            // with more than 5 tabs the app will must crash on load
+            // with more than 5 tabs the app will just crash on load
             Children.Add(theDocListPageNavigation);
             Children.Add(theModelListPageNavigation);
             Children.Add(theModelEntryPageNavigation);
@@ -84,6 +86,25 @@ namespace KaemikaXM.Pages {
                 .CurrentPage as KaemikaPage)
                 .OnSwitchedTo();
         };
+
+        public static void Executing(bool executing) {
+            if (executing) {
+                theOutputPageNavigation.Icon = "icons8refresh96.png"; 
+                theChartPageNavigation.Icon = "icons8refresh96.png";
+                // we need to use size 40x40 icons or they get stuck at wrong size after changing icon:
+                theModelEntryPage.startButton.Source = "icons8play40disabled.png"; 
+                theChartPage.startButton.Source = "icons8play40disabled.png"; 
+                theChartPage.stopButton.Source = "icons8stop40.png"; 
+            }
+            else {
+                theOutputPageNavigation.Icon = "icons8truefalse100.png";
+                theChartPageNavigation.Icon = "icons8combochart48.png";
+                // we need to use size 40x40 icons or they get stuck at wrong size after changing icon:
+                theModelEntryPage.startButton.Source = "icons8play40.png"; 
+                theChartPage.startButton.Source = "icons8play40.png"; 
+                theChartPage.stopButton.Source = "icons8stop40disabled.png";
+            }
+        }
 
         public static void SwitchToTab(NavigationPage page) {
             foreach (NavigationPage child in theMainTabbedPage.Children) {

@@ -31,16 +31,18 @@ namespace Kaemika
         public abstract void ChartUpdate();
         public abstract void LegendUpdate();
         public abstract string ChartAddSeries(string legend, Color color, Noise noise);
-        // returns the same string as 'legend' if it could add the series, and null if not, e.g. if the series was a duplicate name
+        // returns the same string as 'legend' param if it did add the series, and null if not, e.g. if the series was a duplicate name
         public abstract void ChartAddPoint(string seriesName, double t, double mean, double variance, Noise noise);
         public abstract string ChartAddPointAsString(string seriesName, double t, double mean, double variance, Noise noise);
+        public abstract void ChartAddParameter(string parameter, double drawn, string distribution, double[] args);
+        public abstract double ParameterOracle(string parameter); // returns NAN if oracle not available
         public abstract Noise NoiseSeries();
         public abstract bool ScopeVariants();
         public abstract bool RemapVariants();
         public abstract void SaveInput();
         public abstract void RestoreInput();
-        public abstract void StopEnable(bool b);
-        public abstract bool StopEnabled();
+        public abstract void BeginningExecution();   // signals that execution is starting
+        public abstract void EndingExecution();     // signals that execution has ended (run to end, or stopped)
         public abstract void ContinueEnable(bool b);
         public abstract bool ContinueEnabled();
         public abstract string Solver();

@@ -48,7 +48,7 @@ namespace KaemikaXM.Pages
         private Microcharts.ChartView chartView;
         private ModelInfo currentModelInfo;
         public Picker noisePicker;
-        private ImageButton stopButton;
+        public ImageButton stopButton;
         private CollectionView legendView;
         public ImageButton startButton;
         private ToolbarItem solverRK547MButton;
@@ -56,6 +56,7 @@ namespace KaemikaXM.Pages
 
         private ToolbarItem SolverRK547MButton() {
             return new ToolbarItem("OSLO RK547M", "icons8refresh96solver1", () => {
+                if (Exec.IsExecuting()) return;
                 solverRK547MButton.IsEnabled = false;
                 GUI_Xamarin.currentSolver = "OSLO RK547M";
                 MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: false, switchToOutput: false);
@@ -65,6 +66,7 @@ namespace KaemikaXM.Pages
 
         private ToolbarItem SolverGearBDFButton() {
             return new ToolbarItem("OSLO GearBDF", "icons8refresh96solver2", () => {
+                if (Exec.IsExecuting()) return;
                 solverGearBDFButton.IsEnabled = false;
                 GUI_Xamarin.currentSolver = "OSLO GearBDF";
                 MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: false, switchToOutput: false);
@@ -75,12 +77,12 @@ namespace KaemikaXM.Pages
         public ImageButton StopButton() {
             ImageButton button = new ImageButton() {
                 Source = "icons8stop40.png",
-                HeightRequest = 40,
+                HeightRequest = MainTabbedPage.buttonHeightRequest,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = Color.FromHex(ModelEntryPage.secondBarColor),
+                BackgroundColor = MainTabbedPage.secondBarColor,
             };
             button.Clicked += async (object sender, EventArgs e) => {
-                Gui.gui.StopEnable(false); // signals that we should stop
+                Exec.EndingExecution();
             };
             return button;
         }
@@ -112,7 +114,7 @@ namespace KaemikaXM.Pages
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            bottomBar.BackgroundColor = Color.FromHex(ModelEntryPage.secondBarColor);
+            bottomBar.BackgroundColor = MainTabbedPage.secondBarColor;
 
             bottomBar.Children.Add(stopButton, 0, 0);
             bottomBar.Children.Add(noisePicker, 1, 0);
@@ -121,7 +123,7 @@ namespace KaemikaXM.Pages
             Grid grid = new Grid { ColumnSpacing = 0 };
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(startButton.HeightRequest + 2 * bottomBarPadding) });
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(MainTabbedPage.buttonHeightRequest + 2 * bottomBarPadding) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
             legendView = LegendView();
@@ -215,7 +217,8 @@ namespace KaemikaXM.Pages
         public override void OnSwitchedTo() {
             MainTabbedPage.OnAnySwitchedTo(this);
             MainTabbedPage.theModelEntryPage.SyncNoisePicker(noisePicker);
-            if (currentModelInfo != MainTabbedPage.theModelEntryPage.modelInfo) // forkWorker: we can compute the chart concurrently
+            if (!Exec.IsExecuting() && // we could be waiting on a continuation! StartAction would switch us right back to this page even if it does not start a thread!
+                currentModelInfo != MainTabbedPage.theModelEntryPage.modelInfo) // forkWorker: we can compute the chart concurrently
                 MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: false, switchToOutput: false);
             Gui.gui.ChartUpdate();
         }

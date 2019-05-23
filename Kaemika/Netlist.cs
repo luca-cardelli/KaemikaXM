@@ -87,10 +87,12 @@ namespace Kaemika
         public Symbol symbol;
         public Type type;
         public Value value;
-        public ValueEntry(Symbol symbol, Type type, Value value) {
+        public DistributionValue distribution;
+        public ValueEntry(Symbol symbol, Type type, Value value, DistributionValue distribution = null) {
             this.symbol = symbol;
             this.type = type;
             this.value = value;
+            this.distribution = distribution;
         }
         public override string Format(Style style) {
             if (style.traceComputational) {
@@ -349,7 +351,7 @@ namespace Kaemika
             return str;
         }
 
-        public string FormatAsODE(Style style, string prefixDiff = "∂ₜ ", string suffixDiff = "") {
+        public string FormatAsODE(Style style, string prefixDiff = "∂", string suffixDiff = "") {
             string ODEs = "";
             foreach (SpeciesValue variable in sample.species) {
                 string polynomial = "";
@@ -357,18 +359,24 @@ namespace Kaemika
                     string monomial = "";
                     int netStoichiometry = reaction.NetStoichiometry(variable.symbol);
                     if (netStoichiometry != 0) {
-                        foreach (SpeciesValue sp in sample.species) {
-                            int spStoichio = reaction.Stoichiometry(sp.symbol, reaction.reactants);
-                            if (spStoichio > 0) {
-                                string factor = sp.Format(style);
-                                if (spStoichio != 1) factor = factor + "^" + spStoichio;
-                                monomial = (monomial == "") ? factor : monomial + "*" + factor;
+                        if (reaction.rate is MassActionRateValue) {
+                            foreach (SpeciesValue sp in sample.species) {
+                                int spStoichio = reaction.Stoichiometry(sp.symbol, reaction.reactants);
+                                if (spStoichio > 0) {
+                                    string factor = sp.Format(style);
+                                    if (spStoichio != 1) factor = factor + "^" + spStoichio;
+                                    monomial = (monomial == "") ? factor : monomial + "*" + factor;
+                                }
                             }
+                            double rate = ((MassActionRateValue)reaction.rate).Rate(this.temperature);
+                            if ((rate != 1) && (monomial != "")) monomial = "*" + monomial;
+                            if (rate != 1) monomial = style.FormatDouble(rate) + monomial;
+                        } else if (reaction.rate is GeneralRateValue) {
+                            Flow rate = (reaction.rate as GeneralRateValue).rateFunction;
+                            monomial = rate.Format(style);
+                        } else {
+                            throw new Error("FormatAsODE");
                         }
-                        if (!(reaction.rate is MassActionRateValue)) throw new Error("FormatAsODE: only mass action reactions are supported");
-                        double rate = ((MassActionRateValue)reaction.rate).Rate(this.temperature);
-                        if ((rate != 1) && (monomial != "")) monomial = "*" + monomial;
-                        if (rate != 1) monomial = style.FormatDouble(rate) + monomial;
                         if ((netStoichiometry == -1) && (monomial == "")) monomial = "-1";
                         else if ((netStoichiometry == -1) && (monomial != "")) monomial = "-" + monomial;
                         else if ((netStoichiometry == 1) && (monomial != "")) { }
@@ -679,6 +687,16 @@ namespace Kaemika
                 foreach (SpeciesValue s in species) reportList.Add(new ReportEntry(new SpeciesFlow(s.symbol), null));
             }
             return reportList;
+        }
+
+        public List<DistributionValue> Parameters() {
+            List<DistributionValue> parameterList = new List<DistributionValue> { };
+            foreach (Entry entry in this.entries) {
+                if (entry is ValueEntry && (entry as ValueEntry).distribution != null) {
+                    parameterList.Add((entry as ValueEntry).distribution);
+                }
+            }
+            return parameterList;
         }
 
         public List<ProtocolEntry> Protocols() {

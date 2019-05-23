@@ -96,6 +96,8 @@ namespace Kaemika {
                 return new List<Statement> { new ValueDefinition(reduction.Terminal(1), new Type("bool"), ParseExpression(reduction.Nonterminal(3))) };
             } else if (reduction.Production() == "<Statement> ::= number Id '=' <Expression>") {
                 return new List<Statement> { new ValueDefinition(reduction.Terminal(1), new Type("number"), ParseExpression(reduction.Nonterminal(3))) };
+            } else if (reduction.Production() == "<Statement> ::= number Id '=?' <Distribution>") {
+                return new List<Statement> { new DistributionDefinition(reduction.Terminal(1), new Type("distribution"), ParseDistribution(reduction.Nonterminal(3))) };
             } else if (reduction.Production() == "<Statement> ::= string Id '=' <Expression>") {
                 return new List<Statement> { new ValueDefinition(reduction.Terminal(1), new Type("string"), ParseExpression(reduction.Nonterminal(3))) };
             } else if (reduction.Production() == "<Statement> ::= flow Id '=' <Expression>") {
@@ -219,6 +221,12 @@ namespace Kaemika {
                 return ParseExpression(reduction.Nonterminal(1));
             } else if (reduction.Production()            == "<Allocation> ::= ") {
                 return new Variable("vessel");
+            } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
+        }
+
+        public static Distribution ParseDistribution(IReduction reduction) {
+            if (reduction.Production()                   == "<Distribution> ::= Id '(' <Args> ')'") {
+                return new Distribution(reduction.Terminal(0), ParseArguments(reduction.Nonterminal(2)));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }
      

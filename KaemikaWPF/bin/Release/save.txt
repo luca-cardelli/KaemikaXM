@@ -1,63 +1,54 @@
+
 //--------------------------------------------------//
 //------------------- PID Controller ------------------//
 //--------------------------------------------------//
 
-
 //----------------- Proportional Block ------------------
-network PBlock (species E⁺ E⁻ P⁺ P⁻) {
-       E⁺ -> E⁺ + P⁺
-       E⁻ -> E⁻ + P⁻ 
-       P⁺ -> #
-       P⁻ -> #
-       P⁻ + P⁺ -> #
+network PBlock (species E⁺ E⁻ U⁺ U⁻, number Kp) {
+       E⁺ ->{Kp} E⁺ + U⁺
+       E⁻ ->{Kp} E⁻ + U⁻ 
+       U⁺ ->{Kp} #
+       U⁻ ->{Kp} #
+       U⁻ + U⁺ ->{Kp} #
 }
 
 //------------------- Integral Block --------------------
-network IBlock (species E⁺ E⁻ I⁺ I⁻) {
-       E⁺ -> E⁺ + I⁺ 
-       E⁻ -> E⁻ + I⁻ 
-       I⁻ + I⁺ -> #
+network IBlock (species E⁺ E⁻ U⁺ U⁻, number Ki) {
+       E⁺ ->{Ki} E⁺ + U⁺ 
+       E⁻ ->{Ki} E⁻ + U⁻ 
+       U⁻ + U⁺ ->{Ki} #
 }
 
 //------------------ Derivative Block -------------------
-network DBlock(species E⁺ E⁻ D⁺ D⁻) {
+network DBlock(species E⁺ E⁻ U⁺ U⁻, number Kd) {
        species A⁺ @ 0M  // D block auxiliary species +
        species A⁻ @ 0M  // D block auxiliary species -
 
-       E⁺-> E⁺ + A⁺ 
-       A⁺ -> #
-       E⁻ -> E⁻ + A⁻ 
-       A⁻ -> #
-       E⁺ ->{10} E⁺ + D⁺ 
-       A⁻ ->{10} A⁻ + D⁺ 
-       D⁺ -> #
-       E⁻ ->{10} E⁻ + D⁻ 
-       A⁺ ->{10} A⁺ + D⁻ 
-       D⁻ -> #
-       D⁺ + D⁻ -> #
+       E⁺->{10} E⁺ + A⁺ 
+       A⁺ ->{10} #
+       E⁻ ->{10} E⁻ + A⁻ 
+       A⁻ ->{10} #
+       E⁺ ->{10*Kd} E⁺ + U⁺ 
+       A⁻ ->{10*Kd} A⁻ + U⁺ 
+       U⁺ ->{Kd} #
+       E⁻ ->{10*Kd} E⁻ + U⁻ 
+       A⁺ ->{10*Kd} A⁺ + U⁻ 
+       U⁻ ->{Kd} #
+       U⁺ + U⁻ ->{Kd} #
 }
 
-//----------------- Addition Block -----------------
-network SummationBlock (species I⁺ I⁻ P⁺ P⁻ B⁺ B⁻,
-                        number iR pR bR) {
-       I⁺ ->{iR} I⁺ + B⁺ 
-       I⁻ ->{iR} I⁻ + B⁻ 
-       P⁺ ->{pR} P⁺ + B⁺ 
-       P⁻ ->{pR} P⁻ + B⁻ 
-       B⁺ ->{bR} #
-       B⁻ ->{bR} #
-       B⁻ + B⁺ ->{bR} #
-}
+//------------------ Addition Block -------------------
 
-//-------------- Actuator Species Production--------------
-network CopyBlock (species PID⁺ PID⁻ U⁺ U⁻) {
-       number copyRate = 100
-
-       PID⁻ ->{copyRate} PID⁻ + U⁻ 
-       PID⁺ ->{copyRate} PID⁺ + U⁺ 
-       U⁻ ->{copyRate}  #
-       U⁺ ->{copyRate} #
-       U⁻ + U⁺ ->{copyRate} #
+network SumBlock(species P⁺ P⁻ I⁺ I⁻ D⁺ D⁻ U⁺ U⁻, number Ka) {
+      P⁺ ->{Ka} P⁺ + U⁺
+      P⁻ ->{Ka} P⁻  + U⁻
+      I⁺ ->{Ka} I⁺ + U⁺
+      I⁻ ->{Ka} I⁻  + U⁻
+      D⁺ ->{Ka} D⁺ + U⁺
+      D⁻ ->{Ka} D⁻  + U⁻
+      U⁺ ->{Ka} #
+      U⁻ ->{Ka} #
+      U⁺ + U⁻ ->{Ka} #
 }
 
 //----------------- Actuation Method 1 ------------------
@@ -79,11 +70,11 @@ network Actuator3 (species U⁺ Pro U⁻) {
 }
 
 //----------------------- Plant ------------------------
-network Plant (species mRNA microRNA Prot) {
+network Plant (species mRNA microRNA Pro) {
        # -> mRNA  
-       mRNA -> mRNA + Prot  
+       mRNA -> mRNA + Pro 
        mRNA -> #
-       Prot -> #
+       Pro -> #
        mRNA + microRNA -> #
 }
 
@@ -95,74 +86,52 @@ network DualRail (species Y Y'⁺ Y'⁻) {
 }
 
 //------------------ Substraction Block ------------------
-network SubtractionBlock (species Y'⁺ Y'⁻ R⁺ R⁻ E⁺ E⁻) {
-       Y'⁺ -> Y'⁺ + E⁺
-       Y'⁻ -> Y'⁻ + E⁻
-       R⁻ -> R⁻ + E⁺
-       R⁺ -> R⁺ + E⁻
+network SubtractionBlock (species R⁺ R⁻ Y'⁺ Y'⁻ E⁺ E⁻) {
+       R⁺ -> R⁺ + E⁺
+       R⁻ -> R⁻ + E⁻
+       Y'⁻ -> Y'⁻ + E⁺
+       Y'⁺  -> Y'⁺  + E⁻
        E⁺ -> #
        E⁻ -> #
        E⁺ + E⁻-> #
 }
 
-//----------------- Sine Wave Generator------------------
-network SineWave (species A⁺ A⁻ Const Cp ) {
-       species R⁺, R⁻ @ 0 M
-       
-       A⁺ ->{0.01} A⁺ + R⁺     // A: cosine species/
-       A⁻ ->{0.01} A⁻ + R⁻ 
-       R⁺ ->{0.01} R⁺ + A⁻  // R: sine species
-       R⁻ ->{0.01} R⁻ + A⁺ 
-       A⁺ + A⁻ ->{0.01} #
-       R⁺ + R⁻ ->{0.01} #
-       
-       Const ->{100} Const + Cp  // Injecting Poisson noise into Cp?
-       Cp->{100} #
-       
-       A⁺ ->{100} A⁺ + Cp         // Cp copied from A
-}
-
 //--------------------- Full PID Control Applied to the Plant -----------------------
-network PIDController (species Y'⁺ Y'⁻ E⁺ E⁻ P⁺ P⁻ I⁺ I⁻ PI⁺ PI⁻ D⁺ D⁻ PID⁺ PID⁻ Prot mRNA microRNA U⁺ U⁻ R⁺ R⁻ yp constantp) {
-       PBlock(E⁺, E⁻, P⁺, P⁻)
-       IBlock(E⁺, E⁻, I⁺, I⁻)
-       DBlock(E⁺, E⁻, D⁺, D⁻)
-       SummationBlock(I⁺, I⁻, P⁺, P⁻, PI⁺, PI⁻, 0.3, 0.8, 1.1)
-       SummationBlock(D⁺, D⁻, PI⁺, PI⁻, PID⁺, PID⁻, 0.2, 1.1, 1.4)
-       CopyBlock(PID⁺, PID⁻, U⁺, U⁻)
+network PIDController(species R⁺ R⁻ Pro, number Kp Ki Kd Ka) {
+         species {E⁺, E⁻, P⁺, P⁻, I⁺, I⁻, D⁺, D⁻, U⁺, U⁻, mRNA, microRNA, Y'⁺, Y'⁻}
+         amount E⁺ @ 0M        // Error species +
+         amount E⁻ @ 0M        // Error species -
+         amount P⁺ @ 0M      // P species +
+         amount P⁻ @ 0M      // P species -
+         amount I⁺ @ 0M      // I species +
+         amount I⁻ @ 0M      // I species -
+         amount D⁺ @ 0M      // D species +
+         amount D⁻ @ 0M      // D species -
+         amount U⁺ @ 0M      // PID species +
+         amount U⁻ @ 0M      // PID species -
+         amount mRNA @ 0M      // mRNA species
+         amount microRNA @ 0M  // microRNA species
+         amount Y'⁺ @ 0M        // Converter species +
+         amount Y'⁻ @ 0M        // Converter species -
+
+       PBlock(E⁺, E⁻, P⁺, P⁻,Kp) 
+       IBlock(E⁺, E⁻, I⁺, I⁻,Ki)
+       DBlock(E⁺, E⁻, D⁺, D⁻,Kd)
+       SumBlock(P⁺, P⁻, I⁺, I⁻, D⁺, D⁻, U⁺, U⁻, Ka)
        Actuator1(U⁺, U⁻, mRNA, microRNA)
-       Plant(mRNA, microRNA, Prot)
-       DualRail(Prot, R⁺, R⁻)
-       SubtractionBlock(Y'⁺, Y'⁻, R⁺, R⁻, E⁺, E⁻)
-       SineWave(yp, Y'⁻, constantp, Y'⁺)  // weird
+       Plant(mRNA, microRNA, Pro)
+       DualRail(Pro, Y'⁺, Y'⁻ )
+       SubtractionBlock(R⁺, R⁻, Y'⁺, Y'⁻ , E⁺, E⁻)
+
 }
 
 //------------------------- Initial Number of Species --------------------------
-species {Y'⁺, Y'⁻, E⁺, E⁻, P⁺, P⁻, I⁺, I⁻, PI⁺, PI⁻, D⁺, D⁻, PID⁺, PID⁻, Prot, mRNA, microRNA, U⁺, U⁻, R⁺, R⁻, yp, constantp}
-amount Y'⁺ @ 10M      // Constant reference species +
-amount Y'⁻ @ 0M       // Constant reference species -
-amount E⁺ @ 0M        // Error species +
-amount E⁻ @ 0M        // Error species -
-amount P⁺ @ 0M        // P block output species +
-amount P⁻ @ 0M        // P block output species -
-amount I⁺ @ 0M        // I block output species +
-amount I⁻ @ 0M        // I block output species -
-amount PI⁺ @ 0M       // PI summation output species +
-amount PI⁻ @ 0M       // PI summation output species -
-amount D⁺ @ 0M        // D block output species +
-amount D⁻ @ 0M        // D block output species -
-amount PID⁺ @ 0M      // PID summation species +
-amount PID⁻ @ 0M      // PID summation species -
-amount Prot @ 1M      // Protein species
-amount mRNA @ 0M      // mRNA species
-amount microRNA @ 0M  // microRNA species
-amount U⁺ @ 0.5M      // Actuator species +
-amount U⁻ @ 0.5M      // Actuator species -
-amount R⁺ @ 0M        // Converter species +
-amount R⁻ @ 0M        // Converter species -
-amount yp @ 10M
-amount constantp @ 10M
+species {R⁺, R⁻, Pro}
+amount R⁺ @ 10M      // Constant reference species +
+amount R⁻ @ 0M       // Constant reference species -
+amount Pro @ 1M      // Protein species
 
-PIDController(Y'⁺, Y'⁻, E⁺, E⁻, P⁺, P⁻, I⁺, I⁻, PI⁺, PI⁻, D⁺, D⁻, PID⁺, PID⁻, Prot, mRNA, microRNA, U⁺, U⁻, R⁺, R⁻, yp, constantp) 
-report Y'⁺-Y'⁻, Prot
-equilibrate for 450
+number n =? uniform(1,3)
+PIDController(R⁺, R⁻, Pro, 2.0, 0.3, 2.0, 1.0) 
+report R⁺-R⁻, Pro
+equilibrate for 60

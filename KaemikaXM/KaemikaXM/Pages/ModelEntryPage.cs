@@ -20,24 +20,10 @@ namespace KaemikaXM.Pages {
         public Noise noisePickerSelection = Noise.None;
         public ImageButton startButton;
 
-        //public ToolbarItem DeleteItem() {
-        //    return
-        //        new ToolbarItem("Delete", "icons8trash.png", async () => {
-        //            if (File.Exists(modelInfo.filename)) {
-        //                File.Delete(modelInfo.filename);
-        //                MainTabbedPage.theModelEntryPage.SetModel(new ModelInfo());
-        //            }
-        //            MainTabbedPage.theMainTabbedPage.SwitchToTab("Networks");
-        //        });
-        //}
-
-        public const string secondBarColor = "61D5ff"; // standard blue is "2195F3"; https://www.color-hex.com/
-
         public ToolbarItem EditItem()  {
             return
                 new ToolbarItem("Edit", "icons8pencil96", async () => {
                     SetModel(modelInfo.Copy(), editable: true);
-                    // ToolbarItems.Remove(editItem);
                 });
         }
         public ToolbarItem PasteAllItem() {
@@ -60,9 +46,9 @@ namespace KaemikaXM.Pages {
         public ImageButton TextUp(ICustomTextEdit editor) {
             ImageButton button = new ImageButton() {
                 Source = "icons8BigA40.png",
-                HeightRequest = 40,
+                HeightRequest = MainTabbedPage.buttonHeightRequest,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = Color.FromHex(secondBarColor),
+                BackgroundColor = MainTabbedPage.secondBarColor,
             };
             button.Clicked += async (object sender, EventArgs e) => {
                 float size = editor.GetFontSize();
@@ -73,9 +59,9 @@ namespace KaemikaXM.Pages {
         public ImageButton TextDn(ICustomTextEdit editor) {
             ImageButton button = new ImageButton() {
                 Source = "icons8SmallA40.png",
-                HeightRequest = 40,
+                HeightRequest = MainTabbedPage.buttonHeightRequest,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = Color.FromHex(secondBarColor),
+                BackgroundColor = MainTabbedPage.secondBarColor,
             };
             button.Clicked += async (object sender, EventArgs e) => {
                 float size = editor.GetFontSize();
@@ -85,9 +71,9 @@ namespace KaemikaXM.Pages {
         }
 
         public void StartAction(bool forkWorker, bool switchToChart, bool switchToOutput) {
-            if (Gui.gui.StopEnabled() && !Gui.gui.ContinueEnabled()) return; // we are already running a simulation, don't start a concurrent one
-            if (Gui.gui.ContinueEnabled()) {
-                ProtocolActuator.continueExecution = true; // make start button work as continue button
+            if (Exec.IsExecuting() && !Gui.gui.ContinueEnabled()) return; // we are already running a simulation, don't start a concurrent one
+            if (Exec.IsExecuting() && Gui.gui.ContinueEnabled()) { // we are already running a simulation; make start button work as continue button
+                ProtocolActuator.continueExecution = true; 
                 MainTabbedPage.SwitchToTab(MainTabbedPage.theChartPageNavigation);
             } else { // do a start
                 MainTabbedPage.theOutputPage.SetModel(modelInfo);
@@ -101,34 +87,40 @@ namespace KaemikaXM.Pages {
         public ImageButton StartButton(bool switchToChart, bool switchToOutput) {
             ImageButton button = new ImageButton() {
                 Source = "icons8play40.png",
-                HeightRequest = 40,
+                HeightRequest = MainTabbedPage.buttonHeightRequest,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = Color.FromHex(secondBarColor),
+                BackgroundColor = MainTabbedPage.secondBarColor,
             };
-            button.Clicked += async (object sender, EventArgs e) => { StartAction(forkWorker: true, switchToChart, switchToOutput); };
+            button.Clicked += async (object sender, EventArgs e) => {
+                if (!modelInfo.executable) return;
+                StartAction(forkWorker: true, switchToChart, switchToOutput);
+            };
             return button;
         }
 
         public void SetStartButtonToContinue() {
             Device.BeginInvokeOnMainThread(() => {
-                startButton.Source = "icons8pauseplay40.png";
+                // we need to use size 40x40 icons or they get stuck at wrong size after changing icon
+                MainTabbedPage.theModelEntryPage.startButton.Source = "icons8pauseplay40.png";
                 MainTabbedPage.theChartPage.startButton.Source = "icons8pauseplay40.png";
             });         
         }
 
-        public void SetStartButtonToStart() {
+        public void SetContinueButtonToStart() {
             Device.BeginInvokeOnMainThread(() => {
-                startButton.Source = "icons8play40.png";
-                MainTabbedPage.theChartPage.startButton.Source = "icons8play40.png";
+                // we need to use size 40x40 icons or they get stuck at wrong size after changing icon
+                MainTabbedPage.theModelEntryPage.startButton.Source = "icons8play40disabled.png"; // disabled because we are running a continutation
+                MainTabbedPage.theChartPage.startButton.Source = "icons8play40disabled.png"; // disabled because we are running a continutation
             });
         }
 
         public Picker NoisePicker() {
             Picker noisePicker = new Picker {
-                Title = "Noise",
+                Title = "Noise", TitleColor = MainTabbedPage.barColor,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = Color.FromHex(secondBarColor),
-                FontSize = 14,
+                BackgroundColor = MainTabbedPage.pickerColor,
+                FontSize = 14,  
+               
             };
             foreach (string s in ProtocolActuator.noiseString) noisePicker.Items.Add(s);
             noisePicker.Unfocused += async (object sender, FocusEventArgs e) => {
@@ -144,9 +136,9 @@ namespace KaemikaXM.Pages {
         string[] superscripts = new string[] { "\'", "⁺", "⁻", "⁼", "⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹", "⁽", "⁾"};
         public Picker SubPicker() {
             Picker charPicker = new Picker {
-                Title = "Sub",
+                Title = "Sub", TitleColor = MainTabbedPage.barColor,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = Color.FromHex(secondBarColor),
+                BackgroundColor = MainTabbedPage.pickerColor,
                 FontSize = 9,
                 TextColor = Color.Black,
             };
@@ -160,9 +152,9 @@ namespace KaemikaXM.Pages {
         }
         public Picker SupPicker() {
             Picker charPicker = new Picker {
-                Title = "Sup",
+                Title = "Sup", TitleColor = MainTabbedPage.barColor,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = Color.FromHex(secondBarColor),
+                BackgroundColor = MainTabbedPage.pickerColor,
                 FontSize = 9,
                 TextColor = Color.Black,
             };
@@ -194,7 +186,7 @@ namespace KaemikaXM.Pages {
             stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) });
             stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) });
             stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            stepper.BackgroundColor = Color.FromHex(secondBarColor);
+            stepper.BackgroundColor = MainTabbedPage.secondBarColor;
             stepper.Children.Add(TextDn(editor), 1, 0);
             stepper.Children.Add(TextUp(editor), 2, 0);
             return stepper;
@@ -242,7 +234,7 @@ namespace KaemikaXM.Pages {
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            bottomBar.BackgroundColor = Color.FromHex(secondBarColor);
+            bottomBar.BackgroundColor = MainTabbedPage.secondBarColor;
 
             bottomBar.Children.Add(stepper, 0, 0);
             //bottomBar.Children.Add(noisePicker, 1, 0);
@@ -265,7 +257,6 @@ namespace KaemikaXM.Pages {
             Title = modelInfo.title;
             SetText(modelInfo.text);
             (editor as ICustomTextEdit).SetEditable(editable);
-            // if (!editable) if (!ToolbarItems.Contains(editItem)) ToolbarItems.Insert(0, editItem);
             editItem.IsEnabled = !editable;
             pasteAllItem.IsEnabled = editable;
             subPicker.IsVisible = editable;

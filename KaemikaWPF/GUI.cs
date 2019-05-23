@@ -52,6 +52,8 @@ namespace KaemikaWPF
             this.chart1.MouseMove += chart1_MouseMove; // for scrolling
             this.chart1.MouseUp += chart1_MouseUp; // for scrolling
             this.chart1.DoubleClick += chart1_DoubleClick; // for resetting zoom/scroll
+            flowLayoutPanel_Parameters.Visible = false;
+            flowLayoutPanel_Parameters.BringToFront();
             checkedListBox_Series.Visible = false;
             checkedListBox_Series.BringToFront();
             RestoreInput();
@@ -388,6 +390,92 @@ namespace KaemikaWPF
             ChartListboxRestore();
         }
 
+        private static Dictionary<string, ParameterInfo> parameterInfo = new Dictionary<string, ParameterInfo>();
+        public void ParametersForget() {
+            parameterInfo = new Dictionary<string, ParameterInfo>();
+            flowLayoutPanel_Parameters.Controls.Clear();
+        }
+        public class ParameterInfo {
+            public string parameter;
+            public double drawn;
+            public string distribution;
+            public double[] arguments;
+            public CheckBox checkBox;
+            public TrackBar trackBar;
+            public double rangeMin;
+            public double rangeMax;
+            public int rangeSteps;
+            public double range;
+            public bool programmaticChange = false; // i.e. value change not from GUI
+            public ParameterInfo(string parameter, double drawn, string distribution, double[] arguments, CheckBox checkBox, TrackBar trackBar) {
+                this.parameter = parameter;
+                this.drawn = drawn;
+                this.distribution = distribution;
+                this.arguments = arguments;
+                this.checkBox = checkBox;
+                this.trackBar = trackBar;
+            }
+            public string ParameterLabel() {
+                string args = "";
+                for (int i = 0; i < arguments.Length; i++) args += arguments[i].ToString("G4") + ", ";
+                if (args != "") args = args.Substring(0, args.Length - 2);
+                args = "(" + args + ")";
+                return parameter + " = " + drawn.ToString("G4") + ". Drawn from " + distribution + args;
+            }
+        }
+        public void ChartSetParameter(string parameter, double drawn, string distribution, double[] arguments) {
+            const int width = 300;
+            if (!parameterInfo.ContainsKey(parameter)) {
+                CheckBox newCheckBox = new CheckBox(); newCheckBox.Width = width - 30; // space for scrollbar
+                newCheckBox.Margin = new Padding(10, 0, 0, 0);
+                TrackBar newTrackBar = new TrackBar(); newTrackBar.Width = width - 30;
+                newTrackBar.ValueChanged += (object source, EventArgs e) => {
+                    ParameterInfo paramInfo = parameterInfo[parameter];
+                    if (!paramInfo.programmaticChange) paramInfo.drawn = paramInfo.rangeMin + ((source as TrackBar).Value/((double)paramInfo.rangeSteps)) * paramInfo.range;
+                    paramInfo.programmaticChange = false;
+                    paramInfo.checkBox.Text = paramInfo.ParameterLabel();
+                };
+                parameterInfo[parameter] = new ParameterInfo(parameter, drawn, distribution, arguments, newCheckBox, newTrackBar);
+                flowLayoutPanel_Parameters.Controls.Add(newCheckBox); 
+                flowLayoutPanel_Parameters.Controls.Add(newTrackBar); 
+                flowLayoutPanel_Parameters.Width = width;
+            }
+            ParameterInfo info = parameterInfo[parameter];
+            if (!info.checkBox.Checked) {
+                info.distribution = distribution;
+                info.arguments = arguments;
+                info.drawn = drawn;
+                if (distribution == "uniform") {
+                    info.rangeMin = Math.Min(arguments[0], drawn);
+                    info.rangeMax = Math.Max(arguments[1], drawn);
+                    info.rangeSteps = 100;
+                } else if (distribution == "normal") {
+                    info.rangeMin = Math.Min(arguments[0] - 5 * arguments[1], drawn);
+                    info.rangeMax = Math.Max(arguments[0] + 5 * arguments[1], drawn);
+                    info.rangeSteps = 100;
+                } else if (distribution == "exponential") {
+                    info.rangeMin = 0;
+                    info.rangeMax = Math.Max(5 / arguments[0], drawn);
+                    info.rangeSteps = 100;
+                } else if (distribution == "bernoulli") {
+                    info.rangeMin = 0;
+                    info.rangeMax = 1;
+                    info.rangeSteps = 1;
+                }
+                info.range = info.rangeMax - info.rangeMin;
+                info.trackBar.Minimum = 0;
+                info.trackBar.Maximum = info.rangeSteps;
+                info.programmaticChange = true;
+                info.trackBar.Value = (info.range == 0.0) ? (info.rangeSteps/2) : (int)(info.rangeSteps * (info.drawn - info.rangeMin) / info.range);
+                info.checkBox.Text = info.ParameterLabel();
+            }
+        }
+        public double ParameterOracle(string parameter) {
+            if (!parameterInfo.ContainsKey(parameter)) return double.NaN;
+            if (parameterInfo[parameter].checkBox.Checked) return (double)parameterInfo[parameter].drawn;
+            return double.NaN;
+        }
+
 
         /* GUI EVENTS */
 
@@ -516,6 +604,22 @@ namespace KaemikaWPF
                    series.Color = Color.FromArgb(this.Transparency(), series.Color);
             }
             chart1.Update();
+        }
+
+
+        private void CheckBoxButton_Parameters_CheckedChanged(object sender, EventArgs e) {
+            if (checkBoxButton_Parameters.Checked) {
+                int buttonLocationX = tableLayoutPanel_Columns.Location.X + tableLayoutPanel_RightColumn.Location.X + panel_Controls.Location.X + checkBoxButton_Parameters.Location.X;
+                int buttonLocationY = tableLayoutPanel_Columns.Location.Y + tableLayoutPanel_RightColumn.Location.Y + panel_Controls.Location.Y + checkBoxButton_Parameters.Location.Y;
+                flowLayoutPanel_Parameters.Location = new Point(
+                    buttonLocationX - flowLayoutPanel_Parameters.Size.Width + checkBoxButton_Parameters.Size.Width,
+                    buttonLocationY - flowLayoutPanel_Parameters.Size.Height
+                );
+                flowLayoutPanel_Parameters.Visible = true;
+            } else {
+                flowLayoutPanel_Parameters.Visible = false;
+                ParametersForget();
+            }
         }
 
         private void checkBoxButton_EditChart_CheckedChanged(object sender, EventArgs e) {
@@ -660,8 +764,9 @@ namespace KaemikaWPF
         private void comboBox_Export_SelectedIndexChanged(object sender, EventArgs e) {
             if (comboBox_Export.Text == "Protocol") Exec.Execute_Exporter(false, ExportAs.Protocol);
             else if (comboBox_Export.Text == "PDMP") Exec.Execute_Exporter(false, ExportAs.PDMP);
-            else if (comboBox_Export.Text == "PDMP Sequential") Exec.Execute_Exporter(false, ExportAs.PDMP_Sequential);
-            else if (comboBox_Export.Text == "GraphViz") Exec.Execute_Exporter(false, ExportAs.GraphViz);
+            else if (comboBox_Export.Text == "PDMP GraphViz") Exec.Execute_Exporter(false, ExportAs.PDMP_GraphViz);
+            //else if (comboBox_Export.Text == "PDMP Parallel") Exec.Execute_Exporter(false, ExportAs.PDMP_Parallel);
+            //else if (comboBox_Export.Text == "PDMP Parallel GraphViz") Exec.Execute_Exporter(false, ExportAs.PDMP_Parallel_GraphViz);
             else if (comboBox_Export.Text == "CRN (LBS silverlight)") Exec.Execute_Exporter(false, ExportAs.MSRC_LBS);
             else if (comboBox_Export.Text == "CRN (LBS html5)") Exec.Execute_Exporter(false, ExportAs.MSRC_CRN);
             else if (comboBox_Export.Text == "ODE (Oscill8)") Exec.Execute_Exporter(false, ExportAs.ODE);
@@ -678,8 +783,7 @@ namespace KaemikaWPF
 
         private void btnStop_Click(object sender, EventArgs e)
         {
-            //StopEnable(false); // signals that we should stop
-            Gui.gui.StopEnable(false); // signals that we should stop
+            Exec.EndingExecution(); // signals that we should stop
         }
 
         private void button_Continue_Click(object sender, EventArgs e)

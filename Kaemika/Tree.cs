@@ -12,15 +12,15 @@ namespace Kaemika
 
     public class Style {
         private string varchar;                 // The non-inputable character used to distinguish symbol variants
-                                                    // can be null if we do not show the variants
+                                                // can be null if we do not show the variants
         private SwapMap swap;                   // The strings used to replace special chars in export to other systems
-                                                    // cannot be null
+                                                // cannot be null
         private AlphaMap map;                   // The map used to alpha-convert conflicting symbols in printout
-                                                    // can be null if we do not alpha-convert
+                                                // can be null if we do not alpha-convert
         public string numberFormat;             // Number format
-                                                    // can be null for default (full precision)
+                                                // can be null for default (full precision)
         public string dataFormat;               // How to display complex data
-                                                    // "symbol", "header", or "full"
+                                                // "symbol", "header", or "full"
         public ExportTarget exportTarget;       // How to format for external tools
 
         public bool traceComputational;         // Weather to format of TraceComputational or TraceChemical
@@ -95,7 +95,7 @@ namespace Kaemika
         }
     }
 
-    public abstract class Scope  {
+    public abstract class Scope {
         public abstract bool Lookup(string var); // return true if var is defined
         public abstract string Format();
         public Scope Extend(List<Parameter> parameters) {
@@ -166,7 +166,7 @@ namespace Kaemika
                 ((this.type == "sample") && (value is SampleValue))
                 ;
         }
-        public string Format() { return this.type;  }
+        public string Format() { return this.type; }
     }
 
     // ENVIRONMENTS
@@ -203,56 +203,56 @@ namespace Kaemika
         public Env BuiltIn(SampleValue vessel) { //we park this method inside NullEnv for convenience
             if (builtIn == null) {
                 builtIn = new NullEnv();
-                builtIn = new ValueEnv("vessel",     null, vessel, builtIn);
-                builtIn = new ValueEnv("if",         null, new OperatorValue("if"), builtIn);          // conditional pseudo-operator
-                builtIn = new ValueEnv("cond",       null, new OperatorValue("cond"), builtIn);        // flow-expression conditional pseudo-operator
-                builtIn = new ValueEnv("not",        null, new OperatorValue("not"), builtIn);
-                builtIn = new ValueEnv("or",         null, new OperatorValue("or"), builtIn);
-                builtIn = new ValueEnv("and",        null, new OperatorValue("and"), builtIn);
-                builtIn = new ValueEnv("+",          null, new OperatorValue("+"), builtIn);
-                builtIn = new ValueEnv("-",          null, new OperatorValue("-"), builtIn);           // both prefix and infix
-                builtIn = new ValueEnv("*",          null, new OperatorValue("*"), builtIn);
-                builtIn = new ValueEnv("/",          null, new OperatorValue("/"), builtIn);
-                builtIn = new ValueEnv("^",          null, new OperatorValue("^"), builtIn);
-                builtIn = new ValueEnv("=",          null, new OperatorValue("="), builtIn);
-                builtIn = new ValueEnv("<>",         null, new OperatorValue("<>"), builtIn);
-                builtIn = new ValueEnv("<=",         null, new OperatorValue("<="), builtIn);
-                builtIn = new ValueEnv("<",          null, new OperatorValue("<"), builtIn);
-                builtIn = new ValueEnv(">=",         null, new OperatorValue(">="), builtIn);
-                builtIn = new ValueEnv(">",          null, new OperatorValue(">"), builtIn);
-                builtIn = new ValueEnv("pi",         null, new NumberValue(Math.PI), builtIn);
-                builtIn = new ValueEnv("e",          null, new NumberValue(Math.E), builtIn);
-                builtIn = new ValueEnv("abs",        null, new OperatorValue("abs"), builtIn);
-                builtIn = new ValueEnv("arccos",     null, new OperatorValue("arccos"), builtIn);
-                builtIn = new ValueEnv("arcsin",     null, new OperatorValue("arcsin"), builtIn);
-                builtIn = new ValueEnv("arctan",     null, new OperatorValue("arctan"), builtIn);
-                builtIn = new ValueEnv("arctan2",    null, new OperatorValue("arctan2"), builtIn);
-                builtIn = new ValueEnv("ceiling",    null, new OperatorValue("ceiling"), builtIn);
-                builtIn = new ValueEnv("cos",        null, new OperatorValue("cos"), builtIn);
-                builtIn = new ValueEnv("cosh",       null, new OperatorValue("cosh"), builtIn);
-                builtIn = new ValueEnv("exp",        null, new OperatorValue("exp"), builtIn);
-                builtIn = new ValueEnv("floor",      null, new OperatorValue("floor"), builtIn);
-                builtIn = new ValueEnv("int",        null, new OperatorValue("int"), builtIn);         // convert number to integer number by rounding
-                builtIn = new ValueEnv("log",        null, new OperatorValue("log"), builtIn);
-                builtIn = new ValueEnv("max",        null, new OperatorValue("max"), builtIn);
-                builtIn = new ValueEnv("min",        null, new OperatorValue("min"), builtIn);
-                builtIn = new ValueEnv("pos",        null, new OperatorValue("pos"), builtIn);         // convert number to positive number by returning 0 if negative
-                builtIn = new ValueEnv("sign",       null, new OperatorValue("sign"), builtIn);
-                builtIn = new ValueEnv("sin",        null, new OperatorValue("sin"), builtIn);
-                builtIn = new ValueEnv("sinh",       null, new OperatorValue("sinh"), builtIn);
-                builtIn = new ValueEnv("sqrt",       null, new OperatorValue("sqrt"), builtIn);
-                builtIn = new ValueEnv("tan",        null, new OperatorValue("tan"), builtIn);
-                builtIn = new ValueEnv("tanh",       null, new OperatorValue("tanh"), builtIn);
-                builtIn = new ValueEnv("volume",     null, new OperatorValue("volume"), builtIn);
-                builtIn = new ValueEnv("temperature",null, new OperatorValue("temperature"), builtIn);
-                builtIn = new ValueEnv("molarity",   null, new OperatorValue("molarity"), builtIn);         // one or two arguments
-                builtIn = new ValueEnv("time",       null, new OperatorValue("time"), builtIn);             // for flow expressions
-                builtIn = new ValueEnv("kelvin",     null, new OperatorValue("kelvin"), builtIn);           // for flow expressions
-                builtIn = new ValueEnv("celsius",    null, new OperatorValue("celsius"), builtIn);          // for flow expressions
-                builtIn = new ValueEnv("poisson",    null, new OperatorValue("poisson"), builtIn);          // for flow expressions
-                builtIn = new ValueEnv("gauss",      null, new OperatorValue("gauss"), builtIn);            // for flow expressions
-                builtIn = new ValueEnv("var",        null, new OperatorValue("var"), builtIn);              // for flow expressions
-                builtIn = new ValueEnv("cov",        null, new OperatorValue("cov"), builtIn);              // for flow expressions
+                builtIn = new ValueEnv("vessel", null, vessel, builtIn);
+                builtIn = new ValueEnv("if", null, new OperatorValue("if"), builtIn);          // conditional pseudo-operator
+                builtIn = new ValueEnv("cond", null, new OperatorValue("cond"), builtIn);        // flow-expression conditional pseudo-operator
+                builtIn = new ValueEnv("not", null, new OperatorValue("not"), builtIn);
+                builtIn = new ValueEnv("or", null, new OperatorValue("or"), builtIn);
+                builtIn = new ValueEnv("and", null, new OperatorValue("and"), builtIn);
+                builtIn = new ValueEnv("+", null, new OperatorValue("+"), builtIn);
+                builtIn = new ValueEnv("-", null, new OperatorValue("-"), builtIn);           // both prefix and infix
+                builtIn = new ValueEnv("*", null, new OperatorValue("*"), builtIn);
+                builtIn = new ValueEnv("/", null, new OperatorValue("/"), builtIn);
+                builtIn = new ValueEnv("^", null, new OperatorValue("^"), builtIn);
+                builtIn = new ValueEnv("=", null, new OperatorValue("="), builtIn);
+                builtIn = new ValueEnv("<>", null, new OperatorValue("<>"), builtIn);
+                builtIn = new ValueEnv("<=", null, new OperatorValue("<="), builtIn);
+                builtIn = new ValueEnv("<", null, new OperatorValue("<"), builtIn);
+                builtIn = new ValueEnv(">=", null, new OperatorValue(">="), builtIn);
+                builtIn = new ValueEnv(">", null, new OperatorValue(">"), builtIn);
+                builtIn = new ValueEnv("pi", null, new NumberValue(Math.PI), builtIn);
+                builtIn = new ValueEnv("e", null, new NumberValue(Math.E), builtIn);
+                builtIn = new ValueEnv("abs", null, new OperatorValue("abs"), builtIn);
+                builtIn = new ValueEnv("arccos", null, new OperatorValue("arccos"), builtIn);
+                builtIn = new ValueEnv("arcsin", null, new OperatorValue("arcsin"), builtIn);
+                builtIn = new ValueEnv("arctan", null, new OperatorValue("arctan"), builtIn);
+                builtIn = new ValueEnv("arctan2", null, new OperatorValue("arctan2"), builtIn);
+                builtIn = new ValueEnv("ceiling", null, new OperatorValue("ceiling"), builtIn);
+                builtIn = new ValueEnv("cos", null, new OperatorValue("cos"), builtIn);
+                builtIn = new ValueEnv("cosh", null, new OperatorValue("cosh"), builtIn);
+                builtIn = new ValueEnv("exp", null, new OperatorValue("exp"), builtIn);
+                builtIn = new ValueEnv("floor", null, new OperatorValue("floor"), builtIn);
+                builtIn = new ValueEnv("int", null, new OperatorValue("int"), builtIn);         // convert number to integer number by rounding
+                builtIn = new ValueEnv("log", null, new OperatorValue("log"), builtIn);
+                builtIn = new ValueEnv("max", null, new OperatorValue("max"), builtIn);
+                builtIn = new ValueEnv("min", null, new OperatorValue("min"), builtIn);
+                builtIn = new ValueEnv("pos", null, new OperatorValue("pos"), builtIn);         // convert number to positive number by returning 0 if negative
+                builtIn = new ValueEnv("sign", null, new OperatorValue("sign"), builtIn);
+                builtIn = new ValueEnv("sin", null, new OperatorValue("sin"), builtIn);
+                builtIn = new ValueEnv("sinh", null, new OperatorValue("sinh"), builtIn);
+                builtIn = new ValueEnv("sqrt", null, new OperatorValue("sqrt"), builtIn);
+                builtIn = new ValueEnv("tan", null, new OperatorValue("tan"), builtIn);
+                builtIn = new ValueEnv("tanh", null, new OperatorValue("tanh"), builtIn);
+                builtIn = new ValueEnv("volume", null, new OperatorValue("volume"), builtIn);
+                builtIn = new ValueEnv("temperature", null, new OperatorValue("temperature"), builtIn);
+                builtIn = new ValueEnv("molarity", null, new OperatorValue("molarity"), builtIn);         // one or two arguments
+                builtIn = new ValueEnv("time", null, new OperatorValue("time"), builtIn);             // for flow expressions
+                builtIn = new ValueEnv("kelvin", null, new OperatorValue("kelvin"), builtIn);           // for flow expressions
+                builtIn = new ValueEnv("celsius", null, new OperatorValue("celsius"), builtIn);          // for flow expressions
+                builtIn = new ValueEnv("poisson", null, new OperatorValue("poisson"), builtIn);          // for flow expressions
+                builtIn = new ValueEnv("gauss", null, new OperatorValue("gauss"), builtIn);            // for flow expressions
+                builtIn = new ValueEnv("var", null, new OperatorValue("var"), builtIn);              // for flow expressions
+                builtIn = new ValueEnv("cov", null, new OperatorValue("cov"), builtIn);              // for flow expressions
             }
             return builtIn;
         }
@@ -333,7 +333,7 @@ namespace Kaemika
         }
         public State InitAll(double[] init) {
             if (this.inited) throw new Error("InitAll: already inited");
-            if (((!lna) && init.Length != size) || (lna && init.Length != size+size*size)) throw new Error("InitAll: wrong size");
+            if (((!lna) && init.Length != size) || (lna && init.Length != size + size * size)) throw new Error("InitAll: wrong size");
             this.state = init;
             this.inited = true;
             return this;
@@ -394,17 +394,17 @@ namespace Kaemika
         public void AddCovar(Matrix x) {
             for (int i = 0; i < size; i++)
                 for (int j = 0; j < size; j++)
-                    this.state[size + (i * size) + j] += x[i,j];
+                    this.state[size + (i * size) + j] += x[i, j];
         }
         public string FormatSpecies(List<SpeciesValue> species, Style style) {
             string s = "";
-            for (int i=0; i < this.size; i++) {
+            for (int i = 0; i < this.size; i++) {
                 s += species[i].Format(style) + "=" + Mean(i).ToString() + ", ";
             }
             if (this.lna) {
-                for (int i=0; i < this.size; i++)
-                    for (int j=0; j < this.size; j++) {
-                        s += "(" + species[i].Format(style) + "," + species[j].Format(style) + ")=" + Covar(i,j).ToString() + ", ";
+                for (int i = 0; i < this.size; i++)
+                    for (int j = 0; j < this.size; j++) {
+                        s += "(" + species[i].Format(style) + "," + species[j].Format(style) + ")=" + Covar(i, j).ToString() + ", ";
                     }
             }
             if (s.Length > 0) s = s.Substring(0, s.Length - 2);
@@ -461,7 +461,7 @@ namespace Kaemika
             double sndVolume = mixSnd.Volume();
             NumberValue volume = new NumberValue(fstVolume + sndVolume);
             NumberValue temperature = new NumberValue((fstVolume * mixFst.Temperature() + sndVolume * mixSnd.Temperature()) / (fstVolume + sndVolume));
-            SampleValue result = new SampleValue(symbol, volume, temperature, produced:true);
+            SampleValue result = new SampleValue(symbol, volume, temperature, produced: true);
             result.AddSpecies(mixFst, volume.value, fstVolume);
             result.AddSpecies(mixSnd, volume.value, sndVolume);
             return result;
@@ -476,7 +476,7 @@ namespace Kaemika
             SampleValue result1 = new SampleValue(symbol1, volume1, temperature1, produced: true);
             result1.AddSpecies(sample, sampleVolume, sampleVolume); // add species from other sample without changing their concentations
 
-            NumberValue volume2 = new NumberValue(sampleVolume * (1-proportion));
+            NumberValue volume2 = new NumberValue(sampleVolume * (1 - proportion));
             NumberValue temperature2 = new NumberValue(sample.Temperature());
             SampleValue result2 = new SampleValue(symbol2, volume2, temperature2, produced: true);
             result2.AddSpecies(sample, sampleVolume, sampleVolume); // add species from other sample without changing their concentations
@@ -499,7 +499,7 @@ namespace Kaemika
         private static int paletteNo = 0;
 
         public static double NormalizeVolume(double volume, string unit) {
-            if (unit == "L") { return volume;  } // ok
+            if (unit == "L") { return volume; } // ok
             else if (unit == "mL") { return volume * 1e-3; }
             else if (unit == "uL") { return volume * 1e-6; }
             else if (unit == "nL") { return volume * 1e-9; }
@@ -540,12 +540,12 @@ namespace Kaemika
         }
 
         public static SampleValue Equilibrate(Symbol symbol, SampleValue sample, double fortime, Netlist netlist, Style style) {
-            while ((!continueExecution) && Gui.gui.StopEnabled()) {
+            while ((!continueExecution) && Exec.IsExecuting()) {
                 if (!Gui.gui.ContinueEnabled()) Gui.gui.OutputAppendText(netlist.Format(style));
                 Gui.gui.ContinueEnable(true);
                 Thread.Sleep(100);
             }
-            Gui.gui.ContinueEnable(false);  continueExecution = false;
+            Gui.gui.ContinueEnable(false); continueExecution = false;
 
             sample.Consume(style);
             NumberValue volume = new NumberValue(sample.Volume());
@@ -554,7 +554,7 @@ namespace Kaemika
 
             Gui.gui.OutputSetText(""); // clear last results in preparation for the next
             Gui.gui.ChartClear(
-                (resultSample.symbol.Raw() == "vessel") ? "" 
+                (resultSample.symbol.Raw() == "vessel") ? ""
                 : "Sample " + resultSample.symbol.Format(style));
 
             Noise noise = Gui.gui.NoiseSeries();
@@ -570,8 +570,8 @@ namespace Kaemika
             // Program.Log("InitialState = (" + FormatVector(initialState) + ")");
 
             Func<double, double, Vector, Func<double, Vector, Vector>, IEnumerable<SolPoint>> Solver;
-            if (Gui.gui.Solver() == "OSLO GearBDF") Solver = Ode.GearBDF;
-            else if (Gui.gui.Solver() == "OSLO RK547M") Solver = Ode.RK547M;
+            if (Gui.gui.Solver() == "GearBDF") Solver = Ode.GearBDF;
+            else if (Gui.gui.Solver() == "RK547M") Solver = Ode.RK547M;
             else throw new Error("No solver");
 
             Func<double, Vector, Vector> Flux;
@@ -580,7 +580,7 @@ namespace Kaemika
 
             double initialTime = 0.0;
             double finalTime = fortime;
-            IEnumerable<SolPoint> solution; 
+            IEnumerable<SolPoint> solution;
             if (species.Count > 0   // we don't want to run on the empty species list: Oslo crashes
                 && (!crn.trivial)   // we don't want to run trivial ODEs: some Oslo solvers hang on very small stepping
                 && fortime > 0      // we don't want to run when fortime==0
@@ -590,7 +590,7 @@ namespace Kaemika
                     solver = Solver(initialTime, finalTime, initialState.ToArray(), Flux);
                     solution = OdeHelpers.SolveTo(solver, finalTime);
                 }
-                catch (Error e) { throw new Error(e.Message);  }
+                catch (Error e) { throw new Error(e.Message); }
                 catch (Exception e) { throw new Error("ODE Solver FAILED: " + e.Message); }
             } else { // build a dummy point series, in case we want to report and plot just some numerical expressions
                 List<SolPoint> list = new List<SolPoint> { }; // SolPoint constructor was changed to public from internal
@@ -600,28 +600,28 @@ namespace Kaemika
             }
 
             string[] seriesLNA = new string[reports.Count]; // can contain nulls if series are duplicates
-            paletteNo = (reports.Count-1) % palette.Length; // because we scan palette backwards
-            for (int i = reports.Count-1; i >= 0; i--) {    // add series backwards so that Red is in front
+            paletteNo = (reports.Count - 1) % palette.Length; // because we scan palette backwards
+            for (int i = reports.Count - 1; i >= 0; i--) {    // add series backwards so that Red is in front
                 // generate LNA-dependent series
                 ReportEntry entry = reports[i];
                 if ((noise != Noise.None) && entry.flow.HasStochasticVariance() && !entry.flow.HasNullVariance()) {
                     string reportName = (entry.asLabel != null) ? entry.asLabel : entry.flow.TopFormat(style.RestyleAsNumberFormat("G4"));
                     string seriesName = reportName + noiseString[(int)noise];
-                    seriesLNA[i] = Gui.gui.ChartAddSeries(seriesName, palette[paletteNo % palette.Length], noise);
+                    seriesLNA[i] = Gui.gui.ChartAddSeries(seriesName, palette[paletteNo % palette.Length], noise); // could be null
                 }
                 paletteNo--; if (paletteNo < 0) paletteNo += palette.Length; // decrement out here to keep colors coordinated
             }
 
             string[] series = new string[reports.Count]; // can contain nulls if series are duplicates
             paletteNo = (reports.Count - 1) % palette.Length; // because we scan palette backwards
-            for (int i = reports.Count-1; i >= 0; i--) {      // add series backwards so that Red is in front
+            for (int i = reports.Count - 1; i >= 0; i--) {      // add series backwards so that Red is in front
                 // generate deterministic series
                 ReportEntry entry = reports[i];
-                if ((noise == Noise.None && entry.flow.HasDeterministicValue()) || 
+                if ((noise == Noise.None && entry.flow.HasDeterministicValue()) ||
                     ((noise != Noise.None) && entry.flow.HasStochasticMean())) {
                     string reportName = (entry.asLabel != null) ? entry.asLabel : entry.flow.TopFormat(style.RestyleAsNumberFormat("G4"));
                     string seriesName = reportName + ((noise == Noise.None) ? "" : noiseString[(int)Noise.None]);
-                    series[i] = Gui.gui.ChartAddSeries(seriesName, palette[paletteNo % palette.Length], Noise.None);
+                    series[i] = Gui.gui.ChartAddSeries(seriesName, palette[paletteNo % palette.Length], Noise.None); // could be null
                 }
                 paletteNo--; if (paletteNo < 0) paletteNo += palette.Length; // decrement out here to keep colors coordinated
             }
@@ -645,13 +645,13 @@ namespace Kaemika
                 resultSample.SetMolarity(species[i], new NumberValue(molarity), style);
             }
             Exec.lastReport = "======= Last report: time=" + lastTime.ToString() + ", " + lastState.FormatReports(reports, sample, lastTime, noise, series, seriesLNA, style);
-            Exec.lastState =  "======= Last state: total points=" + pointsCounter + ", drawn points=" + renderedCounter + ", time=" + lastTime.ToString() + ", " + lastState.FormatSpecies(species, style);
+            Exec.lastState = "======= Last state: total points=" + pointsCounter + ", drawn points=" + renderedCounter + ", time=" + lastTime.ToString() + ", " + lastState.FormatSpecies(species, style);
             return resultSample;
         }
 
-        private static void Integrate(IEnumerable<SolPoint> solution, double initialTime, double finalTime, 
+        private static void Integrate(IEnumerable<SolPoint> solution, double initialTime, double finalTime,
                                       out double lastTime, out State lastState,
-                                      SampleValue sample, List<ReportEntry> reports, 
+                                      SampleValue sample, List<ReportEntry> reports,
                                       Noise noise, string[] series, string[] seriesLNA,
                                       Netlist netlist, Style style, out int pointsCounter, out int renderedCounter) {
             double redrawTick = initialTime; double redrawStep = (finalTime - initialTime) / 50;
@@ -678,21 +678,23 @@ namespace Kaemika
                 pointsCounter++;
 
                 // LOOP BODY of foreach (SolPoint solPoint in solution):
-                if (!Gui.gui.StopEnabled()) break; // clicking the Stop button disables it
+                if (!Exec.IsExecuting()) break;
                 if (solPoint.T >= densityTick) { // avoid drawing too many points
                     State state = new State(sample.species.Count, noise != Noise.None).InitAll(solPoint.X);
                     for (int i = 0; i < reports.Count; i++) {
-                        // generate deterministic series
-                        if ((noise == Noise.None && reports[i].flow.HasDeterministicValue()) ||
-                            (noise != Noise.None && reports[i].flow.HasStochasticMean())) {
-                            double mean = reports[i].flow.ReportMean(sample, solPoint.T, state, style);
-                            Gui.gui.ChartAddPoint(series[i], solPoint.T, mean, 0.0, Noise.None);
-                        }
-                        // generate LNA-dependent series
-                        if (noise != Noise.None && reports[i].flow.HasStochasticVariance() && !reports[i].flow.HasNullVariance()) {
-                            double mean = reports[i].flow.ReportMean(sample, solPoint.T, state, style);
-                            double variance = reports[i].flow.ReportVariance(sample, solPoint.T, state, style);
-                            Gui.gui.ChartAddPoint(seriesLNA[i], solPoint.T, mean, variance, noise);
+                        if (series[i] != null) { // if a series was actually generated from this report
+                            // generate deterministic series
+                            if ((noise == Noise.None && reports[i].flow.HasDeterministicValue()) ||
+                                (noise != Noise.None && reports[i].flow.HasStochasticMean())) {
+                                double mean = reports[i].flow.ReportMean(sample, solPoint.T, state, style);
+                                Gui.gui.ChartAddPoint(series[i], solPoint.T, mean, 0.0, Noise.None);
+                            }
+                            // generate LNA-dependent series
+                            if (noise != Noise.None && reports[i].flow.HasStochasticVariance() && !reports[i].flow.HasNullVariance()) {
+                                double mean = reports[i].flow.ReportMean(sample, solPoint.T, state, style);
+                                double variance = reports[i].flow.ReportVariance(sample, solPoint.T, state, style);
+                                Gui.gui.ChartAddPoint(seriesLNA[i], solPoint.T, mean, variance, noise);
+                            }
                         }
                     }
                     renderedCounter++;
@@ -704,7 +706,7 @@ namespace Kaemika
                 }
                 lastTime = solPoint.T;
 
-            // END foreach (SolPoint solPoint in solution)
+                // END foreach (SolPoint solPoint in solution)
             } while (true);
 
             if (hasSolPoint) lastState = new State(sample.species.Count, noise != Noise.None).InitAll(solPoint.X);
@@ -719,7 +721,7 @@ namespace Kaemika
         public abstract string Format(Style style);
         public string TopFormat(Style style) {
             string s = this.Format(style);
-            if (s.Length > 0 && s.Substring(0, 1) == "(" && s.Substring(s.Length-1, 1) == ")") s = s.Substring(1, s.Length - 2);
+            if (s.Length > 0 && s.Substring(0, 1) == "(" && s.Substring(s.Length - 1, 1) == ")") s = s.Substring(1, s.Length - 2);
             return s;
         }
     }
@@ -778,9 +780,9 @@ namespace Kaemika
                 double molarity = keyPair.Value.value;
                 string unit;
                 if (molarity == 0.0) { unit = "M"; }
-                else if (Math.Round(molarity*1e6) < 1) { molarity = molarity * 1e9; unit = "nM"; } // this test avoids producing '1000nM'
-                else if (Math.Round(molarity*1e3) < 1) { molarity = molarity * 1e6; unit = "uM"; } // this test avoids producing '1000muM'
-                else if (Math.Round(molarity) < 1)     { molarity = molarity * 1e3; unit = "mM"; } // this test avoids producing '1000mM'
+                else if (Math.Round(molarity * 1e6) < 1) { molarity = molarity * 1e9; unit = "nM"; } // this test avoids producing '1000nM'
+                else if (Math.Round(molarity * 1e3) < 1) { molarity = molarity * 1e6; unit = "uM"; } // this test avoids producing '1000muM'
+                else if (Math.Round(molarity) < 1) { molarity = molarity * 1e3; unit = "mM"; } // this test avoids producing '1000mM'
                 else { unit = "M"; }
                 s += keyPair.Key.Format(style) + " = " + style.FormatDouble(molarity) + unit + ", " + (breaks ? Environment.NewLine : "");
             }
@@ -897,7 +899,7 @@ namespace Kaemika
             double mol = molarity.value;
             if (mol < 0)
                 throw new Error("Species to change '" + species.Format(style) + "' in sample '" + this.symbol.Format(style) + "' must be non-negative: " + mol.ToString());
-            else if (this.HasSpecies(species.symbol, out NumberValue value))  {
+            else if (this.HasSpecies(species.symbol, out NumberValue value)) {
                 this.speciesSet[species] = new NumberValue(Normalize(species, mol, dimension, style));
             } else throw new Error("Species to change not found '" + species.Format(style) + "' in sample '" + this.symbol.Format(style) + "' with value " + mol.ToString());
         }
@@ -931,7 +933,7 @@ namespace Kaemika
             return this.symbol.SameSymbol(otherSpecies.symbol);
         }
         public override string Format(Style style) {
-            return symbol.Format(style) 
+            return symbol.Format(style)
                 // + (HasMolarMass() ? "#" + style.FormatDouble(molarMass) : "")
                 ;
         }
@@ -946,7 +948,7 @@ namespace Kaemika
 
     public class BoolValue : Value {
         public bool value;
-        public BoolValue(bool value){
+        public BoolValue(bool value) {
             this.type = new Type("bool");
             this.value = value;
         }
@@ -957,7 +959,7 @@ namespace Kaemika
 
     public class NumberValue : Value {
         public double value;
-        public NumberValue(double value){
+        public NumberValue(double value) {
             this.type = new Type("number");
             this.value = value;
         }
@@ -968,12 +970,32 @@ namespace Kaemika
 
     public class StringValue : Value {
         public string value;
-        public StringValue(string value){
+        public StringValue(string value) {
             this.type = new Type("string");
             this.value = value;
         }
         public override string Format(Style style) {
             return Parser.FormatString(this.value);
+        }
+    }
+
+    public class DistributionValue : Value {
+        public Symbol parameter;
+        public double drawn;
+        public string distribution;
+        public double[] arguments;
+        public DistributionValue(Symbol parameter, double value, string distribution, double[] arguments) {
+            this.parameter = parameter;
+            this.type = new Type("distribution");
+            this.drawn = value;
+            this.distribution = distribution;
+            this.arguments = arguments;
+        }
+        public override string Format(Style style) {
+            string s = "";
+            foreach (double value in arguments) { s += style.FormatDouble(value) + ", "; }
+            if (s.Length > 0) s = s.Substring(0, s.Length - 2); // remove last comma
+            return parameter.Format(style) + " = " + style.FormatDouble(drawn) + " drawn from " + distribution + "(" + s + ")";
         }
     }
 
@@ -1029,7 +1051,7 @@ namespace Kaemika
     }
 
     public class GeneralRateValue : RateValue {
-        private Flow rateFunction;
+        public Flow rateFunction;
         public GeneralRateValue(Flow rateFunction) {
             this.rateFunction = rateFunction;
         }
@@ -1201,7 +1223,7 @@ namespace Kaemika
                 Flow arg1 = arguments[0];
                 if (name == "not" || name == "-") {
                     return new OpFlow(name, 1, true, new List<Flow> { arg1 });
-                } else if (name == "var" || name == "poisson" || name == "abs" || name == "arccos" || name == "arcsin" || name == "arctan" || name == "ceiling" 
+                } else if (name == "var" || name == "poisson" || name == "abs" || name == "arccos" || name == "arcsin" || name == "arctan" || name == "ceiling"
                         || name == "cos" || name == "cosh" || name == "exp" || name == "floor" || name == "int" || name == "log"
                         || name == "pos" || name == "sign" || name == "sin" || name == "sinh" || name == "sqrt" || name == "tan" || name == "tanh") {
                     return new OpFlow(name, 1, false, new List<Flow> { arg1 });
@@ -1222,7 +1244,7 @@ namespace Kaemika
             } else throw new Error(BadArguments + name);
         }
     }
-             
+
     public class NetworkValue : Value {
         private Symbol symbol; // just for formatting, may be null if produced by a nameless network abstraction
         public Parameters parameters;
@@ -1296,7 +1318,7 @@ namespace Kaemika
         public override bool Involves(List<SpeciesValue> species) { return false; }
         public override bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered) { notCovered = null; return true; }
         public override string Format(Style style) { return style.FormatDouble(this.value); }
-        public override bool ReportBool(SampleValue sample, double time, State state, Style style) {  throw new Error("Flow expression: bool expected instead of number: " + Format(style)); }
+        public override bool ReportBool(SampleValue sample, double time, State state, Style style) { throw new Error("Flow expression: bool expected instead of number: " + Format(style)); }
         public override double ReportMean(SampleValue sample, double time, State state, Style style) { return this.value; }
         public override double ReportVariance(SampleValue sample, double time, State state, Style style) { return 0.0; } // Var(number) = 0
         public override double ReportCovariance(Flow other, SampleValue sample, double time, State state, Style style) { return 0.0; } // Cov(number,Y) = 0
@@ -1521,7 +1543,7 @@ namespace Kaemika
         private bool CacheHasDeterministicValue() {
             if (arity == 0) {
                 return true; // "time", "kelvin", "celsius"
-            }  else if (arity == 1) {
+            } else if (arity == 1) {
                 return (op != "var" && op != "poisson") && args[0].HasDeterministicValue();
                 // Although var(X) is a number, we need the LNA info to compute it, so we say it is not deterministic
                 // poisson is not allowed in determinstic plots or general rates
@@ -1529,9 +1551,9 @@ namespace Kaemika
                 return (op != "cov" && op != "gauss") && args[0].HasDeterministicValue() && args[1].HasDeterministicValue();
                 // Although cov(X,Y) is a number, we need the LNA info to compute it, so we say it is not deterministic
                 // gauss is not allowed in determinstic plots or general rates
-            }  else if (arity == 3) { // including "cond"
+            } else if (arity == 3) { // including "cond"
                 return args[0].HasDeterministicValue() && args[1].HasDeterministicValue() && args[2].HasDeterministicValue();
-            }  else throw new Error("HasDeterministicValue: " + op);
+            } else throw new Error("HasDeterministicValue: " + op);
         }
         public override bool HasStochasticMean() {
             return this.hasStochasticMean;
@@ -1540,11 +1562,11 @@ namespace Kaemika
             if (arity == 0) {
                 return true; // "time", "kelvin", "celsius"
             } else if (arity == 1) {                                     // exclude (op == "var" || op == "poisson")
-                    if (op == "var") return args[0].LinearCombination();
-                    else return args[0].HasStochasticMean();
-            }  else if (arity == 2) {                                     // exclude (op == "cov" || op == "gauss")
-                    if (op == "cov") return args[0].LinearCombination() && args[1].LinearCombination();
-                    else return args[0].HasStochasticMean() && args[1].HasStochasticMean();
+                if (op == "var") return args[0].LinearCombination();
+                else return args[0].HasStochasticMean();
+            } else if (arity == 2) {                                     // exclude (op == "cov" || op == "gauss")
+                if (op == "cov") return args[0].LinearCombination() && args[1].LinearCombination();
+                else return args[0].HasStochasticMean() && args[1].HasStochasticMean();
             } else if (arity == 3) { // including "cond"
                 return args[0].HasStochasticMean() && args[1].HasStochasticMean() && args[2].HasStochasticMean();
             } else throw new Error("HasStochasticMean: " + op);
@@ -1594,7 +1616,7 @@ namespace Kaemika
             } else if (arity == 1) {
                 if (op == "var") {
                     return 0.0;      // yes needed for e.g. "report a + var(a)"                            // Var(var(X)) = 0 since var(X) is a number
-                } else if(op == "poisson")
+                } else if (op == "poisson")
                     return Math.Abs(args[0].ReportMean(sample, time, state, style));                       // Var(poisson(X)) = Abs(mean(X))
                 else if (op == "-") {
                     return args[0].ReportVariance(sample, time, state, style);                             // Var(-X) = Var(X)
@@ -1653,10 +1675,10 @@ namespace Kaemika
                     return 0.0;
                 } else if (op == "+") {                                                                      // Cov(X+Z,Y) = Cov(X,Y) + Cov(Z,Y)
                     return args[0].ReportCovariance(other, sample, time, state, style) +
-                        + args[1].ReportCovariance(other, sample, time, state, style);
+                        +args[1].ReportCovariance(other, sample, time, state, style);
                 } else if (op == "-") {                                                                       // Cov(X-Z,Y) = Cov(X,Y) - Cov(Z,Y)
                     return args[0].ReportCovariance(other, sample, time, state, style) +
-                        - args[1].ReportCovariance(other, sample, time, state, style);
+                        -args[1].ReportCovariance(other, sample, time, state, style);
                 } else if (op == "*") {
                     if (args[0].HasNullVariance() && args[1].HasNullVariance())                               // Cov(n*m,Y) = 0
                         return 0.0;
@@ -1669,14 +1691,14 @@ namespace Kaemika
                     } else throw new Error(BadResult + op); // all other operators, including "/" , "^" , "arctan2" , "min" , "max"
                 } else throw new Error(BadResult + op);
             } else if (arity == 3) {
-                if (op == "cond") { 
+                if (op == "cond") {
                     if (args[0].ReportBool(sample, time, state, style))
                         return args[1].ReportCovariance(other, sample, time, state, style);
                     else return args[2].ReportCovariance(other, sample, time, state, style);
                 } else throw new Error(BadResult + op);
             } else throw new Error(BadArguments + op);
         }
-    } 
+    }
 
     // ABSTRACT SYNTAX TREES
 
@@ -1695,7 +1717,7 @@ namespace Kaemika
 
     public class Variable : Expression {
         private string name;
-        public Variable(string name){
+        public Variable(string name) {
             this.name = name;
         }
         public override string Format() {
@@ -1737,7 +1759,7 @@ namespace Kaemika
 
     public class NumberLiteral : Expression {
         public double value;
-        public NumberLiteral(double value){ this.value = value; }
+        public NumberLiteral(double value) { this.value = value; }
         public override string Format() { return this.value.ToString(); }
         public override void Scope(Scope scope) { }
         public override Value Eval(Env env, Netlist netlist, Style style) { return new NumberValue(this.value); }
@@ -1747,12 +1769,70 @@ namespace Kaemika
 
     public class StringLiteral : Expression {
         public string value;
-        public StringLiteral(string value){ this.value = value; }
+        public StringLiteral(string value) { this.value = value; }
         public override string Format() { return this.value; }
         public override void Scope(Scope scope) { }
         public override Value Eval(Env env, Netlist netlist, Style style) { return new StringValue(this.value); }
         public override Value EvalFlow(Env env, Style style) { return new StringValue(this.value); }
         public override Flow BuildFlow(Env env, Style style) { return new StringFlow(this.value); }
+    }
+
+    public class Distribution {
+        private static Random random = new Random();
+        string distribution;
+        Arguments arguments;
+        public Distribution(string distribution, Arguments arguments) {
+            this.distribution = distribution;
+            this.arguments = arguments;
+        }
+        public string Format() { return this.distribution + '(' + this.arguments.Format() + ')'; }
+        public void Scope(Scope scope) {
+            arguments.Scope(scope);
+        }
+        public DistributionValue Eval(Symbol parameter, Env env, Netlist netlist, Style style) {
+            return DistrEval(parameter, this.arguments.Eval(env, netlist, style), style);
+        }
+        public DistributionValue EvalFlow(Symbol parameter, Env env, Style style) {
+            return DistrEval(parameter, this.arguments.EvalFlow(env, style), style);
+        }
+        private DistributionValue DistrEval(Symbol parameter, List<Value> arguments, Style style) {
+            double[] args = new double[arguments.Count];
+            for (int i = 0; i < args.Length; i++) args[i] = (arguments[i] as NumberValue).value;
+            double oracle = Gui.gui.ParameterOracle(parameter.Format(style));
+            if (!double.IsNaN(oracle)) {
+                return new DistributionValue(parameter, oracle, distribution, args);
+            } else if (distribution == "uniform" && arguments.Count == 2) {
+                if (arguments[0] is NumberValue && arguments[1] is NumberValue) {
+                    double lo = (arguments[0] as NumberValue).value;
+                    double hi = (arguments[1] as NumberValue).value;
+                    if (lo <= hi) return new DistributionValue(parameter, random.NextDouble() * (hi - lo) + lo, distribution, args);
+                    else throw new Error("Bad distribution: " + this.Format());
+                } else throw new Error("Bad distribution: " + this.Format());
+            } else if (distribution == "normal" && arguments.Count == 2) {
+                if (arguments[0] is NumberValue && arguments[1] is NumberValue) {
+                    double mean = (arguments[0] as NumberValue).value;
+                    double stdev = (arguments[1] as NumberValue).value;
+                    if (stdev >= 0) {
+                        double u1 = 1.0 - random.NextDouble();
+                        double u2 = 1.0 - random.NextDouble();
+                        double normal01 = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Sin(2.0 * Math.PI * u2);
+                        return new DistributionValue(parameter, mean + stdev * normal01, distribution, args);
+                    } else throw new Error("Bad distribution: " + this.Format());
+                } else throw new Error("Bad distribution: " + this.Format());
+            } else if (distribution == "exponential" && arguments.Count == 1) {
+                if (arguments[0] is NumberValue) {
+                    double lambda = (arguments[0] as NumberValue).value;
+                    if (lambda > 0) return new DistributionValue(parameter, Math.Log(1 - random.NextDouble()) / (-lambda), distribution, args);
+                    else throw new Error("Bad distribution: " + this.Format());
+                } else throw new Error("Bad distribution: " + this.Format());
+            } else if (distribution == "bernoulli" && arguments.Count == 1) {
+                if (arguments[0] is NumberValue) {
+                    double p = (arguments[0] as NumberValue).value;
+                    if (p >= 0 && p <= 1) return new DistributionValue(parameter, (random.NextDouble() >= (1 - p) ? 1 : 0), distribution, args);
+                    else throw new Error("Bad distribution: " + this.Format());
+                } else throw new Error("Bad distribution: " + this.Format());
+            } else throw new Error("Bad distribution: " + this.Format());
+        } 
     }
 
     public class FunctionAbstraction : Expression {
@@ -2092,17 +2172,47 @@ namespace Kaemika
             return new ConsScope(this.name, scope);
         }
         public override Env Eval(Env env, Netlist netlist, Style style) {
-            Symbol symbol = new Symbol(this.name);                                                             // create a new symbol from name
-            Value value = type.Is("flow") ? definee.BuildFlow(env, style) : definee.Eval(env, netlist, style); // evaluate
-            Env extEnv = new ValueEnv(symbol, type, value, env);                                               // checks that the types match
-            netlist.Emit(new ValueEntry(symbol, type, value));                                                  // embed the new symbol also in the netlist
-            return extEnv;                                                                                     // return the extended environment
+            Symbol symbol = new Symbol(this.name);                                                                   // create a new symbol from name    
+            Value value = (type.Is("flow")) ? definee.BuildFlow(env, style) : definee.Eval(env, netlist, style);     // evaluate
+            Env extEnv = new ValueEnv(symbol, type, value, env);                                                     // checks that the types match
+            netlist.Emit(new ValueEntry(symbol, type, value));                                                       // embed the new symbol also in the netlist
+            return extEnv;                                                                                           // return the extended environment
         }
         public Env BuildFlow(Env env, Style style) {   // special case: only value definitions among all statements support BuildFlow
             Symbol symbol = new Symbol(this.name);                                      // create a new symbol from name
             Flow flow = definee.BuildFlow(env, style);                                  // evaluate
             Env extEnv = new ValueEnv(symbol, new Type("flow"), flow, env);             // checks that the ("flow") types match
             return extEnv;                                                              // return the extended environment
+        }
+    }
+
+    public class DistributionDefinition : Statement {
+        private string name;
+        public Type type;
+        private Distribution definee;
+        private Type numberType;
+        public DistributionDefinition(string name, Type type, Distribution definee) {
+            this.name = name;
+            this.type = type;
+            this.numberType = new Type("number");
+            this.definee = definee;
+        }
+        public override string Format() {
+            return numberType.Format() + " " + name + " =? " + definee.Format();
+        }
+        public override Scope Scope(Scope scope) {
+            definee.Scope(scope);
+            return new ConsScope(this.name, scope);
+        }
+        public override Env Eval(Env env, Netlist netlist, Style style) {
+            Symbol symbol = new Symbol(this.name);                                                               // create a new symbol from name
+            DistributionValue distribution = definee.Eval(symbol, env, netlist, style);                          // evaluate
+            Env extEnv = new ValueEnv(symbol, numberType, new NumberValue(distribution.drawn), env);             // checks that the types match
+            netlist.Emit(new ValueEntry(symbol, numberType, new NumberValue(distribution.drawn), distribution)); // embed the new symbol and distribution also in the netlist
+            return extEnv;                                                                                        // return the extended environment
+        }
+        public Env BuildFlow(Env env, Style style) {
+            throw new Error("A distribution cannot be a flow: " + this.Format());
         }
     }
 

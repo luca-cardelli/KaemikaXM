@@ -6,12 +6,26 @@ using Xamarin.Forms;
 namespace KaemikaXM.Pages {
 
     // uses ModelInfo to store data
-    // uses ModelInfoGroup for grouped lists
+    // uses ModelInfoGroup, a list of ModelInfo for grouped lists
 
     public class ModelInfoGroup : ObservableCollection<ModelInfo> {
         public string GroupHeading { get; private set; }
         public ModelInfoGroup(string groupHeading) {
             GroupHeading = groupHeading;
+        }
+    }
+
+    public class MyDocListCell : TextCell {
+        public MyDocListCell() {
+            TextColor = MainTabbedPage.barColor;
+            // DetailColor = Color.Brown;
+        }
+    }
+
+    public class MyDocListHeaderCell : TextCell {
+        public MyDocListHeaderCell() {
+            TextColor = Color.Red; 
+            // DetailColor = Color.Brown;
         }
     }
 
@@ -52,12 +66,17 @@ namespace KaemikaXM.Pages {
                 IsGroupingEnabled = true,
                 SeparatorVisibility = SeparatorVisibility.None,
                 GroupDisplayBinding = new Binding("GroupHeading"),  // ModelInfoGroup property
-                GroupShortNameBinding = new Binding("GroupHeading")  // ModelInfoGroup property
+                GroupShortNameBinding = new Binding("GroupHeading"),  // ModelInfoGroup property
             };
 
-            var template = new DataTemplate(typeof(TextCell));
-            template.SetBinding(TextCell.TextProperty, "title");        // ModelInfo property
+            var template = new DataTemplate(typeof(MyDocListCell));
+            template.SetBinding(MyDocListCell.TextProperty, "title");        // ModelInfo property
+            // template.SetBinding(MyDocListCell.DetailProperty, "datestring");
             listView.ItemTemplate = template;
+
+            var headerTemplate = new DataTemplate(typeof(MyDocListHeaderCell));
+            headerTemplate.SetBinding(MyDocListHeaderCell.TextProperty, "GroupHeading"); // ModelInfoGroup property
+            listView.GroupHeaderTemplate = headerTemplate;
 
             listView.ItemSelected += async (object sender, SelectedItemChangedEventArgs e) => {
                 if (e.SelectedItem != null) {
