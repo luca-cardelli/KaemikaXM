@@ -28,13 +28,15 @@ namespace Kaemika
         public abstract void ProcessGraph(string graphFamily);  // deliver execution output in graph form
         public abstract void ChartClear(string title);
         public abstract void OutputClear(string title);
+        public abstract void ParametersClear();
         public abstract void ChartUpdate();
         public abstract void LegendUpdate();
         public abstract string ChartAddSeries(string legend, Color color, Noise noise);
         // returns the same string as 'legend' param if it did add the series, and null if not, e.g. if the series was a duplicate name
         public abstract void ChartAddPoint(string seriesName, double t, double mean, double variance, Noise noise);
         public abstract string ChartAddPointAsString(string seriesName, double t, double mean, double variance, Noise noise);
-        public abstract void ChartAddParameter(string parameter, double drawn, string distribution, double[] args);
+        public abstract void AddParameter(string parameter, double drawn, string distribution, double[] args);
+        public abstract void ParametersUpdate();
         public abstract double ParameterOracle(string parameter); // returns NAN if oracle not available
         public abstract Noise NoiseSeries();
         public abstract bool ScopeVariants();

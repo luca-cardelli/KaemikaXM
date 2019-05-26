@@ -58,21 +58,98 @@ namespace Microcharts {
 
     public class Timecourse {
         private object mutex;
+        private List<Series> seriesList;
         private List<ChartEntry> list;
+        private ChartEntry lastEntry;                   // the last entry to accumulate the equal-time points
+        private int lastEntryCount;                     // to know when we have completed the last entry
+        private Dictionary<string, int> seriesIndex;    // maintaining the connection between seriesList and timecourse
+
         public Timecourse() {
-            mutex = new object();
-            list = new List<ChartEntry>();
+            this.mutex = new object();
+            this.seriesList = new List<Series>();
+            this.list = new List<ChartEntry>();
+            this.seriesIndex = new Dictionary<string, int>();
+            this.lastEntry = null;
+            this.lastEntryCount = 0;
+        }
+
+        public string AddSeries(Series series) {
+            lock (mutex) {
+                if (seriesList.Exists(e => e.name == series.name)) return null;  // give null on duplicate series
+                seriesList.Add(series);
+                seriesIndex.Clear();
+                for (int i = 0; i < seriesList.Count; i++) seriesIndex.Add(seriesList[i].name, i);
+                return series.name;
+            }
+        }
+
+        public Series[] Legend() {
+            lock (mutex) { return this.seriesList.ToArray(); }
         }
 
         public bool IsClear()  {
             lock (mutex) { return list.Count == 0; }
         }
 
-        public void Add(ChartEntry entry) {
-            lock (mutex) { list.Add(entry); }
+        public void AddPoint(string seriesName, float t, float mean) {
+            // locks mutex
+            AddRange(seriesName, t, mean, 0); 
         }
 
-        private void Inner_Bounds(List<Series> seriesList, out float minX, out float maxX, out float minY, out float maxY) {
+        public void AddRange(string seriesName, float t, float mean, float variance) {
+            lock (mutex) {
+                if (float.IsNaN(mean)) mean = 0;            // these have been converted from double
+                if (float.IsNaN(variance)) variance = 0;    // these have been converted from double
+                if (seriesIndex.ContainsKey(seriesName)) {  // if not, it may be due to a concurrent invocations of plotting before the previous one has finished
+                    int index = seriesIndex[seriesName];
+                    if (lastEntry == null) {
+                        var Y = new float[seriesList.Count];
+                        var Yrange = new float[seriesList.Count];
+                        Y[index] = mean;
+                        Yrange[index] = variance;
+                        lastEntry = new ChartEntry(X: t, Y: Y, Yrange: Yrange);
+                        lastEntryCount = 1;
+                    } else  {
+                        lastEntry.Y[index] = mean;
+                        lastEntry.Yrange[index] = variance;
+                        lastEntryCount++;
+                    }
+                    if (lastEntryCount == seriesList.Count) {
+                        list.Add(lastEntry);
+                        lastEntry = null;
+                        lastEntryCount = 0;
+                    }
+                }
+            }
+        }
+
+        public void VisibilityRemember(Dictionary<string, bool> visibility) {
+            lock (mutex) {
+                foreach (var series in seriesList) visibility[series.name] = series.visible;
+            }
+        }
+
+        public void VisibilityRestore(Dictionary<string, bool> visibility) {
+             lock (mutex) {
+                foreach (var keyPair in visibility) {
+                    if (seriesIndex.ContainsKey(keyPair.Key))
+                        seriesList[seriesIndex[keyPair.Key]].visible = keyPair.Value;
+                }
+            }
+        }
+
+        public void InvertVisible(string seriesName) {
+            lock (mutex) {
+                foreach (Series series in seriesList) {
+                    if (series.name == seriesName) {
+                        series.visible = !series.visible;
+                        return;
+                    }
+                }
+            }
+        }
+
+        private void Inner_Bounds(out float minX, out float maxX, out float minY, out float maxY) {
             if (list.Count() == 0) { minX = 0; maxX = 0; minY = 0; maxY = 0; return; }
             minX = float.MaxValue;
             maxX = float.MinValue;
@@ -192,7 +269,7 @@ namespace Microcharts {
             }
         }
 
-        private void Inner_DrawLines(SKCanvas canvas, List<Series> seriesList, Swipe pinchPan) {
+        private void Inner_DrawLines(SKCanvas canvas, Swipe pinchPan) {
             for (int j = 0; j < seriesList.Count(); j++) {
                 Series series = seriesList[j];
                 if (series.visible) {
@@ -232,13 +309,13 @@ namespace Microcharts {
             }
         }
 
-        public void DrawContent(SKCanvas canvas, SKPoint plotOrigin, SKSize plotSize, List<Series> seriesList, float textHeight, SKColor axisTextColor, Swipe pinchPan) {
+        public void DrawContent(SKCanvas canvas, SKPoint plotOrigin, SKSize plotSize, float textHeight, SKColor axisTextColor, Swipe pinchPan) {
             lock (mutex) {
-                this.Inner_Bounds(seriesList, out float minX, out float maxX, out float minY, out float maxY);
+                this.Inner_Bounds(out float minX, out float maxX, out float minY, out float maxY);
                 Inner_DrawXLabels(canvas, plotOrigin, plotSize, textHeight, axisTextColor, minX, maxX, pinchPan);
                 Inner_DrawYLabels(canvas, plotOrigin, plotSize, textHeight, axisTextColor, minY, maxY, pinchPan);
                 Inner_CalculatePoints(plotOrigin, plotSize, minX, maxX, minY, maxY);
-                Inner_DrawLines(canvas, seriesList, pinchPan);
+                Inner_DrawLines(canvas, pinchPan);
             }
         }
 
@@ -253,22 +330,17 @@ namespace Microcharts {
         private SKColor axisTextColor { get; set; } = SKColors.Gray;
         public static byte transparency { get; set; } = 32;
 
-        private List<Series> seriesList;  
         private Timecourse timecourse;
 
-        public Chart(string title, string model) {
-            // after a chart is initialized, seriesList should not change, but timecourse will be changed by a concurrent thread
+        public Chart(string title, string model) {    
             this.title = title;
             this.model = model;
-            this.seriesList = new List<Series>();
             this.timecourse = new Timecourse();
         }
 
-        public Chart(string title, string model, List<Series> seriesList, Timecourse timecourse) {
-            // after a chart is initialized, seriesList should not change, but timecourse will be changed by a concurrent thread
+        public Chart(string title, string model, Timecourse timecourse) {          
             this.title = title;
             this.model = model;
-            this.seriesList = seriesList;
             this.timecourse = timecourse;
         }
 
@@ -276,6 +348,7 @@ namespace Microcharts {
         public bool displayPinchOrigin = false;
         public SKPoint pinchOrigin;
 
+        // called asynchronously by the GUI
         public void Draw(SKCanvas canvas, int width, int height) {
             canvas.Clear(this.backgroundColor);
             if (displayPinchOrigin) GraphLayout.CanvasDrawCircle(canvas, pinchOrigin, 20, false, SKColors.LightGray);
@@ -283,7 +356,7 @@ namespace Microcharts {
             float headerHeight = CalculateHeaderHeight();
             SKSize plotSize = CalculatePlotSize(width, height, footerHeight, headerHeight);
             SKPoint plotOrigin = CalculatePlotOrigin(footerHeight);
-            timecourse.DrawContent(canvas, plotOrigin, plotSize, seriesList, textHeight, axisTextColor, pinchPan);
+            timecourse.DrawContent(canvas, plotOrigin, plotSize, textHeight, axisTextColor, pinchPan); // lock protected
         }
 
         private SKSize CalculatePlotSize(int width, int height, float footerHeight, float headerHeight) {
@@ -304,15 +377,6 @@ namespace Microcharts {
 
         private float CalculateHeaderHeight() {
             return this.margin;
-        }
-
-        public void InvertVisible(string seriesName) {
-            foreach (Series series in seriesList) {
-                if (series.name == seriesName) {
-                    series.visible = !series.visible;
-                    return;
-                }
-            }
         }
 
     }

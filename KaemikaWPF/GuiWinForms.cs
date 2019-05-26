@@ -280,12 +280,18 @@ namespace KaemikaWPF
             }
         }
 
-        public override void ChartAddParameter(string parameter, double drawn, string distribution, double[] arguments) {
+        public override void ParametersClear() {
+        }
+
+        public override void ParametersUpdate() {
+        }
+
+        public override void AddParameter(string parameter, double drawn, string distribution, double[] arguments) {
             if (form.flowLayoutPanel_Parameters.InvokeRequired){
-                StringDoubleStringDoubleArrayArgVoidReturnDelegate d = new StringDoubleStringDoubleArrayArgVoidReturnDelegate(ChartAddParameter);
+                StringDoubleStringDoubleArrayArgVoidReturnDelegate d = new StringDoubleStringDoubleArrayArgVoidReturnDelegate(AddParameter);
                 form.Invoke(d, new object[] { parameter, drawn, distribution, arguments });
             } else {
-                form.ChartSetParameter(parameter, drawn, distribution, arguments);
+                form.AddParameter(parameter, drawn, distribution, arguments);
             }
         }
 

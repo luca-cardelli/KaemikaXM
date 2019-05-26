@@ -262,27 +262,73 @@ namespace Kaemika {
                 Vertex reaction = new Vertex_Rectangle(new SKSize(0.5f, 0.5f), true); // size proportional to label text height
                 graph.AddVertex(reaction);
 
-                //foreach (Symbol reactant in r.reactants) {
+                foreach (Symbol reactant in r.ReactantsSet()) {
+                    int n = r.Stoichiometry(reactant, r.reactants);
+                    GraphAddEdge(graph, names[reactant.Format(style)], reaction, null, Directed.Pointy);
+                    for (int i = 1; i < n; i++) { // all edges except the first
+                        Vertex v = new Vertex_Routing();
+                        graph.AddVertex(v);
+                        GraphAddEdge(graph, names[reactant.Format(style)], v, null, Directed.No);
+                        GraphAddEdge(graph, v, reaction, null, Directed.Pointy);
+                    }
+                }
+                foreach (Symbol product in r.ProductsSet()) {
+                    int n = r.Stoichiometry(product, r.products);
+                    GraphAddEdge(graph, reaction, names[product.Format(style)], null, Directed.Solid);
+                    for (int i = 1; i < n; i++) { // all edges except the first
+                        Vertex v = new Vertex_Routing();
+                        graph.AddVertex(v);
+                        GraphAddEdge(graph, reaction, v, null, Directed.No);
+                        GraphAddEdge(graph, v, names[product.Format(style)], null, Directed.Solid);
+                    }
+                }
+
+                //foreach (Symbol reactant in r.ReactantsSet()) {
+                //    int n = r.Stoichiometry(reactant, r.reactants);
+                //    if (n == 1) GraphAddEdge(graph, names[reactant.Format(style)], reaction, null, Directed.Pointy);
+                //    else {
+                //        for (int i = 0; i < n; i++) {
+                //            Vertex v = new Vertex_Routing();
+                //            graph.AddVertex(v);
+                //            GraphAddEdge(graph, names[reactant.Format(style)], v, null, Directed.No);
+                //            GraphAddEdge(graph, v, reaction, null, Directed.Pointy);
+                //        }
+                //    }
+                //}
+                //foreach (Symbol product in r.ProductsSet()) {
+                //    int n = r.Stoichiometry(product, r.products);
+                //    if (n == 1) GraphAddEdge(graph, reaction, names[product.Format(style)], null, Directed.Solid);
+                //    else {
+                //        for (int i = 0; i < n; i++) {
+                //            Vertex v = new Vertex_Routing();
+                //            graph.AddVertex(v);
+                //            GraphAddEdge(graph, reaction, v, null, Directed.No);
+                //            GraphAddEdge(graph, v, names[product.Format(style)], null, Directed.Solid);
+                //        }
+                //    }
+                //}
+
+                //foreach (Symbol reactant in r.ReactantsSet()) {
                 //    int n = r.Stoichiometry(reactant, r.reactants);
                 //    GraphAddEdge(graph, names[reactant.Format(style)], reaction, (n==1) ? null : n.ToString(), Directed.Pointy);
                 //}
-                //foreach (Symbol product in r.products) {
+                //foreach (Symbol product in r.ProductsSet()) {
                 //    int n = r.Stoichiometry(product, r.products);
                 //    GraphAddEdge(graph, reaction, names[product.Format(style)], (n == 1) ? null : n.ToString(), Directed.Solid);
                 //}
 
-                foreach (Symbol reactant in r.reactants) {
-                    Vertex incoming = new Vertex_Routing();
-                    graph.AddVertex(incoming);
-                    GraphAddEdge(graph, names[reactant.Format(style)], incoming, null, Directed.No);
-                    GraphAddEdge(graph, incoming, reaction, null, Directed.Pointy);
-                }
-                foreach (Symbol product in r.products) {
-                    Vertex outgoing = new Vertex_Routing();
-                    graph.AddVertex(outgoing);
-                    GraphAddEdge(graph, reaction, outgoing, null, Directed.No);
-                    GraphAddEdge(graph, outgoing, names[product.Format(style)], null, Directed.Solid);
-                }
+                //foreach (Symbol reactant in r.reactants) {
+                //    Vertex incoming = new Vertex_Routing();
+                //    graph.AddVertex(incoming);
+                //    GraphAddEdge(graph, names[reactant.Format(style)], incoming, null, Directed.No);
+                //    GraphAddEdge(graph, incoming, reaction, null, Directed.Pointy);
+                //}
+                //foreach (Symbol product in r.products) {
+                //    Vertex outgoing = new Vertex_Routing();
+                //    graph.AddVertex(outgoing);
+                //    GraphAddEdge(graph, reaction, outgoing, null, Directed.No);
+                //    GraphAddEdge(graph, outgoing, names[product.Format(style)], null, Directed.Solid);
+                //}
 
                 //Vertex reactionIn = new Vertex_Routing();
                 //Vertex reactionOut = new Vertex_Routing();

@@ -390,90 +390,78 @@ namespace KaemikaWPF
             ChartListboxRestore();
         }
 
-        private static Dictionary<string, ParameterInfo> parameterInfo = new Dictionary<string, ParameterInfo>();
-        public void ParametersForget() {
-            parameterInfo = new Dictionary<string, ParameterInfo>();
+        // ======== PARAMETERS ========= //
+
+        private static Dictionary<string, ParameterInfo> parameterInfoDict = new Dictionary<string, ParameterInfo>();
+        private static Dictionary<string, ParameterState> parameterStateDict = new Dictionary<string, ParameterState>();
+
+        // clear all the parameter info when we close the parameters gui panel, otherwise we remember all this info across executions
+
+        public void ParametersClear() {
+            parameterInfoDict = new Dictionary<string, ParameterInfo>();
+            parameterStateDict = new Dictionary<string, ParameterState>();
             flowLayoutPanel_Parameters.Controls.Clear();
         }
-        public class ParameterInfo {
+
+        public class ParameterState {
             public string parameter;
-            public double drawn;
-            public string distribution;
-            public double[] arguments;
             public CheckBox checkBox;
             public TrackBar trackBar;
-            public double rangeMin;
-            public double rangeMax;
             public int rangeSteps;
-            public double range;
-            public bool programmaticChange = false; // i.e. value change not from GUI
-            public ParameterInfo(string parameter, double drawn, string distribution, double[] arguments, CheckBox checkBox, TrackBar trackBar) {
+            public bool programmaticChange; // i.e. value change not from GUI
+            public ParameterState (string parameter, CheckBox checkBox, TrackBar trackBar, int rangeSteps) {
                 this.parameter = parameter;
-                this.drawn = drawn;
-                this.distribution = distribution;
-                this.arguments = arguments;
                 this.checkBox = checkBox;
                 this.trackBar = trackBar;
-            }
-            public string ParameterLabel() {
-                string args = "";
-                for (int i = 0; i < arguments.Length; i++) args += arguments[i].ToString("G4") + ", ";
-                if (args != "") args = args.Substring(0, args.Length - 2);
-                args = "(" + args + ")";
-                return parameter + " = " + drawn.ToString("G4") + ". Drawn from " + distribution + args;
+                this.rangeSteps = rangeSteps;
+                this.programmaticChange = false;
             }
         }
-        public void ChartSetParameter(string parameter, double drawn, string distribution, double[] arguments) {
+
+        // ask the gui if this parameter is locked
+
+        public double ParameterOracle(string parameter) {
+            if (!parameterInfoDict.ContainsKey(parameter)) return double.NaN;
+            if (parameterStateDict[parameter].checkBox.Checked) return (double)parameterInfoDict[parameter].drawn;
+            return double.NaN;
+        }
+
+        // reflect the parameter state into the gui
+
+        public void AddParameter(string parameter, double drawn, string distribution, double[] arguments) {
             const int width = 300;
-            if (!parameterInfo.ContainsKey(parameter)) {
-                CheckBox newCheckBox = new CheckBox(); newCheckBox.Width = width - 30; // space for scrollbar
+            if (!parameterInfoDict.ContainsKey(parameter)) {
+                CheckBox newCheckBox = new CheckBox();
+                newCheckBox.Width = width - 30; // space for scrollbar
                 newCheckBox.Margin = new Padding(10, 0, 0, 0);
+                newCheckBox.CheckedChanged += (object source, EventArgs e) => {
+                    ParameterInfo paramInfo = parameterInfoDict[parameter];
+                    ParameterState paramState = parameterStateDict[parameter];
+                    paramInfo.locked = paramState.checkBox.Checked;
+                };
                 TrackBar newTrackBar = new TrackBar(); newTrackBar.Width = width - 30;
                 newTrackBar.ValueChanged += (object source, EventArgs e) => {
-                    ParameterInfo paramInfo = parameterInfo[parameter];
-                    if (!paramInfo.programmaticChange) paramInfo.drawn = paramInfo.rangeMin + ((source as TrackBar).Value/((double)paramInfo.rangeSteps)) * paramInfo.range;
-                    paramInfo.programmaticChange = false;
-                    paramInfo.checkBox.Text = paramInfo.ParameterLabel();
+                    ParameterInfo paramInfo = parameterInfoDict[parameter];
+                    ParameterState paramState = parameterStateDict[parameter];
+                    if (!paramState.programmaticChange) paramInfo.drawn = paramInfo.rangeMin + ((source as TrackBar).Value/((double)paramState.rangeSteps)) * paramInfo.range;
+                    paramState.programmaticChange = false;
+                    paramState.checkBox.Text = paramInfo.ParameterLabel(false);
                 };
-                parameterInfo[parameter] = new ParameterInfo(parameter, drawn, distribution, arguments, newCheckBox, newTrackBar);
+                parameterStateDict[parameter] = new ParameterState(parameter, newCheckBox, newTrackBar, (distribution == "bernoulli") ? 1 : 100);
                 flowLayoutPanel_Parameters.Controls.Add(newCheckBox); 
                 flowLayoutPanel_Parameters.Controls.Add(newTrackBar); 
                 flowLayoutPanel_Parameters.Width = width;
             }
-            ParameterInfo info = parameterInfo[parameter];
-            if (!info.checkBox.Checked) {
-                info.distribution = distribution;
-                info.arguments = arguments;
-                info.drawn = drawn;
-                if (distribution == "uniform") {
-                    info.rangeMin = Math.Min(arguments[0], drawn);
-                    info.rangeMax = Math.Max(arguments[1], drawn);
-                    info.rangeSteps = 100;
-                } else if (distribution == "normal") {
-                    info.rangeMin = Math.Min(arguments[0] - 5 * arguments[1], drawn);
-                    info.rangeMax = Math.Max(arguments[0] + 5 * arguments[1], drawn);
-                    info.rangeSteps = 100;
-                } else if (distribution == "exponential") {
-                    info.rangeMin = 0;
-                    info.rangeMax = Math.Max(5 / arguments[0], drawn);
-                    info.rangeSteps = 100;
-                } else if (distribution == "bernoulli") {
-                    info.rangeMin = 0;
-                    info.rangeMax = 1;
-                    info.rangeSteps = 1;
-                }
-                info.range = info.rangeMax - info.rangeMin;
-                info.trackBar.Minimum = 0;
-                info.trackBar.Maximum = info.rangeSteps;
-                info.programmaticChange = true;
-                info.trackBar.Value = (info.range == 0.0) ? (info.rangeSteps/2) : (int)(info.rangeSteps * (info.drawn - info.rangeMin) / info.range);
-                info.checkBox.Text = info.ParameterLabel();
+            parameterInfoDict[parameter] = new ParameterInfo(parameter, drawn, distribution, arguments);
+            ParameterInfo info = parameterInfoDict[parameter];
+            ParameterState state = parameterStateDict[parameter];
+            if (!info.locked) {
+                state.trackBar.Minimum = 0;
+                state.trackBar.Maximum = state.rangeSteps;
+                state.programmaticChange = true;
+                state.trackBar.Value = (info.range == 0.0) ? (state.rangeSteps/2) : (int)(state.rangeSteps * (info.drawn - info.rangeMin) / info.range);
+                state.checkBox.Text = info.ParameterLabel(false);
             }
-        }
-        public double ParameterOracle(string parameter) {
-            if (!parameterInfo.ContainsKey(parameter)) return double.NaN;
-            if (parameterInfo[parameter].checkBox.Checked) return (double)parameterInfo[parameter].drawn;
-            return double.NaN;
         }
 
 
@@ -618,7 +606,7 @@ namespace KaemikaWPF
                 flowLayoutPanel_Parameters.Visible = true;
             } else {
                 flowLayoutPanel_Parameters.Visible = false;
-                ParametersForget();
+                ParametersClear();
             }
         }
 

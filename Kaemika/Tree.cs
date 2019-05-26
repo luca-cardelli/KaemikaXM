@@ -94,6 +94,10 @@ namespace Kaemika
             }
         }
     }
+    public class SymbolComparer : EqualityComparer<Symbol> {
+        public override bool Equals(Symbol a, Symbol b) { return a.SameSymbol(b); }
+        public override int GetHashCode(Symbol a) { return a.Raw().GetHashCode(); }
+    }
 
     public abstract class Scope {
         public abstract bool Lookup(string var); // return true if var is defined
@@ -1041,6 +1045,8 @@ namespace Kaemika
                 if (!species.Exists(x => x.symbol.SameSymbol(rs))) { notCovered = rs; return false; };
             return rate.CoveredBy(species, out notCovered);
         }
+        public HashSet<Symbol> ReactantsSet() { return new HashSet<Symbol>(reactants, new SymbolComparer()); }
+        public HashSet<Symbol> ProductsSet() { return new HashSet<Symbol>(products, new SymbolComparer()); }
     }
 
     public abstract class RateValue {
@@ -1833,6 +1839,45 @@ namespace Kaemika
                 } else throw new Error("Bad distribution: " + this.Format());
             } else throw new Error("Bad distribution: " + this.Format());
         } 
+    }
+
+    public class ParameterInfo {
+        public string parameter;
+        public double drawn;
+        public string distribution;
+        public double[] arguments;
+        public double rangeMin;
+        public double rangeMax;
+        public double range;
+        public bool locked;
+        public ParameterInfo(string parameter, double drawn, string distribution, double[] arguments) {
+            this.parameter = parameter;
+            this.drawn = drawn;
+            this.distribution = distribution;
+            this.arguments = arguments;
+            this.locked = false;
+            if (distribution == "uniform") {
+                this.rangeMin = Math.Min(arguments[0], drawn);
+                this.rangeMax = Math.Max(arguments[1], drawn);
+            } else if (distribution == "normal") {
+                this.rangeMin = Math.Min(arguments[0] - 5 * arguments[1], drawn);
+                this.rangeMax = Math.Max(arguments[0] + 5 * arguments[1], drawn);
+            } else if (distribution == "exponential") {
+                this.rangeMin = 0;
+                this.rangeMax = Math.Max(5 / arguments[0], drawn);
+            } else if (distribution == "bernoulli") {
+                this.rangeMin = 0;
+                this.rangeMax = 1;
+            }
+            this.range = this.rangeMax - this.rangeMin;
+        }
+        public string ParameterLabel(bool twoLines) {
+            string args = "";
+            for (int i = 0; i < arguments.Length; i++) args += arguments[i].ToString("G4") + ", ";
+            if (args != "") args = args.Substring(0, args.Length - 2);
+            args = "(" + args + ")";
+            return parameter + " = " + drawn.ToString("G3") + ((twoLines)? Environment.NewLine : ". Drawn from ") + distribution + args;
+        }
     }
 
     public class FunctionAbstraction : Expression {

@@ -1,137 +1,33 @@
+//======================================
+// Approximate Majority bistable system
+//======================================
 
-//--------------------------------------------------//
-//------------------- PID Controller ------------------//
-//--------------------------------------------------//
+// A triplet of species lo <-> md <-> hi 
+// activated from lo to hi by act, 
+// and inhibited from hi to lo by inh
 
-//----------------- Proportional Block ------------------
-network PBlock (species E⁺ E⁻ U⁺ U⁻, number Kp) {
-       E⁺ ->{Kp} E⁺ + U⁺
-       E⁻ ->{Kp} E⁻ + U⁻ 
-       U⁺ ->{Kp} #
-       U⁻ ->{Kp} #
-       U⁻ + U⁺ ->{Kp} #
+network Triplet(species lo hi act inh, number rate) {
+   species md @ 0M
+   report hi, lo, md, hi+lo+md as "total"
+   act >> lo -> md    {rate}
+   act >> md -> hi    {rate}
+   inh >> hi -> md    {rate}
+   inh >> md -> lo    {rate}
 }
 
-//------------------- Integral Block --------------------
-network IBlock (species E⁺ E⁻ U⁺ U⁻, number Ki) {
-       E⁺ ->{Ki} E⁺ + U⁺ 
-       E⁻ ->{Ki} E⁻ + U⁻ 
-       U⁻ + U⁺ ->{Ki} #
+// Approximate Majority bistable circuit: 
+// hi activates hi and inhibits lo, 
+// lo activates lo and inhibits hi
+
+network AM(species lo hi, number rate) {
+   Triplet(lo, hi, hi, lo, rate)
 }
 
-//------------------ Derivative Block -------------------
-network DBlock(species E⁺ E⁻ U⁺ U⁻, number Kd) {
-       species A⁺ @ 0M  // D block auxiliary species +
-       species A⁻ @ 0M  // D block auxiliary species -
+// Example of stabilization
 
-       E⁺->{10} E⁺ + A⁺ 
-       A⁺ ->{10} #
-       E⁻ ->{10} E⁻ + A⁻ 
-       A⁻ ->{10} #
-       E⁺ ->{10*Kd} E⁺ + U⁺ 
-       A⁻ ->{10*Kd} A⁻ + U⁺ 
-       U⁺ ->{Kd} #
-       E⁻ ->{10*Kd} E⁻ + U⁻ 
-       A⁺ ->{10*Kd} A⁺ + U⁻ 
-       U⁻ ->{Kd} #
-       U⁺ + U⁻ ->{Kd} #
-}
+species hi @ 0.51M
+species lo @ 0.49M
+AM(lo, hi, 1.0)
 
-//------------------ Addition Block -------------------
+equilibrate for 20
 
-network SumBlock(species P⁺ P⁻ I⁺ I⁻ D⁺ D⁻ U⁺ U⁻, number Ka) {
-      P⁺ ->{Ka} P⁺ + U⁺
-      P⁻ ->{Ka} P⁻  + U⁻
-      I⁺ ->{Ka} I⁺ + U⁺
-      I⁻ ->{Ka} I⁻  + U⁻
-      D⁺ ->{Ka} D⁺ + U⁺
-      D⁻ ->{Ka} D⁻  + U⁻
-      U⁺ ->{Ka} #
-      U⁻ ->{Ka} #
-      U⁺ + U⁻ ->{Ka} #
-}
-
-//----------------- Actuation Method 1 ------------------
-network Actuator1(species U⁺ U⁻ mRNA microRNA) {
-       U⁺->{0.8} U⁺+ mRNA 
-       U⁻ ->{0.8} U⁻ + microRNA 
-}
-
-//----------------- Actuation Method 2 ------------------
-network Actuator2 (species U⁺ mRNA U⁻ ) {
-       U⁺ ->{0.8} U⁺ + mRNA 
-       U⁻ + mRNA ->{0.8} U⁻ 
-}
-
-//----------------- Actuation Method 3 ------------------
-network Actuator3 (species U⁺ Pro U⁻) {
-       U⁺ ->{0.8} U⁺ + Pro 
-       U⁻ + Pro ->{0.8} U⁻ 
-}
-
-//----------------------- Plant ------------------------
-network Plant (species mRNA microRNA Pro) {
-       # -> mRNA  
-       mRNA -> mRNA + Pro 
-       mRNA -> #
-       Pro -> #
-       mRNA + microRNA -> #
-}
-
-//--------------- Dual Rail Converter Block----------------
-network DualRail (species Y Y'⁺ Y'⁻) {
-       Y -> Y + Y'⁺ 
-       Y'⁺ -> #
-       Y'⁺ + Y'⁻ -> #
-}
-
-//------------------ Substraction Block ------------------
-network SubtractionBlock (species R⁺ R⁻ Y'⁺ Y'⁻ E⁺ E⁻) {
-       R⁺ -> R⁺ + E⁺
-       R⁻ -> R⁻ + E⁻
-       Y'⁻ -> Y'⁻ + E⁺
-       Y'⁺  -> Y'⁺  + E⁻
-       E⁺ -> #
-       E⁻ -> #
-       E⁺ + E⁻-> #
-}
-
-//--------------------- Full PID Control Applied to the Plant -----------------------
-network PIDController(species R⁺ R⁻ Pro, number Kp Ki Kd Ka) {
-         species {E⁺, E⁻, P⁺, P⁻, I⁺, I⁻, D⁺, D⁻, U⁺, U⁻, mRNA, microRNA, Y'⁺, Y'⁻}
-         amount E⁺ @ 0M        // Error species +
-         amount E⁻ @ 0M        // Error species -
-         amount P⁺ @ 0M      // P species +
-         amount P⁻ @ 0M      // P species -
-         amount I⁺ @ 0M      // I species +
-         amount I⁻ @ 0M      // I species -
-         amount D⁺ @ 0M      // D species +
-         amount D⁻ @ 0M      // D species -
-         amount U⁺ @ 0M      // PID species +
-         amount U⁻ @ 0M      // PID species -
-         amount mRNA @ 0M      // mRNA species
-         amount microRNA @ 0M  // microRNA species
-         amount Y'⁺ @ 0M        // Converter species +
-         amount Y'⁻ @ 0M        // Converter species -
-
-       PBlock(E⁺, E⁻, P⁺, P⁻,Kp) 
-       IBlock(E⁺, E⁻, I⁺, I⁻,Ki)
-       DBlock(E⁺, E⁻, D⁺, D⁻,Kd)
-       SumBlock(P⁺, P⁻, I⁺, I⁻, D⁺, D⁻, U⁺, U⁻, Ka)
-       Actuator1(U⁺, U⁻, mRNA, microRNA)
-       Plant(mRNA, microRNA, Pro)
-       DualRail(Pro, Y'⁺, Y'⁻ )
-       SubtractionBlock(R⁺, R⁻, Y'⁺, Y'⁻ , E⁺, E⁻)
-
-}
-
-//------------------------- Initial Number of Species --------------------------
-species {R⁺, R⁻, Pro}
-amount R⁺ @ 10M      // Constant reference species +
-amount R⁻ @ 0M       // Constant reference species -
-amount Pro @ 1M      // Protein species
-
-number n =? uniform(1,3)
-PIDController(R⁺, R⁻, Pro, 2.0, 0.3, 2.0, 1.0) 
-report R⁺-R⁻, Pro
-equilibrate for 60

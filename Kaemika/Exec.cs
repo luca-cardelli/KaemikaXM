@@ -112,6 +112,7 @@ namespace Kaemika {
             Gui.gui.SaveInput();
             Gui.gui.OutputClear("");
             Gui.gui.ChartClear("");
+            Gui.gui.ParametersClear();
             lastExecution = null;
             DateTime startTime = DateTime.Now;
             if (TheParser.parser.Parse(Gui.gui.InputGetText(), out IReduction root)) {
@@ -133,7 +134,8 @@ namespace Kaemika {
                                 Env ignoreEnv = statements.Eval(new NullEnv().BuiltIn(vessel), netlist, style);
                                 lastExecution = new ExecutionInstance(vessel, netlist, style, startTime, evalTime);
                                 foreach (DistributionValue parameter in netlist.Parameters())
-                                    Gui.gui.ChartAddParameter(parameter.parameter.Format(style), parameter.drawn, parameter.distribution, parameter.arguments);
+                                    Gui.gui.AddParameter(parameter.parameter.Format(style), parameter.drawn, parameter.distribution, parameter.arguments);
+                                Gui.gui.ParametersUpdate();
                                 Gui.gui.ProcessOutput();
                             }
                         }

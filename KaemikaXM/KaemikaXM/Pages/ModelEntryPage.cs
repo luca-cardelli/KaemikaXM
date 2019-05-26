@@ -2,6 +2,7 @@
 using System.IO;
 using Xamarin.Forms;
 using Xamarin.Essentials;
+using System.Collections.Generic;
 using Kaemika;
 
 namespace KaemikaXM.Pages {
@@ -289,6 +290,15 @@ namespace KaemikaXM.Pages {
 
         public void Overwrite() {
             File.WriteAllText(modelInfo.filename, modelInfo.title + Environment.NewLine + modelInfo.text);
+        }
+      
+        private static Dictionary<string, Dictionary<string, bool>> visibilityCache =
+            new Dictionary<string, Dictionary<string, bool>>();
+
+        public Dictionary<string,bool> Visibility() {
+            string theModel = modelInfo.title;
+            if (!visibilityCache.ContainsKey(theModel)) visibilityCache[theModel] = new Dictionary<string, bool>();
+            return visibilityCache[theModel];
         }
 
         public override void OnSwitchedTo() {

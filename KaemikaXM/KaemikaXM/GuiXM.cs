@@ -80,27 +80,27 @@ namespace Kaemika {
         // CHART
 
         private string title = "";
-        private List<Series> seriesList;
-        private Timecourse timecourse;                  // assumes points they arrive in time equal or increasing
-        private ChartEntry lastEntry;                   // the last entry to accumulate the equal-time points
-        private int lastEntryCount;                     // to know when we have completed the last entry
-        private Dictionary<string, int> seriesIndex;    // maintaining the connection between seriesList and timecourse
+        private Timecourse timecourse;                  // assumes points arrive in time equal or increasing
 
-        public override void ChartUpdate() {  // after a ChartUpdate we should be sure that seriesList is not changed, because a Chart.Draw can start from a gui refresh
-            VisibilityRestore();
+        public override void ChartUpdate() {
+            timecourse.VisibilityRestore(MainTabbedPage.theModelEntryPage.Visibility());
             MainTabbedPage.theChartPage.SetChart(
-                new Chart(title, MainTabbedPage.theModelEntryPage.modelInfo.title, seriesList, timecourse),
+                new Chart(title, MainTabbedPage.theModelEntryPage.modelInfo.title, timecourse),
                 MainTabbedPage.theModelEntryPage.modelInfo);
         }
 
         public void ChartUpdateLandscape() {
             MainTabbedPage.theChartPageLandscape.SetChart(
-                new Chart(title, MainTabbedPage.theModelEntryPage.modelInfo.title, seriesList, timecourse));
+                new Chart(title, MainTabbedPage.theModelEntryPage.modelInfo.title, timecourse));
         }
 
         public override void LegendUpdate() {
-            VisibilityRestore();
-            MainTabbedPage.theChartPage.SetLegend(seriesList);
+            timecourse.VisibilityRestore(MainTabbedPage.theModelEntryPage.Visibility());
+            MainTabbedPage.theChartPage.SetLegend(timecourse.Legend());
+        }
+
+        public override void ParametersClear() {
+            MainTabbedPage.theChartPage.ParametersClear();
         }
 
         public bool IsChartClear() {
@@ -109,11 +109,7 @@ namespace Kaemika {
 
         private void ChartInit() {
             this.title = "";
-            this.seriesList = new List<Series>() { };
             this.timecourse = new Timecourse() { };
-            this.seriesIndex = new Dictionary<string, int>();
-            this.lastEntry = null;
-            this.lastEntryCount = 0;
         }
 
         public override void ChartClear(string title) {
@@ -127,62 +123,26 @@ namespace Kaemika {
             MainTabbedPage.theOutputPage.OutputClear();
             this.title = title;
         }
-
-        private void UpdateIndexes() {
-            seriesIndex.Clear();
-            for (int i = 0; i < seriesList.Count; i++) seriesIndex.Add(seriesList[i].name, i);
-        }
-
+        
         public override string ChartAddSeries(string legend, Color color, Noise noise) {
-            if (seriesList.Exists(e => e.name == legend)) return null; // give null on duplicate series
             if (noise == Noise.None) {
-                seriesList.Add(new Series(legend, color, LineMode.Line, LineStyle.Thick));
+                return timecourse.AddSeries(new Series(legend, color, LineMode.Line, LineStyle.Thick));
             } else if (noise == Noise.Sigma || noise == Noise.SigmaSq || noise == Noise.CV || noise == Noise.Fano) {
-                seriesList.Add(new Series(legend, color, LineMode.Line, LineStyle.Thin));
+                return timecourse.AddSeries(new Series(legend, color, LineMode.Line, LineStyle.Thin));
             } else if (noise == Noise.SigmaRange || noise == Noise.SigmaSqRange) {
-                seriesList.Add(new Series(legend, Color.FromArgb(Chart.transparency, color), LineMode.Range, LineStyle.Thin));
+                return timecourse.AddSeries(new Series(legend, Color.FromArgb(Chart.transparency, color), LineMode.Range, LineStyle.Thin));
             } else throw new Error("ChartAddSeries");
-            UpdateIndexes();
-            return legend;
-        }
-
-        private void AddPoint(string seriesName, float t, float mean) {
-            AddRange(seriesName, t, mean, 0);
-        }
-        private void AddRange(string seriesName, float t, float mean, float variance) {
-            if (float.IsNaN(mean)) mean = 0;            // these have been converted from double
-            if (float.IsNaN(variance)) variance = 0;    // these have been converted from double
-            if (seriesIndex.ContainsKey(seriesName)) {  // if not, it may be due to a concurrent invocations of plotting before the previous one has finished
-                int index = seriesIndex[seriesName];
-                if (lastEntry == null) {
-                    var Y = new float[seriesList.Count];
-                    var Yrange = new float[seriesList.Count];
-                    Y[index] = mean;
-                    Yrange[index] = variance;
-                    lastEntry = new ChartEntry(X: t, Y: Y, Yrange: Yrange);
-                    lastEntryCount = 1;
-                } else  {
-                    lastEntry.Y[index] = mean;
-                    lastEntry.Yrange[index] = variance;
-                    lastEntryCount++;
-                }
-                if (lastEntryCount == seriesList.Count) {
-                    timecourse.Add(lastEntry);
-                    lastEntry = null;
-                    lastEntryCount = 0;
-                }
-            }
         }
 
         public override void ChartAddPoint(string seriesName, double t, double mean, double variance, Noise noise) {
             if (seriesName != null) {
-                if (noise == Noise.None) AddPoint(seriesName, (float)t, (float)mean);
-                if (noise == Noise.SigmaSq) AddPoint(seriesName, (float)t, (float)variance);
-                if (noise == Noise.Sigma) AddPoint(seriesName, (float)t, (float)Math.Sqrt(variance));
-                if (noise == Noise.CV) AddPoint(seriesName, (float)t, (float)((mean == 0.0) ? 0.0 : (Math.Sqrt(variance) / mean)));
-                if (noise == Noise.Fano) AddPoint(seriesName, (float)t, (float)((mean == 0.0) ? 0.0 : (variance / mean)));
-                if (noise == Noise.SigmaSqRange) AddRange(seriesName, (float)t, (float)mean, (float)variance);
-                if (noise == Noise.SigmaRange) AddRange(seriesName, (float)t, (float)mean, (float)Math.Sqrt(variance));
+                if (noise == Noise.None) timecourse.AddPoint(seriesName, (float)t, (float)mean);
+                if (noise == Noise.SigmaSq) timecourse.AddPoint(seriesName, (float)t, (float)variance);
+                if (noise == Noise.Sigma) timecourse.AddPoint(seriesName, (float)t, (float)Math.Sqrt(variance));
+                if (noise == Noise.CV) timecourse.AddPoint(seriesName, (float)t, (float)((mean == 0.0) ? 0.0 : (Math.Sqrt(variance) / mean)));
+                if (noise == Noise.Fano) timecourse.AddPoint(seriesName, (float)t, (float)((mean == 0.0) ? 0.0 : (variance / mean)));
+                if (noise == Noise.SigmaSqRange) timecourse.AddRange(seriesName, (float)t, (float)mean, (float)variance);
+                if (noise == Noise.SigmaRange) timecourse.AddRange(seriesName, (float)t, (float)mean, (float)Math.Sqrt(variance));
             }
         }
 
@@ -199,6 +159,26 @@ namespace Kaemika {
                 if (noise == Noise.SigmaRange) { double sd = Math.Sqrt(variance); s += mean.ToString() + "±" + sd.ToString(); }
             }
             return s;
+        }
+
+        public void VisibilityRemember() {
+            timecourse.VisibilityRemember(MainTabbedPage.theModelEntryPage.Visibility());
+        }
+
+        public void InvertVisible(string name) {
+            timecourse.InvertVisible(name);
+        }
+
+        public override void AddParameter(string parameter, double drawn, string distribution, double[] arguments) {
+            MainTabbedPage.theChartPage.AddParameter(parameter, drawn, distribution, arguments);
+        }
+
+        public override double ParameterOracle(string parameter) { // returns NAN if oracle not available
+            return MainTabbedPage.theChartPage.ParameterOracle(parameter);
+        }
+
+        public override void ParametersUpdate() {
+            MainTabbedPage.theChartPage.ParametersUpdate();
         }
 
         public override Noise NoiseSeries() {
@@ -243,35 +223,13 @@ namespace Kaemika {
             return continueButtonIsEnabled;
         }
 
-        public static string currentSolver = "OSLO RK547M"; // "OSLO GearBDF" or "OSLO RK547M"
+        public static string currentSolver = "RK547M"; // "GearBDF" or "RK547M"
         public override string Solver() {
             return currentSolver;
         }
 
         public override bool PrecomputeLNA() {
             return false; // appaarently zero benefit in precomputing the drift matrix
-        }
-
-        private static Dictionary<string, Dictionary<string, bool>> visibilityCache = 
-            new Dictionary<string, Dictionary<string, bool>>();
-
-        private Dictionary<string,bool> Visibility() {
-            string theModel = MainTabbedPage.theModelEntryPage.modelInfo.title;
-            if (!visibilityCache.ContainsKey(theModel)) visibilityCache[theModel] = new Dictionary<string, bool>();
-            return visibilityCache[theModel];
-        }
-
-        public void VisibilityRemember() {
-            Dictionary<string, bool> visibility = Visibility();
-            foreach (var series in seriesList) visibility[series.name] = series.visible;
-        }
-
-        public void VisibilityRestore() {
-            Dictionary<string, bool> visibility = Visibility();
-            foreach (var keyPair in visibility) {
-                if (seriesIndex.ContainsKey(keyPair.Key))
-                    seriesList[seriesIndex[keyPair.Key]].visible = keyPair.Value;
-            }
         }
 
         public override void ChartListboxAddSeries(string legend){ }
