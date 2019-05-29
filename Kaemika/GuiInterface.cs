@@ -3,7 +3,7 @@ using System.Drawing;
 
 namespace Kaemika
 {
-    public enum Noise : int { None, SigmaRange, Sigma, CV, SigmaSqRange, SigmaSq, Fano }
+    public enum Noise { None = 0, SigmaRange = 1, Sigma = 2, CV = 3, SigmaSqRange = 4, SigmaSq = 5, Fano = 6 }
 
     public class Error : Exception {
         public Error(string message) : base(message) { }
@@ -14,6 +14,14 @@ namespace Kaemika
         public static void Log(string s) {
             Gui.gui.OutputAppendText(s + System.Environment.NewLine);
         }
+        public static Noise[] noise = (Noise[])Enum.GetValues(typeof(Noise));
+        private static readonly string[] noiseString = new string[] { " μ", " ±σ", " σ", " σ/μ", " ±σ²", " σ²", " σ²/μ" }; // match order of enum Noise
+        private static readonly string[] longNoiseString = new string[] { " μ  (mean)", " ±σ  (μ ± standard deviation)", " σ  (μ and standard deviation)", " σ/μ  (μ and coeff of variation)", " ±σ²  (μ ± variance)", " σ²  (μ and variance)", " σ²/μ  (μ and Fano factor)" }; 
+        public static Noise NoiseOfString(string selection) {
+            for (int i = 0; i < noise.Length; i++) { if (selection == noiseString[i] || selection == longNoiseString[i]) return noise[i]; }
+            return Noise.None; // if selection == null
+        }
+        public static string StringOfNoise(Noise noise) { return noiseString[(int)noise]; }
     }
 
     public abstract class GuiInterface {

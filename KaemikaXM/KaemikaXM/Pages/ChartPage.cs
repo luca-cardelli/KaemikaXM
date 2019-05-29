@@ -149,9 +149,8 @@ namespace KaemikaXM.Pages
             chartView.Chart = chart;
         }
 
-        public void SetModel(ModelInfo modelInfo) { 
-            this.title = modelInfo.title;
-            MainTabbedPage.theChartPage.Title = this.title;
+        public void SetModel(ModelInfo modelInfo) {
+            this.title = (modelInfo == null) ? "" : modelInfo.title;
             currentModelInfo = modelInfo;
         }
 

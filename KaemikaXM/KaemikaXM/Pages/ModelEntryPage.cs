@@ -17,7 +17,6 @@ namespace KaemikaXM.Pages {
         public Picker noisePicker;
         public Picker subPicker;
         public Picker supPicker;
-        public object noisePickerSelectedItem = ProtocolActuator.noiseString[0];
         public Noise noisePickerSelection = Noise.None;
         public ImageButton startButton;
 
@@ -84,7 +83,12 @@ namespace KaemikaXM.Pages {
                 else if (switchToOutput) MainTabbedPage.SwitchToTab(MainTabbedPage.theOutputPageNavigation);
             }
         }
-            
+
+        private void ResetCurrentModels() { // so outputs and charts get recomputed after models are edited
+            MainTabbedPage.theOutputPage.SetModel(null);
+            MainTabbedPage.theChartPage.SetModel(null);
+        }
+
         public ImageButton StartButton(bool switchToChart, bool switchToOutput) {
             ImageButton button = new ImageButton() {
                 Source = "icons8play40.png",
@@ -123,10 +127,12 @@ namespace KaemikaXM.Pages {
                 FontSize = 14,  
                
             };
-            foreach (string s in ProtocolActuator.noiseString) noisePicker.Items.Add(s);
+            foreach (Noise s in Gui.noise) noisePicker.Items.Add(Gui.StringOfNoise(s));
             noisePicker.Unfocused += async (object sender, FocusEventArgs e) => {
-                noisePickerSelectedItem = noisePicker.SelectedItem;
-                noisePickerSelection = ProtocolActuator.NoiseOfString(noisePicker.SelectedItem as string);
+                Noise oldSelection = noisePickerSelection;
+                noisePickerSelection = Gui.NoiseOfString(noisePicker.SelectedItem as string);
+                if (noisePickerSelection != oldSelection)
+                    MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: true, switchToOutput: false);
             };
             return noisePicker;
         }
@@ -194,7 +200,7 @@ namespace KaemikaXM.Pages {
         }
 
         public void SyncNoisePicker(Picker noisePicker) {
-            noisePicker.SelectedItem = noisePickerSelectedItem;
+            noisePicker.SelectedItem = Gui.StringOfNoise(noisePickerSelection);
         }
 
         public ModelEntryPage() {
@@ -218,7 +224,12 @@ namespace KaemikaXM.Pages {
             editor = Kaemika.GUI_Xamarin.customTextEditor();
 
             (editor as ICustomTextEdit).OnTextChanged(
-                async(ICustomTextEdit textEdit) => { modelInfo.modified = true; });
+                async(ICustomTextEdit textEdit) => {
+                    if (!modelInfo.modified) {
+                        modelInfo.modified = true;
+                        ResetCurrentModels();
+                    }
+                });
 
             (editor as ICustomTextEdit).OnFocusChange(
                 async (ICustomTextEdit textEdit) => { if (modelInfo.modified) SaveEditor(); });
@@ -270,7 +281,10 @@ namespace KaemikaXM.Pages {
 
         public void SetText(string text) {
             (editor as ICustomTextEdit).SetText(text);
-            modelInfo.modified = true;
+            if (!modelInfo.modified) {
+                modelInfo.modified = true;
+                ResetCurrentModels();
+            }
         }
 
         public void InsertText(string text) {
@@ -281,6 +295,7 @@ namespace KaemikaXM.Pages {
             modelInfo.text = GetText();
             if (string.IsNullOrWhiteSpace(modelInfo.filename)) SaveFresh();
             else Overwrite();
+            modelInfo.modified = false;
         }
 
         public void SaveFresh() {

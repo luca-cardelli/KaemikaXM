@@ -230,13 +230,14 @@ namespace KaemikaWPF
         private void ChartSeriesVisible(string legend, bool visible, bool showMu, bool showSigma) {
             Series series = ChartSeriesNamed(legend);
             if (series != null) series.Enabled = visible;
-            foreach (string noise in ProtocolActuator.noiseString) {
-                if (ChartListboxMu(noise)) {
-                    Series seriesLNA = ChartSeriesNamed(legend + noise);
+            foreach (Noise noise in Gui.noise) {
+                string noiseString = Gui.StringOfNoise(noise);
+                if (ChartListboxMu(noiseString)) {
+                    Series seriesLNA = ChartSeriesNamed(legend + noiseString);
                     if (seriesLNA != null) seriesLNA.Enabled = visible && showMu;
                 }
-                if (ChartListboxSigma(noise)) {
-                    Series seriesLNA = ChartSeriesNamed(legend + noise);
+                if (ChartListboxSigma(noiseString)) {
+                    Series seriesLNA = ChartSeriesNamed(legend + noiseString);
                     if (seriesLNA != null) seriesLNA.Enabled = visible && showSigma;
                 }
             }

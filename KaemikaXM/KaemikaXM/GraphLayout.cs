@@ -155,6 +155,7 @@ namespace GraphSharp {
         public SKPoint pinchOrigin;
 
         public void Draw(SKCanvas canvas, int width, int height) {
+            if (MainTabbedPage.theOutputPage.currentOutputAction.kind != OutputKind.Graph) return;
             canvas.Clear(this.backgroundColor);
             if (GRAPH == null) return;
 
@@ -173,7 +174,7 @@ namespace GraphSharp {
                 DrawVertex(canvas, kvp.Key, kvp.Value, layoutInfo.vertexSizes[kvp.Key], textHeight, layoutInfo.nodePadding, SKColors.Red, SKColors.Green, swipe);
 
             foreach (var edge in GRAPH.Edges)
-                DrawEdge(canvas, edge, layoutInfo.nodeHeight, textHeight, SKColors.Black, swipe);
+                DrawSplineEdge(canvas, edge, layoutInfo.nodeHeight, textHeight, SKColors.Black, swipe);
 
             //DEBUG
             //CanvasDrawRect(canvas, plotBounds, true, SKColors.Cyan);
@@ -289,6 +290,113 @@ namespace GraphSharp {
                     //canvas.DrawTextOnPath(edge.Label, path, new SKPoint(paint.TextSize/2, -paint.TextSize/2), paint);
                  }
             }
+        }
+
+        private (SKPoint edgeSource, SKPoint edgeTarget) AddEdgePath(List<SKPoint> edgePath, Kaemika.Edge<Vertex> edge) {
+            SKPoint source = layoutInfo.vertexPositions[edge.Source];
+            SKPoint target = layoutInfo.vertexPositions[edge.Target];
+            SKSize sourceSize = layoutInfo.vertexSizes[edge.Source];
+            SKSize targetSize = layoutInfo.vertexSizes[edge.Target];
+
+            if (layoutInfo.edgeRoutes == null) layoutInfo.edgeRoutes = new Dictionary<Kaemika.Edge<Vertex>, SKPoint[]>();
+            SKPoint[] route = (layoutInfo.edgeRoutes.ContainsKey(edge)) ? layoutInfo.edgeRoutes[edge] : new SKPoint[] { };
+
+            SKPoint initialTarget = (route.Length == 0) ? target : route[0];
+            SKPoint firstSource = PointOnRectangle(source, initialTarget, sourceSize.Width / 2, sourceSize.Height / 2);
+            edgePath.Add(firstSource);
+            SKPoint lastSource = firstSource;
+            foreach (var nextTarget in route) {
+                edgePath.Add(nextTarget);
+                lastSource = nextTarget;
+            }
+            SKPoint lastTarget = PointOnRectangle(target, lastSource, targetSize.Width / 2, targetSize.Height / 2);
+            SKPoint firstTarget = (route.Length == 0) ? lastTarget : initialTarget;
+            if (!(edge.Target is Vertex_Routing)) edgePath.Add(lastTarget);
+            return (firstSource, firstTarget);
+        }
+
+        private void DrawSplineEdge(SKCanvas canvas, Kaemika.Edge<Vertex> edge, float nodeHeight, float textSize, SKColor color, Swipe swipe) {
+            if (edge.Source is Vertex_Routing) return; // this edge it will be drawn as part of another edge
+            List<SKPoint> edgePath = new List<SKPoint>();
+            Kaemika.Edge<Vertex> routedEdge = edge;
+            (SKPoint firstSource, SKPoint firstTarget) = AddEdgePath(edgePath, routedEdge);
+            while (routedEdge.Target is Vertex_Routing) {
+                routedEdge = (routedEdge.Target as Vertex_Routing).toEdge;
+                AddEdgePath(edgePath, routedEdge);
+            }
+            edgePath.Insert(0, edgePath[0]); // duplicate first point for spline
+            SKPoint ultimate = edgePath[edgePath.Count - 1];
+            SKPoint penultimate = edgePath[edgePath.Count - 2];
+            edgePath.Insert(edgePath.Count, ultimate); // duplicate last point for spline
+            List<SKPoint> controlPoints = ControlPoints(edgePath);
+            SKPath path = AddBeziers(new SKPath(), controlPoints.ToArray(), swipe);
+
+            using (var paint = new SKPaint()) {
+                paint.TextSize = 10.0f; paint.IsAntialias = true; paint.Color = color; paint.IsStroke = true;
+                canvas.DrawPath(path, paint);
+
+                SKPoint arrowHeadBase = ultimate;
+                if (routedEdge.Directed != Directed.No) { // draw arrowhead on last routedEdge segment, update arrowHeadBase
+                    VectorStd lineVector = VectorStd.DifferenceVector(ultimate, penultimate);
+                    float lineLength = lineVector.Length;
+                    // calculate point at base of arrowhead
+                    float arrowWidth = nodeHeight / 6;
+                    float tPointOnLine = (float)(arrowWidth / (2 * (Math.Tan(120) / 2) * lineLength));
+                    arrowHeadBase = ultimate + (-tPointOnLine * lineVector);
+                    VectorStd normalVector = new VectorStd(-lineVector.Y, lineVector.X);
+                    float tNormal = arrowWidth / (2 * lineLength);
+                    SKPoint leftPoint = arrowHeadBase + tNormal * normalVector;
+                    SKPoint rightPoint = arrowHeadBase + -tNormal * normalVector;
+                    if (routedEdge.Directed == Directed.Solid) {
+                        var arrowPath = new SKPath(); paint.IsStroke = false;
+                        arrowPath.MoveTo(swipe % leftPoint); arrowPath.LineTo(swipe % ultimate);
+                        arrowPath.LineTo(swipe % rightPoint); arrowPath.Close();
+                        canvas.DrawPath(arrowPath, paint);
+                    }
+                    if (routedEdge.Directed == Directed.Pointy) {
+                        var arrowPath = new SKPath(); paint.IsStroke = true;
+                        arrowPath.MoveTo(swipe % leftPoint); arrowPath.LineTo(swipe % ultimate);
+                        arrowPath.LineTo(swipe % rightPoint);
+                        canvas.DrawPath(arrowPath, paint);
+                    }
+                }
+                // if (routedEdge.Directed == Directed.Solid) { paint.IsStroke = false; canvas.DrawCircle(path.LastPoint, 20, paint); }
+                // if (routedEdge.Directed == Directed.Pointy) { paint.IsStroke = true; canvas.DrawCircle(path.LastPoint, 20, paint); }
+
+                if (edge.Label != null) { // draw label on first routedEdge segment
+                    var saveTextSize = paint.TextSize;
+                    paint.TextSize = swipe % textSize / 3;
+                    SKPoint labelTarget = (firstTarget == ultimate) ? arrowHeadBase : firstTarget;
+                    CanvasDrawTextCentered(canvas, edge.Label, swipe % new SKPoint((firstSource.X + labelTarget.X) / 2, (firstSource.Y + labelTarget.Y) / 2), paint, true);
+                    paint.TextSize = saveTextSize;
+                 }
+
+            }
+        }
+
+        private SKPath AddBeziers(SKPath path, SKPoint[] controlPoints, Swipe swipe) {
+            path.MoveTo(swipe % controlPoints[0]);
+            for (int i = 0; i < controlPoints.Length - 2; i += 4) {
+                if (i+3 > controlPoints.Length - 1) {
+                    path.QuadTo(swipe % controlPoints[i + 1], swipe % controlPoints[i + 2]);
+                } else {
+                    path.CubicTo(swipe % controlPoints[i + 1], swipe % controlPoints[i + 2], swipe % controlPoints[i + 3]);
+                }
+            }
+            return path;
+        }
+        
+        public List<SKPoint> ControlPoints(List<SKPoint> path) {
+	        List<SKPoint> controlPoints = new List<SKPoint>();
+	        for ( int i = 1; i < path.Count - 1; i += 2 ) {
+		        controlPoints.Add(new SKPoint((path[i - 1].X + path[i].X) / 2, (path[i - 1].Y + path[i].Y) / 2));
+		        controlPoints.Add(path[i]);
+		        controlPoints.Add(path[i+1]);
+                if (i + 2 < path.Count - 1) {
+                    controlPoints.Add(new SKPoint((path[i + 1].X + path[i + 2].X)/2, (path[i + 1].Y + path[i + 2].Y) / 2));
+		        }
+	        }
+            return controlPoints;
         }
 
         public static void CanvasDrawCircle(SKCanvas canvas, SKPoint p, float radius, bool isStroke, SKColor color) {

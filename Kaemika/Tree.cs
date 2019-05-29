@@ -443,21 +443,6 @@ namespace Kaemika
 
         public static bool continueExecution = true;
 
-        public static string[] noiseString = new string[7] { " μ", " ±σ", " σ", " σ/μ", " ±σ²", " σ²", " σ²/μ" }; //Enum.GetNames(typeof(Noise)).Length
-        public static string[] longNoiseString = new string[7] { " μ  (mean)", " ±σ  (μ ± standard deviation)", " σ  (μ and standard deviation)", " σ/μ  (μ and coeff of variation)", " ±σ²  (μ ± variance)", " σ²  (μ and variance)", " σ²/μ  (μ and Fano factor)" }; //Enum.GetNames(typeof(Noise)).Length
-
-        public static Noise NoiseOfString(string selection) {
-            if (selection == null) return Noise.None;
-            if (selection == noiseString[0] || selection == longNoiseString[0]) return Noise.None; // " μ"
-            if (selection == noiseString[1] || selection == longNoiseString[1]) return Noise.SigmaRange; // " ±σ"
-            if (selection == noiseString[2] || selection == longNoiseString[2]) return Noise.Sigma; // " σ"
-            if (selection == noiseString[3] || selection == longNoiseString[3]) return Noise.CV; // " σ/μ"
-            if (selection == noiseString[4] || selection == longNoiseString[4]) return Noise.SigmaSqRange; // " ±σ²"
-            if (selection == noiseString[5] || selection == longNoiseString[5]) return Noise.SigmaSq; // " σ²"
-            if (selection == noiseString[6] || selection == longNoiseString[6]) return Noise.Fano; // " σ²/μ"
-            return Noise.None;
-        }
-
         public static SampleValue Mix(Symbol symbol, SampleValue mixFst, SampleValue mixSnd, Style style) {
             mixFst.Consume(style);
             mixSnd.Consume(style);
@@ -610,7 +595,7 @@ namespace Kaemika
                 ReportEntry entry = reports[i];
                 if ((noise != Noise.None) && entry.flow.HasStochasticVariance() && !entry.flow.HasNullVariance()) {
                     string reportName = (entry.asLabel != null) ? entry.asLabel : entry.flow.TopFormat(style.RestyleAsNumberFormat("G4"));
-                    string seriesName = reportName + noiseString[(int)noise];
+                    string seriesName = reportName + Gui.StringOfNoise(noise);
                     seriesLNA[i] = Gui.gui.ChartAddSeries(seriesName, palette[paletteNo % palette.Length], noise); // could be null
                 }
                 paletteNo--; if (paletteNo < 0) paletteNo += palette.Length; // decrement out here to keep colors coordinated
@@ -624,7 +609,7 @@ namespace Kaemika
                 if ((noise == Noise.None && entry.flow.HasDeterministicValue()) ||
                     ((noise != Noise.None) && entry.flow.HasStochasticMean())) {
                     string reportName = (entry.asLabel != null) ? entry.asLabel : entry.flow.TopFormat(style.RestyleAsNumberFormat("G4"));
-                    string seriesName = reportName + ((noise == Noise.None) ? "" : noiseString[(int)Noise.None]);
+                    string seriesName = reportName + ((noise == Noise.None) ? "" : Gui.StringOfNoise(Noise.None));
                     series[i] = Gui.gui.ChartAddSeries(seriesName, palette[paletteNo % palette.Length], Noise.None); // could be null
                 }
                 paletteNo--; if (paletteNo < 0) paletteNo += palette.Length; // decrement out here to keep colors coordinated
@@ -788,7 +773,7 @@ namespace Kaemika
                 else if (Math.Round(molarity * 1e3) < 1) { molarity = molarity * 1e6; unit = "uM"; } // this test avoids producing '1000muM'
                 else if (Math.Round(molarity) < 1) { molarity = molarity * 1e3; unit = "mM"; } // this test avoids producing '1000mM'
                 else { unit = "M"; }
-                s += keyPair.Key.Format(style) + " = " + style.FormatDouble(molarity) + unit + ", " + (breaks ? Environment.NewLine : "");
+                s += (breaks ? (Environment.NewLine + "   ") : "") + keyPair.Key.Format(style) + " = " + style.FormatDouble(molarity) + unit + ", ";
             }
             if (s.Length > 0) s = s.Substring(0, s.Length - 2); // remove last comma
             return s;
@@ -796,7 +781,7 @@ namespace Kaemika
         public override string Format(Style style) {
             if (style.dataFormat == "symbol") return symbol.Format(style);
             else if (style.dataFormat == "header") return "sample " + FormatHeader(style);
-            else if (style.dataFormat == "full") return "sample " + FormatHeader(style) + " {" + FormatContent(style) + "}";
+            else if (style.dataFormat == "full") return "sample " + FormatHeader(style) + " {" + FormatContent(style, true) + Environment.NewLine + "}";
             else return "unknown format: " + style.dataFormat;
         }
 

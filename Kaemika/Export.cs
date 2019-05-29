@@ -23,7 +23,11 @@ namespace Kaemika {
         }
     }
     public class Vertex_Routing: Vertex {
-        public Vertex_Routing() {
+        public Edge<Vertex> fromEdge;
+        public Edge<Vertex> toEdge;
+        public Vertex_Routing(Edge<Vertex> fromEdge, Edge<Vertex> toEdge) {
+            this.fromEdge = fromEdge;
+            this.toEdge = toEdge;
         }
     }
 
@@ -191,11 +195,32 @@ namespace Kaemika {
         public static void GraphAddEdge(AdjacencyGraph<Vertex, Edge<Vertex>> graph, Vertex source, Vertex target, string label = null, Directed directed = Directed.Solid) {
             // Sugiyama crashes on self loops?
             if (source == target) {
-                Vertex self = new Vertex_Rectangle(new SKSize(0.5f, 0.5f), false);
-                graph.AddVertex(self);
-                graph.AddEdge(new Edge<Vertex>(source, self, label));
-                graph.AddEdge(new Edge<Vertex>(self, target));
+                Vertex_Routing v1 = new Vertex_Routing(null, null);
+                Vertex_Routing v2 = new Vertex_Routing(null, null);
+                Edge<Vertex> e1 = new Edge<Vertex>(source, v1, label, Directed.No);
+                Edge<Vertex> e2 = new Edge<Vertex>(v1, v2, null, Directed.No);
+                Edge<Vertex> e3 = new Edge<Vertex>(v2, target, null, directed);
+                v1.fromEdge = e1;
+                v1.toEdge = e2;
+                v2.fromEdge = e2;
+                v1.toEdge = e3;
+                graph.AddVertex(v1);
+                graph.AddVertex(v2);
+                graph.AddEdge(e1);
+                graph.AddEdge(e2);
+                graph.AddEdge(e3);
             } else graph.AddEdge(new Edge<Vertex>(source, target, label, directed));
+        }
+
+        public static void GraphAddRoutedEdge(AdjacencyGraph<Vertex, Edge<Vertex>> graph, Vertex source, Vertex target, string label = null, Directed directed = Directed.Solid) {
+            Vertex_Routing v = new Vertex_Routing(null, null);
+            Edge<Vertex> fromEdge = new Edge<Vertex>(source, v, label, Directed.No);
+            Edge<Vertex> toEdge = new Edge<Vertex>(v, target, null, directed);
+            v.fromEdge = fromEdge;
+            v.toEdge = toEdge;
+            graph.AddVertex(v);
+            graph.AddEdge(fromEdge);
+            graph.AddEdge(toEdge);
         }
 
         public static AdjacencyGraph<Vertex, Edge<Vertex>> ComplexGraph(List<Symbol> species, List<ReactionValue> reactions, Style style) {
@@ -266,20 +291,14 @@ namespace Kaemika {
                     int n = r.Stoichiometry(reactant, r.reactants);
                     GraphAddEdge(graph, names[reactant.Format(style)], reaction, null, Directed.Pointy);
                     for (int i = 1; i < n; i++) { // all edges except the first
-                        Vertex v = new Vertex_Routing();
-                        graph.AddVertex(v);
-                        GraphAddEdge(graph, names[reactant.Format(style)], v, null, Directed.No);
-                        GraphAddEdge(graph, v, reaction, null, Directed.Pointy);
+                        GraphAddRoutedEdge(graph, names[reactant.Format(style)], reaction, null, Directed.Pointy);
                     }
                 }
                 foreach (Symbol product in r.ProductsSet()) {
                     int n = r.Stoichiometry(product, r.products);
                     GraphAddEdge(graph, reaction, names[product.Format(style)], null, Directed.Solid);
                     for (int i = 1; i < n; i++) { // all edges except the first
-                        Vertex v = new Vertex_Routing();
-                        graph.AddVertex(v);
-                        GraphAddEdge(graph, reaction, v, null, Directed.No);
-                        GraphAddEdge(graph, v, names[product.Format(style)], null, Directed.Solid);
+                        GraphAddRoutedEdge(graph, reaction, names[product.Format(style)], null, Directed.Solid);
                     }
                 }
 

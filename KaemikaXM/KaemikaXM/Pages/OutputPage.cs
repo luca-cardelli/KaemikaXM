@@ -196,8 +196,7 @@ namespace KaemikaXM.Pages {
         }
 
         public void SetModel(ModelInfo modelInfo) {
-            this.title = modelInfo.title;
-            MainTabbedPage.theOutputPage.Title = this.title;
+            this.title = (modelInfo == null) ? "" : modelInfo.title;
             currentModelInfo = modelInfo;
         }
 
