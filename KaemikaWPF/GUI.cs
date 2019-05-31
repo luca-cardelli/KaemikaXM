@@ -752,7 +752,8 @@ namespace KaemikaWPF
 
         private void comboBox_Export_SelectedIndexChanged(object sender, EventArgs e) {
             if (comboBox_Export.Text == "Protocol") Exec.Execute_Exporter(false, ExportAs.Protocol);
-            else if (comboBox_Export.Text == "PDMP") Exec.Execute_Exporter(false, ExportAs.PDMP);
+            else if (comboBox_Export.Text == "Hybrid System Reactions") Exec.Execute_Exporter(false, ExportAs.PDMPreactions);
+            else if (comboBox_Export.Text == "Hybrid System Equations") Exec.Execute_Exporter(false, ExportAs.PDMPequations);
             else if (comboBox_Export.Text == "PDMP GraphViz") Exec.Execute_Exporter(false, ExportAs.PDMP_GraphViz);
             //else if (comboBox_Export.Text == "PDMP Parallel") Exec.Execute_Exporter(false, ExportAs.PDMP_Parallel);
             //else if (comboBox_Export.Text == "PDMP Parallel GraphViz") Exec.Execute_Exporter(false, ExportAs.PDMP_Parallel_GraphViz);

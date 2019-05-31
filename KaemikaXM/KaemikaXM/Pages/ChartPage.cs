@@ -62,7 +62,7 @@ namespace KaemikaXM.Pages
                 if (Exec.IsExecuting()) return;
                 solverRK547MButton.IsEnabled = false;
                 GUI_Xamarin.currentSolver = "RK547M";
-                MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: false, switchToOutput: false);
+                MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: false, switchToOutput: false, autoContinue: false);
                 solverGearBDFButton.IsEnabled = true;
             });
         }
@@ -72,7 +72,7 @@ namespace KaemikaXM.Pages
                 if (Exec.IsExecuting()) return;
                 solverGearBDFButton.IsEnabled = false;
                 GUI_Xamarin.currentSolver = "GearBDF";
-                MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: false, switchToOutput: false);
+                MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: false, switchToOutput: false, autoContinue: false);
                 solverRK547MButton.IsEnabled = true;
             });
         }
@@ -151,6 +151,7 @@ namespace KaemikaXM.Pages
 
         public void SetModel(ModelInfo modelInfo) {
             this.title = (modelInfo == null) ? "" : modelInfo.title;
+            Title = this.title;
             currentModelInfo = modelInfo;
         }
 
@@ -388,7 +389,7 @@ namespace KaemikaXM.Pages
             MainTabbedPage.theModelEntryPage.SyncNoisePicker(noisePicker);
             if (!Exec.IsExecuting() && // we could be waiting on a continuation! StartAction would switch us right back to this page even if it does not start a thread!
                 currentModelInfo != MainTabbedPage.theModelEntryPage.modelInfo) // forkWorker: we can compute the chart concurrently
-                MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: false, switchToOutput: false);
+                MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: false, switchToOutput: false, autoContinue: false);
             Gui.gui.ChartUpdate();
         }
 

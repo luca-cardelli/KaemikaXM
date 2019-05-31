@@ -238,11 +238,11 @@ namespace Kaemika {
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }
         public static Statement ParseFunctionDef(string funName, IReduction reduction) {
-            if (reduction.Production()                   == "<Fun> ::= <Headers> '{' <Statements> return <Expression> '}'") {
+            if (reduction.Production()                   == "<Fun> ::= <Headers> '{' <Expression> '}'") {
                 List<Parameters> headers = ParseHeaders(reduction.Nonterminal(0));
                 return new FunctionDefinition(funName, headers[0],
                     CurriedFunctionAbstraction(headers, 1,
-                        new BlockExpression(ParseStatements(reduction.Nonterminal(2)), ParseExpression(reduction.Nonterminal(4)))));
+                        ParseExpression(reduction.Nonterminal(2))));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }
 
@@ -470,6 +470,8 @@ namespace Kaemika {
                 return ParseNetworkAbstraction(reduction.Nonterminal(1));
             } else  if (reduction.Production()       == "<Base Exp> ::= '(' <Expression> ')'") {
                 return ParseExpression(reduction.Nonterminal(1));
+            } else  if (reduction.Production()       == "<Base Exp> ::= define <Statements> return <Expression>") {
+                return new BlockExpression(ParseStatements(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(3)));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }
 
@@ -503,16 +505,16 @@ namespace Kaemika {
         }
 
         public static Expression ParseFunctionAbstraction(IReduction reduction) {
-            if (reduction.Production()               == "<Fun> ::= <Headers> '{' <Statements> return <Expression> '}'") {
+            if (reduction.Production()               == "<Fun> ::= <Headers> '{' <Expression> '}'") {
                 List<Parameters> headers = ParseHeaders(reduction.Nonterminal(0));
                 return new FunctionAbstraction(headers[0],
                     CurriedFunctionAbstraction(headers, 1,
-                        new BlockExpression(ParseStatements(reduction.Nonterminal(2)), ParseExpression(reduction.Nonterminal(4)))));
+                        ParseExpression(reduction.Nonterminal(2))));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }
-        public static BlockExpression CurriedFunctionAbstraction(List<Parameters> headers, int next, BlockExpression body) {
+        public static Expression CurriedFunctionAbstraction(List<Parameters> headers, int next, Expression body) {
             if (next >= headers.Count) return body;
-            else return new BlockExpression(new Statements(), new FunctionAbstraction(headers[next], CurriedFunctionAbstraction(headers, next + 1, body)));
+            else return new FunctionAbstraction(headers[next], CurriedFunctionAbstraction(headers, next + 1, body));
         }
 
         public static Expression ParseNetworkAbstraction(IReduction reduction) {

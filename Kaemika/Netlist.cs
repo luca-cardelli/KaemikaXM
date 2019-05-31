@@ -385,6 +385,7 @@ namespace Kaemika
                     }
                     if (monomial != "") {
                         if (polynomial == "") polynomial = monomial;
+                        else if (monomial.Substring(0,1) == "-") polynomial = polynomial + " - " + monomial.Substring(1);
                         else polynomial = polynomial + " + " + monomial;
                     }
                 }
@@ -582,8 +583,10 @@ namespace Kaemika
 
     public class Netlist {
         private List<Entry> entries;
-        public Netlist() {
+        public bool autoContinue;
+        public Netlist(bool autoContinue) {
             this.entries = new List<Entry> { };
+            this.autoContinue = autoContinue;
         }
         public void Emit(Entry entry) {
             this.entries.Add(entry);
@@ -660,9 +663,11 @@ namespace Kaemika
                     ReactionValue reaction = ((ReactionEntry)entry).reaction;
                     if (reaction.Involves(species)) {
                         if (!reaction.CoveredBy(species, out Symbol notCovered)) {
-                            throw new Error("Reaction '" + reaction.Format(style) + "' involves species '" + notCovered.Format(style) + "' in sample '" + sample.symbol.Format(style)
+                            throw new Error(
+                            // Gui.Log("WARNING " +
+                                "Reaction '" + reaction.Format(style) + "' involves species '" + notCovered.Format(style) + "' in sample '" + sample.symbol.Format(style)
                                 +"', but that species is uninitialized in that sample"); }
-                        reactionList.Add(reaction);
+                        else reactionList.Add(reaction);
                     }
                 }
             }

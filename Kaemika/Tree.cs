@@ -444,8 +444,8 @@ namespace Kaemika
         public static bool continueExecution = true;
 
         public static SampleValue Mix(Symbol symbol, SampleValue mixFst, SampleValue mixSnd, Style style) {
-            mixFst.Consume(style);
-            mixSnd.Consume(style);
+            mixFst.Consume(new List<ReactionValue> (), style);
+            mixSnd.Consume(new List<ReactionValue> (), style);
             double fstVolume = mixFst.Volume();
             double sndVolume = mixSnd.Volume();
             NumberValue volume = new NumberValue(fstVolume + sndVolume);
@@ -457,7 +457,7 @@ namespace Kaemika
         }
 
         public static (SampleValue, SampleValue) Split(Symbol symbol1, Symbol symbol2, SampleValue sample, double proportion, Style style) {
-            sample.Consume(style);
+            sample.Consume(new List<ReactionValue>(), style);
             double sampleVolume = sample.Volume();
 
             NumberValue volume1 = new NumberValue(sampleVolume * proportion);
@@ -474,14 +474,14 @@ namespace Kaemika
         }
 
         public static SampleValue Transfer(Symbol symbol, double volume, double temperature, SampleValue inSample, Style style) {
-            inSample.Consume(style);
+            inSample.Consume(new List<ReactionValue>(), style);
             SampleValue result = new SampleValue(symbol, new NumberValue(volume), new NumberValue(temperature), produced: true);
             result.AddSpecies(inSample, volume, inSample.Volume());
             return result;
         }
 
         public static void Dispose(SampleValue sample, Style style) {
-            sample.Consume(style);
+            sample.Consume(new List<ReactionValue>(), style);
         }
 
         private static Color[] palette = { Color.Red, Color.Green, Color.Blue, Color.Gold, Color.Cyan, Color.GreenYellow, Color.Violet, Color.Purple };
@@ -528,23 +528,23 @@ namespace Kaemika
             else return -1;
         }
 
+        //### THIS SHOULD RETURN THE CRN THAT IT IS COMPUTING, MAYBE PUT IT INSIDE resultSample??
         public static SampleValue Equilibrate(Symbol symbol, SampleValue sample, double fortime, Netlist netlist, Style style) {
-            while ((!continueExecution) && Exec.IsExecuting()) {
-                if (!Gui.gui.ContinueEnabled()) Gui.gui.OutputAppendText(netlist.Format(style));
-                Gui.gui.ContinueEnable(true);
-                Thread.Sleep(100);
+            if (!netlist.autoContinue) {
+                while ((!continueExecution) && Exec.IsExecuting()) {
+                    if (!Gui.gui.ContinueEnabled()) Gui.gui.OutputAppendText(netlist.Format(style));
+                    Gui.gui.ContinueEnable(true);
+                    Thread.Sleep(100);
+                }
+                Gui.gui.ContinueEnable(false); continueExecution = false;
             }
-            Gui.gui.ContinueEnable(false); continueExecution = false;
 
-            sample.Consume(style);
             NumberValue volume = new NumberValue(sample.Volume());
             NumberValue temperature = new NumberValue(sample.Temperature());
             SampleValue resultSample = new SampleValue(symbol, volume, temperature, produced: true);
 
             Gui.gui.OutputSetText(""); // clear last results in preparation for the next
-            Gui.gui.ChartClear(
-                (resultSample.symbol.Raw() == "vessel") ? ""
-                : "Sample " + resultSample.symbol.Format(style));
+            Gui.gui.ChartClear((resultSample.symbol.Raw() == "vessel") ? "" : "Sample " + resultSample.symbol.Format(style));
 
             Noise noise = Gui.gui.NoiseSeries();
             List<SpeciesValue> species = sample.Species(out double[] speciesState);
@@ -552,6 +552,7 @@ namespace Kaemika
             List<ReactionValue> reactions = netlist.RelevantReactions(sample, species, style);
             CRN crn = new CRN(sample, reactions, precomputeLNA: (noise != Noise.None) && Gui.gui.PrecomputeLNA());
             List<ReportEntry> reports = netlist.Reports(species);
+            sample.Consume(reactions, style);
 
             // Program.Log(sample.Format(netlist.style));
             // Program.Log(crn.Format(netlist.style));
@@ -725,6 +726,7 @@ namespace Kaemika
         private bool produced; // produced by an operation as opposed as being created as a sample
         private bool consumed; // consumed by an operation, including dispose
         public SampleValue asConsumed;
+        private List<ReactionValue> reactionsAsConsumed;
         public SampleValue(Symbol symbol, NumberValue volume, NumberValue temperature, bool produced) {
             this.type = new Type("sample");
             this.symbol = symbol;
@@ -736,11 +738,17 @@ namespace Kaemika
             this.produced = produced;
             this.consumed = false;
             this.asConsumed = null;
+            this.reactionsAsConsumed = null;
         }
-        public void Consume(Style style) {
+        public void Consume(List<ReactionValue> reactionsAsConsumed, Style style) {
             if (this.consumed) throw new Error("Sample already used: '" + this.symbol.Format(style) + "'");
             this.asConsumed = this.Copy(); // save it for export purposes
+            this.reactionsAsConsumed = reactionsAsConsumed; // save it for PDMP computation
             this.consumed = true;
+        }
+        public List<ReactionValue> ReactionsAsConsumed(Style style) {
+            if (!consumed) throw new Error("Sample '" + symbol.Format(style) + "' should have been equilibrated and consumed");
+            return reactionsAsConsumed;
         }
         public bool IsProduced() { return this.produced; }
         public bool IsConsumed() { return this.consumed; }
@@ -1867,7 +1875,7 @@ namespace Kaemika
 
     public class FunctionAbstraction : Expression {
         private Parameters parameters;
-        private Expression body; // the body will be a BlockExpression
+        private Expression body;
         public FunctionAbstraction(Parameters parameters, Expression body) {
             this.parameters = parameters;
             this.body = body;
@@ -1921,8 +1929,8 @@ namespace Kaemika
             this.expression = expression;
         }
         public override string Format() {
-            if (statements.statements.Count() == 0) return " return " + this.expression.Format();
-            else return this.statements.Format() + Environment.NewLine + " return " + this.expression.Format();
+            if (statements.statements.Count() == 0) return this.expression.Format();
+            else return "define " + Environment.NewLine + this.statements.Format() + Environment.NewLine + "return " + this.expression.Format();
         }
         public override void Scope(Scope scope) {
             this.expression.Scope(this.statements.Scope(scope));

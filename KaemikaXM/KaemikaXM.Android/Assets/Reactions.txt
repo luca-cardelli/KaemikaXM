@@ -105,7 +105,7 @@ species p,q @ 1 M
 // Arrhenius function:
 
 function Arrhenius(flow cf ae) { 
-  return cf*exp(-ae/(8.3144598*kelvin)) 
+  cf*exp(-ae/(8.3144598*kelvin)) 
 }
 
 // Using the Arrhenius function in a rate:
@@ -121,21 +121,21 @@ p + q -> #  {{ Arrhenius(2,50)*p*q }}
  // Hill coefficient n:
 
 function UpHill(flow y, flow n) { 
-   return y^n/(1+y^n) 
+   y^n/(1+y^n) 
 }   
 
 // Hill inhibition for catalyst y and 
 // Hill coefficient n:
 
 function DnHill(flow y, flow n) { 
-   return 1/(1+y^n) 
+   1/(1+y^n) 
 } 
 
 // Using a boolean flag to choose 
 // between them conditionally
 
 function Hill(flow y, flow n, flow up) { 
-   return cond(up, UpHill(y,n), DnHill(y,n)) 
+   cond(up, UpHill(y,n), DnHill(y,n)) 
 }  
 
 // Choose a Hill coefficient:

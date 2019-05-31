@@ -3,11 +3,19 @@
 //======================================
 
 sample A 
-sample D
+species a @ 1M in A
+a -> #
 
-split B,C := A by 0.5
-equilibrate E := D for 3
-mix F := B with E
+sample B
+species b @ 1M in B
+b -> #
+equilibrate E := B for 3
+
+split C,D := A by 0.5
 dispose C
-dispose F
 
+mix F := D with E
+a + b -> #
+equilibrate G := F for 3
+
+dispose G

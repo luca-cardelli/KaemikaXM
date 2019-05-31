@@ -90,13 +90,12 @@ namespace Kaemika {
  
         // Export for LBS Tool
 
-        public static string MSRC_LBS(Netlist netlist, SampleValue sample, Style style) {
-            return MSRC_LBShead(netlist, sample, style) + MSRC_LBSbody(netlist, sample, style);
+        public static string MSRC_LBS(List<ReportEntry> reportList, SampleValue sample, Style style) {
+            return MSRC_LBShead(reportList, sample, style) + MSRC_LBSbody(sample, style);
         }
-        private static string MSRC_LBShead(Netlist netlist, SampleValue sample, Style style) {
+        private static string MSRC_LBShead(List<ReportEntry> reportList, SampleValue sample, Style style) {
             string final = null;
             string plots = null;
-            List<ReportEntry> reportList = netlist.Reports(sample.species);
             foreach (ReportEntry report in reportList) {
                 string series = report.Format(style);
                 plots = (plots == null) ? series : plots + "; " + series;
@@ -107,11 +106,11 @@ namespace Kaemika {
             head = (plots == null) ? head : head + "directive plot " + plots + Environment.NewLine;
             return head;
         }
-        private static string MSRC_LBSbody(Netlist netlist, SampleValue sample, Style style) {
+        private static string MSRC_LBSbody(SampleValue sample, Style style) {
             string body = "";
             string tail = "";
             List<SpeciesValue> speciesList = sample.species;
-            List<ReactionValue> reactionList = netlist.RelevantReactions(sample, speciesList, style);
+            List<ReactionValue> reactionList = sample.ReactionsAsConsumed(style);
             foreach (SpeciesValue species in speciesList) {
                 body = body + tail + "init " + species.Format(style) + " " + sample.Molarity(species.symbol, style).Format(style);
                 tail = " |" + Environment.NewLine;
@@ -132,13 +131,12 @@ namespace Kaemika {
 
         // Export for CRN Tool
 
-        public static string MSRC_CRN(Netlist netlist, SampleValue sample, Style style) {
-            return Export_CRNhead(netlist, sample, style) + MSRC_LBSbody(netlist, sample, style);
+        public static string MSRC_CRN(List<ReportEntry> reportList, SampleValue sample, Style style) {
+            return Export_CRNhead(reportList, sample, style) + MSRC_LBSbody(sample, style);
         }
-        private static string Export_CRNhead(Netlist netlist, SampleValue sample, Style style) {
+        private static string Export_CRNhead(List<ReportEntry> reportList, SampleValue sample, Style style) {
             string final = null;
             string plots = null;
-            List<ReportEntry> reportList = netlist.Reports(sample.species);
             foreach (ReportEntry report in reportList) {
                 string series = report.flow.Format(style); // ignore .asList
                 plots = (plots == null) ? series : plots + "; " + series;
@@ -164,7 +162,6 @@ namespace Kaemika {
 
         public static string ODE(SampleValue sample, CRN crn, Style style) {
             return ODE_Header(sample, style) 
-                // + Export_ODE_Equations(vessel, style) 
                 + crn.FormatAsODE(style, prefixDiff: "", suffixDiff: "'")
                 + Environment.NewLine
                 + ODE_Initializations(sample, style);
@@ -399,7 +396,7 @@ namespace Kaemika {
                     GraphAddEdge(graph, veticesDict[inS], veticesDict[outS2], "split " + (1 - node.proportion.value).ToString("G3"));
                 } else if (entry is EquilibrateEntry) {
                     var node = entry as EquilibrateEntry; var inS = node.inSample.FormatSymbol(style); var outS = node.outSample.FormatSymbol(style);
-                    GraphAddEdge(graph, veticesDict[inS], veticesDict[outS], "eq for " + node.time.value.ToString("G3"));
+                    GraphAddEdge(graph, veticesDict[inS], veticesDict[outS], "equil for " + node.time.value.ToString("G3"));
                 } else if (entry is TransferEntry) {
                     var node = entry as TransferEntry; var inS = node.inSample.FormatSymbol(style); var outS = node.outSample.FormatSymbol(style);
                     GraphAddEdge(graph, veticesDict[inS], veticesDict[outS], "transfer");
@@ -410,143 +407,6 @@ namespace Kaemika {
                 }
         }
 
-        //// Export Protocol as GRAPHVIZ text (obsolete)
-
-        //public static string GraphViz(Netlist netlist) {
-        //    Style style = new Style("•", new SwapMap(subsup: true), new AlphaMap(), "G3", "symbol", ExportTarget.Standard, false);
-        //    string edges = GraphViz_Edges(netlist, style);
-        //    string nodes = GraphViz_Nodes(netlist, style);
-        //    return
-        //          "// Copy and paste into GraphViz " + Environment.NewLine
-        //        + "// e.g. at https://dreampuf.github.io/GraphvizOnline" + Environment.NewLine
-        //        + Environment.NewLine
-        //        + "digraph G {" + Environment.NewLine + nodes + edges + "}" + Environment.NewLine;
-        //}
-
-        //public static string GraphViz_Edges(Netlist netlist, Style style) {
-        //    string edges = "";
-        //    foreach (ProtocolEntry entry in netlist.AllOperations())
-        //        if (entry is MixEntry) {
-        //            var node = entry as MixEntry;
-        //            edges += node.inSample1.symbol.Format(style) + " -> " + node.outSample.symbol.Format(style) + "[label=\"mix\"];" + Environment.NewLine;
-        //            edges += node.inSample2.symbol.Format(style) + " -> " + node.outSample.symbol.Format(style) + "[label=\"mix\"];" + Environment.NewLine;
-        //        } else if (entry is SplitEntry) {
-        //            var node = entry as SplitEntry;
-        //            edges += node.inSample.symbol.Format(style) + " -> " + node.outSample1.symbol.Format(style) + "[label=\"split\"];" + Environment.NewLine;
-        //            edges += node.inSample.symbol.Format(style) + " -> " + node.outSample2.symbol.Format(style) + "[label=\"split\"];" + Environment.NewLine;
-        //        } else if (entry is EquilibrateEntry) {
-        //            var node = entry as EquilibrateEntry;
-        //            edges += node.inSample.symbol.Format(style) + " -> " + node.outSample.symbol.Format(style) + "[label=\"equilibrate for " + node.time.Format(style) + "\"];" + Environment.NewLine;
-        //        } else if (entry is TransferEntry) {
-        //            var node = entry as TransferEntry;
-        //            edges += node.inSample.symbol.Format(style) + " -> " + node.outSample.symbol.Format(style) + "[label=\"transfer\"];" + Environment.NewLine;
-        //        } else if (entry is DisposeEntry) {
-        //            var node = entry as DisposeEntry;
-        //            edges += node.inSample.symbol.Format(style) + " -> " + "XXX" + "[label=\"dispose\"];" + Environment.NewLine;
-        //        }
-        //    return edges;
-        //}
-
-        //public static string GraphViz_Nodes(Netlist netlist, Style style) {
-        //    string nodes = "";
-        //    //List<SampleValue> sources = netlist.SourceSamples();
-        //    //foreach (SampleValue sample in sources) { // report the inital conditions of source samples at the time they were consumed (i.e. when they where fully initialized)
-        //    //    SampleValue s = (sample.asConsumed == null) ? sample : sample.asConsumed;
-        //    //    string node_proper = s.symbol.Format(style);
-        //    //    string node_init = node_proper + "_INITIAL";
-        //    //    string label = "(" + node_proper + ")" + Environment.NewLine + s.FormatContent(style);
-        //    //    if (label.Length > 0 && label[label.Length - 1] == '\n') label = label.Substring(0, label.Length - 2);
-        //    //    nodes += node_init + "[label=" + Parser.FormatString(label) + "];" + Environment.NewLine;
-        //    //    nodes += node_init + " -> " + node_proper + "[label=\"init\"];";
-        //    //}
-        //    List<SampleValue> samples = netlist.AllSamples();
-        //    foreach (SampleValue sample in samples) {
-        //        string label =
-        //            sample.FormatHeader(style) + Environment.NewLine
-        //            + new CRN(sample, netlist.RelevantReactions(sample, sample.species, style), precomputeLNA: false).FormatAsODE(style, prefixDiff: "", suffixDiff: "'")
-        //            + ((sample.asConsumed == null) ? sample : sample.asConsumed).FormatContent(style, breaks:true);
-        //        if (label.Length > 0 && label[label.Length - 1] == '\n') label = label.Substring(0, label.Length - 1);
-        //        nodes += sample.symbol.Format(style) + "[shape=box, label=" + Parser.FormatString(label) + "];" + Environment.NewLine;
-        //    }   
-        //    return nodes + "XXX [shape=box, label=\"(dispose)\"]" // Dispose node
-        //       // + Environment.NewLine    // www.webgraphviz.com complains if there is an empty line before the last '}'
-        //       ;  
-        //}
-
-        //class ID<T> {
-
-        //    public ID() { }
-
-        //    public bool Same(ID<T> other) {
-        //        return this == other;
-        //    }
-
-        //    private static Dictionary<ID<T>, Organization<T>> organizationRegistry;
-
-        //    public static ID<T> OrganizationID(HashSet<ID<T>> membership) {
-        //        foreach (var keyPair in organizationRegistry) {
-        //            IEnumerable<ID<T>> i = membership;
-        //            if (membership.SetEquals(keyPair.Value.Membership())) return keyPair.Key;
-        //        }
-        //        return null;
-        //    }
-
-        //    public static Organization<T> OrganizationOfMembership(HashSet<ID<T>> membership) {
-        //        ID<T> id = OrganizationID(membership);
-        //        if (id != null) return organizationRegistry[id];
-        //        else {
-        //            ID<T> newId = new ID<T>();
-        //            Organization<T> newOrganization = new Organization<T>(newId, membership);
-        //            organizationRegistry[newId] = newOrganization;
-        //            return newOrganization;
-        //        }
-        //    }
-
-        //    public static Organization<T> EmptyOrganization() {
-        //        return OrganizationOfMembership(new HashSet<ID<T>>());
-        //    }
-        //}
-
-        //class Individual<T> {
-        //    private T element;
-        //    private ID<T> id;
-        //    public Individual(T element) {
-        //        this.element = element;
-        //        this.id = new ID<T>();
-        //    }
-        //    public ID<T> Id() {
-        //        return this.id;
-        //    }
-        //    public bool Same(Individual<T> other) { return id.Same(other.id);  }
-        //}
-
-        //class Organization<T> {
-        //    private ID<T> id;
-        //    private HashSet<ID<T>> membership;
-        //    public Organization(ID<T> id, HashSet<ID<T>> membership) {
-        //        this.id = id;
-        //        this.membership = membership;
-        //    }
-        //    public HashSet<ID<T>> Membership() { return this.membership; }
-        //    public Organization<T> Plus(Individual<T> individual) {
-        //        if (membership.Contains(individual.Id())) return this;
-        //        else {
-        //            HashSet<ID<T>> newMembership = membership.Copy().Add(individual.Id());
-        //            return ID<T>.OrganizationOfMembership(newMembership);
-        //        }
-        //    }
-        //    public Organization<T> Minus(Individual<T> individual) {
-        //        if (!membership.Contains(individual.Id())) return this;
-        //        else {
-        //            HashSet<ID<T>> newMembership = membership.Copy().Remove(individual.Id());
-        //            return ID<T>.OrganizationOfMembership(newMembership);
-        //        }
-        //    }
-        //    public bool Same(Organization<T> other) {
-        //        return membership.SetEquals(other.membership);
-        //    }
-
-        //}
 
         // ===============
         // Export Protocol
@@ -580,22 +440,40 @@ namespace Kaemika {
             public string Format(Style style) {
                 string s = "";
                 foreach (State state in states.states) {
-                    s += "STATE " + state.id.ToString() + Environment.NewLine +
-                        state.Format(style) + Environment.NewLine;
+                    s += "STATE_" + state.id.ToString() + Environment.NewLine + state.Format(style) + Environment.NewLine;
+                }
+                foreach (Transition transition in transitions) {
+                    s += "TRANSITION " + transition.Format(style) + Environment.NewLine;
+                }
+                return s;
+            }
+            public string HybridSystem(bool showReactions, Style style) {
+                string s = "";
+                s += "TRANSITIONS" + Environment.NewLine;
+                foreach (Transition transition in transitions) {
+                    s += transition.Format(style) + Environment.NewLine;
+                }
+                s += Environment.NewLine;
+                foreach (State state in states.states) {
+                    s += "STATE_" + state.id.ToString() + Environment.NewLine +
+                        state.Format(style) + Environment.NewLine + Environment.NewLine;
                     bool found = false;
                     foreach (Transition transition in state.transitionsOut) {
                         if (transition.entry is EquilibrateEntry) {
                             if (found) throw new Error("More than one equilibrate transitions out of one state.");
                             SampleValue sample = (transition.entry as EquilibrateEntry).inSample;
-                            List<ReactionValue> reactions = netlist.RelevantReactions(sample, sample.species, style);
-                            CRN crn = new CRN(sample, reactions);
-                            s += "KINETICS FOR SAMPLE " + sample.FormatSymbol(style) + Environment.NewLine +  crn.FormatAsODE(style);
+                            List<ReactionValue> reactions = sample.ReactionsAsConsumed(style);
+                            // List<ReactionValue> reactions = netlist.RelevantReactions(sample, sample.species, style); // this would pick up reactions that were added after the sample was consumed
+                            s += "KINETICS for STATE_" + transition.source.id.ToString() + " (sample " + sample.FormatSymbol(style) + ") for " + (transition.entry as EquilibrateEntry).time.Format(style) + " time units:" + Environment.NewLine;
+                            if (showReactions) {
+                                foreach (ReactionValue reaction in reactions) s += reaction.Format(style) + Environment.NewLine;
+                            } else {
+                                s += (new CRN(sample, reactions)).FormatAsODE(style);
+                            }
+                            s += Environment.NewLine;
                             found = true;
                         }
                     }
-                }
-                foreach (Transition transition in transitions) {
-                    s += "TRANSITION " + transition.Format(style) + Environment.NewLine;
                 }
                 return s;
             }
@@ -633,7 +511,7 @@ namespace Kaemika {
             }
             public string Format(Style style) {
 //                return "[" + source.Format(style) + " ->{" + label + "} " + target.Format(style) + "]";
-                return "[STATE " + source.id.ToString() + " ->{" + label + "} STATE " + target.id.ToString() + "]";
+                return "[STATE_" + source.id.ToString() + "   (" + label + ")   STATE_" + target.id.ToString() + "]";
             }
             public string GraphVizEdge(Style style) {
                 return source.UniqueNodeName() + " -> " + target.UniqueNodeName() + " [label=" + Parser.FormatString(label) + "];" + Environment.NewLine;
@@ -654,6 +532,7 @@ namespace Kaemika {
             private List<SampleValue> samples;
             public List<Transition> transitionsIn;
             public List<Transition> transitionsOut;
+            public static void Reset() { unique = 0; }
             public State() {
                 this.id = unique; unique++;
                 this.samples = new List<SampleValue>();
@@ -685,9 +564,10 @@ namespace Kaemika {
             public string Format(Style style) {
                 string s = "";
                 foreach (SampleValue sample in samples) {
-                    s += sample.Format(style) + ", ";
+                    if (sample.species.Count > 0)
+                        s += sample.Format(style) + ", " + Environment.NewLine;
                 }
-                if (s.Length > 0) s = s.Substring(0, s.Length - 2);
+                if (s.Length > 0) s = s.Substring(0, s.Length - 3);
                 return s;
             }
             public string Label(Style style) {
@@ -737,6 +617,7 @@ namespace Kaemika {
         //  Building a PDPM Closure from a Netlist
 
         public static Closure PDMP(Netlist netlist, Style style, bool sequential) {
+            State.Reset();
             Closure closure = new Closure(netlist);
             State current = PDMP_InitialState(closure, style);
 
@@ -802,7 +683,7 @@ namespace Kaemika {
                         newState.Add(outSample);
                         newState = closure.AddUniqueState(newState, style); // may replace it with an existing state
                         closure.AddTransition(new Transition(state, newState, entry,
-                            "eq " + outSample.FormatSymbol(style) + " := " + inSample.FormatSymbol(style) + " for " + (entry as EquilibrateEntry).time.value.ToString("G3")));
+                            "equil " + outSample.FormatSymbol(style) + " := " + inSample.FormatSymbol(style) + " for " + (entry as EquilibrateEntry).time.value.ToString("G3")));
                         nextStates.AddUnique(newState, style);
                         if (sequential) return nextStates; // otherwise keep accumulating
                     }
@@ -826,7 +707,7 @@ namespace Kaemika {
                         newState.Remove(inSample);
                         newState = closure.AddUniqueState(newState, style); // may replace it with an existing state
                         closure.AddTransition(new Transition(state, newState, entry,
-                            "disp " + inSample.FormatSymbol(style)));
+                            "dispose " + inSample.FormatSymbol(style)));
                         nextStates.AddUnique(newState, style);
                         if (sequential) return nextStates; // otherwise keep accumulating
                     }

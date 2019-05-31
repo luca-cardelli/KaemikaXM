@@ -1,9 +1,16 @@
+// PDMP Export
 
-TODO
+sample A
+species a,b@1M in A
+equilibrate D := A for 3
 
-export Kaemika
-export Erode
-export hybrid system
+// a species and reaction is added later, does not affect the kinetics of A
+species c@1M in D
+a + b -> c
+// withot this equilibrate, D does not have kinetics:
+equilibrate E := D for 3
+
+dispose E
 
 
 

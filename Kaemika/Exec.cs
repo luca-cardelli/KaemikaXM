@@ -11,9 +11,9 @@ namespace Kaemika {
         ReactionGraph, ComplexGraph,
         MSRC_LBS, MSRC_CRN, ODE,
         Protocol, ProtocolGraph,
-        PDMP, //PDMP_Parallel,
-        PDMPGraph, //PDMPGraph_Parallel,
-        PDMP_GraphViz, //PDMP_Parallel_GraphViz, 
+        PDMPreactions, PDMPequations, // or PDMP_Parallel,
+        PDMPGraph, // or PDMPGraph_Parallel,
+        PDMP_GraphViz, // or PDMP_Parallel_GraphViz, 
     }
 
     public class ExecutionInstance { // collect the results of running an Eval
@@ -81,18 +81,18 @@ namespace Kaemika {
         public static string lastReport = ""; // the last report of the last simulation, in string form
         public static string lastState = ""; // the last state of the last simulation, in string form, including covariance matrix if LNA
 
-        public static void Execute_Starter(bool forkWorker, bool doParse = false, bool doAST = false, bool doScope = false) {
+        public static void Execute_Starter(bool forkWorker, bool doParse = false, bool doAST = false, bool doScope = false, bool autoContinue = false) {
             lock (executionMutex) {
                 if (executionMutex.IsExecuting()) return; // we are already running an executor worker thread
                 else executionMutex.BeginningExecution();
             }
             ProtocolActuator.continueExecution = true;
             if (forkWorker) {
-                Thread thread = new Thread(() => Execute_Worker(doParse, doAST, doScope));
+                Thread thread = new Thread(() => Execute_Worker(doParse, doAST, doScope, autoContinue));
                 thread.SetApartmentState(ApartmentState.STA); // required to use the clipboard
                 thread.Start();
             } else {
-                Execute_Worker(doParse, doAST, doScope);
+                Execute_Worker(doParse, doAST, doScope, autoContinue);
             }
         }
 
@@ -107,7 +107,7 @@ namespace Kaemika {
             Gui.gui.EndingExecution();
         }
 
-        private static void Execute_Worker(bool doParse, bool doAST, bool doScope) {
+        private static void Execute_Worker(bool doParse, bool doAST, bool doScope, bool autoContinue) {
             Gui.gui.BeginningExecution();
             Gui.gui.SaveInput();
             Gui.gui.OutputClear("");
@@ -125,7 +125,7 @@ namespace Kaemika {
                             Scope scope = statements.Scope(new NullScope().BuiltIn(vessel));
                             if (doScope) Gui.gui.OutputAppendText(scope.Format());
                             else {
-                                Netlist netlist = new Netlist();
+                                Netlist netlist = new Netlist(autoContinue);
                                 netlist.Emit(new SampleEntry(vessel));
                                 Style style = new Style(varchar: Gui.gui.ScopeVariants() ? defaultVarchar : null, new SwapMap(),
                                                         map: Gui.gui.RemapVariants() ? new AlphaMap() : null, numberFormat: "G4", dataFormat: "full",  // we want it full for samples, but maybe only headers for functions/networks?
@@ -167,61 +167,67 @@ namespace Kaemika {
         }
 
         private static void Execute_Exporter_Worker(ExportAs exportAs) {
-            var execution = lastExecution; // atomically copy it
-            if (execution == null) {
-            } else if (exportAs == ExportAs.None) {
-            } else if (exportAs == ExportAs.ChemicalTrace) {
-                Gui.gui.OutputSetText(execution.netlist.Format(execution.style.RestyleAsTraceComputational(false)) + execution.ElapsedTime());
-            } else if (exportAs == ExportAs.ComputationalTrace) {
-                Gui.gui.OutputSetText(execution.netlist.Format(execution.style.RestyleAsTraceComputational(true)) + execution.ElapsedTime());
-            } else if (exportAs == ExportAs.MSRC_LBS) {
-                Gui.gui.OutputSetText(Export.MSRC_LBS(execution.netlist, execution.vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.LBS, traceComputational: false)));
-                try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
-            } else if (exportAs == ExportAs.MSRC_CRN) {
-                Gui.gui.OutputSetText(Export.MSRC_CRN(execution.netlist, execution.vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.CRN, traceComputational: false)));
-                try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
-            } else if (exportAs == ExportAs.ODE) {
-                Gui.gui.OutputSetText(Export.ODE(execution.vessel, new CRN(execution.vessel, execution.netlist.RelevantReactions(execution.vessel, execution.vessel.species, execution.style), precomputeLNA: false),
-                    new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.Standard, traceComputational: false)));
-                try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
-            } else if (exportAs == ExportAs.Protocol) {
-                Gui.gui.OutputSetText(Export.Protocol(execution.netlist, new Style(varchar: defaultVarchar, new SwapMap(), map: new AlphaMap(), numberFormat: "G4", dataFormat: "symbol", exportTarget: ExportTarget.Standard, traceComputational: false)));
-                try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
-            } else if (exportAs == ExportAs.ReactionGraph) {
-                if (execution.graphCache.ContainsKey("ReactionGraph")) { }
-                else execution.graphCache["ReactionGraph"] = Export.ReactionGraph(execution.netlist.AllSpecies(), execution.netlist.AllReactions(), execution.style);
-                Gui.gui.ProcessGraph("ReactionGraph");
-            } else if (exportAs == ExportAs.ComplexGraph) {
-                if (execution.graphCache.ContainsKey("ComplexGraph")) { }
-                else execution.graphCache["ComplexGraph"] = Export.ComplexGraph(execution.netlist.AllSpecies(), execution.netlist.AllReactions(), execution.style);
-                Gui.gui.ProcessGraph("ComplexGraph");
-            } else if (exportAs == ExportAs.ProtocolGraph) {
-                if (execution.graphCache.ContainsKey("ProtocolGraph")) { }
-                else execution.graphCache["ProtocolGraph"] = Export.ProtocolGraph(execution.netlist, execution.style);
-                Gui.gui.ProcessGraph("ProtocolGraph");
-            } else if (exportAs == ExportAs.PDMP) {
-                Gui.gui.OutputSetText(Export.PDMP(execution.netlist, execution.style, sequential: true).Format(execution.style));
-                try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
-            } else if (exportAs == ExportAs.PDMPGraph) {
-                if (execution.graphCache.ContainsKey("PDMPGraphSequential")) { }
-                else execution.graphCache["PDMPGraphSequential"] = Export.PDMPGraph(execution.netlist, execution.style, sequential: true);
-                Gui.gui.ProcessGraph("PDMPGraphSequential"); 
-            } else if (exportAs == ExportAs.PDMP_GraphViz) {
-                Gui.gui.OutputSetText(Export.PDMP(execution.netlist, execution.style, sequential: true).GraphViz(execution.style));
-                try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
-            //} else if (exportAs == ExportAs.PDMP_Parallel) {
-            //    Gui.gui.OutputSetText(Export.PDMP(execution.netlist, execution.style, sequential: false).Format(execution.style));
-            //    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
-            //} else if (exportAs == ExportAs.PDMPGraph_Parallel) {
-            //    if (execution.graphCache.ContainsKey("PDMPGraphParallel")) { }
-            //    else execution.graphCache["PDMPGraphParallel"] = Export.PDMPGraph(execution.netlist, execution.style, sequential: false);
-            //    Gui.gui.ProcessGraph("PDMPGraphParallel"); 
-            //} else if (exportAs == ExportAs.PDMP_Parallel_GraphViz) {
-            //    Gui.gui.OutputSetText(Export.PDMP(execution.netlist, execution.style, sequential: false).GraphViz(execution.style));
-            //    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
-            } else { };
+            try {
+                var execution = lastExecution; // atomically copy it
+                Gui.gui.OutputSetText("");
+                if (execution == null) {
+                } else if (exportAs == ExportAs.None) {
+                } else if (exportAs == ExportAs.ChemicalTrace) {
+                    Gui.gui.OutputAppendText(execution.netlist.Format(execution.style.RestyleAsTraceComputational(false)) + execution.ElapsedTime());
+                } else if (exportAs == ExportAs.ComputationalTrace) {
+                    Gui.gui.OutputAppendText(execution.netlist.Format(execution.style.RestyleAsTraceComputational(true)) + execution.ElapsedTime());
+                } else if (exportAs == ExportAs.MSRC_LBS) { // export only the vessel
+                    Gui.gui.OutputAppendText(Export.MSRC_LBS(execution.netlist.Reports(execution.vessel.species), execution.vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.LBS, traceComputational: false)));
+                    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
+                } else if (exportAs == ExportAs.MSRC_CRN) { // export only the vessel
+                    Gui.gui.OutputAppendText(Export.MSRC_CRN(execution.netlist.Reports(execution.vessel.species), execution.vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.CRN, traceComputational: false)));
+                    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
+                } else if (exportAs == ExportAs.ODE) { // export only the vessel
+                    Gui.gui.OutputAppendText(Export.ODE(execution.vessel, new CRN(execution.vessel, execution.vessel.ReactionsAsConsumed(execution.style), precomputeLNA: false),
+                        new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.Standard, traceComputational: false)));
+                    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
+                } else if (exportAs == ExportAs.Protocol) {
+                    Gui.gui.OutputAppendText(Export.Protocol(execution.netlist, new Style(varchar: defaultVarchar, new SwapMap(), map: new AlphaMap(), numberFormat: "G4", dataFormat: "symbol", exportTarget: ExportTarget.Standard, traceComputational: false)));
+                    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
+                } else if (exportAs == ExportAs.ReactionGraph) {
+                    if (execution.graphCache.ContainsKey("ReactionGraph")) { }
+                    else execution.graphCache["ReactionGraph"] = Export.ReactionGraph(execution.netlist.AllSpecies(), execution.netlist.AllReactions(), execution.style);
+                    Gui.gui.ProcessGraph("ReactionGraph");
+                } else if (exportAs == ExportAs.ComplexGraph) {
+                    if (execution.graphCache.ContainsKey("ComplexGraph")) { }
+                    else execution.graphCache["ComplexGraph"] = Export.ComplexGraph(execution.netlist.AllSpecies(), execution.netlist.AllReactions(), execution.style);
+                    Gui.gui.ProcessGraph("ComplexGraph");
+                } else if (exportAs == ExportAs.ProtocolGraph) {
+                    if (execution.graphCache.ContainsKey("ProtocolGraph")) { }
+                    else execution.graphCache["ProtocolGraph"] = Export.ProtocolGraph(execution.netlist, execution.style);
+                    Gui.gui.ProcessGraph("ProtocolGraph");
+                } else if (exportAs == ExportAs.PDMPreactions) {
+                    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).HybridSystem(true, execution.style));
+                    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
+                } else if (exportAs == ExportAs.PDMPequations) {
+                    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).HybridSystem(false, execution.style));
+                    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
+                } else if (exportAs == ExportAs.PDMPGraph) {
+                    if (execution.graphCache.ContainsKey("PDMPGraphSequential")) { }
+                    else execution.graphCache["PDMPGraphSequential"] = Export.PDMPGraph(execution.netlist, execution.style, sequential: true);
+                    Gui.gui.ProcessGraph("PDMPGraphSequential"); 
+                } else if (exportAs == ExportAs.PDMP_GraphViz) {
+                    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).GraphViz(execution.style));
+                    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
+                //} else if (exportAs == ExportAs.PDMP_Parallel) {
+                //    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: false).Format(execution.style));
+                //    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
+                //} else if (exportAs == ExportAs.PDMPGraph_Parallel) {
+                //    if (execution.graphCache.ContainsKey("PDMPGraphParallel")) { }
+                //    else execution.graphCache["PDMPGraphParallel"] = Export.PDMPGraph(execution.netlist, execution.style, sequential: false);
+                //    Gui.gui.ProcessGraph("PDMPGraphParallel"); 
+                //} else if (exportAs == ExportAs.PDMP_Parallel_GraphViz) {
+                //    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: false).GraphViz(execution.style));
+                //    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
+                } else { };
 
-            lock (exporterMutex) { exporterMutex[exportAs] = false; }
+                lock (exporterMutex) { exporterMutex[exportAs] = false; }
+            } catch (Error ex) { Gui.gui.InputSetErrorSelection(-1, -1, 0, ex.Message); }
         }
 
     }

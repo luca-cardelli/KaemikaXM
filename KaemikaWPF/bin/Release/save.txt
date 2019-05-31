@@ -1,253 +1,41 @@
-//  !!!!!!!!!!!!!!!! ************* USE the GearBDF SOLVER ************* !!!!!!!!!!!!!!!! 
-// [1] https://www.biorxiv.org/content/10.1101/322297v1
-// [2] T4 Ligase - DNA Binding https://pubs.acs.org/doi/abs/10.1021/acs.biochem.6b01261?src=recsys&journalCode=bichaw
-// [3] Kinetic Characterization of T4 Ligase (on nicked DNA) https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3243518/
+//======================================
+// Build a chain of reactions from a to b 
+// with n intermediate species c_i
+// a -> c_0 -> c_1 ->  ... -> c_(n-1) -> b
+//======================================
 
-// ========= Mastermix ========= //
-
-species {SapI, T4ligase}
-
-function MasterMixSample(number quantity/*uL*/) {
-   sample SapI_sample {quantity uL, 20C}
-   amount  SapI @ 101 uM in SapI_sample  // 2500 units in each 1 uL, guessing same concentration as T4 in [1]
-
-   sample T4ligase_sample {quantity uL, 20C}
-   amount T4ligase @ 4375 uM in T4ligase_sample   // 100000 units in each 1 uL [1]
-
-   sample ATP_sample {quantity uL, 20C}
-   species ATP#507.18 @ quantity * 507.18E-9 g in ATP_sample  // = 1mM
-
-   sample buffer_sample {quantity * 2 uL, 20C} 
-
-   mix mastermix := buffer_sample with ATP_sample
-   mix mastermix with SapI_sample
-   mix mastermix with T4ligase_sample
-   return mastermix
+network Erlang(species a b, number n) {
+   if n <= 0 then 
+      // just one reaction from a to b
+      a -> b                        
+   else
+      // new intermediate species c, initially 0
+      species c @ 0M
+      // plot (report) at most 3 of those
+      if n <= 3 then report c end
+      // build a chain from a to c with n-1 steps
+      Erlang(a, c, n-1) 
+      // plus one reaction from c to b
+      c -> b                        
+   end
 }
 
-// ========= DNA Parts ========= //
+// Connect two such chains in a loop
+// to produced a dampened ring oscillator
 
-// need to use correct plasmid lengths (some common backbones are 2673bp)
-number dsDNAbp = 660   // g/mol/bp molar mass
-species{ 
-   g1part#dsDNAbp *3000,
-   g2part#dsDNAbp *3000,
-   g3part#dsDNAbp *3000,
-   g4part#dsDNAbp *3000,
-   gBpart#dsDNAbp *3000}
-
-function DnaPartsSample(number quantity/*uL*/) {
-   sample dnaParts {quantity uL, 20 C}
-   amount g1part @ quantity*5 ng in dnaParts 
-   amount g2part @ quantity*5 ng in dnaParts 
-   amount g3part @ quantity*5 ng in dnaParts 
-   amount g4part @ quantity*5 ng in dnaParts 
-   amount gBpart @ quantity*5 ng in dnaParts 
-   return dnaParts
+network RingOscillator(species a b, number n) {
+    Erlang(a,b,n/2)
+    Erlang(b,a,n/2)
 }
 
-// ========= Final mix ========= //
+// Initialize some species and activate the oscillator
 
-sample mastermix = MasterMixSample(3.75/*uL*/)
-sample dnaParts = DnaPartsSample(5 * 0.75/*uL*/)
-sample water_sample {7.5uL, 20C}
+species a @ 1M
+species b @ 0M
+RingOscillator(a, b, 10)
 
-mix total := water_sample with mastermix
-mix total with dnaParts
+// Simulate the reactions and produce a plot
+// the multiple 'c' species are distinguished by a suffix
 
-
-// ========= Golden Gate Assembly ========= //
-
-function Hill(flow k, flow Kd, flow L, flow n) { return k * L^n/(Kd+L^n) }   
-
-// -------------  Enzyme cutting -------------  //
-
-species g1, g2, g3, g4, gB @ 0 M in total
-number k = 1
-number Kd = 0.01
-number coeff = 1
-SapI >> g1part -> g1 {{SapI*Hill(k,Kd,g1part,coeff)}}  // 2 cuts, residual parts backbone not modeled
-SapI >> g2part -> g2 {{SapI*Hill(k,Kd,g2part,coeff)}}
-SapI >> g3part -> g3 {{SapI*Hill(k,Kd,g3part,coeff)}}
-SapI >> g4part -> g4 {{SapI*Hill(k,Kd,g4part,coeff)}}
-SapI >> gBpart -> gB {{SapI*Hill(k,Kd,gBpart,coeff)}}
-
-// equilibrate total for 1000 // sufficient for cutting phase
-
-// -------------  Hybridization -------------  //
-
-species g12, g23, g34, g4B, gB1, g123, g234, g34B, g4B1, gB12, 
-    g1234, g234B, g34B1, g4B12, gB123, g1234B, g234B1, g34B12, g4B123, gB1234, 
-    circ @ 0 M in total
-number hyb = 1e5
-
-g1 + g2 ->{hyb} g12
-g1 + g23 ->{hyb} g123
-g1 + g234 ->{hyb} g1234
-g1 + g234B ->{hyb} g1234B
-g2 + g3 ->{hyb} g23
-g2 + g34 ->{hyb} g234
-g2 + g34B ->{hyb} g234B
-g2 + g34B1 ->{hyb} g234B1
-g3 + g4 ->{hyb} g34
-g3 + g4B ->{hyb} g34B
-g3 + g4B1 ->{hyb} g34B1
-g3 + g4B12 ->{hyb} g34B12
-g4 + gB ->{hyb} g4B
-g4 + gB1 ->{hyb} g4B1
-g4 + gB12 ->{hyb} g4B12
-g4 + gB123 ->{hyb} g4B123
-gB + g1 ->{hyb} gB1
-gB + g12 ->{hyb} gB12
-gB + g123 ->{hyb} gB123
-gB + g1234 ->{hyb} gB1234
-
-g12 + g3 ->{hyb} g123
-g12 + g34 ->{hyb} g1234
-g12 + g34B ->{hyb} g1234B
-g23 + g4 ->{hyb} g234
-g23 + g4B ->{hyb} g234B
-g23 + g4B1 ->{hyb} g234B1
-g34 + gB ->{hyb} g34B
-g34 + gB1 ->{hyb} g34B1
-g34 + gB12 ->{hyb} g34B12
-g4B + g1 ->{hyb} g4B1
-g4B + g12 ->{hyb} g4B12
-g4B + g123 ->{hyb} g4B123
-gB1 + g2 ->{hyb} gB12
-gB1 + g23 ->{hyb} gB123
-gB1 + g234 ->{hyb} gB1234
-
-g123 + g4 ->{hyb} g1234
-g123 + g4B ->{hyb} g1234B
-g234 + gB ->{hyb} g234B
-g234 + gB1 ->{hyb} g234B1
-g34B + g1 ->{hyb} g34B1
-g34B + g12 ->{hyb} g34B1
-g4B1 + g2 ->{hyb} g4B12
-g4B1 + g23 ->{hyb} g4B123
-gB12 + g3 ->{hyb} gB123
-gB12 + g34 ->{hyb} gB1234
-
-g1234 + gB ->{hyb} g1234B
-g234B + g1 ->{hyb} g234B1
-g34B1 + g2 ->{hyb} g34B12
-g4B12 + g3 ->{hyb} g4B123
-gB123 + g4 ->{hyb} gB1234
-
-g1234B ->{hyb}  circ
-g234B1 ->{hyb}  circ
-g34B12 ->{hyb}  circ
-g4B123 ->{hyb}  circ
-gB1234 ->{hyb}  circ
-
-// equilibrate total for 1e5 // sufficient for hybridization phase with hyb = 1e5
-
-// -------------  Ligation -------------  //
-
-species c1, c2, c3, c4, cB, // ligated between 1&2, between 2&3, etc
-   c12, c13, c14, c1B, c23, c24, c2B, c34, c3B, c4B, // ligated between 1&2 and 2&3, etc.
-   c123, c124, c12B, c134, c13B, c14B, c234, c23B, c24B, c34B,
-   c1234, c123B, c124B, c134B, c234B,
-   P @ 0 M in total
-
-T4ligase >> circ -> c1 
-T4ligase >> circ -> c2
-T4ligase >> circ -> c3
-T4ligase >> circ -> c4
-T4ligase >> circ -> cB
-
-T4ligase >> c1 -> c12  
-T4ligase >> c1 -> c13
-T4ligase >> c1 -> c14
-T4ligase >> c1 -> c1B
-T4ligase >> c2 -> c23
-T4ligase >> c2 -> c24
-T4ligase >> c2 -> c2B
-T4ligase >> c2 -> c12
-T4ligase >> c3 -> c34
-T4ligase >> c3 -> c3B
-T4ligase >> c3 -> c13
-T4ligase >> c3 -> c23
-T4ligase >> c4 -> c4B
-T4ligase >> c4 -> c14
-T4ligase >> c4 -> c24
-T4ligase >> c4 -> c34
-T4ligase >> cB -> c1B
-T4ligase >> cB -> c2B
-T4ligase >> cB -> c3B
-T4ligase >> cB -> c4B
-
-T4ligase >> c12 -> c123
-T4ligase >> c12 -> c124
-T4ligase >> c12 -> c12B
-T4ligase >> c13 -> c123
-T4ligase >> c13 -> c134
-T4ligase >> c13 -> c13B
-T4ligase >> c14 -> c124
-T4ligase >> c14 -> c134
-T4ligase >> c14 -> c14B
-T4ligase >> c1B -> c12B
-T4ligase >> c1B -> c13B
-T4ligase >> c1B -> c14B
-T4ligase >> c23 -> c123
-T4ligase >> c23 -> c234
-T4ligase >> c23 -> c23B
-T4ligase >> c24 -> c124
-T4ligase >> c24 -> c234
-T4ligase >> c24 -> c24B
-T4ligase >> c2B -> c12B
-T4ligase >> c2B -> c23B
-T4ligase >> c2B -> c24B
-T4ligase >> c34 -> c134
-T4ligase >> c34 -> c234
-T4ligase >> c34 -> c34B
-T4ligase >> c3B -> c13B
-T4ligase >> c3B -> c23B
-T4ligase >> c3B -> c34B
-T4ligase >> c4B -> c14B
-T4ligase >> c4B -> c24B
-T4ligase >> c4B -> c34B
-
-T4ligase >> c123 -> c1234
-T4ligase >> c123 -> c123B
-T4ligase >> c124 -> c1234
-T4ligase >> c124 -> c124B
-T4ligase >> c12B -> c123B
-T4ligase >> c12B -> c124B
-T4ligase >> c134 -> c1234
-T4ligase >> c134 -> c134B
-T4ligase >> c13B -> c123B
-T4ligase >> c13B -> c134B
-T4ligase >> c14B -> c124B
-T4ligase >> c14B -> c134B
-T4ligase >> c234 -> c1234
-T4ligase >> c234 -> c234B
-T4ligase >> c23B -> c123B
-T4ligase >> c23B -> c234B
-T4ligase >> c24B -> c124B
-T4ligase >> c24B -> c234B
-T4ligase >> c34B -> c134B
-T4ligase >> c34B -> c234B
-
-T4ligase >> c1234 -> P
-T4ligase >> c123B -> P
-T4ligase >> c124B -> P
-T4ligase >> c134B -> P
-T4ligase >> c234B -> P
-
-equilibrate total for 5E5
-
-/*
-
-// Extensions for protocol optimization
-// number a1 = 1                        // penalize small amounts of P
-// number a2 = 2                       // penalize amounts of P far from set quantity
-// number a3 = 3                    // penalize length of equilibration
-// number quantity = 4         // desired quantity of P
-// equilibrate total for mintime (-a1*P + a2(P-quantity)^2 + a3*time) hint 10h            // hint for optimization start: 10 hours
-
-// that expression is a "flow" expression of time t (used also elsewhere in the language)
-// where "P" means molarity of species P at time t, and "time" means t 
-
-*/
+equilibrate for 20           
+                             

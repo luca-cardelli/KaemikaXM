@@ -25,8 +25,8 @@ Comment Block @= { Nesting = All }
 ! ABSTRACTIONS  --------------------------------------------
                           
 <Function>       ::= Id '=' <Expression>                                     ! binding a function value to a function id
-                    | Id <Fun>                                                 ! function id definition
-<Fun>            ::= <Headers> '{' <Statements> 'return' <Expression> '}'    ! function body requires 'return': it disambiguates use of reaction syntax
+                    | Id <Fun>                                               ! function id definition
+<Fun>            ::= <Headers> '{' <Expression> '}'                          ! function abstraction
 
 <Network>        ::= Id '=' <Expression>                                     ! binding a network value to a network id
                     | Id <Net>                                                 ! network id definition
@@ -143,6 +143,9 @@ Comment Block @= { Nesting = All }
                     | 'fun' <Fun>                                           ! function abstraction
                     | 'net' <Net>                                           ! network abstraction
                     | '(' <Expression> ')'
+                    | 'define' <Statements> 'return' <Expression>           ! numerous but mild shift-reduce conflicts becuase no 'end' bracket. 
+                                                                            ! E.g. (define number n = 3 return n) + 3   vs. define number n = 3 return (n + 3)
+                                                                            ! resolved as the latter
                   
 <Fun Instance>      ::= Id                                                  ! built-in math library operators, and pi and e, follow this syntax too
                     | <Fun Instance>  '(' ')'                               ! function invocations can use currying

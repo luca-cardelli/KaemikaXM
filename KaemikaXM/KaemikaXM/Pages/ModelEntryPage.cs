@@ -70,7 +70,7 @@ namespace KaemikaXM.Pages {
             return button;
         }
 
-        public void StartAction(bool forkWorker, bool switchToChart, bool switchToOutput) {
+        public void StartAction(bool forkWorker, bool switchToChart, bool switchToOutput, bool autoContinue = false) {
             if (Exec.IsExecuting() && !Gui.gui.ContinueEnabled()) return; // we are already running a simulation, don't start a concurrent one
             if (Exec.IsExecuting() && Gui.gui.ContinueEnabled()) { // we are already running a simulation; make start button work as continue button
                 ProtocolActuator.continueExecution = true; 
@@ -78,7 +78,7 @@ namespace KaemikaXM.Pages {
             } else { // do a start
                 MainTabbedPage.theOutputPage.SetModel(modelInfo);
                 MainTabbedPage.theChartPage.SetModel(modelInfo);
-                Exec.Execute_Starter(forkWorker); // This is where it all happens
+                Exec.Execute_Starter(forkWorker, autoContinue: autoContinue); // This is where it all happens
                 if (switchToChart) MainTabbedPage.SwitchToTab(MainTabbedPage.theChartPageNavigation);
                 else if (switchToOutput) MainTabbedPage.SwitchToTab(MainTabbedPage.theOutputPageNavigation);
             }
@@ -98,7 +98,7 @@ namespace KaemikaXM.Pages {
             };
             button.Clicked += async (object sender, EventArgs e) => {
                 if (!modelInfo.executable) return;
-                StartAction(forkWorker: true, switchToChart, switchToOutput);
+                StartAction(forkWorker: true, switchToChart, switchToOutput, autoContinue: false);
             };
             return button;
         }
@@ -132,7 +132,7 @@ namespace KaemikaXM.Pages {
                 Noise oldSelection = noisePickerSelection;
                 noisePickerSelection = Gui.NoiseOfString(noisePicker.SelectedItem as string);
                 if (noisePickerSelection != oldSelection)
-                    MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: true, switchToOutput: false);
+                    MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: true, switchToOutput: false, autoContinue: true);
             };
             return noisePicker;
         }

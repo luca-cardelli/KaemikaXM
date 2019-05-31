@@ -25,8 +25,8 @@ Comment Block @= { Nesting = All }
 ! ABSTRACTIONS  --------------------------------------------
                           
 <Function>       ::= Id '=' <Expression>                                     ! binding a function value to a function id
-                    | Id <Fun>                                                 ! function id definition
-<Fun>            ::= <Headers> '{' <Statements> 'return' <Expression> '}'    ! function body requires 'return': it disambiguates use of reaction syntax
+                    | Id <Fun>                                               ! function id definition
+<Fun>            ::= <Headers> '{' <Expression> '}'                          ! function abstraction
 
 <Network>        ::= Id '=' <Expression>                                     ! binding a network value to a network id
                     | Id <Net>                                                 ! network id definition
@@ -78,7 +78,8 @@ Comment Block @= { Nesting = All }
 <Statement>     ::=   <Net Instance>                          ! there are no obligatory delimiter characters between statements. LALR FTW!
                     | <Reaction>                              ! reactions are the only statements not prefixed by a keyword (other than instances)
                     | 'bool' Id '=' <Expression>              ! binding a bool value to a bool id
-                    | 'number' Id '=' <Expression>            ! binding a number value to a number id
+                    | 'number' Id '=' <Expression>            ! binding a number value (to a number id
+                    | 'number' Id '=?' <Distribution>         ! binding a number value drawn from a distribution to a number id
                     | 'string' Id '=' <Expression>            ! binding a string value to a string id
                     | 'flow' Id '=' <Expression>              ! binding a flow value to a flow id
                     | 'sample' <Sample>                       ! binding a sample to a sample id or sample def
@@ -142,6 +143,9 @@ Comment Block @= { Nesting = All }
                     | 'fun' <Fun>                                           ! function abstraction
                     | 'net' <Net>                                           ! network abstraction
                     | '(' <Expression> ')'
+                    | 'define' <Statements> 'return' <Expression>           ! numerous but mild shift-reduce conflicts becuase no 'end' bracket. 
+                                                                            ! E.g. (define number n = 3 return n) + 3   vs. define number n = 3 return (n + 3)
+                                                                            ! resolved as the latter
                   
 <Fun Instance>      ::= Id                                                  ! built-in math library operators, and pi and e, follow this syntax too
                     | <Fun Instance>  '(' ')'                               ! function invocations can use currying
@@ -160,6 +164,8 @@ Comment Block @= { Nesting = All }
                     | <Expression> 'as' <Expression>
                     | <Expression> 
 
+<Distribution>   ::= Id '(' <Args> ')'     ! uniform(lo,hi), normal(mean,stdev), exponential(lambda), bernoulli(p)
+                  
 ! OPERATORS  --------------------------------------------                                 
 
 <Or Exp>        ::=  <Or Exp> 'or' <And Exp>                                 ! boring encoding of prefix/infix operator precedence         

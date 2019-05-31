@@ -17,25 +17,26 @@ species {NaCl#58.44, KCl#74.5513, NA2HPO4#141.96, KH2PO4#136.086}
 report NaCl, KCl, NA2HPO4, KH2PO4
 
 function Autoclave(sample PBS, number t) {
-   // increase temperature, preserve volume:
-   transfer hot { volume(PBS)L, 121C } := PBS
-   // bake
-   equilibrate hot for t	
-   // decrease temperature, preserve volume:
-   transfer PBS { volume(hot)L, 20C }	:= hot	
+   define
+      // increase temperature, preserve volume:
+      transfer hot { volume(PBS)L, 121C } := PBS
+      // bake
+      equilibrate hot for t	
+      // decrease temperature, preserve volume:
+      transfer PBS { volume(hot)L, 20C }	:= hot	
    return PBS
 }
 
 function MakePBS() {
-   sample PBS {800mL, 20C}
-   amount NaCl @ 8g in PBS 
-   amount KCl @ 0.2g in PBS 
-   amount NA2HPO4 @ 1.44g in PBS 
-   amount KH2PO4 @ 0.24g in PBS
+   define
+      sample PBS {800mL, 20C}
+      amount NaCl @ 8g in PBS 
+      amount KCl @ 0.2g in PBS 
+      amount NA2HPO4 @ 1.44g in PBS 
+      amount KH2PO4 @ 0.24g in PBS
 
-   sample topup {200mL, 20C}  
-   mix PBS with topup
-
+      sample topup {200mL, 20C}  
+      mix PBS with topup
    return Autoclave(PBS, 20*60)
 }
 
