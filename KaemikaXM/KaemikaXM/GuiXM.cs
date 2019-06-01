@@ -234,7 +234,9 @@ namespace Kaemika {
 
         public override void ChartListboxAddSeries(string legend){ }
 
-        public override void ClipboardSetText(string text) { }
+        public override void ClipboardSetText(string text) {
+            // this was for Export output to the clipboard, but we do not need to do this in Android
+        }
 
     }
 }

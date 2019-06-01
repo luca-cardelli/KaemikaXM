@@ -234,11 +234,12 @@ namespace KaemikaXM.Pages
 
         private static Dictionary<string, ParameterInfo> parameterInfoDict = new Dictionary<string, ParameterInfo>(); // persistent information
         private static Dictionary<string, ParameterState> parameterStateDict = new Dictionary<string, ParameterState>();
+        private static object parameterLock = new object(); // protects parameterInfoDict and parameterStateDict
 
         // clear the parameterStateDict at the beginning of every execution, but we keep the parametersInfoDict forever
 
         public void ParametersClear() {
-            parameterStateDict = new Dictionary<string, ParameterState>();
+            lock (parameterLock) { parameterStateDict = new Dictionary<string, ParameterState>(); }
         }
 
         public class ParameterState {
@@ -269,22 +270,27 @@ namespace KaemikaXM.Pages
         // ask the gui if this parameter is locked
 
         public double ParameterOracle(string parameter) { // returns NAN if oracle not available
-            if (parameterInfoDict.ContainsKey(parameter) && parameterInfoDict[parameter].locked)
-                // parameter does not exist yet in parameterExistsDict but will exist at the end of the run, and it will be locked
-                return parameterInfoDict[parameter].drawn;
-            return double.NaN;
+            lock (parameterLock) {
+                if (parameterInfoDict.ContainsKey(parameter) && parameterInfoDict[parameter].locked)
+                    // parameter does not exist yet in parameterExistsDict but will exist at the end of the run, and it will be locked
+                    return parameterInfoDict[parameter].drawn;
+                return double.NaN;
+            }
         }
 
         // reflect the parameter state into the gui
 
         public void ParametersUpdate() {
             Xamarin.Forms.Device.BeginInvokeOnMainThread(() => {
-                RefreshParameters();
+                lock (parameterLock) {
+                    RefreshParameters();
+                }
                 MainTabbedPage.theChartPage.stackView.Children[1].HeightRequest = 20 + ParameterItemHeight * parameterInfoDict.Count;
                 
             });
         }
-        private void RefreshParameters() {
+        private void RefreshParameters() {  
+            // call it with already locked parameterLock
             var parameterList = new ObservableCollection<ParameterBinding>();
             foreach (var kvp in parameterStateDict) {
                 ParameterInfo info = parameterInfoDict[kvp.Key];
@@ -302,16 +308,18 @@ namespace KaemikaXM.Pages
         }
 
         public void AddParameter(string parameter, double drawn, string distribution, double[] arguments) {
-            if (!parameterInfoDict.ContainsKey(parameter)) {
-                parameterInfoDict[parameter] = new ParameterInfo(parameter, drawn, distribution, arguments);
-                parameterStateDict[parameter] = new ParameterState(parameter, parameterInfoDict[parameter]);
+            lock (parameterLock) {
+                if (!parameterInfoDict.ContainsKey(parameter)) {
+                    parameterInfoDict[parameter] = new ParameterInfo(parameter, drawn, distribution, arguments);
+                    parameterStateDict[parameter] = new ParameterState(parameter, parameterInfoDict[parameter]);
+                }
+                parameterStateDict[parameter] = new ParameterState(parameter, parameterInfoDict[parameter]); // use the old value, not the one from drawn
+                if (parameterInfoDict.ContainsKey(parameter) && parameterInfoDict[parameter].locked) return; // do not change the old value if locked
+                ParameterInfo info = new ParameterInfo(parameter, drawn, distribution, arguments);           // use the new value, from drawn
+                ParameterState state = new ParameterState(parameter, info);                                  // update the value
+                parameterInfoDict[parameter] = info;
+                parameterStateDict[parameter] = state;
             }
-            parameterStateDict[parameter] = new ParameterState(parameter, parameterInfoDict[parameter]); // use the old value, not the one from drawn
-            if (parameterInfoDict.ContainsKey(parameter) && parameterInfoDict[parameter].locked) return; // do not change the old value if locked
-            ParameterInfo info = new ParameterInfo(parameter, drawn, distribution, arguments);           // use the new value, from drawn
-            ParameterState state = new ParameterState(parameter, info);                                  // update the value
-            parameterInfoDict[parameter] = info;
-            parameterStateDict[parameter] = state;
         }
 
         // bind the parameter info to the gui via SetBinding/BindingContext, ugh!
@@ -353,12 +361,15 @@ namespace KaemikaXM.Pages
                 slider.DragCompleted += (object source, EventArgs e) => {
                     if (slider.BindingContext == null) return;
                     ParameterBinding parameterBinding = (ParameterBinding)slider.BindingContext; // the implicit binding context, ugh!
-                    ParameterInfo info = parameterInfoDict[parameterBinding.Parameter];
-                    ParameterState state = parameterStateDict[parameterBinding.Parameter];
-                    state.SetNormalizedValue((source as Slider).Value, info);
-                    info.drawn = state.UnnormalizeAndGetValue(info);
-                    parameterBinding.Format = info.ParameterLabel(true);
-                    RefreshParameters(); // otherwise formatLabel does not update even though it has a data binding, ugh!
+                    lock (parameterLock) {
+                        if ((!parameterStateDict.ContainsKey(parameterBinding.Parameter)) || (!parameterInfoDict.ContainsKey(parameterBinding.Parameter))) return;
+                        ParameterInfo info = parameterInfoDict[parameterBinding.Parameter];
+                        ParameterState state = parameterStateDict[parameterBinding.Parameter];
+                        state.SetNormalizedValue((source as Slider).Value, info);
+                        info.drawn = state.UnnormalizeAndGetValue(info);
+                        parameterBinding.Format = info.ParameterLabel(true);
+                        RefreshParameters(); // otherwise formatLabel does not update even though it has a data binding, ugh!
+                    }
                 };
 
                 Switch switcher = new Switch();
@@ -366,8 +377,11 @@ namespace KaemikaXM.Pages
                 switcher.Toggled += (object source, ToggledEventArgs e) => {
                     if (switcher.BindingContext == null) return; // ugh!
                     ParameterBinding parameterBinding = (ParameterBinding)switcher.BindingContext; // the implicit binding context, ugh!
-                    ParameterInfo parameterInfo = parameterInfoDict[parameterBinding.Parameter];
-                    parameterInfo.locked = (source as Switch).IsToggled;
+                    lock (parameterLock) {
+                        if (!parameterInfoDict.ContainsKey(parameterBinding.Parameter)) return;
+                        ParameterInfo parameterInfo = parameterInfoDict[parameterBinding.Parameter];
+                        parameterInfo.locked = (source as Switch).IsToggled;
+                    }
                 };
 
                 Label formatLabel = new Label { FontSize = 12, FontAttributes = FontAttributes.Bold };

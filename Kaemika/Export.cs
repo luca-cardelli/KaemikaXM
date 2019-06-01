@@ -187,38 +187,23 @@ namespace Kaemika {
             return inits;
         }
 
+        // Export AdjacencyGraph as GraphViz (withot producing layout for AdjacencyGraph)
+
+        public static string GraphViz(AdjacencyGraph<Vertex, Edge<Vertex>> graph) {
+            return new Graph<Vertex, Edge<Vertex>>(graph.Vertices, graph.Edges).ToGraphviz();
+        }
+
+        public static string ProcessGraph(string graphFamily) { // for WinForms version: generate graph and just get graphviz in text form
+            var execution = Exec.lastExecution; // atomically copy it
+            if (execution == null) return ""; // something's wrong
+            if (execution.graphCache.ContainsKey(graphFamily)) {
+                var graph = execution.graphCache[graphFamily];
+                if (graph.VertexCount == 0 || graph.EdgeCount == 0) return "";
+                else return Export.GraphViz(graph);
+            } else return "";
+        }
+
         // Export Reactions as COMPLEX GRAPH
-
-        public static void GraphAddEdge(AdjacencyGraph<Vertex, Edge<Vertex>> graph, Vertex source, Vertex target, string label = null, Directed directed = Directed.Solid) {
-            // Sugiyama crashes on self loops?
-            if (source == target) {
-                Vertex_Routing v1 = new Vertex_Routing(null, null);
-                Vertex_Routing v2 = new Vertex_Routing(null, null);
-                Edge<Vertex> e1 = new Edge<Vertex>(source, v1, label, Directed.No);
-                Edge<Vertex> e2 = new Edge<Vertex>(v1, v2, null, Directed.No);
-                Edge<Vertex> e3 = new Edge<Vertex>(v2, target, null, directed);
-                v1.fromEdge = e1;
-                v1.toEdge = e2;
-                v2.fromEdge = e2;
-                v1.toEdge = e3;
-                graph.AddVertex(v1);
-                graph.AddVertex(v2);
-                graph.AddEdge(e1);
-                graph.AddEdge(e2);
-                graph.AddEdge(e3);
-            } else graph.AddEdge(new Edge<Vertex>(source, target, label, directed));
-        }
-
-        public static void GraphAddRoutedEdge(AdjacencyGraph<Vertex, Edge<Vertex>> graph, Vertex source, Vertex target, string label = null, Directed directed = Directed.Solid) {
-            Vertex_Routing v = new Vertex_Routing(null, null);
-            Edge<Vertex> fromEdge = new Edge<Vertex>(source, v, label, Directed.No);
-            Edge<Vertex> toEdge = new Edge<Vertex>(v, target, null, directed);
-            v.fromEdge = fromEdge;
-            v.toEdge = toEdge;
-            graph.AddVertex(v);
-            graph.AddEdge(fromEdge);
-            graph.AddEdge(toEdge);
-        }
 
         public static AdjacencyGraph<Vertex, Edge<Vertex>> ComplexGraph(List<Symbol> species, List<ReactionValue> reactions, Style style) {
             AdjacencyGraph<Vertex, Edge<Vertex>> graph = new AdjacencyGraph<Vertex, Edge<Vertex>>();
@@ -254,6 +239,37 @@ namespace Kaemika {
             foreach (var kvp in l) s += ((kvp.Value > 1) ? kvp.Value.ToString() : "") + kvp.Key + "+";
             if (s != "") s = s.Substring(0, s.Length - 1);
             return s;
+        }
+       
+        public static void GraphAddEdge(AdjacencyGraph<Vertex, Edge<Vertex>> graph, Vertex source, Vertex target, string label = null, Directed directed = Directed.Solid) {
+            // Sugiyama crashes on self loops?
+            if (source == target) {
+                Vertex_Routing v1 = new Vertex_Routing(null, null);
+                Vertex_Routing v2 = new Vertex_Routing(null, null);
+                Edge<Vertex> e1 = new Edge<Vertex>(source, v1, label, Directed.No);
+                Edge<Vertex> e2 = new Edge<Vertex>(v1, v2, null, Directed.No);
+                Edge<Vertex> e3 = new Edge<Vertex>(v2, target, null, directed);
+                v1.fromEdge = e1;
+                v1.toEdge = e2;
+                v2.fromEdge = e2;
+                v1.toEdge = e3;
+                graph.AddVertex(v1);
+                graph.AddVertex(v2);
+                graph.AddEdge(e1);
+                graph.AddEdge(e2);
+                graph.AddEdge(e3);
+            } else graph.AddEdge(new Edge<Vertex>(source, target, label, directed));
+        }
+
+        public static void GraphAddRoutedEdge(AdjacencyGraph<Vertex, Edge<Vertex>> graph, Vertex source, Vertex target, string label = null, Directed directed = Directed.Solid) {
+            Vertex_Routing v = new Vertex_Routing(null, null);
+            Edge<Vertex> fromEdge = new Edge<Vertex>(source, v, label, Directed.No);
+            Edge<Vertex> toEdge = new Edge<Vertex>(v, target, null, directed);
+            v.fromEdge = fromEdge;
+            v.toEdge = toEdge;
+            graph.AddVertex(v);
+            graph.AddEdge(fromEdge);
+            graph.AddEdge(toEdge);
         }
 
         // Export Reactions as REACTION GRAPH
@@ -396,7 +412,7 @@ namespace Kaemika {
                     GraphAddEdge(graph, veticesDict[inS], veticesDict[outS2], "split " + (1 - node.proportion.value).ToString("G3"));
                 } else if (entry is EquilibrateEntry) {
                     var node = entry as EquilibrateEntry; var inS = node.inSample.FormatSymbol(style); var outS = node.outSample.FormatSymbol(style);
-                    GraphAddEdge(graph, veticesDict[inS], veticesDict[outS], "equil for " + node.time.value.ToString("G3"));
+                    GraphAddEdge(graph, veticesDict[inS], veticesDict[outS], "equilibrate for " + node.time.value.ToString("G3"));
                 } else if (entry is TransferEntry) {
                     var node = entry as TransferEntry; var inS = node.inSample.FormatSymbol(style); var outS = node.outSample.FormatSymbol(style);
                     GraphAddEdge(graph, veticesDict[inS], veticesDict[outS], "transfer");
@@ -449,10 +465,10 @@ namespace Kaemika {
             }
             public string HybridSystem(bool showReactions, Style style) {
                 string s = "";
-                s += "TRANSITIONS" + Environment.NewLine;
-                foreach (Transition transition in transitions) {
-                    s += transition.Format(style) + Environment.NewLine;
-                }
+                //s += "TRANSITIONS" + Environment.NewLine;
+                //foreach (Transition transition in transitions) {
+                //    s += transition.Format(style) + Environment.NewLine;
+                //}
                 s += Environment.NewLine;
                 foreach (State state in states.states) {
                     s += "STATE_" + state.id.ToString() + Environment.NewLine +
@@ -463,7 +479,7 @@ namespace Kaemika {
                             if (found) throw new Error("More than one equilibrate transitions out of one state.");
                             SampleValue sample = (transition.entry as EquilibrateEntry).inSample;
                             List<ReactionValue> reactions = sample.ReactionsAsConsumed(style);
-                            // List<ReactionValue> reactions = netlist.RelevantReactions(sample, sample.species, style); // this would pick up reactions that were added after the sample was consumed
+                            // List<ReactionValue> reactions = sample.RelevantReactions(netlist, style); // this would pick up reactions that were added after the sample was consumed
                             s += "KINETICS for STATE_" + transition.source.id.ToString() + " (sample " + sample.FormatSymbol(style) + ") for " + (transition.entry as EquilibrateEntry).time.Format(style) + " time units:" + Environment.NewLine;
                             if (showReactions) {
                                 foreach (ReactionValue reaction in reactions) s += reaction.Format(style) + Environment.NewLine;
@@ -473,6 +489,10 @@ namespace Kaemika {
                             s += Environment.NewLine;
                             found = true;
                         }
+                    }
+                    foreach (Transition transition in state.transitionsOut) {
+                        s += "TRANSITION" + Environment.NewLine;
+                        s += transition.Format(style) + Environment.NewLine + Environment.NewLine;
                     }
                 }
                 return s;
@@ -511,7 +531,7 @@ namespace Kaemika {
             }
             public string Format(Style style) {
 //                return "[" + source.Format(style) + " ->{" + label + "} " + target.Format(style) + "]";
-                return "[STATE_" + source.id.ToString() + "   (" + label + ")   STATE_" + target.id.ToString() + "]";
+                return "[STATE_" + source.id.ToString() + "   (" + label + ")=>   STATE_" + target.id.ToString() + "]";
             }
             public string GraphVizEdge(Style style) {
                 return source.UniqueNodeName() + " -> " + target.UniqueNodeName() + " [label=" + Parser.FormatString(label) + "];" + Environment.NewLine;
@@ -683,7 +703,7 @@ namespace Kaemika {
                         newState.Add(outSample);
                         newState = closure.AddUniqueState(newState, style); // may replace it with an existing state
                         closure.AddTransition(new Transition(state, newState, entry,
-                            "equil " + outSample.FormatSymbol(style) + " := " + inSample.FormatSymbol(style) + " for " + (entry as EquilibrateEntry).time.value.ToString("G3")));
+                            "equilibrate " + outSample.FormatSymbol(style) + " := " + inSample.FormatSymbol(style) + " for " + (entry as EquilibrateEntry).time.value.ToString("G3")));
                         nextStates.AddUnique(newState, style);
                         if (sequential) return nextStates; // otherwise keep accumulating
                     }

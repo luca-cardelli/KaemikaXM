@@ -751,15 +751,24 @@ namespace KaemikaWPF
         private void btnEval_Click(object sender, EventArgs e) { Exec.Execute_Starter(forkWorker: true); }
 
         private void comboBox_Export_SelectedIndexChanged(object sender, EventArgs e) {
-            if (comboBox_Export.Text == "Protocol") Exec.Execute_Exporter(false, ExportAs.Protocol);
-            else if (comboBox_Export.Text == "Hybrid System Reactions") Exec.Execute_Exporter(false, ExportAs.PDMPreactions);
-            else if (comboBox_Export.Text == "Hybrid System Equations") Exec.Execute_Exporter(false, ExportAs.PDMPequations);
-            else if (comboBox_Export.Text == "PDMP GraphViz") Exec.Execute_Exporter(false, ExportAs.PDMP_GraphViz);
-            //else if (comboBox_Export.Text == "PDMP Parallel") Exec.Execute_Exporter(false, ExportAs.PDMP_Parallel);
-            //else if (comboBox_Export.Text == "PDMP Parallel GraphViz") Exec.Execute_Exporter(false, ExportAs.PDMP_Parallel_GraphViz);
+                 if (comboBox_Export.Text == "Chemical Trace") Exec.Execute_Exporter(false, ExportAs.ChemicalTrace);
+            else if (comboBox_Export.Text == "Computational Trace") Exec.Execute_Exporter(false, ExportAs.ComputationalTrace);
+            else if (comboBox_Export.Text == "Reaction Graph") Exec.Execute_Exporter(false, ExportAs.ReactionGraph);
+            else if (comboBox_Export.Text == "Reaction Complex Graph") Exec.Execute_Exporter(false, ExportAs.ComplexGraph);
+            else if (comboBox_Export.Text == "Protocol Step Graph") Exec.Execute_Exporter(false, ExportAs.ProtocolGraph);
+            else if (comboBox_Export.Text == "Protocol State Graph") Exec.Execute_Exporter(false, ExportAs.PDMPGraph);
+            else if (comboBox_Export.Text == "System Reactions") Exec.Execute_Exporter(false, ExportAs.PDMPreactions);
+            else if (comboBox_Export.Text == "System Equations") Exec.Execute_Exporter(false, ExportAs.PDMPequations);
+
             else if (comboBox_Export.Text == "CRN (LBS silverlight)") Exec.Execute_Exporter(false, ExportAs.MSRC_LBS);
             else if (comboBox_Export.Text == "CRN (LBS html5)") Exec.Execute_Exporter(false, ExportAs.MSRC_CRN);
             else if (comboBox_Export.Text == "ODE (Oscill8)") Exec.Execute_Exporter(false, ExportAs.ODE);
+            else if (comboBox_Export.Text == "Protocol") Exec.Execute_Exporter(false, ExportAs.Protocol);
+
+            //else if (comboBox_Export.Text == "PDMP GraphViz") Exec.Execute_Exporter(false, ExportAs.PDMP_GraphViz);
+            //else if (comboBox_Export.Text == "PDMP Parallel") Exec.Execute_Exporter(false, ExportAs.PDMP_Parallel);
+            //else if (comboBox_Export.Text == "PDMP Parallel GraphViz") Exec.Execute_Exporter(false, ExportAs.PDMP_Parallel_GraphViz);
+
             else if (comboBox_Export.Text == "Last simulation state") {
                 string s = Exec.lastReport + Environment.NewLine + Exec.lastState + Environment.NewLine;
                 this.OutputAppendText(s);

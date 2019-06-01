@@ -528,7 +528,6 @@ namespace Kaemika
             else return -1;
         }
 
-        //### THIS SHOULD RETURN THE CRN THAT IT IS COMPUTING, MAYBE PUT IT INSIDE resultSample??
         public static SampleValue Equilibrate(Symbol symbol, SampleValue sample, double fortime, Netlist netlist, Style style) {
             if (!netlist.autoContinue) {
                 while ((!continueExecution) && Exec.IsExecuting()) {
@@ -549,7 +548,7 @@ namespace Kaemika
             Noise noise = Gui.gui.NoiseSeries();
             List<SpeciesValue> species = sample.Species(out double[] speciesState);
             State initialState = new State(species.Count, noise != Noise.None).InitMeans(speciesState);
-            List<ReactionValue> reactions = netlist.RelevantReactions(sample, species, style);
+            List<ReactionValue> reactions = sample.RelevantReactions(netlist, style);
             CRN crn = new CRN(sample, reactions, precomputeLNA: (noise != Noise.None) && Gui.gui.PrecomputeLNA());
             List<ReportEntry> reports = netlist.Reports(species);
             sample.Consume(reactions, style);
@@ -572,7 +571,7 @@ namespace Kaemika
             double finalTime = fortime;
             IEnumerable<SolPoint> solution;
             if (species.Count > 0   // we don't want to run on the empty species list: Oslo crashes
-                && (!crn.trivial)   // we don't want to run trivial ODEs: some Oslo solvers hang on very small stepping
+                && (!crn.Trivial(style))   // we don't want to run trivial ODEs: some Oslo solvers hang on very small stepping
                 && fortime > 0      // we don't want to run when fortime==0
                ) {
                 try {
@@ -916,6 +915,21 @@ namespace Kaemika
             }
             throw new Error("Invalid dimension '" + dimension + "'");
         }
+        public List<ReactionValue> RelevantReactions(Netlist netlist, Style style) { 
+            // return the list of reactions in the netlist that can fire in this sample
+            // check that those reactions produce only species in this sample, or give error
+            List<ReactionValue> reactionList = new List<ReactionValue> { };
+            foreach (ReactionValue reaction in netlist.AllReactions()) {
+                if (reaction.ReactantsCoveredBy(species, out Symbol notCoveredReactant)) {
+                    if (reaction.ProductsCoveredBy(species, out Symbol notCoveredProduct)) {
+                        reactionList.Add(reaction);
+                    } else throw new Error(
+                        "Reaction '" + reaction.Format(style) + "' produces species '" + notCoveredProduct.Format(style) + 
+                        "' in sample '" + this.symbol.Format(style) + "', but that species is uninitialized in that sample");
+                } // else ignore reaction because it cannot fire
+            }
+            return reactionList;
+        }
     }
 
     public class SpeciesValue : Value {
@@ -1031,12 +1045,35 @@ namespace Kaemika
             if (this.rate.Involves(species)) return true;
             return false;
         }
+        public bool InvolvesAsReactants(List<SpeciesValue> species) {
+            foreach (SpeciesValue s in species) {
+                if (this.reactants.Exists(x => x.SameSymbol(s.symbol))) return true;
+            }
+            if (this.rate.Involves(species)) return true;
+            return false;
+        }
+        public bool InvolvesAsProducts(List<SpeciesValue> species) {
+            foreach (SpeciesValue s in species) {
+                if (this.products.Exists(x => x.SameSymbol(s.symbol))) return true;
+            }
+            return false;
+        }
         public bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered) {
             foreach (Symbol rs in this.reactants)
                 if (!species.Exists(x => x.symbol.SameSymbol(rs))) { notCovered = rs; return false; };
             foreach (Symbol rs in this.products)
                 if (!species.Exists(x => x.symbol.SameSymbol(rs))) { notCovered = rs; return false; };
             return rate.CoveredBy(species, out notCovered);
+        }
+        public bool ReactantsCoveredBy(List<SpeciesValue> species, out Symbol notCovered) {
+            foreach (Symbol rs in this.reactants)
+                if (!species.Exists(x => x.symbol.SameSymbol(rs))) { notCovered = rs; return false; };
+            return rate.CoveredBy(species, out notCovered);
+        }
+        public bool ProductsCoveredBy(List<SpeciesValue> species, out Symbol notCovered) {
+            foreach (Symbol rs in this.products)
+                if (!species.Exists(x => x.symbol.SameSymbol(rs))) { notCovered = rs; return false; };
+            notCovered = null; return true;
         }
         public HashSet<Symbol> ReactantsSet() { return new HashSet<Symbol>(reactants, new SymbolComparer()); }
         public HashSet<Symbol> ProductsSet() { return new HashSet<Symbol>(products, new SymbolComparer()); }

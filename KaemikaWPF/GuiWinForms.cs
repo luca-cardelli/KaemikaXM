@@ -94,10 +94,9 @@ namespace KaemikaWPF
             //### also clear any graph
         }
 
-        public override void ProcessGraph(string text) {
-            //### 
+        public override void ProcessGraph(string graphFamily) {
+            OutputSetText(Export.ProcessGraph(graphFamily));
         }
-
        
         public override void OutputSetText(string text) {
             if (form.txtTarget.InvokeRequired) {

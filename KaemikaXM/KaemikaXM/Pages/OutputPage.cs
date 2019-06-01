@@ -46,8 +46,8 @@ namespace KaemikaXM.Pages {
                 new OutputAction(this, "Reaction Complex Graph", OutputKind.Graph, ExportAs.ComplexGraph),
                 new OutputAction(this, "Protocol Step Graph", OutputKind.Graph, ExportAs.ProtocolGraph),
                 new OutputAction(this, "Protocol State Graph", OutputKind.Graph, ExportAs.PDMPGraph),
-                new OutputAction(this, "Hybrid System Reactions", OutputKind.Text, ExportAs.PDMPreactions),
-                new OutputAction(this, "Hybrid System Equations", OutputKind.Text, ExportAs.PDMPequations),
+                new OutputAction(this, "System Reactions", OutputKind.Text, ExportAs.PDMPreactions),
+                new OutputAction(this, "System Equations", OutputKind.Text, ExportAs.PDMPequations),
                 //new OutputAction(this, "Protocol State Graph (Par.)", OutputKind.Graph, ExportAs.PDMPGraph_Parallel),
             };
         }
@@ -91,7 +91,7 @@ namespace KaemikaXM.Pages {
                 FontSize = 14,
             };
 
-            currentTextOutputAction = outputActions["Chemical Trace"];
+            currentTextOutputAction = outputActions["System Reactions"]; //Chemical Trace
             currentGraphOutputAction = outputActions["Protocol Step Graph"];
             currentOutputAction = currentTextOutputAction;
 
@@ -132,7 +132,7 @@ namespace KaemikaXM.Pages {
                         if (layout == null) return;
                         var graph = layout.GRAPH;
                         if (graph == null) return;
-                        text = new Graph<Vertex, Kaemika.Edge<Vertex>>(graph.Vertices, graph.Edges).ToGraphviz();
+                        text = Export.GraphViz(graph);
                     }
                     if (text != "") await Clipboard.SetTextAsync(text);
                 }));

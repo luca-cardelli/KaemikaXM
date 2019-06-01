@@ -33,7 +33,8 @@ namespace KaemikaXM
         }
 
         public App(Stream cgtStream, List<ModelInfoGroup> docs) {
-            FolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
+//            FolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
+            FolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
             Gui.gui = new GUI_Xamarin();
             TheParser.parser = new CalithaParser(GoldParser(cgtStream));
             DocListPage.docs = docs;

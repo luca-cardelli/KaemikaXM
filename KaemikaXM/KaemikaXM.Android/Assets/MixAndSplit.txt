@@ -2,20 +2,25 @@
 // Example of Sample Manipulation
 //======================================
 
+species {c}
+
 sample A 
 species a @ 1M in A
-a -> #
+amount c @ 0.1M in A
+a + c -> a + a
+equilibrate A1 := A for 1
 
 sample B
 species b @ 1M in B
-b -> #
-equilibrate E := B for 3
+amount c @ 0.1M in B
+b + c -> c + c
+equilibrate B1 := B for 1
 
-split C,D := A by 0.5
+split C,D := A1 by 0.5
 dispose C
 
-mix F := D with E
-a + b -> #
-equilibrate G := F for 3
+mix E := D with B1
+a + b -> b + b
 
-dispose G
+equilibrate F := E for 20
+dispose F

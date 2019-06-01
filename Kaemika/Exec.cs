@@ -172,10 +172,36 @@ namespace Kaemika {
                 Gui.gui.OutputSetText("");
                 if (execution == null) {
                 } else if (exportAs == ExportAs.None) {
+
                 } else if (exportAs == ExportAs.ChemicalTrace) {
                     Gui.gui.OutputAppendText(execution.netlist.Format(execution.style.RestyleAsTraceComputational(false)) + execution.ElapsedTime());
                 } else if (exportAs == ExportAs.ComputationalTrace) {
                     Gui.gui.OutputAppendText(execution.netlist.Format(execution.style.RestyleAsTraceComputational(true)) + execution.ElapsedTime());
+                } else if (exportAs == ExportAs.PDMPreactions) {
+                    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).HybridSystem(true, execution.style));
+                    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
+                } else if (exportAs == ExportAs.PDMPequations) {
+                    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).HybridSystem(false, execution.style));
+                    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
+
+                } else if (exportAs == ExportAs.ReactionGraph) {
+                    if (execution.graphCache.ContainsKey("ReactionGraph")) { }
+                    else execution.graphCache["ReactionGraph"] = Export.ReactionGraph(execution.netlist.AllSpecies(), execution.netlist.AllReactions(), execution.style);
+                    Gui.gui.ProcessGraph("ReactionGraph");
+                } else if (exportAs == ExportAs.ComplexGraph) {
+                    if (execution.graphCache.ContainsKey("ComplexGraph")) { }
+                    else execution.graphCache["ComplexGraph"] = Export.ComplexGraph(execution.netlist.AllSpecies(), execution.netlist.AllReactions(), execution.style);
+                    Gui.gui.ProcessGraph("ComplexGraph");
+                } else if (exportAs == ExportAs.ProtocolGraph) {
+                    if (execution.graphCache.ContainsKey("ProtocolGraph")) { }
+                    else execution.graphCache["ProtocolGraph"] = Export.ProtocolGraph(execution.netlist, execution.style);
+                    Gui.gui.ProcessGraph("ProtocolGraph");
+                } else if (exportAs == ExportAs.PDMPGraph) {
+                    if (execution.graphCache.ContainsKey("PDMPGraphSequential")) { }
+                    else execution.graphCache["PDMPGraphSequential"] = Export.PDMPGraph(execution.netlist, execution.style, sequential: true);
+                    Gui.gui.ProcessGraph("PDMPGraphSequential"); 
+
+                // Windows only
                 } else if (exportAs == ExportAs.MSRC_LBS) { // export only the vessel
                     Gui.gui.OutputAppendText(Export.MSRC_LBS(execution.netlist.Reports(execution.vessel.species), execution.vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.LBS, traceComputational: false)));
                     try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
@@ -189,31 +215,10 @@ namespace Kaemika {
                 } else if (exportAs == ExportAs.Protocol) {
                     Gui.gui.OutputAppendText(Export.Protocol(execution.netlist, new Style(varchar: defaultVarchar, new SwapMap(), map: new AlphaMap(), numberFormat: "G4", dataFormat: "symbol", exportTarget: ExportTarget.Standard, traceComputational: false)));
                     try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
-                } else if (exportAs == ExportAs.ReactionGraph) {
-                    if (execution.graphCache.ContainsKey("ReactionGraph")) { }
-                    else execution.graphCache["ReactionGraph"] = Export.ReactionGraph(execution.netlist.AllSpecies(), execution.netlist.AllReactions(), execution.style);
-                    Gui.gui.ProcessGraph("ReactionGraph");
-                } else if (exportAs == ExportAs.ComplexGraph) {
-                    if (execution.graphCache.ContainsKey("ComplexGraph")) { }
-                    else execution.graphCache["ComplexGraph"] = Export.ComplexGraph(execution.netlist.AllSpecies(), execution.netlist.AllReactions(), execution.style);
-                    Gui.gui.ProcessGraph("ComplexGraph");
-                } else if (exportAs == ExportAs.ProtocolGraph) {
-                    if (execution.graphCache.ContainsKey("ProtocolGraph")) { }
-                    else execution.graphCache["ProtocolGraph"] = Export.ProtocolGraph(execution.netlist, execution.style);
-                    Gui.gui.ProcessGraph("ProtocolGraph");
-                } else if (exportAs == ExportAs.PDMPreactions) {
-                    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).HybridSystem(true, execution.style));
-                    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
-                } else if (exportAs == ExportAs.PDMPequations) {
-                    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).HybridSystem(false, execution.style));
-                    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
-                } else if (exportAs == ExportAs.PDMPGraph) {
-                    if (execution.graphCache.ContainsKey("PDMPGraphSequential")) { }
-                    else execution.graphCache["PDMPGraphSequential"] = Export.PDMPGraph(execution.netlist, execution.style, sequential: true);
-                    Gui.gui.ProcessGraph("PDMPGraphSequential"); 
-                } else if (exportAs == ExportAs.PDMP_GraphViz) {
-                    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).GraphViz(execution.style));
-                    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
+
+                //} else if (exportAs == ExportAs.PDMP_GraphViz) {
+                //    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).GraphViz(execution.style));
+                //    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
                 //} else if (exportAs == ExportAs.PDMP_Parallel) {
                 //    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: false).Format(execution.style));
                 //    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };

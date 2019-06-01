@@ -313,7 +313,7 @@ namespace Kaemika
         //private double[,,] precomp;
 
         private double[,,] driftFactor; // LNA precomputation
-        public bool trivial;       // try to identify trivial stoichiometry (no change to any species), but not guaranteed
+        private bool trivial;       // try to identify trivial stoichiometry (no change to any species), but not guaranteed
 
         public CRN(SampleValue sample, List<ReactionValue> reactions, bool precomputeLNA = false) {
             this.sample = sample;
@@ -349,6 +349,10 @@ namespace Kaemika
             if (s2.Length > 0) s2 = s2.Substring(0, s2.Length - 2); // remove last comma
             str += s2 + "}";
             return str;
+        }
+
+        public bool Trivial(Style style) {
+            return trivial;
         }
 
         public string FormatAsODE(Style style, string prefixDiff = "∂", string suffixDiff = "") {
@@ -654,28 +658,28 @@ namespace Kaemika
             return reactionList;
         }
 
-        public List<ReactionValue> RelevantReactions(SampleValue sample, List<SpeciesValue> species, Style style) { 
-            // return the list of reactions in this netlist that involve any of the species in the species list
-            // check that those reactions use only the species in the list, or give error
-            List<ReactionValue> reactionList = new List<ReactionValue> { };
-            foreach (Entry entry in this.entries) {
-                if (entry is ReactionEntry) {
-                    ReactionValue reaction = ((ReactionEntry)entry).reaction;
-                    if (reaction.Involves(species)) {
-                        if (!reaction.CoveredBy(species, out Symbol notCovered)) {
-                            throw new Error(
-                            // Gui.Log("WARNING " +
-                                "Reaction '" + reaction.Format(style) + "' involves species '" + notCovered.Format(style) + "' in sample '" + sample.symbol.Format(style)
-                                +"', but that species is uninitialized in that sample"); }
-                        else reactionList.Add(reaction);
-                    }
-                }
-            }
-            //string s = "Relevant Reactions for sample " + sample.Format(style) + ":" + Environment.NewLine;       
-            //foreach (ReactionValue r in reactionList) s += r.Format(style) + Environment.NewLine;
-            //Gui.Log(s);
-            return reactionList;
-        }
+        //public List<ReactionValue> RelevantReactions(SampleValue sample, List<SpeciesValue> species, Style style) { 
+        //    // return the list of reactions in this netlist that involve any of the species in the species list
+        //    // check that those reactions use only the species in the list, or give error
+        //    List<ReactionValue> reactionList = new List<ReactionValue> { };
+        //    foreach (Entry entry in this.entries) {
+        //        if (entry is ReactionEntry) {
+        //            ReactionValue reaction = ((ReactionEntry)entry).reaction;
+        //            if (reaction.Involves(species)) {
+        //                if (!reaction.CoveredBy(species, out Symbol notCovered)) {
+        //                    throw new Error(
+        //                    // Gui.Log("WARNING " +
+        //                        "Reaction '" + reaction.Format(style) + "' involves species '" + notCovered.Format(style) + "' in sample '" + sample.symbol.Format(style)
+        //                        +"', but that species is uninitialized in that sample"); }
+        //                else reactionList.Add(reaction);
+        //            }
+        //        }
+        //    }
+        //    //string s = "Relevant Reactions for sample " + sample.Format(style) + ":" + Environment.NewLine;       
+        //    //foreach (ReactionValue r in reactionList) s += r.Format(style) + Environment.NewLine;
+        //    //Gui.Log(s);
+        //    return reactionList;
+        //}
 
         public List<ReportEntry> Reports(List<SpeciesValue> species) {
             // return the list of report in this netlist that involve any of the species in the species list
