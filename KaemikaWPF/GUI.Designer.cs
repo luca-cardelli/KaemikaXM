@@ -104,10 +104,9 @@
             // 
             // btnConstruct
             // 
-            this.btnConstruct.Location = new System.Drawing.Point(128, 2260);
-            this.btnConstruct.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.btnConstruct.Location = new System.Drawing.Point(64, 1175);
             this.btnConstruct.Name = "btnConstruct";
-            this.btnConstruct.Size = new System.Drawing.Size(94, 60);
+            this.btnConstruct.Size = new System.Drawing.Size(47, 31);
             this.btnConstruct.TabIndex = 7;
             this.btnConstruct.Text = "Build";
             this.toolTip1.SetToolTip(this.btnConstruct, "Build the abstract syntax tree (debug)");
@@ -122,13 +121,12 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtTarget.BackColor = System.Drawing.SystemColors.Window;
             this.txtTarget.Font = new System.Drawing.Font("Lucida Sans Unicode", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTarget.Location = new System.Drawing.Point(6, 100);
-            this.txtTarget.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.txtTarget.Location = new System.Drawing.Point(3, 52);
             this.txtTarget.Multiline = true;
             this.txtTarget.Name = "txtTarget";
             this.txtTarget.ReadOnly = true;
             this.txtTarget.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.txtTarget.Size = new System.Drawing.Size(1242, 554);
+            this.txtTarget.Size = new System.Drawing.Size(787, 298);
             this.txtTarget.TabIndex = 6;
             // 
             // imageList1
@@ -140,10 +138,9 @@
             // btnEval
             // 
             this.btnEval.BackColor = System.Drawing.Color.LightSalmon;
-            this.btnEval.Location = new System.Drawing.Point(24, 21);
-            this.btnEval.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.btnEval.Location = new System.Drawing.Point(12, 11);
             this.btnEval.Name = "btnEval";
-            this.btnEval.Size = new System.Drawing.Size(192, 62);
+            this.btnEval.Size = new System.Drawing.Size(96, 32);
             this.btnEval.TabIndex = 8;
             this.btnEval.Text = "Start";
             this.toolTip1.SetToolTip(this.btnEval, "Execute the program\r\n(Parse + Build + Scope + Eval)");
@@ -152,10 +149,9 @@
             // 
             // btnScope
             // 
-            this.btnScope.Location = new System.Drawing.Point(234, 2260);
-            this.btnScope.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.btnScope.Location = new System.Drawing.Point(117, 1175);
             this.btnScope.Name = "btnScope";
-            this.btnScope.Size = new System.Drawing.Size(94, 60);
+            this.btnScope.Size = new System.Drawing.Size(47, 31);
             this.btnScope.TabIndex = 9;
             this.btnScope.Text = "Scope";
             this.toolTip1.SetToolTip(this.btnScope, "Validate the use of program variables");
@@ -168,10 +164,9 @@
             this.checkBox_ScopeVariants.AutoSize = true;
             this.checkBox_ScopeVariants.Checked = true;
             this.checkBox_ScopeVariants.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_ScopeVariants.Location = new System.Drawing.Point(340, 2250);
-            this.checkBox_ScopeVariants.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.checkBox_ScopeVariants.Location = new System.Drawing.Point(170, 1170);
             this.checkBox_ScopeVariants.Name = "checkBox_ScopeVariants";
-            this.checkBox_ScopeVariants.Size = new System.Drawing.Size(176, 29);
+            this.checkBox_ScopeVariants.Size = new System.Drawing.Size(91, 17);
             this.checkBox_ScopeVariants.TabIndex = 10;
             this.checkBox_ScopeVariants.Text = "show variants";
             this.toolTip1.SetToolTip(this.checkBox_ScopeVariants, "If distinct variables have the same name\r\ndistinguish them by a unique number");
@@ -183,10 +178,9 @@
             // 
             this.label_Kaemika.AutoSize = true;
             this.label_Kaemika.Font = new System.Drawing.Font("Matura MT Script Capitals", 24F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label_Kaemika.Location = new System.Drawing.Point(8, 0);
-            this.label_Kaemika.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
+            this.label_Kaemika.Location = new System.Drawing.Point(4, 0);
             this.label_Kaemika.Name = "label_Kaemika";
-            this.label_Kaemika.Size = new System.Drawing.Size(300, 85);
+            this.label_Kaemika.Size = new System.Drawing.Size(150, 42);
             this.label_Kaemika.TabIndex = 11;
             this.label_Kaemika.Text = "Kaemika";
             // 
@@ -194,10 +188,9 @@
             // 
             this.label_Version.AutoSize = true;
             this.label_Version.ForeColor = System.Drawing.Color.DarkGreen;
-            this.label_Version.Location = new System.Drawing.Point(110, 67);
-            this.label_Version.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
+            this.label_Version.Location = new System.Drawing.Point(55, 35);
             this.label_Version.Name = "label_Version";
-            this.label_Version.Size = new System.Drawing.Size(181, 25);
+            this.label_Version.Size = new System.Drawing.Size(90, 13);
             this.label_Version.TabIndex = 12;
             this.label_Version.Text = "Version 6.022e23";
             // 
@@ -205,10 +198,9 @@
             // 
             this.button_Source_Copy.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button_Source_Copy.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.button_Source_Copy.Location = new System.Drawing.Point(794, 21);
-            this.button_Source_Copy.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.button_Source_Copy.Location = new System.Drawing.Point(563, 11);
             this.button_Source_Copy.Name = "button_Source_Copy";
-            this.button_Source_Copy.Size = new System.Drawing.Size(150, 62);
+            this.button_Source_Copy.Size = new System.Drawing.Size(75, 32);
             this.button_Source_Copy.TabIndex = 14;
             this.button_Source_Copy.Text = "Copy";
             this.toolTip1.SetToolTip(this.button_Source_Copy, "Copy Kaemika program to clipboard");
@@ -219,10 +211,9 @@
             // 
             this.button_Source_Paste.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button_Source_Paste.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.button_Source_Paste.Location = new System.Drawing.Point(958, 21);
-            this.button_Source_Paste.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.button_Source_Paste.Location = new System.Drawing.Point(645, 11);
             this.button_Source_Paste.Name = "button_Source_Paste";
-            this.button_Source_Paste.Size = new System.Drawing.Size(150, 62);
+            this.button_Source_Paste.Size = new System.Drawing.Size(75, 32);
             this.button_Source_Paste.TabIndex = 15;
             this.button_Source_Paste.Text = "Paste";
             this.toolTip1.SetToolTip(this.button_Source_Paste, "Paste Kaemika program from clipboard");
@@ -234,10 +225,9 @@
             this.checkBox_RemapVariants.AutoSize = true;
             this.checkBox_RemapVariants.Checked = true;
             this.checkBox_RemapVariants.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_RemapVariants.Location = new System.Drawing.Point(340, 2281);
-            this.checkBox_RemapVariants.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.checkBox_RemapVariants.Location = new System.Drawing.Point(170, 1186);
             this.checkBox_RemapVariants.Name = "checkBox_RemapVariants";
-            this.checkBox_RemapVariants.Size = new System.Drawing.Size(186, 29);
+            this.checkBox_RemapVariants.Size = new System.Drawing.Size(95, 17);
             this.checkBox_RemapVariants.TabIndex = 17;
             this.checkBox_RemapVariants.Text = "remap variants";
             this.toolTip1.SetToolTip(this.checkBox_RemapVariants, "Remap the unique varible numbers from 0");
@@ -247,10 +237,9 @@
             // 
             // btnParse
             // 
-            this.btnParse.Location = new System.Drawing.Point(22, 2260);
-            this.btnParse.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.btnParse.Location = new System.Drawing.Point(11, 1175);
             this.btnParse.Name = "btnParse";
-            this.btnParse.Size = new System.Drawing.Size(94, 60);
+            this.btnParse.Size = new System.Drawing.Size(47, 31);
             this.btnParse.TabIndex = 20;
             this.btnParse.Text = "Parse";
             this.toolTip1.SetToolTip(this.btnParse, "Validate the program syntax");
@@ -280,8 +269,8 @@
             legend1.IsTextAutoFit = false;
             legend1.Name = "Legend1";
             this.chart1.Legends.Add(legend1);
-            this.chart1.Location = new System.Drawing.Point(12, 743);
-            this.chart1.Margin = new System.Windows.Forms.Padding(12, 8, 12, 8);
+            this.chart1.Location = new System.Drawing.Point(6, 396);
+            this.chart1.Margin = new System.Windows.Forms.Padding(6, 4, 6, 4);
             this.chart1.Name = "chart1";
             this.chart1.Palette = System.Windows.Forms.DataVisualization.Charting.ChartColorPalette.Bright;
             series1.ChartArea = "ChartArea1";
@@ -289,7 +278,7 @@
             series1.Legend = "Legend1";
             series1.Name = "-";
             this.chart1.Series.Add(series1);
-            this.chart1.Size = new System.Drawing.Size(1230, 551);
+            this.chart1.Size = new System.Drawing.Size(781, 297);
             this.chart1.TabIndex = 24;
             this.chart1.Text = "chart1";
             this.toolTip1.SetToolTip(this.chart1, "pinch or mouse-wheel to zoom\r\ndrag to scroll when zoomed\r\ndouble-click to cancel " +
@@ -328,11 +317,10 @@
             "   Builtin Operators",
             "   Flows",
             "   Functions"});
-            this.comboBox_Examples.Location = new System.Drawing.Point(320, 35);
-            this.comboBox_Examples.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.comboBox_Examples.Location = new System.Drawing.Point(160, 18);
             this.comboBox_Examples.MaxDropDownItems = 100;
             this.comboBox_Examples.Name = "comboBox_Examples";
-            this.comboBox_Examples.Size = new System.Drawing.Size(238, 33);
+            this.comboBox_Examples.Size = new System.Drawing.Size(121, 21);
             this.comboBox_Examples.TabIndex = 25;
             this.comboBox_Examples.SelectedIndexChanged += new System.EventHandler(this.comboBox_Examples_SelectedIndexChanged);
             // 
@@ -344,10 +332,9 @@
             this.comboBox_Solvers.Items.AddRange(new object[] {
             "RK547M",
             "GearBDF"});
-            this.comboBox_Solvers.Location = new System.Drawing.Point(626, 27);
-            this.comboBox_Solvers.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.comboBox_Solvers.Location = new System.Drawing.Point(313, 14);
             this.comboBox_Solvers.Name = "comboBox_Solvers";
-            this.comboBox_Solvers.Size = new System.Drawing.Size(128, 32);
+            this.comboBox_Solvers.Size = new System.Drawing.Size(66, 20);
             this.comboBox_Solvers.TabIndex = 27;
             this.comboBox_Solvers.SelectedIndexChanged += new System.EventHandler(this.comboBox_Solvers_SelectedIndexChanged);
             // 
@@ -355,10 +342,9 @@
             // 
             this.btnStop.BackColor = System.Drawing.Color.Gainsboro;
             this.btnStop.Enabled = false;
-            this.btnStop.Location = new System.Drawing.Point(366, 21);
-            this.btnStop.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.btnStop.Location = new System.Drawing.Point(183, 11);
             this.btnStop.Name = "btnStop";
-            this.btnStop.Size = new System.Drawing.Size(192, 62);
+            this.btnStop.Size = new System.Drawing.Size(96, 32);
             this.btnStop.TabIndex = 29;
             this.btnStop.Text = "Stop";
             this.toolTip1.SetToolTip(this.btnStop, "Stop program execution");
@@ -369,10 +355,9 @@
             // 
             this.checkBox_LNA.AutoSize = true;
             this.checkBox_LNA.ForeColor = System.Drawing.Color.DarkGreen;
-            this.checkBox_LNA.Location = new System.Drawing.Point(10, 21);
-            this.checkBox_LNA.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.checkBox_LNA.Location = new System.Drawing.Point(5, 11);
             this.checkBox_LNA.Name = "checkBox_LNA";
-            this.checkBox_LNA.Size = new System.Drawing.Size(85, 29);
+            this.checkBox_LNA.Size = new System.Drawing.Size(47, 17);
             this.checkBox_LNA.TabIndex = 30;
             this.checkBox_LNA.Text = "LNA";
             this.toolTip1.SetToolTip(this.checkBox_LNA, "Compute and plot the Linear Noise Approximation");
@@ -388,11 +373,10 @@
             this.groupBox_LNA.Controls.Add(this.radioButton_LNA_Var);
             this.groupBox_LNA.Controls.Add(this.radioButton_LNA_SD);
             this.groupBox_LNA.Controls.Add(this.checkBox_LNA);
-            this.groupBox_LNA.Location = new System.Drawing.Point(572, 2);
+            this.groupBox_LNA.Location = new System.Drawing.Point(286, 1);
             this.groupBox_LNA.Margin = new System.Windows.Forms.Padding(0);
             this.groupBox_LNA.Name = "groupBox_LNA";
-            this.groupBox_LNA.Padding = new System.Windows.Forms.Padding(6, 6, 6, 6);
-            this.groupBox_LNA.Size = new System.Drawing.Size(388, 88);
+            this.groupBox_LNA.Size = new System.Drawing.Size(194, 46);
             this.groupBox_LNA.TabIndex = 32;
             this.groupBox_LNA.TabStop = false;
             // 
@@ -400,10 +384,9 @@
             // 
             this.radioButton_LNA_CV.AutoSize = true;
             this.radioButton_LNA_CV.Enabled = false;
-            this.radioButton_LNA_CV.Location = new System.Drawing.Point(292, 19);
-            this.radioButton_LNA_CV.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.radioButton_LNA_CV.Location = new System.Drawing.Point(146, 10);
             this.radioButton_LNA_CV.Name = "radioButton_LNA_CV";
-            this.radioButton_LNA_CV.Size = new System.Drawing.Size(73, 29);
+            this.radioButton_LNA_CV.Size = new System.Drawing.Size(43, 17);
             this.radioButton_LNA_CV.TabIndex = 36;
             this.radioButton_LNA_CV.TabStop = true;
             this.radioButton_LNA_CV.Text = "σ/μ";
@@ -414,10 +397,10 @@
             // 
             this.radioButton_LNA_Fano.AutoSize = true;
             this.radioButton_LNA_Fano.Enabled = false;
-            this.radioButton_LNA_Fano.Location = new System.Drawing.Point(292, 52);
-            this.radioButton_LNA_Fano.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.radioButton_LNA_Fano.Location = new System.Drawing.Point(146, 27);
+            this.radioButton_LNA_Fano.Margin = new System.Windows.Forms.Padding(2);
             this.radioButton_LNA_Fano.Name = "radioButton_LNA_Fano";
-            this.radioButton_LNA_Fano.Size = new System.Drawing.Size(80, 29);
+            this.radioButton_LNA_Fano.Size = new System.Drawing.Size(46, 17);
             this.radioButton_LNA_Fano.TabIndex = 35;
             this.radioButton_LNA_Fano.Text = "σ²/μ";
             this.toolTip1.SetToolTip(this.radioButton_LNA_Fano, "Plot the Fano factor");
@@ -427,10 +410,10 @@
             // 
             this.radioButton_LNA_VarRange.AutoSize = true;
             this.radioButton_LNA_VarRange.Enabled = false;
-            this.radioButton_LNA_VarRange.Location = new System.Drawing.Point(114, 52);
-            this.radioButton_LNA_VarRange.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.radioButton_LNA_VarRange.Location = new System.Drawing.Point(57, 27);
+            this.radioButton_LNA_VarRange.Margin = new System.Windows.Forms.Padding(2);
             this.radioButton_LNA_VarRange.Name = "radioButton_LNA_VarRange";
-            this.radioButton_LNA_VarRange.Size = new System.Drawing.Size(80, 29);
+            this.radioButton_LNA_VarRange.Size = new System.Drawing.Size(44, 17);
             this.radioButton_LNA_VarRange.TabIndex = 34;
             this.radioButton_LNA_VarRange.Text = "± σ²";
             this.toolTip1.SetToolTip(this.radioButton_LNA_VarRange, "Plot variance as a band");
@@ -443,10 +426,10 @@
             this.radioButton_LNA_SDRange.Enabled = false;
             this.radioButton_LNA_SDRange.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.radioButton_LNA_SDRange.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.radioButton_LNA_SDRange.Location = new System.Drawing.Point(114, 19);
-            this.radioButton_LNA_SDRange.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.radioButton_LNA_SDRange.Location = new System.Drawing.Point(57, 10);
+            this.radioButton_LNA_SDRange.Margin = new System.Windows.Forms.Padding(2);
             this.radioButton_LNA_SDRange.Name = "radioButton_LNA_SDRange";
-            this.radioButton_LNA_SDRange.Size = new System.Drawing.Size(75, 30);
+            this.radioButton_LNA_SDRange.Size = new System.Drawing.Size(41, 17);
             this.radioButton_LNA_SDRange.TabIndex = 33;
             this.radioButton_LNA_SDRange.TabStop = true;
             this.radioButton_LNA_SDRange.Text = "± σ";
@@ -457,10 +440,9 @@
             // 
             this.radioButton_LNA_Var.AutoSize = true;
             this.radioButton_LNA_Var.Enabled = false;
-            this.radioButton_LNA_Var.Location = new System.Drawing.Point(212, 52);
-            this.radioButton_LNA_Var.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.radioButton_LNA_Var.Location = new System.Drawing.Point(106, 27);
             this.radioButton_LNA_Var.Name = "radioButton_LNA_Var";
-            this.radioButton_LNA_Var.Size = new System.Drawing.Size(62, 29);
+            this.radioButton_LNA_Var.Size = new System.Drawing.Size(35, 17);
             this.radioButton_LNA_Var.TabIndex = 32;
             this.radioButton_LNA_Var.Text = "σ²";
             this.toolTip1.SetToolTip(this.radioButton_LNA_Var, "Plot variance");
@@ -471,10 +453,9 @@
             // 
             this.radioButton_LNA_SD.AutoSize = true;
             this.radioButton_LNA_SD.Enabled = false;
-            this.radioButton_LNA_SD.Location = new System.Drawing.Point(212, 19);
-            this.radioButton_LNA_SD.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.radioButton_LNA_SD.Location = new System.Drawing.Point(106, 10);
             this.radioButton_LNA_SD.Name = "radioButton_LNA_SD";
-            this.radioButton_LNA_SD.Size = new System.Drawing.Size(55, 29);
+            this.radioButton_LNA_SD.Size = new System.Drawing.Size(32, 17);
             this.radioButton_LNA_SD.TabIndex = 31;
             this.radioButton_LNA_SD.Text = "σ";
             this.toolTip1.SetToolTip(this.radioButton_LNA_SD, "Plot standard deviation");
@@ -488,11 +469,11 @@
             this.checkedListBox_Series.CheckOnClick = true;
             this.checkedListBox_Series.Font = new System.Drawing.Font("Lucida Sans Unicode", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkedListBox_Series.FormattingEnabled = true;
-            this.checkedListBox_Series.Location = new System.Drawing.Point(1838, 810);
-            this.checkedListBox_Series.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkedListBox_Series.Location = new System.Drawing.Point(1603, 501);
+            this.checkedListBox_Series.Margin = new System.Windows.Forms.Padding(2);
             this.checkedListBox_Series.MultiColumn = true;
             this.checkedListBox_Series.Name = "checkedListBox_Series";
-            this.checkedListBox_Series.Size = new System.Drawing.Size(654, 346);
+            this.checkedListBox_Series.Size = new System.Drawing.Size(329, 175);
             this.checkedListBox_Series.TabIndex = 33;
             this.checkedListBox_Series.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.checkedListBox_Series_ItemCheck);
             this.checkedListBox_Series.SelectedIndexChanged += new System.EventHandler(this.checkedListBox_Series_SelectedIndexChanged);
@@ -500,10 +481,9 @@
             // button_ChartSnap
             // 
             this.button_ChartSnap.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.button_ChartSnap.Location = new System.Drawing.Point(966, 10);
-            this.button_ChartSnap.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.button_ChartSnap.Location = new System.Drawing.Point(483, 5);
             this.button_ChartSnap.Name = "button_ChartSnap";
-            this.button_ChartSnap.Size = new System.Drawing.Size(150, 62);
+            this.button_ChartSnap.Size = new System.Drawing.Size(75, 32);
             this.button_ChartSnap.TabIndex = 35;
             this.button_ChartSnap.Text = "Snap";
             this.toolTip1.SetToolTip(this.button_ChartSnap, "Copy chart image to clipboard\r\nas resolution-independent .emf\r\n(paste into e.g. P" +
@@ -515,10 +495,10 @@
             // 
             this.radioButton_TraceComputational.AutoSize = true;
             this.radioButton_TraceComputational.ForeColor = System.Drawing.Color.DarkGreen;
-            this.radioButton_TraceComputational.Location = new System.Drawing.Point(10, 52);
-            this.radioButton_TraceComputational.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.radioButton_TraceComputational.Location = new System.Drawing.Point(5, 27);
+            this.radioButton_TraceComputational.Margin = new System.Windows.Forms.Padding(2);
             this.radioButton_TraceComputational.Name = "radioButton_TraceComputational";
-            this.radioButton_TraceComputational.Size = new System.Drawing.Size(242, 29);
+            this.radioButton_TraceComputational.Size = new System.Drawing.Size(123, 17);
             this.radioButton_TraceComputational.TabIndex = 1;
             this.radioButton_TraceComputational.Text = "Computational Trace";
             this.toolTip1.SetToolTip(this.radioButton_TraceComputational, "Output all defined entities");
@@ -530,10 +510,10 @@
             this.radioButton_TraceChemical.AutoSize = true;
             this.radioButton_TraceChemical.Checked = true;
             this.radioButton_TraceChemical.ForeColor = System.Drawing.Color.DarkGreen;
-            this.radioButton_TraceChemical.Location = new System.Drawing.Point(10, 15);
-            this.radioButton_TraceChemical.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.radioButton_TraceChemical.Location = new System.Drawing.Point(5, 8);
+            this.radioButton_TraceChemical.Margin = new System.Windows.Forms.Padding(2);
             this.radioButton_TraceChemical.Name = "radioButton_TraceChemical";
-            this.radioButton_TraceChemical.Size = new System.Drawing.Size(193, 29);
+            this.radioButton_TraceChemical.Size = new System.Drawing.Size(99, 17);
             this.radioButton_TraceChemical.TabIndex = 0;
             this.radioButton_TraceChemical.TabStop = true;
             this.radioButton_TraceChemical.Text = "Chemical Trace";
@@ -543,15 +523,14 @@
             // 
             // numericUpDown_Transparency
             // 
-            this.numericUpDown_Transparency.Location = new System.Drawing.Point(874, 33);
-            this.numericUpDown_Transparency.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.numericUpDown_Transparency.Location = new System.Drawing.Point(437, 17);
             this.numericUpDown_Transparency.Maximum = new decimal(new int[] {
             255,
             0,
             0,
             0});
             this.numericUpDown_Transparency.Name = "numericUpDown_Transparency";
-            this.numericUpDown_Transparency.Size = new System.Drawing.Size(78, 31);
+            this.numericUpDown_Transparency.Size = new System.Drawing.Size(39, 20);
             this.numericUpDown_Transparency.TabIndex = 40;
             this.toolTip1.SetToolTip(this.numericUpDown_Transparency, "Transparency of bands");
             this.numericUpDown_Transparency.Value = new decimal(new int[] {
@@ -564,10 +543,9 @@
             // button_Target_Copy
             // 
             this.button_Target_Copy.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.button_Target_Copy.Location = new System.Drawing.Point(246, 10);
-            this.button_Target_Copy.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.button_Target_Copy.Location = new System.Drawing.Point(123, 5);
             this.button_Target_Copy.Name = "button_Target_Copy";
-            this.button_Target_Copy.Size = new System.Drawing.Size(150, 62);
+            this.button_Target_Copy.Size = new System.Drawing.Size(75, 32);
             this.button_Target_Copy.TabIndex = 16;
             this.button_Target_Copy.Text = "Copy";
             this.toolTip1.SetToolTip(this.button_Target_Copy, "Copy text output to clipboard");
@@ -579,10 +557,9 @@
             this.checkBoxButton_EditChart.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkBoxButton_EditChart.AutoSize = true;
             this.checkBoxButton_EditChart.BackColor = System.Drawing.Color.Linen;
-            this.checkBoxButton_EditChart.Location = new System.Drawing.Point(1128, 27);
-            this.checkBoxButton_EditChart.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.checkBoxButton_EditChart.Location = new System.Drawing.Point(564, 14);
             this.checkBoxButton_EditChart.Name = "checkBoxButton_EditChart";
-            this.checkBoxButton_EditChart.Size = new System.Drawing.Size(94, 35);
+            this.checkBoxButton_EditChart.Size = new System.Drawing.Size(53, 23);
             this.checkBoxButton_EditChart.TabIndex = 34;
             this.checkBoxButton_EditChart.Text = "Legend";
             this.toolTip1.SetToolTip(this.checkBoxButton_EditChart, "Select data series to plot\r\n\r\nRemembered across \r\nsimulations, if left open");
@@ -609,10 +586,9 @@
             "CRN (LBS html5)",
             "CRN (LBS silverlight)",
             "Last simulation state"});
-            this.comboBox_Export.Location = new System.Drawing.Point(20, 23);
-            this.comboBox_Export.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.comboBox_Export.Location = new System.Drawing.Point(10, 12);
             this.comboBox_Export.Name = "comboBox_Export";
-            this.comboBox_Export.Size = new System.Drawing.Size(210, 33);
+            this.comboBox_Export.Size = new System.Drawing.Size(107, 21);
             this.comboBox_Export.TabIndex = 37;
             this.toolTip1.SetToolTip(this.comboBox_Export, "Export and copy result to clipboard");
             this.comboBox_Export.SelectedIndexChanged += new System.EventHandler(this.comboBox_Export_SelectedIndexChanged);
@@ -620,10 +596,9 @@
             // checkBox_ChartGrid
             // 
             this.checkBox_ChartGrid.AutoSize = true;
-            this.checkBox_ChartGrid.Location = new System.Drawing.Point(770, 40);
-            this.checkBox_ChartGrid.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.checkBox_ChartGrid.Location = new System.Drawing.Point(385, 21);
             this.checkBox_ChartGrid.Name = "checkBox_ChartGrid";
-            this.checkBox_ChartGrid.Size = new System.Drawing.Size(80, 29);
+            this.checkBox_ChartGrid.Size = new System.Drawing.Size(43, 17);
             this.checkBox_ChartGrid.TabIndex = 41;
             this.checkBox_ChartGrid.Text = "grid";
             this.toolTip1.SetToolTip(this.checkBox_ChartGrid, "Show/hide grid");
@@ -635,10 +610,9 @@
             this.checkBox_CharAxes.AutoSize = true;
             this.checkBox_CharAxes.Checked = true;
             this.checkBox_CharAxes.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_CharAxes.Location = new System.Drawing.Point(770, 8);
-            this.checkBox_CharAxes.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.checkBox_CharAxes.Location = new System.Drawing.Point(385, 4);
             this.checkBox_CharAxes.Name = "checkBox_CharAxes";
-            this.checkBox_CharAxes.Size = new System.Drawing.Size(90, 29);
+            this.checkBox_CharAxes.Size = new System.Drawing.Size(48, 17);
             this.checkBox_CharAxes.TabIndex = 42;
             this.checkBox_CharAxes.Text = "axes";
             this.toolTip1.SetToolTip(this.checkBox_CharAxes, "Show/hide axes");
@@ -650,10 +624,9 @@
             this.checkBox_precomputeLNA.AutoSize = true;
             this.checkBox_precomputeLNA.Checked = true;
             this.checkBox_precomputeLNA.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_precomputeLNA.Location = new System.Drawing.Point(584, 37);
-            this.checkBox_precomputeLNA.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.checkBox_precomputeLNA.Location = new System.Drawing.Point(292, 19);
             this.checkBox_precomputeLNA.Name = "checkBox_precomputeLNA";
-            this.checkBox_precomputeLNA.Size = new System.Drawing.Size(28, 27);
+            this.checkBox_precomputeLNA.Size = new System.Drawing.Size(15, 14);
             this.checkBox_precomputeLNA.TabIndex = 45;
             this.toolTip1.SetToolTip(this.checkBox_precomputeLNA, "Precompute LNA drift matrix (big)");
             this.checkBox_precomputeLNA.UseVisualStyleBackColor = false;
@@ -666,10 +639,9 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.richTextBox.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.richTextBox.Font = new System.Drawing.Font("Lucida Sans Unicode", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.richTextBox.Location = new System.Drawing.Point(8, 0);
-            this.richTextBox.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.richTextBox.Location = new System.Drawing.Point(4, 0);
             this.richTextBox.Name = "richTextBox";
-            this.richTextBox.Size = new System.Drawing.Size(1226, 1188);
+            this.richTextBox.Size = new System.Drawing.Size(777, 636);
             this.richTextBox.TabIndex = 47;
             this.richTextBox.Text = "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n" +
     "31\n32\n33\n34";
@@ -679,10 +651,9 @@
             // 
             this.button_Continue.BackColor = System.Drawing.Color.Gainsboro;
             this.button_Continue.Enabled = false;
-            this.button_Continue.Location = new System.Drawing.Point(226, 21);
-            this.button_Continue.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.button_Continue.Location = new System.Drawing.Point(113, 11);
             this.button_Continue.Name = "button_Continue";
-            this.button_Continue.Size = new System.Drawing.Size(128, 62);
+            this.button_Continue.Size = new System.Drawing.Size(64, 32);
             this.button_Continue.TabIndex = 38;
             this.button_Continue.Text = "Continue";
             this.button_Continue.UseVisualStyleBackColor = false;
@@ -692,11 +663,11 @@
             // 
             this.groupBox_Trace.Controls.Add(this.radioButton_TraceComputational);
             this.groupBox_Trace.Controls.Add(this.radioButton_TraceChemical);
-            this.groupBox_Trace.Location = new System.Drawing.Point(974, 2);
+            this.groupBox_Trace.Location = new System.Drawing.Point(487, 1);
             this.groupBox_Trace.Margin = new System.Windows.Forms.Padding(0);
             this.groupBox_Trace.Name = "groupBox_Trace";
-            this.groupBox_Trace.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.groupBox_Trace.Size = new System.Drawing.Size(266, 88);
+            this.groupBox_Trace.Padding = new System.Windows.Forms.Padding(2);
+            this.groupBox_Trace.Size = new System.Drawing.Size(133, 46);
             this.groupBox_Trace.TabIndex = 39;
             this.groupBox_Trace.TabStop = false;
             // 
@@ -722,10 +693,10 @@
             "₉",
             "₍",
             "₎"});
-            this.comboBox_Sub.Location = new System.Drawing.Point(1118, 52);
-            this.comboBox_Sub.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboBox_Sub.Location = new System.Drawing.Point(725, 27);
+            this.comboBox_Sub.Margin = new System.Windows.Forms.Padding(2);
             this.comboBox_Sub.Name = "comboBox_Sub";
-            this.comboBox_Sub.Size = new System.Drawing.Size(38, 33);
+            this.comboBox_Sub.Size = new System.Drawing.Size(21, 21);
             this.comboBox_Sub.TabIndex = 43;
             this.comboBox_Sub.SelectedIndexChanged += new System.EventHandler(this.comboBox_Sub_SelectedIndexChanged);
             // 
@@ -734,10 +705,10 @@
             this.label_Sub.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label_Sub.AutoSize = true;
             this.label_Sub.ForeColor = System.Drawing.Color.DarkGreen;
-            this.label_Sub.Location = new System.Drawing.Point(1114, 25);
-            this.label_Sub.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label_Sub.Location = new System.Drawing.Point(723, 13);
+            this.label_Sub.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label_Sub.Name = "label_Sub";
-            this.label_Sub.Size = new System.Drawing.Size(50, 25);
+            this.label_Sub.Size = new System.Drawing.Size(26, 13);
             this.label_Sub.TabIndex = 44;
             this.label_Sub.Text = "Sub";
             // 
@@ -763,10 +734,10 @@
             "⁹",
             "⁽",
             "⁾"});
-            this.comboBox_Sup.Location = new System.Drawing.Point(1170, 31);
-            this.comboBox_Sup.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboBox_Sup.Location = new System.Drawing.Point(751, 16);
+            this.comboBox_Sup.Margin = new System.Windows.Forms.Padding(2);
             this.comboBox_Sup.Name = "comboBox_Sup";
-            this.comboBox_Sup.Size = new System.Drawing.Size(38, 33);
+            this.comboBox_Sup.Size = new System.Drawing.Size(21, 21);
             this.comboBox_Sup.TabIndex = 45;
             this.comboBox_Sup.SelectedIndexChanged += new System.EventHandler(this.comboBox_Sup_SelectedIndexChanged);
             // 
@@ -775,10 +746,10 @@
             this.label_Sup.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label_Sup.AutoSize = true;
             this.label_Sup.ForeColor = System.Drawing.Color.DarkGreen;
-            this.label_Sup.Location = new System.Drawing.Point(1162, 0);
-            this.label_Sup.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label_Sup.Location = new System.Drawing.Point(747, 0);
+            this.label_Sup.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label_Sup.Name = "label_Sup";
-            this.label_Sup.Size = new System.Drawing.Size(50, 25);
+            this.label_Sup.Size = new System.Drawing.Size(26, 13);
             this.label_Sup.TabIndex = 46;
             this.label_Sup.Text = "Sup";
             // 
@@ -798,7 +769,7 @@
             this.panel_Header.Location = new System.Drawing.Point(0, 0);
             this.panel_Header.Margin = new System.Windows.Forms.Padding(0);
             this.panel_Header.Name = "panel_Header";
-            this.panel_Header.Size = new System.Drawing.Size(1254, 94);
+            this.panel_Header.Size = new System.Drawing.Size(793, 49);
             this.panel_Header.TabIndex = 36;
             // 
             // panel_Simulate
@@ -813,17 +784,16 @@
             this.panel_Simulate.Location = new System.Drawing.Point(0, 0);
             this.panel_Simulate.Margin = new System.Windows.Forms.Padding(0);
             this.panel_Simulate.Name = "panel_Simulate";
-            this.panel_Simulate.Size = new System.Drawing.Size(1254, 94);
+            this.panel_Simulate.Size = new System.Drawing.Size(793, 49);
             this.panel_Simulate.TabIndex = 48;
             // 
             // label_Solvers
             // 
             this.label_Solvers.AutoSize = true;
             this.label_Solvers.ForeColor = System.Drawing.Color.DarkGreen;
-            this.label_Solvers.Location = new System.Drawing.Point(626, 0);
-            this.label_Solvers.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
+            this.label_Solvers.Location = new System.Drawing.Point(313, 0);
             this.label_Solvers.Name = "label_Solvers";
-            this.label_Solvers.Size = new System.Drawing.Size(84, 25);
+            this.label_Solvers.Size = new System.Drawing.Size(42, 13);
             this.label_Solvers.TabIndex = 28;
             this.label_Solvers.Text = "Solvers";
             // 
@@ -845,19 +815,18 @@
             this.panel_Controls.Controls.Add(this.button_ChartSnap);
             this.panel_Controls.Controls.Add(this.numericUpDown_Transparency);
             this.panel_Controls.Controls.Add(this.button_Target_Copy);
-            this.panel_Controls.Location = new System.Drawing.Point(0, 660);
+            this.panel_Controls.Location = new System.Drawing.Point(0, 353);
             this.panel_Controls.Margin = new System.Windows.Forms.Padding(0);
             this.panel_Controls.Name = "panel_Controls";
-            this.panel_Controls.Size = new System.Drawing.Size(1254, 75);
+            this.panel_Controls.Size = new System.Drawing.Size(793, 39);
             this.panel_Controls.TabIndex = 49;
             // 
             // label_Parameters
             // 
             this.label_Parameters.AutoSize = true;
-            this.label_Parameters.Location = new System.Drawing.Point(466, 2);
-            this.label_Parameters.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
+            this.label_Parameters.Location = new System.Drawing.Point(233, 1);
             this.label_Parameters.Name = "label_Parameters";
-            this.label_Parameters.Size = new System.Drawing.Size(45, 25);
+            this.label_Parameters.Size = new System.Drawing.Size(25, 13);
             this.label_Parameters.TabIndex = 47;
             this.label_Parameters.Text = "↑↑↑";
             // 
@@ -866,10 +835,9 @@
             this.checkBoxButton_Parameters.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkBoxButton_Parameters.AutoSize = true;
             this.checkBoxButton_Parameters.BackColor = System.Drawing.Color.Linen;
-            this.checkBoxButton_Parameters.Location = new System.Drawing.Point(432, 27);
-            this.checkBoxButton_Parameters.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.checkBoxButton_Parameters.Location = new System.Drawing.Point(216, 14);
             this.checkBoxButton_Parameters.Name = "checkBoxButton_Parameters";
-            this.checkBoxButton_Parameters.Size = new System.Drawing.Size(132, 35);
+            this.checkBoxButton_Parameters.Size = new System.Drawing.Size(70, 23);
             this.checkBoxButton_Parameters.TabIndex = 46;
             this.checkBoxButton_Parameters.Text = "Parameters";
             this.checkBoxButton_Parameters.UseVisualStyleBackColor = false;
@@ -878,20 +846,19 @@
             // label_Transparency
             // 
             this.label_Transparency.AutoSize = true;
-            this.label_Transparency.Location = new System.Drawing.Point(866, 8);
-            this.label_Transparency.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
+            this.label_Transparency.Location = new System.Drawing.Point(433, 4);
             this.label_Transparency.Name = "label_Transparency";
-            this.label_Transparency.Size = new System.Drawing.Size(65, 25);
+            this.label_Transparency.Size = new System.Drawing.Size(33, 13);
             this.label_Transparency.TabIndex = 44;
             this.label_Transparency.Text = "alpha";
             // 
             // label_Legend
             // 
             this.label_Legend.AutoSize = true;
-            this.label_Legend.Location = new System.Drawing.Point(1142, 2);
-            this.label_Legend.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label_Legend.Location = new System.Drawing.Point(571, 1);
+            this.label_Legend.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label_Legend.Name = "label_Legend";
-            this.label_Legend.Size = new System.Drawing.Size(45, 25);
+            this.label_Legend.Size = new System.Drawing.Size(25, 13);
             this.label_Legend.TabIndex = 43;
             this.label_Legend.Text = "↑↑↑";
             // 
@@ -904,13 +871,13 @@
             this.tableLayoutPanel_LeftColumn.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel_LeftColumn.Controls.Add(this.panel_richTextBoxPadding, 0, 1);
             this.tableLayoutPanel_LeftColumn.Controls.Add(this.panel_Header, 0, 0);
-            this.tableLayoutPanel_LeftColumn.Location = new System.Drawing.Point(4, 4);
-            this.tableLayoutPanel_LeftColumn.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tableLayoutPanel_LeftColumn.Location = new System.Drawing.Point(2, 2);
+            this.tableLayoutPanel_LeftColumn.Margin = new System.Windows.Forms.Padding(2);
             this.tableLayoutPanel_LeftColumn.Name = "tableLayoutPanel_LeftColumn";
             this.tableLayoutPanel_LeftColumn.RowCount = 2;
-            this.tableLayoutPanel_LeftColumn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 94F));
+            this.tableLayoutPanel_LeftColumn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 49F));
             this.tableLayoutPanel_LeftColumn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel_LeftColumn.Size = new System.Drawing.Size(1254, 1302);
+            this.tableLayoutPanel_LeftColumn.Size = new System.Drawing.Size(793, 697);
             this.tableLayoutPanel_LeftColumn.TabIndex = 0;
             // 
             // panel_richTextBoxPadding
@@ -921,11 +888,10 @@
             this.panel_richTextBoxPadding.BackColor = System.Drawing.Color.White;
             this.panel_richTextBoxPadding.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.panel_richTextBoxPadding.Controls.Add(this.richTextBox);
-            this.panel_richTextBoxPadding.Location = new System.Drawing.Point(6, 100);
-            this.panel_richTextBoxPadding.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.panel_richTextBoxPadding.Location = new System.Drawing.Point(3, 52);
             this.panel_richTextBoxPadding.Name = "panel_richTextBoxPadding";
-            this.panel_richTextBoxPadding.Padding = new System.Windows.Forms.Padding(8, 0, 0, 0);
-            this.panel_richTextBoxPadding.Size = new System.Drawing.Size(1242, 1196);
+            this.panel_richTextBoxPadding.Padding = new System.Windows.Forms.Padding(4, 0, 0, 0);
+            this.panel_richTextBoxPadding.Size = new System.Drawing.Size(787, 642);
             this.panel_richTextBoxPadding.TabIndex = 35;
             // 
             // flowLayoutPanel_Parameters
@@ -935,10 +901,10 @@
             this.flowLayoutPanel_Parameters.BackColor = System.Drawing.Color.Linen;
             this.flowLayoutPanel_Parameters.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.flowLayoutPanel_Parameters.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
-            this.flowLayoutPanel_Parameters.Location = new System.Drawing.Point(1300, 810);
-            this.flowLayoutPanel_Parameters.Margin = new System.Windows.Forms.Padding(10, 10, 10, 10);
+            this.flowLayoutPanel_Parameters.Location = new System.Drawing.Point(1334, 501);
+            this.flowLayoutPanel_Parameters.Margin = new System.Windows.Forms.Padding(5);
             this.flowLayoutPanel_Parameters.Name = "flowLayoutPanel_Parameters";
-            this.flowLayoutPanel_Parameters.Size = new System.Drawing.Size(578, 408);
+            this.flowLayoutPanel_Parameters.Size = new System.Drawing.Size(290, 213);
             this.flowLayoutPanel_Parameters.TabIndex = 49;
             this.flowLayoutPanel_Parameters.WrapContents = false;
             // 
@@ -953,15 +919,15 @@
             this.tableLayoutPanel_RightColumn.Controls.Add(this.panel_Simulate, 0, 0);
             this.tableLayoutPanel_RightColumn.Controls.Add(this.chart1, 0, 3);
             this.tableLayoutPanel_RightColumn.Controls.Add(this.txtTarget, 0, 1);
-            this.tableLayoutPanel_RightColumn.Location = new System.Drawing.Point(1266, 4);
-            this.tableLayoutPanel_RightColumn.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tableLayoutPanel_RightColumn.Location = new System.Drawing.Point(799, 2);
+            this.tableLayoutPanel_RightColumn.Margin = new System.Windows.Forms.Padding(2);
             this.tableLayoutPanel_RightColumn.Name = "tableLayoutPanel_RightColumn";
             this.tableLayoutPanel_RightColumn.RowCount = 4;
-            this.tableLayoutPanel_RightColumn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 94F));
+            this.tableLayoutPanel_RightColumn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 49F));
             this.tableLayoutPanel_RightColumn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel_RightColumn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 75F));
+            this.tableLayoutPanel_RightColumn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 39F));
             this.tableLayoutPanel_RightColumn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel_RightColumn.Size = new System.Drawing.Size(1254, 1302);
+            this.tableLayoutPanel_RightColumn.Size = new System.Drawing.Size(793, 697);
             this.tableLayoutPanel_RightColumn.TabIndex = 1;
             // 
             // tableLayoutPanel_Columns
@@ -972,15 +938,15 @@
             this.tableLayoutPanel_Columns.ColumnCount = 2;
             this.tableLayoutPanel_Columns.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel_Columns.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel_Columns.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 40F));
+            this.tableLayoutPanel_Columns.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.tableLayoutPanel_Columns.Controls.Add(this.tableLayoutPanel_RightColumn, 1, 0);
             this.tableLayoutPanel_Columns.Controls.Add(this.tableLayoutPanel_LeftColumn, 0, 0);
             this.tableLayoutPanel_Columns.Location = new System.Drawing.Point(0, 0);
-            this.tableLayoutPanel_Columns.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tableLayoutPanel_Columns.Margin = new System.Windows.Forms.Padding(2);
             this.tableLayoutPanel_Columns.Name = "tableLayoutPanel_Columns";
             this.tableLayoutPanel_Columns.RowCount = 1;
             this.tableLayoutPanel_Columns.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel_Columns.Size = new System.Drawing.Size(2524, 1310);
+            this.tableLayoutPanel_Columns.Size = new System.Drawing.Size(1594, 701);
             this.tableLayoutPanel_Columns.TabIndex = 34;
             // 
             // notifyIcon1
@@ -990,10 +956,10 @@
             // 
             // GUI
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientSize = new System.Drawing.Size(2528, 1310);
+            this.ClientSize = new System.Drawing.Size(1598, 702);
             this.Controls.Add(this.checkedListBox_Series);
             this.Controls.Add(this.flowLayoutPanel_Parameters);
             this.Controls.Add(this.btnParse);
@@ -1003,8 +969,7 @@
             this.Controls.Add(this.btnConstruct);
             this.Controls.Add(this.tableLayoutPanel_Columns);
             this.KeyPreview = true;
-            this.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
-            this.MinimumSize = new System.Drawing.Size(1380, 71);
+            this.MinimumSize = new System.Drawing.Size(698, 56);
             this.Name = "GUI";
             this.Text = "Kaemika";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.frmMain_FormClosing);

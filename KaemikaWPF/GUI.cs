@@ -665,7 +665,7 @@ namespace KaemikaWPF
         }
 
         private static bool ChartListboxGroup(string str) {
-            return str.Contains("<");
+            return ChartListboxAll(str) || ChartListboxShowMu(str) || ChartListboxShowSigma(str);
         }
         private static bool ChartListboxAll(string str) {
             return str == " <ALL species> ";

@@ -97,6 +97,7 @@ namespace Kaemika
     public class SymbolComparer : EqualityComparer<Symbol> {
         public override bool Equals(Symbol a, Symbol b) { return a.SameSymbol(b); }
         public override int GetHashCode(Symbol a) { return a.Raw().GetHashCode(); }
+        public static SymbolComparer comparer = new SymbolComparer();
     }
 
     public abstract class Scope {
@@ -1010,6 +1011,41 @@ namespace Kaemika
         }
     }
 
+    public class SymbolMultiset {
+        private List<Symbol> mset;
+        public SymbolMultiset() {
+            mset = new List<Symbol>();
+        }
+        public SymbolMultiset(List<Symbol> set) {
+            mset = new List<Symbol>();
+            foreach (Symbol symbol in set) mset.Add(symbol);
+        }
+        public int Count(Symbol symbol) {
+            int n = 0;
+            foreach (Symbol s in mset)
+                if (s.SameSymbol(symbol)) n += 1;
+            return n;
+        }
+        public List<Symbol> ToList() {
+            var list = new List<Symbol>();
+            foreach (Symbol symbol in mset) list.Add(symbol);
+            return list;
+        }
+        public List<Symbol> ToSet() {
+            var set = new List<Symbol>();
+            foreach (Symbol symbol in mset) if (!set.Contains(symbol, SymbolComparer.comparer)) set.Add(symbol);
+            return set;
+        }
+        public void Add(Symbol symbol, int count) {
+            for (int i = 0; i < count; i++) mset.Add(symbol);
+        }
+        public void Subtract(Symbol symbol, int count) {
+            for (int i = 0; i < count; i++)
+                for (int j = 0; j < mset.Count; j++)
+                    if (mset[j].SameSymbol(symbol)) { mset.RemoveAt(j); break; }
+        }
+    }
+
     public class ReactionValue : Value {
         public List<Symbol> reactants;
         public List<Symbol> products;
@@ -1075,8 +1111,22 @@ namespace Kaemika
                 if (!species.Exists(x => x.symbol.SameSymbol(rs))) { notCovered = rs; return false; };
             notCovered = null; return true;
         }
-        public HashSet<Symbol> ReactantsSet() { return new HashSet<Symbol>(reactants, new SymbolComparer()); }
-        public HashSet<Symbol> ProductsSet() { return new HashSet<Symbol>(products, new SymbolComparer()); }
+        public (SymbolMultiset catalysts, SymbolMultiset catalyzedRactants, SymbolMultiset catalyzedProducts) CatalistForm() {
+            var catalysts = new SymbolMultiset();
+            var catalyzedRactants = new SymbolMultiset(reactants); 
+            var catalyzedProducts = new SymbolMultiset(products); 
+            foreach (Symbol symbol in reactants) {
+                int n = Math.Min(catalyzedRactants.Count(symbol), catalyzedProducts.Count(symbol));
+                if (n > 0) {
+                    catalysts.Add(symbol, 1);
+                    catalyzedRactants.Subtract(symbol, 1);
+                    catalyzedProducts.Subtract(symbol, 1);
+                }
+            }
+            return (catalysts, catalyzedRactants, catalyzedProducts);
+        }
+        public HashSet<Symbol> ReactantsSet() { return new HashSet<Symbol>(reactants, SymbolComparer.comparer); }
+        public HashSet<Symbol> ProductsSet() { return new HashSet<Symbol>(products, SymbolComparer.comparer); }
     }
 
     public abstract class RateValue {
@@ -1603,7 +1653,7 @@ namespace Kaemika
             } else if (arity == 2) {                                     // exclude (op == "cov" || op == "gauss")
                 if (op == "cov") return args[0].LinearCombination() && args[1].LinearCombination();
                 else return args[0].HasStochasticMean() && args[1].HasStochasticMean();
-            } else if (arity == 3) { // including "cond"
+            } else if (arity == 3) { // including "cond"  //### should "cond" require HasDeterministicMean in args[0] ??
                 return args[0].HasStochasticMean() && args[1].HasStochasticMean() && args[2].HasStochasticMean();
             } else throw new Error("HasStochasticMean: " + op);
         }
@@ -1621,7 +1671,7 @@ namespace Kaemika
                 else if (op == "*") return args[0].LinearCombination() && args[1].LinearCombination() && (args[0].HasNullVariance() || args[1].HasNullVariance());
                 else return false;
             } else if (arity == 3) {
-                if (op == "cond") return false; // we do not support "cond", what would be the var(cond(...)) or cov(cond(...), something) ?
+                if (op == "cond") return args[1].LinearCombination() && args[2].LinearCombination();
                 else throw new Error("LinearCombination: " + op);
             } else throw new Error("LinearCombination: " + op);
         }

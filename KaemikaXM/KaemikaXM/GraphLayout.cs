@@ -342,7 +342,9 @@ namespace GraphSharp {
                     // calculate point at base of arrowhead
                     float arrowWidth = nodeHeight / 6;
                     float tPointOnLine = (float)(arrowWidth / (2 * (Math.Tan(120) / 2) * lineLength));
-                    arrowHeadBase = ultimate + (-tPointOnLine * lineVector);
+                    VectorStd arrowReverseVector = -tPointOnLine * lineVector;
+                    arrowHeadBase = ultimate + arrowReverseVector;
+                    SKPoint arrowHeadMid = ultimate + (0.5F * arrowReverseVector);
                     VectorStd normalVector = new VectorStd(-lineVector.Y, lineVector.X);
                     float tNormal = arrowWidth / (2 * lineLength);
                     SKPoint leftPoint = arrowHeadBase + tNormal * normalVector;
@@ -358,6 +360,10 @@ namespace GraphSharp {
                         arrowPath.MoveTo(swipe % leftPoint); arrowPath.LineTo(swipe % ultimate);
                         arrowPath.LineTo(swipe % rightPoint);
                         canvas.DrawPath(arrowPath, paint);
+                    }
+                    if (routedEdge.Directed == Directed.Ball) {
+                        var arrowPath = new SKPath(); paint.IsStroke = false;
+                        canvas.DrawCircle(swipe % arrowHeadMid, swipe % (arrowReverseVector.Length/2), paint);
                     }
                 }
                 // if (routedEdge.Directed == Directed.Solid) { paint.IsStroke = false; canvas.DrawCircle(path.LastPoint, 20, paint); }
