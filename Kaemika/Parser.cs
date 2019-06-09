@@ -121,13 +121,13 @@ namespace Kaemika {
                 return new List<Statement> { new Split(reduction.Terminal(1), reduction.Terminal(3), ParseExpression(reduction.Nonterminal(5)), ParseExpression(reduction.Nonterminal(7))) };
             } else if ((reduction.Production()               == "<Statement> ::= dispose <Expression>")) {
                 return new List<Statement> { new Dispose(ParseExpression(reduction.Nonterminal(1))) };
-            } else if ((reduction.Production()               == "<Statement> ::= equilibrate Id ':=' <Expression> for <Expression>")) {
-                return new List<Statement> { new Equilibrate(reduction.Terminal(1), ParseExpression(reduction.Nonterminal(3)), ParseExpression(reduction.Nonterminal(5))) };
-            } else if ((reduction.Production()               == "<Statement> ::= equilibrate Id for <Expression>")) {
+            } else if ((reduction.Production()               == "<Statement> ::= equilibrate Id ':=' <Expression> <EndCondition>")) {
+                return new List<Statement> { new Equilibrate(reduction.Terminal(1), ParseExpression(reduction.Nonterminal(3)), ParseEndCondition(reduction.Nonterminal(4))) };
+            } else if ((reduction.Production()               == "<Statement> ::= equilibrate Id <EndCondition>")) {
                 string id = reduction.Terminal(1);
-                return new List<Statement> { new Equilibrate(id, new Variable(id), ParseExpression(reduction.Nonterminal(3))) };
-            } else if ((reduction.Production()               == "<Statement> ::= equilibrate for <Expression>")) {
-                return new List<Statement> { new Equilibrate("vessel", new Variable("vessel"), ParseExpression(reduction.Nonterminal(2))) };
+                return new List<Statement> { new Equilibrate(id, new Variable(id), ParseEndCondition(reduction.Nonterminal(2))) };
+            } else if ((reduction.Production()               == "<Statement> ::= equilibrate <EndCondition>")) {
+                return new List<Statement> { new Equilibrate("vessel", new Variable("vessel"), ParseEndCondition(reduction.Nonterminal(1))) };
             } else if ((reduction.Production()               == "<Statement> ::= transfer <EmptySample> ':=' <Expression>")) {
                 ParseEmptySample(reduction.Nonterminal(1), out string name, out Expression volume, out string volumeUnit, out Expression temperature, out string temperatureUnit);
                 Expression sample = ParseExpression(reduction.Nonterminal(3));
@@ -142,6 +142,14 @@ namespace Kaemika {
                 return new List<Statement> { new IfThenElse(ParseExpression(reduction.Nonterminal(1)), ParseStatements(reduction.Nonterminal(3)), ParseElse(reduction.Nonterminal(4))) };
             } else if ((reduction.Production()               == "<Statement> ::= ';'")) {
                 return new List<Statement> { };
+            } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
+        }
+
+        public static EndCondition ParseEndCondition(IReduction reduction) {
+            if (reduction.Production()                   == "<EndCondition> ::= for <Expression>") {
+                return new EndConditionSimple(ParseExpression(reduction.Nonterminal(1)));
+            } else if ((reduction.Production()               == "<EndCondition> ::= for <Expression> minimize <Expression>")) {
+                return new EndConditionMinimize(ParseExpression(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(3)));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }
 
@@ -433,8 +441,9 @@ namespace Kaemika {
                 (reduction.Production() == "<Powr Exp> ::= <Base Exp>")) {
                     return ParseExpression(reduction.Nonterminal(0));
             } else if ((reduction.Production() == "<Neg Exp> ::= - <Powr Exp>") ||    // somehow it must be "-", not "'-'"
+                       (reduction.Production() == "<Neg Exp> ::= '∂' <Powr Exp>") ||
                        (reduction.Production() == "<Not Exp> ::= not <Comp Exp>")) {
-                return new FunctionInstance(new Variable(reduction.Terminal(0)), new Arguments().Add(ParseExpression(reduction.Nonterminal(1))));
+                return new FunctionInstance(new Variable(reduction.Terminal(0)), new Arguments().Add(ParseExpression(reduction.Nonterminal(1))), infix: true, arity: 1);
             } else if ((reduction.Production() == "<Sum Exp> ::= <Sum Exp> '+' <Mult Exp>") ||
                 (reduction.Production() == "<Sum Exp> ::= <Sum Exp> - <Mult Exp>") ||  // somehow it must be "-", not "'-'"
                 (reduction.Production() == "<Mult Exp> ::= <Mult Exp> '*' <Neg Exp>") ||
@@ -448,9 +457,9 @@ namespace Kaemika {
                 (reduction.Production() == "<Comp Exp> ::= <Sum Exp> '<' <Sum Exp>") ||
                 (reduction.Production() == "<Comp Exp> ::= <Sum Exp> '>' <Sum Exp>") ||
                 (reduction.Production() == "<Powr Exp> ::= <Powr Exp> '^' <Base Exp>")) {
-                return new FunctionInstance(new Variable(reduction.Terminal(1)), new Arguments().Add(ParseExpression(reduction.Nonterminal(0))).Add(ParseExpression(reduction.Nonterminal(2))));
+                return new FunctionInstance(new Variable(reduction.Terminal(1)), new Arguments().Add(ParseExpression(reduction.Nonterminal(0))).Add(ParseExpression(reduction.Nonterminal(2))), infix: true, arity: 2);
             } else  if (reduction.Production()       == "<Base Exp> ::= if <Expression> then <Expression> <Else Exp>") {
-                return new FunctionInstance(new Variable("if"), new Arguments().Add(ParseExpression(reduction.Nonterminal(1))).Add(ParseExpression(reduction.Nonterminal(3))).Add(ParseElseExpression(reduction.Nonterminal(4))));
+                return new FunctionInstance(new Variable("if"), new Arguments().Add(ParseExpression(reduction.Nonterminal(1))).Add(ParseExpression(reduction.Nonterminal(3))).Add(ParseElseExpression(reduction.Nonterminal(4))), infix: true, arity: 3);
             } else  if (reduction.Production()       == "<Base Exp> ::= <Fun Instance>") {
                 return ParseExpressionInstance(reduction.Nonterminal(0));
             } else if ((reduction.Production() == "<Base Exp> ::= true") ||
@@ -535,7 +544,7 @@ namespace Kaemika {
         
         public static Expression ParseElseExpression(IReduction reduction) {
             if (reduction.Production()                   == "<Else Exp> ::= elseif <Expression> then <Expression> <Else Exp>") {
-                return new FunctionInstance(new Variable("if"), new Arguments().Add(ParseExpression(reduction.Nonterminal(1))).Add(ParseExpression(reduction.Nonterminal(3))).Add(ParseElseExpression(reduction.Nonterminal(4))));
+                return new FunctionInstance(new Variable("if"), new Arguments().Add(ParseExpression(reduction.Nonterminal(1))).Add(ParseExpression(reduction.Nonterminal(3))).Add(ParseElseExpression(reduction.Nonterminal(4))), infix: true, arity: 3);
             } else if (reduction.Production()            == "<Else Exp> ::= else <Expression> end") {
                 return ParseExpression(reduction.Nonterminal(1));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }

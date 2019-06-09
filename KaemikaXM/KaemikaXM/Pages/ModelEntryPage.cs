@@ -73,7 +73,7 @@ namespace KaemikaXM.Pages {
         public void StartAction(bool forkWorker, bool switchToChart, bool switchToOutput, bool autoContinue = false) {
             if (Exec.IsExecuting() && !Gui.gui.ContinueEnabled()) return; // we are already running a simulation, don't start a concurrent one
             if (Exec.IsExecuting() && Gui.gui.ContinueEnabled()) { // we are already running a simulation; make start button work as continue button
-                ProtocolActuator.continueExecution = true; 
+                Protocol.continueExecution = true; 
                 MainTabbedPage.SwitchToTab(MainTabbedPage.theChartPageNavigation);
             } else { // do a start
                 MainTabbedPage.theOutputPage.SetModel(modelInfo);

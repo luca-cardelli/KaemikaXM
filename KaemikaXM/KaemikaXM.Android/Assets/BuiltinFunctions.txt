@@ -1,4 +1,4 @@
-//======================================
+﻿//======================================
 // Builtin functions and operators
 //======================================
 
@@ -86,13 +86,20 @@ time
 kelvin
 celsius
 
+// Derivatives, valid in 'report' 
+// but not in {{...}} rates:
+
+∂ a      // first time derivative
+diff(a)  // same as ∂a
+sdiff(a) // symbolic differentiation
+
 // Noise with mean = mean(a)
-// and variance = mean(a)
+// and variance = mean(a):
 
 poisson(a)    
 
 // Noise with mean = mean(a) 
-// and variance = mean(b)
+// and variance = mean(b):
 
 gauss(a,b)  
 

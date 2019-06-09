@@ -9,6 +9,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Parser.cs.copy" />
+    <None Remove="Tree.cs.copy" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MathNet.Numerics" Version="4.8.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\CalithaGOLD\CalithaGOLD.csproj" />
     <ProjectReference Include="..\Oslo\Oslo.csproj" />
     <ProjectReference Include="..\QuickGraphStd\QuickGraphStd.csproj" />

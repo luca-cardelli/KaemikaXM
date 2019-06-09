@@ -203,6 +203,10 @@ namespace KaemikaWPF
             ChartSetAxes();
         }
 
+        public void ChartClearData() {
+            foreach (Series series in this.chart1.Series) series.Points.Clear();
+        }
+
         public void ChartUpdate() {
             this.chart1.Series.ResumeUpdates();
             //this.chart1.Update();
@@ -491,7 +495,6 @@ namespace KaemikaWPF
                 mouseToolTip.RemoveAll();
             } catch { }
         }
-
         private bool dragging = false;
         private Point mouseDown;
         private Point mouseMove;
@@ -751,30 +754,30 @@ namespace KaemikaWPF
         private void btnEval_Click(object sender, EventArgs e) { Exec.Execute_Starter(forkWorker: true); }
 
         private void comboBox_Export_SelectedIndexChanged(object sender, EventArgs e) {
-                 if (comboBox_Export.Text == "Chemical Trace") Exec.Execute_Exporter(false, ExportAs.ChemicalTrace);
-            else if (comboBox_Export.Text == "Computational Trace") Exec.Execute_Exporter(false, ExportAs.ComputationalTrace);
-            else if (comboBox_Export.Text == "Reaction Graph") Exec.Execute_Exporter(false, ExportAs.ReactionGraph);
-            else if (comboBox_Export.Text == "Reaction Complex Graph") Exec.Execute_Exporter(false, ExportAs.ComplexGraph);
-            else if (comboBox_Export.Text == "Protocol Step Graph") Exec.Execute_Exporter(false, ExportAs.ProtocolGraph);
-            else if (comboBox_Export.Text == "Protocol State Graph") Exec.Execute_Exporter(false, ExportAs.PDMPGraph);
-            else if (comboBox_Export.Text == "System Reactions") Exec.Execute_Exporter(false, ExportAs.PDMPreactions);
-            else if (comboBox_Export.Text == "System Equations") Exec.Execute_Exporter(false, ExportAs.PDMPequations);
+                 if (comboBox_Export.Text == "Chemical Trace") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ChemicalTrace); }
+            else if (comboBox_Export.Text == "Computational Trace") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ComputationalTrace); }
+            else if (comboBox_Export.Text == "Reaction Graph") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ReactionGraph); }
+            else if (comboBox_Export.Text == "Reaction Complex Graph") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ComplexGraph); }
+            else if (comboBox_Export.Text == "Protocol Step Graph") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ProtocolGraph); }
+            else if (comboBox_Export.Text == "Protocol State Graph") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPGraph); }
+            else if (comboBox_Export.Text == "System Reactions") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPreactions); }
+            else if (comboBox_Export.Text == "System Equations") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPequations); }
 
-            else if (comboBox_Export.Text == "CRN (LBS silverlight)") Exec.Execute_Exporter(false, ExportAs.MSRC_LBS);
-            else if (comboBox_Export.Text == "CRN (LBS html5)") Exec.Execute_Exporter(false, ExportAs.MSRC_CRN);
-            else if (comboBox_Export.Text == "ODE (Oscill8)") Exec.Execute_Exporter(false, ExportAs.ODE);
-            else if (comboBox_Export.Text == "Protocol") Exec.Execute_Exporter(false, ExportAs.Protocol);
+            else if (comboBox_Export.Text == "CRN (LBS silverlight)") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.MSRC_LBS); }
+            else if (comboBox_Export.Text == "CRN (LBS html5)") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.MSRC_CRN); }
+            else if (comboBox_Export.Text == "ODE (Oscill8)") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ODE); }
+            else if (comboBox_Export.Text == "Protocol") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.Protocol); }
 
             //else if (comboBox_Export.Text == "PDMP GraphViz") Exec.Execute_Exporter(false, ExportAs.PDMP_GraphViz);
             //else if (comboBox_Export.Text == "PDMP Parallel") Exec.Execute_Exporter(false, ExportAs.PDMP_Parallel);
             //else if (comboBox_Export.Text == "PDMP Parallel GraphViz") Exec.Execute_Exporter(false, ExportAs.PDMP_Parallel_GraphViz);
 
             else if (comboBox_Export.Text == "Last simulation state") {
+                Gui.gui.OutputSetText("");
                 string s = Exec.lastReport + Environment.NewLine + Exec.lastState + Environment.NewLine;
                 this.OutputAppendText(s);
                 try { Clipboard.SetText(s); } catch (ArgumentException) { };
-            }
-            else { }
+            } else { }
             this.comboBox_Export.SelectedIndex = 0;
         }
 
@@ -787,11 +790,7 @@ namespace KaemikaWPF
 
         private void button_Continue_Click(object sender, EventArgs e)
         {
-            ProtocolActuator.continueExecution = true;
-        }
-
-        private void txtSource_TextChanged(object sender, EventArgs e)
-        {
+            Protocol.continueExecution = true;
         }
 
         private void checkBox_ScopeVariants_CheckedChanged(object sender, EventArgs e)
@@ -829,11 +828,13 @@ namespace KaemikaWPF
 
         private void radioButton_TraceChemical_CheckedChanged(object sender, EventArgs e)
         {
+            Gui.gui.OutputSetText("");
             Exec.Execute_Exporter(false, ExportAs.ChemicalTrace);
         }
 
         private void radioButton_TraceComputational_CheckedChanged(object sender, EventArgs e)
         {
+            Gui.gui.OutputSetText("");
             Exec.Execute_Exporter(false, ExportAs.ComputationalTrace);
         }
 
@@ -847,6 +848,12 @@ namespace KaemikaWPF
         {
             if (comboBox_Sup.Text.Count() > 0) {
                 InputInsertText(comboBox_Sup.Text);
+            }
+        }
+        private void comboBox_Math_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (comboBox_Math.Text.Count() > 0) {
+                InputInsertText(comboBox_Math.Text);
             }
         }
 
@@ -952,6 +959,5 @@ namespace KaemikaWPF
             }
             base.OnKeyDown(e);
         }
-
     }
 } 

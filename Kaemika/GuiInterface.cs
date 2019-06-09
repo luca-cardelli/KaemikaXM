@@ -22,6 +22,23 @@ namespace Kaemika
             return Noise.None; // if selection == null
         }
         public static string StringOfNoise(Noise noise) { return noiseString[(int)noise]; }
+
+        public static string FormatUnit(double value, string spacer, string baseUnit, string numberFormat) {
+            if (value == 0.0) return value.ToString(numberFormat) + spacer + baseUnit;
+            //else if (Math.Round(value * 1e6) < 1) return (value * 1e9).ToString(numberFormat) + spacer + "n" + baseUnit; // this test avoids producing '1000nM'
+            //else if (Math.Round(value * 1e3) < 1) return (value * 1e6).ToString(numberFormat) + spacer + "u" + baseUnit; // this test avoids producing '1000uM'
+            //else if (Math.Round(value) < 1) return (value * 1e3).ToString(numberFormat) + spacer + "m" + baseUnit; // this test avoids producing '1000mM'
+            else if (Math.Round(Math.Abs(value) * 1e9) < 1)  return (value * 1e12).ToString(numberFormat) + spacer + "p" + baseUnit;
+            else if (Math.Round(Math.Abs(value) * 1e6) < 1)  return (value * 1e9).ToString(numberFormat) + spacer + "n" + baseUnit;
+            else if (Math.Round(Math.Abs(value) * 1e3) < 1)  return (value * 1e6).ToString(numberFormat) + spacer + "μ" + baseUnit;
+            else if (Math.Round(Math.Abs(value)) < 1)        return (value * 1e3).ToString(numberFormat) + spacer + "m" + baseUnit;
+            else if (Math.Round(Math.Abs(value) * 1e-3) < 1) return (value).ToString(numberFormat) + spacer + baseUnit;
+            else if (Math.Round(Math.Abs(value) * 1e-6) < 1) return (value * 1e-3).ToString(numberFormat) + spacer + "k" + baseUnit;
+            else                                             return (value * 1e-6).ToString(numberFormat) + spacer + "M" + baseUnit;
+        }
+        public static string FormatUnit(float value, string spacer, string baseUnit, string numberFormat) {
+            return FormatUnit((double)value, spacer, baseUnit, numberFormat);
+        }
     }
 
     public abstract class GuiInterface {
@@ -35,6 +52,7 @@ namespace Kaemika
         public abstract void ProcessOutput();
         public abstract void ProcessGraph(string graphFamily);  // deliver execution output in graph form
         public abstract void ChartClear(string title);
+        public abstract void ChartClearData(); // clear only the data points in the chart
         public abstract void OutputClear(string title);
         public abstract void ParametersClear();
         public abstract void ChartUpdate();

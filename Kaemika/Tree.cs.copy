@@ -223,9 +223,6 @@ namespace Kaemika
                 builtIn = new ValueEnv("<", null, new OperatorValue("<"), builtIn);
                 builtIn = new ValueEnv(">=", null, new OperatorValue(">="), builtIn);
                 builtIn = new ValueEnv(">", null, new OperatorValue(">"), builtIn);
-                builtIn = new ValueEnv("∂", null, new OperatorValue("∂"), builtIn);
-                builtIn = new ValueEnv("diff", null, new OperatorValue("∂"), builtIn);
-                builtIn = new ValueEnv("sdiff", null, new OperatorValue("sdiff"), builtIn);
                 builtIn = new ValueEnv("pi", null, new NumberValue(Math.PI), builtIn);
                 builtIn = new ValueEnv("e", null, new NumberValue(Math.E), builtIn);
                 builtIn = new ValueEnv("abs", null, new OperatorValue("abs"), builtIn);
@@ -416,20 +413,20 @@ namespace Kaemika
             if (s.Length > 0) s = s.Substring(0, s.Length - 2);
             return s;
         }
-        public string FormatReports(List<ReportEntry> reports, SampleValue sample, Func<double, Vector, Vector> flux, double time, Noise noise, string[] series, string[] seriesLNA, Style style) {
+        public string FormatReports(List<ReportEntry> reports, SampleValue sample, double time, Noise noise, string[] series, string[] seriesLNA, Style style) {
             string s = "";
             for (int i = 0; i < reports.Count; i++) {
                 if (series[i] != null) { // if a series was actually generated from this report
                     // generate deterministic series
                     if ((noise == Noise.None && reports[i].flow.HasDeterministicValue()) ||
                         (noise != Noise.None && reports[i].flow.HasStochasticMean())) {
-                        double mean = reports[i].flow.ReportMean(sample, time, this, flux, style);
+                        double mean = reports[i].flow.ReportMean(sample, time, this, Flow.nilFlux, style);
                         s += Gui.gui.ChartAddPointAsString(series[i], time, mean, 0.0, Noise.None) + ", ";
                     }
                     // generate LNA-dependent series
                     if (noise != Noise.None && reports[i].flow.HasStochasticVariance() && !reports[i].flow.HasNullVariance()) {
-                        double mean = reports[i].flow.ReportMean(sample, time, this, flux, style);
-                        double variance = reports[i].flow.ReportVariance(sample, time, this, style);  //### Flux for variance ???
+                        double mean = reports[i].flow.ReportMean(sample, time, this, Flow.nilFlux, style);
+                        double variance = reports[i].flow.ReportVariance(sample, time, this, style);
                         s += Gui.gui.ChartAddPointAsString(seriesLNA[i], time, mean, variance, noise) + ", ";
                     }
                 }
@@ -866,7 +863,7 @@ namespace Kaemika
         }
         public override double Action(SampleValue sample, List<Symbol> reactants, double time, Vector state, double temperature, Style style) {
             // We earlier checked that rateFunction HasDeterministicMean. If it is not a numeric flow, we now get an error from ReportMean.
-            return rateFunction.ReportMean(sample, time, new State(state.Length, false).InitAll(state), null, style);  // flux=null: we cannot evaluate derivative for rates, which affect those derivatives
+            return rateFunction.ReportMean(sample, time, new State(state.Length, false).InitAll(state), Flow.nilFlux, style);
         }
         public override bool Involves(List<SpeciesValue> species) {
             return rateFunction.Involves(species);
@@ -1027,10 +1024,8 @@ namespace Kaemika
                 throw new Error(BadArguments + name);
             } else if (arguments.Count == 1) {
                 Flow arg1 = arguments[0];
-                if (name == "not" || name == "-" || name == "∂") {
+                if (name == "not" || name == "-") {
                     return new OpFlow(name, 1, true, new List<Flow> { arg1 });
-                } else if (name == "sdiff") { // a Flow will never contain sdiff: it is expanded out here
-                    return arg1.Differentiate(style);
                 } else if (name == "var" || name == "poisson" || name == "abs" || name == "arccos" || name == "arcsin" || name == "arctan" || name == "ceiling"
                         || name == "cos" || name == "cosh" || name == "exp" || name == "floor" || name == "int" || name == "log"
                         || name == "pos" || name == "sign" || name == "sin" || name == "sinh" || name == "sqrt" || name == "tan" || name == "tanh") {
@@ -1085,11 +1080,10 @@ namespace Kaemika
     public abstract class Flow : Value {
         public abstract bool Involves(List<SpeciesValue> species);
         public abstract bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered);
-        public abstract bool ReportBool(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style); // for boolean flow-subexpressions
-        public abstract double ReportMean(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style); // for numeric flow-subexpressions
+        public abstract bool ReportBool(SampleValue sample, double time, State state, Style style); // for boolean flow-subexpressions
+        public abstract double ReportMean(SampleValue sample, double time, State state, Vector flux, Style style); // for numeric flow-subexpressions
         public abstract double ReportVariance(SampleValue sample, double time, State state, Style style);
         public abstract double ReportCovariance(Flow other, SampleValue sample, double time, State state, Style style);
-        public abstract double ReportDiff(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style);
         public abstract bool HasDeterministicValue();
         // = Can appear in non-LNA charts and in generalized rates {{ ... }}. 
         // Excludes var/cov, poisson/gauss.
@@ -1113,11 +1107,10 @@ namespace Kaemika
         public override bool Involves(List<SpeciesValue> species) { return false; }
         public override bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered) { notCovered = null; return true; }
         public override string Format(Style style) { if (this.value) return "true"; else return "false"; }
-        public override bool ReportBool(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { return this.value; }
-        public override double ReportMean(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new Error("Flow expression: number expected instead of bool: " + Format(style)); }
+        public override bool ReportBool(SampleValue sample, double time, State state, Style style) { return this.value; }
+        public override double ReportMean(SampleValue sample, double time, State state, Vector flux, Style style) { throw new Error("Flow expression: number expected instead of bool: " + Format(style)); }
         public override double ReportVariance(SampleValue sample, double time, State state, Style style) { throw new Error("Flow expression: number expected instead of bool: " + Format(style)); }
         public override double ReportCovariance(Flow other, SampleValue sample, double time, State state, Style style) { throw new Error("Flow expression: number expected instead of bool: " + Format(style)); }
-        public override double ReportDiff(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new Error("Not differentiable, bool: " + Format(style)); }
         public override bool HasDeterministicValue() { return true; } // can appear in rate-expressions in a cond
         public override bool HasStochasticMean() { return true; }
         public override bool LinearCombination() { return true; } // but if it appears in a cond it will not be a linear combination anyway
@@ -1131,11 +1124,10 @@ namespace Kaemika
         public override bool Involves(List<SpeciesValue> species) { return false; }
         public override bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered) { notCovered = null; return true; }
         public override string Format(Style style) { return style.FormatDouble(this.value); }
-        public override bool ReportBool(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new Error("Flow expression: bool expected instead of number: " + Format(style)); }
-        public override double ReportMean(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { return this.value; }
+        public override bool ReportBool(SampleValue sample, double time, State state, Style style) { throw new Error("Flow expression: bool expected instead of number: " + Format(style)); }
+        public override double ReportMean(SampleValue sample, double time, State state, Vector flux, Style style) { return this.value; }
         public override double ReportVariance(SampleValue sample, double time, State state, Style style) { return 0.0; } // Var(number) = 0
         public override double ReportCovariance(Flow other, SampleValue sample, double time, State state, Style style) { return 0.0; } // Cov(number,Y) = 0
-        public override double ReportDiff(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { return 0.0; } // ∂n = 0
         public override bool HasDeterministicValue() { return true; }
         public override bool HasStochasticMean() { return true; }
         public override bool LinearCombination() { return true; }
@@ -1149,11 +1141,10 @@ namespace Kaemika
         public override bool Involves(List<SpeciesValue> species) { return false; }
         public override bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered) { notCovered = null; return true; }
         public override string Format(Style style) { return Parser.FormatString(this.value); }
-        public override bool ReportBool(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new Error("Flow expression: bool expected instead of string: " + Format(style)); }
-        public override double ReportMean(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new Error("Flow expression: number expected instead of string: " + Format(style)); }
+        public override bool ReportBool(SampleValue sample, double time, State state, Style style) { throw new Error("Flow expression: bool expected instead of string: " + Format(style)); }
+        public override double ReportMean(SampleValue sample, double time, State state, Vector flux, Style style) { throw new Error("Flow expression: number expected instead of string: " + Format(style)); }
         public override double ReportVariance(SampleValue sample, double time, State state, Style style) { throw new Error("Flow expression: number expected instead of string: " + Format(style)); }
         public override double ReportCovariance(Flow other, SampleValue sample, double time, State state, Style style) { throw new Error("Flow expression: number expected instead of string: " + Format(style)); }
-        public override double ReportDiff(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new Error("Not differentiable, string: " + Format(style)); }
         public override bool HasDeterministicValue() { return true; }
         public override bool HasStochasticMean() { return true; }
         public override bool LinearCombination() { return true; }
@@ -1179,10 +1170,10 @@ namespace Kaemika
             if (style.exportTarget == ExportTarget.CRN) name = "[" + name + "]";
             return name;
         }
-        public override bool ReportBool(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) {
+        public override bool ReportBool(SampleValue sample, double time, State state, Style style) {
             throw new Error("Flow expression: bool expected instead of species: " + Format(style));
         }
-        public override double ReportMean(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) {
+        public override double ReportMean(SampleValue sample, double time, State state, Vector flux, Style style) {
             return state.Mean(sample.speciesIndex[this.species]);
         }
         public override double ReportVariance(SampleValue sample, double time, State state, Style style) {
@@ -1194,15 +1185,34 @@ namespace Kaemika
                 return state.Covar(sample.speciesIndex[this.species], sample.speciesIndex[((SpeciesFlow)other).species]);
             else return other.ReportCovariance(this, sample, time, state, style);
         }
-        public override double ReportDiff(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) {
-            if (flux == null) throw new Error("Non differentiable: " + species.Format(style));
-            return flux(time, state.MeanVector())[sample.speciesIndex[this.species]];   //### to optimize this we should memoize flux(time, state.MeanVector()) for the latest time
-        }
         public override bool HasDeterministicValue() { return true; }
         public override bool HasStochasticMean() { return true; }
         public override bool LinearCombination() { return true; }
         public override bool HasNullVariance() { return false; }
-        public override Flow Differentiate(Style style) { return new OpFlow("∂", true, this); } // a species 'a' is differentiated as '∂a'
+        public override Flow Differentiate(Style style) { return new SpeciesDiffFlow(this.species); }
+    }
+
+    public class SpeciesDiffFlow : Flow {
+        public Symbol species;
+        public SpeciesDiffFlow(Symbol species) { this.type = new Type("flow"); this.species = species; }
+        public override bool Involves(List<SpeciesValue> species) { throw new Error("SpeciesDiffFlow Involves"); }
+        public override bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered) { throw new Error("SpeciesDiffFlow CoveredBy"); }
+        public override string Format(Style style) {
+            string name = this.species.Format(style);
+            return "∂" + name;
+        }
+        public override bool ReportBool(SampleValue sample, double time, State state, Style style) { throw new Error("SpeciesDiffFlow ReportBool"); }
+        public override double ReportMean(SampleValue sample, double time, State state, Vector flux, Style style) {
+            if (flux.Length == 0) throw new Error("SpeciesDiffFlow ReportMean");
+            return flux[sample.speciesIndex[this.species]];
+        }
+        public override double ReportVariance(SampleValue sample, double time, State state, Style style) { throw new Error("SpeciesDiffFlow ReportVariance"); }
+        public override double ReportCovariance(Flow other, SampleValue sample, double time, State state, Style style) { throw new Error("SpeciesDiffFlow ReportCovariance"); }
+        public override bool HasDeterministicValue() { return true; }
+        public override bool HasStochasticMean() { return false; }
+        public override bool LinearCombination() { return false; }
+        public override bool HasNullVariance() { return false; }
+        public override Flow Differentiate(Style style) { throw new Error("Not differentiable: ∂" + species.Format(style)); }
     }
 
     public class OpFlow : Flow {
@@ -1225,49 +1235,8 @@ namespace Kaemika
             this.linearCombination = CacheLinearCombination();
             this.hasNullVariance = CacheHasNullVariance();
         }
-        public OpFlow(string op, bool infix) : this(op, 0, infix, new List<Flow> {}) { }
         public OpFlow(string op, bool infix, Flow arg) : this(op, 1, infix, new List<Flow> { arg }) { }
         public OpFlow(string op, bool infix, Flow arg1, Flow arg2) : this(op, 2, infix, new List<Flow> { arg1, arg2 }) { }
-        public Flow OpFlowPlus(Flow arg1, Flow arg2) {
-            if (arg1 is NumberFlow && (arg1 as NumberFlow).value == 0.0) return arg2;
-            if (arg2 is NumberFlow && (arg2 as NumberFlow).value == 0.0) return arg1;
-            return new OpFlow("+", true, arg1, arg2);
-        }
-        public Flow OpFlowMinus(Flow arg1, Flow arg2) {
-            if (arg1 is NumberFlow && (arg1 as NumberFlow).value == 0.0) return new OpFlow("-", true, arg2);
-            if (arg2 is NumberFlow && (arg2 as NumberFlow).value == 0.0) return arg1;
-            return new OpFlow("-", true, arg1, arg2);
-        }
-        public Flow OpFlowMult(Flow arg1, Flow arg2) {
-            if (arg1 is NumberFlow && (arg1 as NumberFlow).value == 0.0) return new NumberFlow(0.0);
-            if (arg2 is NumberFlow && (arg2 as NumberFlow).value == 0.0) return new NumberFlow(0.0);
-            if (arg1 is NumberFlow && (arg1 as NumberFlow).value == 1.0) return arg2;
-            if (arg2 is NumberFlow && (arg2 as NumberFlow).value == 1.0) return arg1;
-            return new OpFlow("*", true, arg1, arg2);
-        }
-        public Flow OpFlowDiv(Flow arg1, Flow arg2) {
-            if (arg2 is NumberFlow && (arg2 as NumberFlow).value == 0.0) return new NumberFlow(double.MinValue); // divide by zero
-            if (arg2 is NumberFlow && (arg2 as NumberFlow).value == 1.0) return arg1;
-            if (arg1 is NumberFlow && (arg1 as NumberFlow).value == 0.0) return new NumberFlow(0.0);
-            return new OpFlow("/", true, arg1, arg2);
-        }
-        public Flow OpFlowPow(Flow arg1, Flow arg2) {
-            if (arg2 is NumberFlow && (arg2 as NumberFlow).value == 0.0) return new NumberFlow(1.0); // n^0
-            if (arg2 is NumberFlow && (arg2 as NumberFlow).value == 1.0) return arg1;
-            if (arg1 is NumberFlow && (arg1 as NumberFlow).value == 0.0) return new NumberFlow(0.0);
-            return new OpFlow("^", true, arg1, arg2);
-        }
-        public Flow OpFlowLog(Flow arg) {
-            if (arg is NumberFlow && (arg as NumberFlow).value <= 0.0) return new NumberFlow(double.MinValue); // log(0) or log(negative)
-            if (arg is NumberFlow && (arg as NumberFlow).value == 1.0) return new NumberFlow(0.0);
-            if (arg is NumberFlow && (arg as NumberFlow).value == Math.E) return new NumberFlow(1.0);
-            return new OpFlow("log", false, arg);
-        }
-        public Flow OpFlowCond(Flow arg1, Flow arg2, Flow arg3) {
-            if (arg1 is BoolFlow && (arg1 as BoolFlow).value == true) return arg2;
-            if (arg1 is BoolFlow && (arg1 as BoolFlow).value == false) return arg3;
-            return new OpFlow("cond", 3, false, new List<Flow> { arg1, arg2, arg3 });
-        }
 
         public override bool Involves(List<SpeciesValue> species) {
             if (this.arity == 0) return false;
@@ -1306,42 +1275,42 @@ namespace Kaemika
                 return op + "(" + arg1 + ", " + arg2 + ", " + arg3 + ")";
             } else throw new Error("ReportValueOp.Format");
         }
-        public override bool ReportBool(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) {
+        public override bool ReportBool(SampleValue sample, double time, State state, Style style) {
             const string BadArguments = "Flow expression: Bad arguments to: ";
             const string BadResult = "Flow expression: boolean operator expected instead of: ";
             if (arity == 0) {
                 throw new Error(BadResult + op);
             } else if (arity == 1) {
-                bool arg1 = args[0].ReportBool(sample, time, state, flux, style);
+                bool arg1 = args[0].ReportBool(sample, time, state, style);
                 if (op == "not") return !arg1;
                 else throw new Error(BadResult + op);
             } else if (arity == 2) {
-                if (op == "or") return args[0].ReportBool(sample, time, state, flux, style) || args[1].ReportBool(sample, time, state, flux, style);
-                else if (op == "and") return args[0].ReportBool(sample, time, state, flux, style) && args[1].ReportBool(sample, time, state, flux, style);
-                else if (op == "<=") return args[0].ReportMean(sample, time, state, flux, style) <= args[1].ReportMean(sample, time, state, flux, style);
-                else if (op == "<") return args[0].ReportMean(sample, time, state, flux, style) < args[1].ReportMean(sample, time, state, flux, style);
-                else if (op == ">=") return args[0].ReportMean(sample, time, state, flux, style) >= args[1].ReportMean(sample, time, state, flux, style);
-                else if (op == ">") return args[0].ReportMean(sample, time, state, flux, style) > args[1].ReportMean(sample, time, state, flux, style);
+                if (op == "or") return args[0].ReportBool(sample, time, state, style) || args[1].ReportBool(sample, time, state, style);
+                else if (op == "and") return args[0].ReportBool(sample, time, state, style) && args[1].ReportBool(sample, time, state, style);
+                else if (op == "<=") return args[0].ReportMean(sample, time, state, Flow.nilFlux, style) <= args[1].ReportMean(sample, time, state, Flow.nilFlux, style);
+                else if (op == "<") return args[0].ReportMean(sample, time, state, Flow.nilFlux, style) < args[1].ReportMean(sample, time, state, Flow.nilFlux, style);
+                else if (op == ">=") return args[0].ReportMean(sample, time, state, Flow.nilFlux, style) >= args[1].ReportMean(sample, time, state, Flow.nilFlux, style);
+                else if (op == ">") return args[0].ReportMean(sample, time, state, Flow.nilFlux, style) > args[1].ReportMean(sample, time, state, Flow.nilFlux, style);
                 else if (op == "=") {
                     if (args[0] is BoolFlow && args[1] is BoolFlow) return ((BoolFlow)args[0]).value == ((BoolFlow)args[1]).value;
                     else if (args[0] is StringFlow && args[1] is StringFlow) return ((StringFlow)args[0]).value == ((StringFlow)args[1]).value;
-                    else if ((args[0] is NumberFlow || args[0] is SpeciesFlow) && (args[1] is NumberFlow || args[1] is SpeciesFlow)) return args[0].ReportMean(sample, time, state, flux, style) == args[1].ReportMean(sample, time, state, flux, style);
+                    else if ((args[0] is NumberFlow || args[0] is SpeciesFlow) && (args[1] is NumberFlow || args[1] is SpeciesFlow)) return args[0].ReportMean(sample, time, state, Flow.nilFlux, style) == args[1].ReportMean(sample, time, state, Flow.nilFlux, style);
                     else throw new Error(BadArguments + op);
                 } else if (op == "<>") {
                     if (args[0] is BoolFlow && args[1] is BoolFlow) return ((BoolFlow)args[0]).value != ((BoolFlow)args[1]).value;
                     else if (args[0] is StringFlow && args[1] is StringFlow) return ((StringFlow)args[0]).value != ((StringFlow)args[1]).value;
-                    else if ((args[0] is NumberFlow || args[0] is SpeciesFlow) && (args[1] is NumberFlow || args[1] is SpeciesFlow)) return args[0].ReportMean(sample, time, state, flux, style) != args[1].ReportMean(sample, time, state, flux, style);
+                    else if ((args[0] is NumberFlow || args[0] is SpeciesFlow) && (args[1] is NumberFlow || args[1] is SpeciesFlow)) return args[0].ReportMean(sample, time, state, Flow.nilFlux, style) != args[1].ReportMean(sample, time, state, Flow.nilFlux, style);
                     else throw new Error(BadArguments + op);
                 } else throw new Error(BadResult + op);
             } else if (arity == 3) {
                 if (op == "cond") {
-                    if (args[0].ReportBool(sample, time, state, flux, style))
-                        return args[1].ReportBool(sample, time, state, flux, style);
-                    else return args[2].ReportBool(sample, time, state, flux, style);
+                    if (args[0].ReportBool(sample, time, state, style))
+                        return args[1].ReportBool(sample, time, state, style);
+                    else return args[2].ReportBool(sample, time, state, style);
                 } else throw new Error(BadResult + op);
             } else throw new Error(BadArguments + op);
         }
-        public override double ReportMean(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) {
+        public override double ReportMean(SampleValue sample, double time, State state, Vector flux, Style style) {
             const string BadArguments = "Flow expression: Bad arguments to: ";
             const string BadResult = "Flow expression: numerical operator expected instead of: ";
             if (arity == 0) {
@@ -1355,8 +1324,6 @@ namespace Kaemika
                     return args[0].ReportVariance(sample, time, state, style);              // Mean(var(X)) = var(X)  since var(X) is a number
                 } else if (op == "poisson") {
                     return args[0].ReportMean(sample, time, state, flux, style);            // Mean(poisson(X)) = X
-                } else if (op == "∂") {
-                    return args[0].ReportDiff(sample, time, state, flux, style);
                 } else {
                     if (op == "-") return -arg1;
                     else if (op == "abs") return Math.Abs(arg1);
@@ -1399,73 +1366,11 @@ namespace Kaemika
                 }
             } else if (arity == 3) {
                 if (op == "cond") {
-                    if (args[0].ReportBool(sample, time, state, flux, style))
+                    if (args[0].ReportBool(sample, time, state, style))
                         return args[1].ReportMean(sample, time, state, flux, style);
                     else return args[2].ReportMean(sample, time, state, flux, style);
                 } else throw new Error(BadResult + op);
             } else throw new Error(BadArguments + op);
-        }
-        public override double ReportDiff(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) {
-            const string Bad = "Non differentiable: ";
-            if (arity == 0) {
-                if (op == "time") // ∂time = 1.0
-                    return 1.0; 
-                else return 0.0; // "kelvin", "celsius" // ∂k = 0.0
-            } else if (arity == 1) {
-                if (op == "-") // ∂-f(time) = -∂f(time)
-                    return -args[0].ReportDiff(sample, time, state, flux, style);
-                else if (op == "exp") // ∂(e^f(time)) = e^f(time) * ∂f(time)
-                    return this.ReportMean(sample, time, state, flux, style) * args[0].ReportDiff(sample, time, state, flux, style);
-                else if (op == "log") // ∂ln(f(time)) = 1/time * ∂f(time), for time > 0
-                    if (time == 0.0) return double.MinValue;
-                    else return 1.0/time * args[0].ReportDiff(sample, time, state, flux, style);
-                else if (op == "sqrt") // ∂sqrt(f(time)) = 1/(2*sqrt(f(time))) * ∂f(time)
-                    return (1/(2*Math.Sqrt(args[0].ReportMean(sample, time, state, flux, style)))) * args[0].ReportDiff(sample, time, state, flux, style);
-                else if (op == "sin") // ∂sin(f(time)) = cos(f(time)) * ∂f(time);   e.g. ∂sin(s) = cos(s)*∂s for a species s
-                    return Math.Cos(args[0].ReportMean(sample, time, state, flux, style)) * args[0].ReportDiff(sample, time, state, flux, style);
-                else if (op == "cos") // ∂cos(f(time)) = -sin(f(time)) * ∂f(time)
-                    return - Math.Sin(args[0].ReportMean(sample, time, state, flux, style)) * args[0].ReportDiff(sample, time, state, flux, style);
-                // ### etc.
-                else throw new Error(Bad + this.Format(style)); // "var", "poisson", "∂" cannot support second derivative
-            } else if (arity == 2) {
-                if (op == "+") // ∂(f(time)+g(time)) = ∂f(time)+∂g(time)
-                    return args[0].ReportDiff(sample, time, state, flux, style) + args[1].ReportDiff(sample, time, state, flux, style);
-                else if (op == "-") // ∂(f(time)-g(time)) = ∂f(time)-∂g(time)
-                    return args[0].ReportDiff(sample, time, state, flux, style) - args[1].ReportDiff(sample, time, state, flux, style);
-                else if (op == "*") // ∂(f(time)*g(time)) = ∂f(time)*g(time) + f(time)*∂g(time)
-                    return
-                        args[0].ReportDiff(sample, time, state, flux, style) * args[1].ReportMean(sample, time, state, flux, style) +
-                        args[0].ReportMean(sample, time, state, flux, style) * args[1].ReportDiff(sample, time, state, flux, style);
-                else if (op == "/") { // ∂(f(time)/g(time)) = (∂f(time)*g(time) - f(time)*∂g(time)) / g(time)^2
-                    double arg0 = args[0].ReportMean(sample, time, state, flux, style);
-                    double arg1 = args[1].ReportMean(sample, time, state, flux, style);
-                    return
-                        (args[0].ReportDiff(sample, time, state, flux, style) * arg1 -
-                         arg0 * args[1].ReportDiff(sample, time, state, flux, style))
-                        / (arg1 * arg1);
-                } else if (op == "^") {
-                    if (args[0] is NumberFlow && (args[0] as NumberFlow).value == Math.E) { // ∂(e^f(time)) = e^f(time) * ∂f(time)  // special case if base is e
-                        return this.ReportMean(sample, time, state, flux, style) * args[1].ReportDiff(sample, time, state, flux, style);
-                    } else if (args[1] is NumberFlow) { // ∂(f(time)^n) = n*(f(time)^(n-1))*∂f(time) // special case if exponent is constant
-                        double power = (args[1] as NumberFlow).value;
-                        return power * Math.Pow(args[0].ReportMean(sample, time, state, flux, style), power-1) 
-                            * args[0].ReportDiff(sample, time, state, flux, style);
-                    } else { // ∂(f(time)^g(time)) = g(time)*(f(time)^(g(time)-1))*∂f(time) + (f(time)^g(time))*ln(f(time))*∂g(time)
-                             //   = (f(time)^(g(time)-1)) * (g(time)*∂f(time) + f(time)*ln(f(time))*∂g(time))
-                        double arg0 = args[0].ReportMean(sample, time, state, flux, style);
-                        double arg1 = args[1].ReportMean(sample, time, state, flux, style);
-                        return Math.Pow(arg0, arg1 - 1.0) *
-                            (arg1 * args[0].ReportDiff(sample, time, state, flux, style) +
-                             arg0 * Math.Log(arg0) * args[1].ReportDiff(sample, time, state, flux, style));
-                    };
-                } else throw new Error(Bad + this.Format(style));
-            } else if (arity == 3) {
-                if (op == "cond") {
-                    bool arg0 = args[0].ReportBool(sample, time, state, flux, style);
-                    if (arg0) return args[1].ReportDiff(sample, time, state, flux, style);
-                    else return args[2].ReportDiff(sample, time, state, flux, style);
-                } else  throw new Error(Bad + op);
-            } else throw new Error(Bad + op);
         }
         public override bool HasDeterministicValue() {
             return this.hasDeterministicValue;
@@ -1474,7 +1379,7 @@ namespace Kaemika
             if (arity == 0) {
                 return true; // "time", "kelvin", "celsius"
             } else if (arity == 1) {
-                return (op != "var" && op != "poisson") && args[0].HasDeterministicValue();  // includes ∂
+                return (op != "var" && op != "poisson") && args[0].HasDeterministicValue();
                 // Although var(X) is a number, we need the LNA info to compute it, so we say it is not deterministic
                 // poisson is not allowed in determinstic plots or general rates
             } else if (arity == 2) {
@@ -1491,13 +1396,12 @@ namespace Kaemika
         private bool CacheHasStochasticMean() {
             if (arity == 0) {
                 return true; // "time", "kelvin", "celsius"
-            } else if (arity == 1) { 
-                if (op == "∂") return false; //### if we set this to true, we get an error InitAll: wrong size
-                else if (op == "var") return args[0].LinearCombination();
-                else return args[0].HasStochasticMean();  // including "poisson"
-            } else if (arity == 2) { 
+            } else if (arity == 1) {                                     // exclude (op == "var" || op == "poisson")
+                if (op == "var") return args[0].LinearCombination();
+                else return args[0].HasStochasticMean();
+            } else if (arity == 2) {                                     // exclude (op == "cov" || op == "gauss")
                 if (op == "cov") return args[0].LinearCombination() && args[1].LinearCombination();
-                else return args[0].HasStochasticMean() && args[1].HasStochasticMean();  // including "gauss"
+                else return args[0].HasStochasticMean() && args[1].HasStochasticMean();
             } else if (arity == 3) { // including "cond"  //### should "cond" require HasDeterministicMean in args[0] ??
                 return args[0].HasStochasticMean() && args[1].HasStochasticMean() && args[2].HasStochasticMean();
             } else throw new Error("HasStochasticMean: " + op);
@@ -1508,7 +1412,7 @@ namespace Kaemika
         private bool CacheLinearCombination() {
             if (arity == 0) {
                 return true; // "time", "kelvin", "celsius"
-            } else if (arity == 1) {                                     // exclude (op == "var" || op == "poisson" || op == "∂" )
+            } else if (arity == 1) {                                     // exclude (op == "var" || op == "poisson")
                 if (op == "-") return args[0].LinearCombination();
                 else return false;
             } else if (arity == 2) {                                     // exclude (op == "cov" || op == "gauss")
@@ -1529,7 +1433,7 @@ namespace Kaemika
             } else if (arity == 1) {
                 if (op == "var") return true;                                    // var(X) is a number so it has a zero variance
                 else if (op == "poisson") return false;
-                else return args[0].HasNullVariance();  // including "∂"
+                else return args[0].HasNullVariance();
             } else if (arity == 2) {
                 if (op == "cov") return true;                                    // cov(X,Y) is a number so it has a zero variance
                 else if (op == "gauss") return false;
@@ -1542,22 +1446,21 @@ namespace Kaemika
         public override double ReportVariance(SampleValue sample, double time, State state, Style style) {
             const string BadArguments = "Flow expression: Bad arguments to: ";
             const string BadResult = "Flow expression: Variance invalid for operator: ";
-            Func<double, Vector, Vector> flux = null; // disallow "∂", we can't allow "∂(var(a))", but we could build in "∂var(a)" evaluated via flux.CovarMatrix
             if (arity == 0) {
                 return 0.0; // "time", "kelvin", "celsius"                                                // Var(constant) = 0
             } else if (arity == 1) {
                 if (op == "var") {
                     return 0.0;      // yes needed for e.g. "report a + var(a)"                            // Var(var(X)) = 0 since var(X) is a number
                 } else if (op == "poisson")
-                    return Math.Abs(args[0].ReportMean(sample, time, state, flux, style));                 // Var(poisson(X)) = Abs(mean(X))
+                    return Math.Abs(args[0].ReportMean(sample, time, state, Flow.nilFlux, style));                 // Var(poisson(X)) = Abs(mean(X))
                 else if (op == "-") {
                     return args[0].ReportVariance(sample, time, state, style);                             // Var(-X) = Var(X)
-                } else throw new Error(BadResult + op); // all other arithmetic operators and "∂": we only handle linear combinations
+                } else throw new Error(BadResult + op); // all other arithmetic operators: we only handle linear combinations
             } else if (arity == 2) {
                 if (op == "cov") {
                     return 0.0;      // yes needed                                                          // Var(cov(X,Y)) = 0 since cov(X,Y) is a number
                 } else if (op == "gauss") {
-                    return Math.Abs(args[1].ReportMean(sample, time, state, flux, style));                 // Var(gauss(X,Y)) = Abs(mean(Y))
+                    return Math.Abs(args[1].ReportMean(sample, time, state, Flow.nilFlux, style));                 // Var(gauss(X,Y)) = Abs(mean(Y))
                 } else if (op == "+") {                                                                     // Var(X+Y) = Var(X) + Var(Y) + 2*Cov(X,Y)
                     double arg1 = args[0].ReportVariance(sample, time, state, style);
                     double arg2 = args[1].ReportVariance(sample, time, state, style);
@@ -1570,18 +1473,18 @@ namespace Kaemika
                     if (args[0].HasNullVariance() && args[1].HasNullVariance())
                         return 0.0;
                     else if (args[0].HasNullVariance() && (!args[1].HasNullVariance())) {                 // Var(n*X) = n^2*Var(X)
-                        double arg1 = args[0].ReportMean(sample, time, state, flux, style);
+                        double arg1 = args[0].ReportMean(sample, time, state, Flow.nilFlux, style);
                         double arg2 = args[1].ReportVariance(sample, time, state, style);
                         return arg1 * arg1 * arg2;
                     } else if ((!args[0].HasNullVariance()) && args[1].HasNullVariance()) {                // Var(X*n) = Var(X)*n^2
                         double arg1 = args[0].ReportVariance(sample, time, state, style);
-                        double arg2 = args[1].ReportMean(sample, time, state, flux, style);
+                        double arg2 = args[1].ReportMean(sample, time, state, Flow.nilFlux, style);
                         return arg1 * arg2 * arg2;
                     } else throw new Error(BadResult + op); // this will be prevented by checking ahead of time
                 } else throw new Error(BadResult + op); // all other operators, including "/" , "^" , "arctan2" , "min" , "max"
             } else if (arity == 3) {
                 if (op == "cond") {
-                    if (args[0].ReportBool(sample, time, state, flux, style))
+                    if (args[0].ReportBool(sample, time, state, style))
                         return args[1].ReportVariance(sample, time, state, style);
                     else return args[2].ReportVariance(sample, time, state, style);
                 } else throw new Error(BadResult + op);
@@ -1590,7 +1493,6 @@ namespace Kaemika
         public override double ReportCovariance(Flow other, SampleValue sample, double time, State state, Style style) {
             const string BadArguments = "Flow expression: Bad arguments to: ";
             const string BadResult = "Flow expression: Covariance invalid for operator: ";
-            Func<double, Vector, Vector> flux = null; // disallow "∂", we can't allow "∂(cov(a,b))", but we could build in "∂cov(a,b)" evaluated via flux.CovarMatrix
             if (arity == 0) {
                 return 0.0; // "time", "kelvin", "celsius"                                                    // Cov(number,Y) = 0
             } else if (arity == 1) {
@@ -1600,7 +1502,7 @@ namespace Kaemika
                     return 0.0;
                 else if (op == "-")
                     return 0.0 - args[0].ReportCovariance(other, sample, time, state, style);                // Cov(-X,Y) = -Cov(X,Y)
-                else throw new Error(BadResult + op); // all other arithmetic operators and "∂": we only handle linear combinations
+                else throw new Error(BadResult + op); // all other arithmetic operators: we only handle linear combinations
             } else if (arity == 2) {
                 if (op == "cov") {
                     return 0.0;      // yes needed                                                           // Cov(cov(X,Y),Z) = 0 since cov(X,Y) is a number
@@ -1616,89 +1518,58 @@ namespace Kaemika
                     if (args[0].HasNullVariance() && args[1].HasNullVariance())                               // Cov(n*m,Y) = 0
                         return 0.0;
                     else if (args[0].HasNullVariance() && (!args[1].HasNullVariance())) {                      // Cov(n*X,Y) = n*Cov(X,Y) 
-                        return args[0].ReportMean(sample, time, state, flux, style) *
+                        return args[0].ReportMean(sample, time, state, Flow.nilFlux, style) *
                             args[1].ReportCovariance(other, sample, time, state, style);
                     } else if ((!args[0].HasNullVariance()) && args[1].HasNullVariance()) {                    // Cov(X*n,Y) = Cov(X,Y)*n
                         return args[0].ReportCovariance(other, sample, time, state, style) *
-                            args[1].ReportMean(sample, time, state, flux, style);
+                            args[1].ReportMean(sample, time, state, Flow.nilFlux, style);
                     } else throw new Error(BadResult + op); // all other operators, including "/" , "^" , "arctan2" , "min" , "max"
                 } else throw new Error(BadResult + op);
             } else if (arity == 3) {
                 if (op == "cond") {
-                    if (args[0].ReportBool(sample, time, state, flux, style))
+                    if (args[0].ReportBool(sample, time, state, style))
                         return args[1].ReportCovariance(other, sample, time, state, style);
                     else return args[2].ReportCovariance(other, sample, time, state, style);
                 } else throw new Error(BadResult + op);
             } else throw new Error(BadArguments + op);
         }
-        public override Flow Differentiate(Style style) { // symbolic differentiation w.r.t. "time". 
+        public override Flow Differentiate(Style style) { // w.r.t. "time". 
+            // Any species a(t) should become d/dt a(t). It is mapped back to a(t) and the resultig flow must be evaluated in a context where a(t) is bound to the Flow d/dt a(t)
             const string Bad = "Non differentiable: ";
             if (arity == 0) {
-                if (op == "time") // ∂time = 1.0
+                if (op == "time")
                     return new NumberFlow(1.0);
-                else return new NumberFlow(1.0); // "kelvin", "celsius" // ∂k = 0.0
+                else throw new Error(Bad + op); // "kelvin", "celsius"
             } else if (arity == 1) {
-                if (op == "-") // ∂-f(time) = -∂f(time)
+                if (op == "-")
                     return new OpFlow("-", true, args[0].Differentiate(style));
-                else if (op == "exp") // ∂(e^f(time)) = e^f(time) * ∂f(time)
-                    return OpFlowMult(this, args[0].Differentiate(style));
-                else if (op == "log") // ∂ln(f(time)) = 1/time * ∂f(time), for time > 0
-                    return OpFlowMult(OpFlowDiv(new NumberFlow(1.0), new OpFlow("time", false)), args[0].Differentiate(style));
-                else if (op == "sqrt") // ∂sqrt(f(time)) = 1/(2*sqrt(f(time))) * ∂f(time)
-                    return OpFlowMult(OpFlowDiv(new NumberFlow(1.0), OpFlowMult(new NumberFlow(2.0), new OpFlow("sqrt", false, args[0]))), args[0].Differentiate(style));
-                else if (op == "sin") // ∂sin(f(time)) = cos(f(time)) * ∂f(time);   e.g. ∂sin(s) = cos(s)*∂s for a species s
-                    return OpFlowMult(new OpFlow("cos", false, args[0]), args[0].Differentiate(style));
-                else if (op == "cos") // ∂cos(f(time)) = -sin(f(time)) * ∂f(time)
-                    return OpFlowMult(OpFlowMinus(new NumberFlow(0.0), new OpFlow("sin", false, args[0])), args[0].Differentiate(style));
-                // ### etc.
-                else throw new Error(Bad + op); // "var", "poisson", "∂" cannot support second derivative
+                else throw new Error(Bad + op); // "var", "poisson"
             } else if (arity == 2) {
-                if (op == "+") // ∂(f(time)+g(time)) = ∂f(time)+∂g(time)
-                    return OpFlowPlus(args[0].Differentiate(style), args[1].Differentiate(style));
-                else if (op == "-") // ∂(f(time)-g(time)) = ∂f(time)-∂g(time)
-                    return OpFlowMinus(args[0].Differentiate(style), args[1].Differentiate(style));
-                else if (op == "*") // ∂(f(time)*g(time)) = ∂f(time)*g(time) + f(time)*∂g(time)
-                    return OpFlowPlus(
-                        OpFlowMult(args[0].Differentiate(style), args[1]),
-                        OpFlowMult(args[0], args[1].Differentiate(style)));
-                else if (op == "/") // ∂(f(time)/g(time)) = (∂f(time)*g(time) - f(time)*∂g(time)) / g(time)^2
+                if (op == "+")
+                    return new OpFlow("+", true, args[0].Differentiate(style), args[1].Differentiate(style));
+                else if (op == "-")
+                    return new OpFlow("-", true, args[0].Differentiate(style), args[1].Differentiate(style));
+                else if (op == "*")
+                    return new OpFlow("+", true,
+                        new OpFlow("*", true, args[0].Differentiate(style), args[1]),
+                        new OpFlow("*", true, args[0], args[1].Differentiate(style)));
+                else if (op == "/") {
                     return
-                        OpFlowDiv(
-                            OpFlowMinus(
-                               OpFlowMult(args[0].Differentiate(style), args[1]),
-                               OpFlowMult(args[0], args[1].Differentiate(style))),
-                            OpFlowPow(args[1], new NumberFlow(2.0)));              
-                else if (op == "^")  
-                    if (args[0] is NumberFlow && (args[0] as NumberFlow).value == Math.E) { // ∂(e^f(time)) = e^f(time) * ∂f(time)  // special case if base is e
-                        return OpFlowMult(this, args[1].Differentiate(style));
-                    } else if (args[1] is NumberFlow) { // ∂(f(time)^n) = n*(f(time)^(n-1))*∂f(time) // special case if exponent is constant
-                        double power = (args[1] as NumberFlow).value;
-                        return
-                            OpFlowMult(
-                                OpFlowMult(args[1],
-                                    OpFlowPow(args[0], new NumberFlow(power-1))),
-                                args[0].Differentiate(style));
-                    } else { // ∂(f(time)^g(time)) = g(time)*(f(time)^(g(time)-1))*∂f(time) + (f(time)^g(time))*ln(f(time))*∂g(time)
-                             //   = (f(time)^(g(time)-1)) * (g(time)*∂f(time) + f(time)*ln(f(time))*∂g(time))
-                        return
-                           OpFlowMult(
-                              OpFlowPow(args[0], OpFlowMinus(args[1], new NumberFlow(1.0))),
-                              OpFlowPlus(
-                                 OpFlowMult(args[1], args[0].Differentiate(style)),
-                                 OpFlowMult(args[0],
-                                    OpFlowMult(
-                                       OpFlowLog(args[0]), 
-                                       args[1].Differentiate(style)
-                                    )
-                                 )
-                              )
-                           );
-                    }
+                        new OpFlow("/", true,
+                            new OpFlow("-", true,
+                               new OpFlow("*", true, args[0].Differentiate(style), args[1]),
+                               new OpFlow("*", true, args[0], args[1].Differentiate(style))),
+                            new OpFlow("^", true, args[1], new NumberFlow(2.0)));
+                    // this works only if the arg[1] is constant and arg[0] is literally the diff variables, otherwise must use chain rule and multiply by the derivative of the diff variables
+                    // so for squaring just use multiplication
+                    //} else if (op == "^") { 
+                    //    if (args[1] is NumberFlow) {
+                    //        double power = (args[1] as NumberFlow).value;
+                    //        return new OpFlow("*", true, new NumberFlow(power),
+                    //                  new OpFlow("^", true, args[0], new NumberFlow(power-1)));
+                    //    } else throw new Error(Bad + op);
+                }
                 else throw new Error(Bad + op);
-            } else if (arity == 3) {
-                if (op == "cond")
-                    return OpFlowCond(args[0], args[1].Differentiate(style), args[2].Differentiate(style));
-                else  throw new Error(Bad + op);
             } else throw new Error(Bad + op);
         }
     }
@@ -1801,7 +1672,7 @@ namespace Kaemika
         private DistributionValue DistrEval(Symbol parameter, List<Value> arguments, Style style) {
             double[] args = new double[arguments.Count];
             for (int i = 0; i < args.Length; i++) args[i] = (arguments[i] as NumberValue).value;
-            double oracle = Gui.gui.ParameterOracle(parameter.Format(style)); // returns NaN unless the value has been locked in the Gui
+            double oracle = Gui.gui.ParameterOracle(parameter.Format(style));
             if (!double.IsNaN(oracle)) {
                 return new DistributionValue(parameter, oracle, distribution, args);
             } else if (distribution == "uniform" && arguments.Count == 2) {
@@ -1960,21 +1831,12 @@ namespace Kaemika
     public class FunctionInstance : Expression {
         private Expression function;
         private Arguments arguments;
-        private bool infix; // just for Format
-        private int arity; // just for Format
-        public FunctionInstance(Expression function, Arguments arguments, bool infix = false, int arity = 0) {
+        public FunctionInstance(Expression function, Arguments arguments) {
             this.function = function;
             this.arguments = arguments;
-            this.infix = infix;
-            this.arity = arity;
         }
         public override string Format() {
-            if (!infix) return function.Format() + "(" + arguments.Format() + ")";
-            List<Expression> args = arguments.arguments;
-            if (arity == 1) return "(" + function.Format() + " " + args[0].Format() + ")";
-            if (arity == 2) return "(" + args[0].Format() + " " + function.Format() + " " + args[1].Format() + ")";
-            if (arity == 3) return "if " + args[0].Format() + " then " + args[1].Format() + " else " + args[2].Format() + " end";
-            return "???";
+            return function.Format() + "(" + arguments.Format() + ")";
         }
         public override void Scope(Scope scope) {
             function.Scope(scope);
@@ -2734,7 +2596,7 @@ namespace Kaemika
             this.endcondition = endcondition;
         }
         public override string Format() {       
-            return "equilibrate" +  " " + name + " := " + sample.Format() + endcondition.Format();
+            return "equilibrate" +  " " + name + " := " + sample.Format() + " for " + endcondition.Format();
         }
         public override Scope Scope(Scope scope) {
             Scope extScope = new ConsScope(name, scope);
@@ -2746,28 +2608,25 @@ namespace Kaemika
             Value inSampleValue = this.sample.Eval(env, netlist, style);
             if (!(inSampleValue is SampleValue)) throw new Error("equilibrate '" + name + "' requires a sample as first value");
             SampleValue inSample = (SampleValue)inSampleValue;
+            Symbol resultSymbol = new Symbol(name);
             Noise noise = Gui.gui.NoiseSeries();
             Value forTimeValue = endcondition.fortime.Eval(env, netlist, style);
             if (!(forTimeValue is NumberValue)) throw new Error("equilibrate '" + name + "' requires a number as second value");
             double forTime = ((NumberValue)forTimeValue).value;
             if (forTime < 0) throw new Error("equilibrate '" + name + "' requires a nonnegative number second value");
-            Symbol resultSymbol = new Symbol(name);
-            SampleValue resultSample = new SampleValue(resultSymbol, new NumberValue(inSample.Volume()), new NumberValue(inSample.Temperature()), produced: true);
             if (endcondition is EndConditionSimple) {
                 Protocol.PauseEquilibrate(netlist, style); // Gui pause between successive equilibrate, if enabled
-                NumberValue outTime = Protocol.Equilibrate(resultSample, inSample, noise, forTime, null, null, netlist, style);
-                netlist.Emit(new EquilibrateEntry(resultSample, inSample, outTime));
-                return new ValueEnv(resultSymbol, null, resultSample, env);
+                (SampleValue outSample, NumberValue outTime) = Protocol.Equilibrate(resultSymbol, inSample, noise, forTime, null, null, netlist, style);
+                netlist.Emit(new EquilibrateEntry(outSample, inSample, outTime));
+                return new ValueEnv(resultSymbol, null, outSample, env);
             }
             if (endcondition is EndConditionMinimize) {
                 Expression minimize = (endcondition as EndConditionMinimize).minimize;
                 Flow minimizeFlow = minimize.BuildFlow(env, style);
                 Flow minimizeFlowDiff = minimizeFlow.Differentiate(style);
-                // note that minimizeFlow is scoped in its surrounding environment, but is later evaluated for the species in the sample, and the sample may come from some other scope, hence this check:
-                if (!minimizeFlow.CoveredBy(inSample.species, out Symbol notCovered)) throw new Error("Species '" + notCovered.Format(style) + "' in flow '" + minimizeFlow.Format(style) + "' is not one of the species in sample '" + inSample.FormatSymbol(style) + "', when evaluating: " + this.Format());
-                NumberValue forTimevalue = Protocol.Equilibrate(resultSample, inSample, noise, forTime, minimizeFlow, minimizeFlowDiff, netlist, style);
-                netlist.Emit(new EquilibrateEntry(resultSample, inSample, forTimevalue));
-                return new ValueEnv(resultSymbol, null, resultSample, env);
+                (SampleValue outSample, NumberValue forTimevalue) = Protocol.Equilibrate(resultSymbol, inSample, noise, forTime, minimizeFlow, minimizeFlowDiff, netlist, style);  //### ENDTIMEGUESS
+                netlist.Emit(new EquilibrateEntry(outSample, inSample, forTimevalue));
+                return new ValueEnv(resultSymbol, null, outSample, env);
             }
             throw new Error("Equilibrate");
         }

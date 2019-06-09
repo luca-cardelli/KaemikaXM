@@ -29,9 +29,9 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.btnConstruct = new System.Windows.Forms.Button();
             this.txtTarget = new System.Windows.Forms.TextBox();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
@@ -76,6 +76,8 @@
             this.comboBox_Sup = new System.Windows.Forms.ComboBox();
             this.label_Sup = new System.Windows.Forms.Label();
             this.panel_Header = new System.Windows.Forms.Panel();
+            this.label_Math = new System.Windows.Forms.Label();
+            this.comboBox_Math = new System.Windows.Forms.ComboBox();
             this.panel_Simulate = new System.Windows.Forms.Panel();
             this.label_Solvers = new System.Windows.Forms.Label();
             this.panel_Controls = new System.Windows.Forms.Panel();
@@ -126,7 +128,7 @@
             this.txtTarget.Name = "txtTarget";
             this.txtTarget.ReadOnly = true;
             this.txtTarget.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.txtTarget.Size = new System.Drawing.Size(787, 298);
+            this.txtTarget.Size = new System.Drawing.Size(630, 298);
             this.txtTarget.TabIndex = 6;
             // 
             // imageList1
@@ -198,7 +200,7 @@
             // 
             this.button_Source_Copy.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button_Source_Copy.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.button_Source_Copy.Location = new System.Drawing.Point(563, 11);
+            this.button_Source_Copy.Location = new System.Drawing.Point(380, 11);
             this.button_Source_Copy.Name = "button_Source_Copy";
             this.button_Source_Copy.Size = new System.Drawing.Size(75, 32);
             this.button_Source_Copy.TabIndex = 14;
@@ -211,7 +213,7 @@
             // 
             this.button_Source_Paste.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button_Source_Paste.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.button_Source_Paste.Location = new System.Drawing.Point(645, 11);
+            this.button_Source_Paste.Location = new System.Drawing.Point(462, 11);
             this.button_Source_Paste.Name = "button_Source_Paste";
             this.button_Source_Paste.Size = new System.Drawing.Size(75, 32);
             this.button_Source_Paste.TabIndex = 15;
@@ -254,31 +256,33 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.chart1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.chart1.BorderSkin.PageColor = System.Drawing.SystemColors.Control;
-            chartArea1.AxisX.MajorGrid.LineColor = System.Drawing.Color.Gray;
-            chartArea1.AxisX.MajorGrid.LineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dot;
-            chartArea1.AxisX.ScrollBar.BackColor = System.Drawing.Color.White;
-            chartArea1.AxisX.ScrollBar.ButtonColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            chartArea1.AxisY.MajorGrid.LineColor = System.Drawing.Color.Gray;
-            chartArea1.AxisY.MajorGrid.LineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dot;
-            chartArea1.AxisY.ScrollBar.BackColor = System.Drawing.Color.White;
-            chartArea1.AxisY.ScrollBar.ButtonColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            chartArea1.BorderWidth = 10;
-            chartArea1.Name = "ChartArea1";
-            this.chart1.ChartAreas.Add(chartArea1);
-            legend1.Font = new System.Drawing.Font("Lucida Sans Unicode", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            legend1.IsTextAutoFit = false;
-            legend1.Name = "Legend1";
-            this.chart1.Legends.Add(legend1);
+            chartArea2.AxisX.MajorGrid.LineColor = System.Drawing.Color.Gray;
+            chartArea2.AxisX.MajorGrid.LineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dot;
+            chartArea2.AxisX.ScrollBar.BackColor = System.Drawing.Color.White;
+            chartArea2.AxisX.ScrollBar.ButtonColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            chartArea2.AxisX.Title = "Time (s)";
+            chartArea2.AxisY.MajorGrid.LineColor = System.Drawing.Color.Gray;
+            chartArea2.AxisY.MajorGrid.LineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dot;
+            chartArea2.AxisY.ScrollBar.BackColor = System.Drawing.Color.White;
+            chartArea2.AxisY.ScrollBar.ButtonColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            chartArea2.AxisY.Title = "Molarity (M)";
+            chartArea2.BorderWidth = 10;
+            chartArea2.Name = "ChartArea1";
+            this.chart1.ChartAreas.Add(chartArea2);
+            legend2.Font = new System.Drawing.Font("Lucida Sans Unicode", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            legend2.IsTextAutoFit = false;
+            legend2.Name = "Legend1";
+            this.chart1.Legends.Add(legend2);
             this.chart1.Location = new System.Drawing.Point(6, 396);
             this.chart1.Margin = new System.Windows.Forms.Padding(6, 4, 6, 4);
             this.chart1.Name = "chart1";
             this.chart1.Palette = System.Windows.Forms.DataVisualization.Charting.ChartColorPalette.Bright;
-            series1.ChartArea = "ChartArea1";
-            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series1.Legend = "Legend1";
-            series1.Name = "-";
-            this.chart1.Series.Add(series1);
-            this.chart1.Size = new System.Drawing.Size(781, 297);
+            series2.ChartArea = "ChartArea1";
+            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series2.Legend = "Legend1";
+            series2.Name = "-";
+            this.chart1.Series.Add(series2);
+            this.chart1.Size = new System.Drawing.Size(624, 296);
             this.chart1.TabIndex = 24;
             this.chart1.Text = "chart1";
             this.toolTip1.SetToolTip(this.chart1, "pinch or mouse-wheel to zoom\r\ndrag to scroll when zoomed\r\ndouble-click to cancel " +
@@ -469,7 +473,7 @@
             this.checkedListBox_Series.CheckOnClick = true;
             this.checkedListBox_Series.Font = new System.Drawing.Font("Lucida Sans Unicode", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkedListBox_Series.FormattingEnabled = true;
-            this.checkedListBox_Series.Location = new System.Drawing.Point(1603, 501);
+            this.checkedListBox_Series.Location = new System.Drawing.Point(1289, 500);
             this.checkedListBox_Series.Margin = new System.Windows.Forms.Padding(2);
             this.checkedListBox_Series.MultiColumn = true;
             this.checkedListBox_Series.Name = "checkedListBox_Series";
@@ -641,7 +645,7 @@
             this.richTextBox.Font = new System.Drawing.Font("Lucida Sans Unicode", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.richTextBox.Location = new System.Drawing.Point(4, 0);
             this.richTextBox.Name = "richTextBox";
-            this.richTextBox.Size = new System.Drawing.Size(777, 636);
+            this.richTextBox.Size = new System.Drawing.Size(620, 635);
             this.richTextBox.TabIndex = 47;
             this.richTextBox.Text = "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n" +
     "31\n32\n33\n34";
@@ -693,7 +697,7 @@
             "₉",
             "₍",
             "₎"});
-            this.comboBox_Sub.Location = new System.Drawing.Point(725, 27);
+            this.comboBox_Sub.Location = new System.Drawing.Point(568, 27);
             this.comboBox_Sub.Margin = new System.Windows.Forms.Padding(2);
             this.comboBox_Sub.Name = "comboBox_Sub";
             this.comboBox_Sub.Size = new System.Drawing.Size(21, 21);
@@ -705,7 +709,7 @@
             this.label_Sub.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label_Sub.AutoSize = true;
             this.label_Sub.ForeColor = System.Drawing.Color.DarkGreen;
-            this.label_Sub.Location = new System.Drawing.Point(723, 13);
+            this.label_Sub.Location = new System.Drawing.Point(566, 13);
             this.label_Sub.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label_Sub.Name = "label_Sub";
             this.label_Sub.Size = new System.Drawing.Size(26, 13);
@@ -734,7 +738,7 @@
             "⁹",
             "⁽",
             "⁾"});
-            this.comboBox_Sup.Location = new System.Drawing.Point(751, 16);
+            this.comboBox_Sup.Location = new System.Drawing.Point(594, 16);
             this.comboBox_Sup.Margin = new System.Windows.Forms.Padding(2);
             this.comboBox_Sup.Name = "comboBox_Sup";
             this.comboBox_Sup.Size = new System.Drawing.Size(21, 21);
@@ -746,7 +750,7 @@
             this.label_Sup.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label_Sup.AutoSize = true;
             this.label_Sup.ForeColor = System.Drawing.Color.DarkGreen;
-            this.label_Sup.Location = new System.Drawing.Point(747, 0);
+            this.label_Sup.Location = new System.Drawing.Point(590, 0);
             this.label_Sup.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label_Sup.Name = "label_Sup";
             this.label_Sup.Size = new System.Drawing.Size(26, 13);
@@ -757,6 +761,8 @@
             // 
             this.panel_Header.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel_Header.Controls.Add(this.label_Math);
+            this.panel_Header.Controls.Add(this.comboBox_Math);
             this.panel_Header.Controls.Add(this.label_Version);
             this.panel_Header.Controls.Add(this.label_Kaemika);
             this.panel_Header.Controls.Add(this.comboBox_Examples);
@@ -769,8 +775,40 @@
             this.panel_Header.Location = new System.Drawing.Point(0, 0);
             this.panel_Header.Margin = new System.Windows.Forms.Padding(0);
             this.panel_Header.Name = "panel_Header";
-            this.panel_Header.Size = new System.Drawing.Size(793, 49);
+            this.panel_Header.Size = new System.Drawing.Size(636, 49);
             this.panel_Header.TabIndex = 36;
+            // 
+            // label_Math
+            // 
+            this.label_Math.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.label_Math.AutoSize = true;
+            this.label_Math.ForeColor = System.Drawing.Color.DarkGreen;
+            this.label_Math.Location = new System.Drawing.Point(546, 5);
+            this.label_Math.Name = "label_Math";
+            this.label_Math.Size = new System.Drawing.Size(15, 13);
+            this.label_Math.TabIndex = 48;
+            this.label_Math.Text = "∑";
+            // 
+            // comboBox_Math
+            // 
+            this.comboBox_Math.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.comboBox_Math.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBox_Math.DropDownWidth = 21;
+            this.comboBox_Math.FormattingEnabled = true;
+            this.comboBox_Math.Items.AddRange(new object[] {
+            "∂",
+            "μ",
+            "σ",
+            "±",
+            "ʃ",
+            "√",
+            "∑",
+            "∏"});
+            this.comboBox_Math.Location = new System.Drawing.Point(542, 21);
+            this.comboBox_Math.Name = "comboBox_Math";
+            this.comboBox_Math.Size = new System.Drawing.Size(22, 21);
+            this.comboBox_Math.TabIndex = 47;
+            this.comboBox_Math.SelectedIndexChanged += new System.EventHandler(this.comboBox_Math_SelectedIndexChanged);
             // 
             // panel_Simulate
             // 
@@ -784,7 +822,7 @@
             this.panel_Simulate.Location = new System.Drawing.Point(0, 0);
             this.panel_Simulate.Margin = new System.Windows.Forms.Padding(0);
             this.panel_Simulate.Name = "panel_Simulate";
-            this.panel_Simulate.Size = new System.Drawing.Size(793, 49);
+            this.panel_Simulate.Size = new System.Drawing.Size(636, 49);
             this.panel_Simulate.TabIndex = 48;
             // 
             // label_Solvers
@@ -818,7 +856,7 @@
             this.panel_Controls.Location = new System.Drawing.Point(0, 353);
             this.panel_Controls.Margin = new System.Windows.Forms.Padding(0);
             this.panel_Controls.Name = "panel_Controls";
-            this.panel_Controls.Size = new System.Drawing.Size(793, 39);
+            this.panel_Controls.Size = new System.Drawing.Size(636, 39);
             this.panel_Controls.TabIndex = 49;
             // 
             // label_Parameters
@@ -877,7 +915,7 @@
             this.tableLayoutPanel_LeftColumn.RowCount = 2;
             this.tableLayoutPanel_LeftColumn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 49F));
             this.tableLayoutPanel_LeftColumn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel_LeftColumn.Size = new System.Drawing.Size(793, 697);
+            this.tableLayoutPanel_LeftColumn.Size = new System.Drawing.Size(636, 696);
             this.tableLayoutPanel_LeftColumn.TabIndex = 0;
             // 
             // panel_richTextBoxPadding
@@ -891,7 +929,7 @@
             this.panel_richTextBoxPadding.Location = new System.Drawing.Point(3, 52);
             this.panel_richTextBoxPadding.Name = "panel_richTextBoxPadding";
             this.panel_richTextBoxPadding.Padding = new System.Windows.Forms.Padding(4, 0, 0, 0);
-            this.panel_richTextBoxPadding.Size = new System.Drawing.Size(787, 642);
+            this.panel_richTextBoxPadding.Size = new System.Drawing.Size(630, 641);
             this.panel_richTextBoxPadding.TabIndex = 35;
             // 
             // flowLayoutPanel_Parameters
@@ -901,7 +939,7 @@
             this.flowLayoutPanel_Parameters.BackColor = System.Drawing.Color.Linen;
             this.flowLayoutPanel_Parameters.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.flowLayoutPanel_Parameters.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
-            this.flowLayoutPanel_Parameters.Location = new System.Drawing.Point(1334, 501);
+            this.flowLayoutPanel_Parameters.Location = new System.Drawing.Point(1020, 500);
             this.flowLayoutPanel_Parameters.Margin = new System.Windows.Forms.Padding(5);
             this.flowLayoutPanel_Parameters.Name = "flowLayoutPanel_Parameters";
             this.flowLayoutPanel_Parameters.Size = new System.Drawing.Size(290, 213);
@@ -919,7 +957,7 @@
             this.tableLayoutPanel_RightColumn.Controls.Add(this.panel_Simulate, 0, 0);
             this.tableLayoutPanel_RightColumn.Controls.Add(this.chart1, 0, 3);
             this.tableLayoutPanel_RightColumn.Controls.Add(this.txtTarget, 0, 1);
-            this.tableLayoutPanel_RightColumn.Location = new System.Drawing.Point(799, 2);
+            this.tableLayoutPanel_RightColumn.Location = new System.Drawing.Point(642, 2);
             this.tableLayoutPanel_RightColumn.Margin = new System.Windows.Forms.Padding(2);
             this.tableLayoutPanel_RightColumn.Name = "tableLayoutPanel_RightColumn";
             this.tableLayoutPanel_RightColumn.RowCount = 4;
@@ -927,7 +965,7 @@
             this.tableLayoutPanel_RightColumn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel_RightColumn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 39F));
             this.tableLayoutPanel_RightColumn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel_RightColumn.Size = new System.Drawing.Size(793, 697);
+            this.tableLayoutPanel_RightColumn.Size = new System.Drawing.Size(636, 696);
             this.tableLayoutPanel_RightColumn.TabIndex = 1;
             // 
             // tableLayoutPanel_Columns
@@ -946,7 +984,7 @@
             this.tableLayoutPanel_Columns.Name = "tableLayoutPanel_Columns";
             this.tableLayoutPanel_Columns.RowCount = 1;
             this.tableLayoutPanel_Columns.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel_Columns.Size = new System.Drawing.Size(1594, 701);
+            this.tableLayoutPanel_Columns.Size = new System.Drawing.Size(1280, 700);
             this.tableLayoutPanel_Columns.TabIndex = 34;
             // 
             // notifyIcon1
@@ -959,7 +997,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientSize = new System.Drawing.Size(1598, 702);
+            this.ClientSize = new System.Drawing.Size(1284, 701);
             this.Controls.Add(this.checkedListBox_Series);
             this.Controls.Add(this.flowLayoutPanel_Parameters);
             this.Controls.Add(this.btnParse);
@@ -1034,6 +1072,8 @@
         private System.Windows.Forms.ComboBox comboBox_Sup;
         private System.Windows.Forms.Label label_Sup;
         private System.Windows.Forms.Panel panel_Header;
+        private System.Windows.Forms.Label label_Math;
+        private System.Windows.Forms.ComboBox comboBox_Math;
         private System.Windows.Forms.Panel panel_Simulate;
         private System.Windows.Forms.Button button_Target_Copy;
         private System.Windows.Forms.Label label_Solvers;

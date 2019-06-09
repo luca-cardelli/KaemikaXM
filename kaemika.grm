@@ -1,4 +1,4 @@
-"Name"    = Kaemika grammar
+﻿"Name"    = Kaemika grammar
 "Author"  = Luca Cardelli
 "Version" = 1
 "About"   = A Language for Modularizing Chemistry
@@ -94,9 +94,9 @@ Comment Block @= { Nesting = All }
                     | 'mix' Id ':=' <Expression> 'with' <Expression>        ! mix two samples, and name the new sample
                     | 'mix' Id 'with' <Expression>                          ! short for 'mix' Id ':=' Id 'with' <Expression> (reusing the sample name)
                     | 'split' Id ',' Id ':=' <Expression> 'by' <Expression> ! split a sample in two named samples, the 1st by proportion (0..1), the 2nd by 1-proportion
-                    | 'equilibrate' Id ':=' <Expression> 'for' <Expression> ! integrate a sample for a time, and name the new sample
-                    | 'equilibrate' Id 'for' <Expression>                   ! short for 'integrate' Id ':=' Id 'for' <Expression>
-                    | 'equilibrate' 'for' <Expression>                      ! short for 'integrate' 'vessel' ':=' 'vessel' 'for' <Expression>
+                    | 'equilibrate' Id ':=' <Expression> <EndCondition>     ! integrate a sample for a time, and name the new sample
+                    | 'equilibrate' Id <EndCondition>                       ! short for 'integrate' Id ':=' Id <EndCondition>
+                    | 'equilibrate' <EndCondition>                          ! short for 'integrate' 'vessel' ':=' 'vessel' <EndCondition>
                     | 'transfer' <EmptySample> ':=' <Expression>            ! change sample volume (evaporate/dilute) and temperature
                     | 'dispose' <Expression>                                ! dispose of a sample (sample cannot be reused)
                 
@@ -166,6 +166,9 @@ Comment Block @= { Nesting = All }
 
 <Distribution>   ::= Id '(' <Args> ')'     ! uniform(lo,hi), normal(mean,stdev), exponential(lambda), bernoulli(p)
                   
+<EndCondition>   ::= 'for' <Expression>
+                    | 'for' <Expression> 'minimize' <Expression>
+                  
 ! OPERATORS  --------------------------------------------                                 
 
 <Or Exp>        ::=  <Or Exp> 'or' <And Exp>                                 ! boring encoding of prefix/infix operator precedence         
@@ -194,6 +197,7 @@ Comment Block @= { Nesting = All }
                     | <Neg Exp> 
 
 <Neg Exp>       ::= '-' <Powr Exp> 
+                    | '∂' <Powr Exp>
                     | <Powr Exp>
                     
 <Powr Exp>      ::= <Powr Exp> '^' <Base Exp>                               ! -2^2 = -4;  -2^-2 is error, use -2^(-2)
@@ -201,6 +205,6 @@ Comment Block @= { Nesting = All }
 
 ! UNITS  --------------------------------------------                                 
 
-<Volume>        ::= Id     ! 'L' | 'mL' | 'muL' | 'nL'
+<Volume>        ::= Id     ! 'L' | 'mL' | 'uL' | 'μL' | 'nL'
 <Temperature>   ::= Id     ! 'K' | 'Kelvin' | 'C' | 'Celsius'
-<Quantity>      ::= Id     ! 'kg' | 'g' | 'mg' | 'mug' | 'ng' | 'kM' | 'M' | 'mM' | 'muM' | 'nM' | 'kmol' | 'mol' | 'mmol' | 'mumol' | 'nmol'
+<Quantity>      ::= Id     ! 'kg' | 'g' | 'mg' | 'ug' | 'μg' | 'ng' | 'kM' | 'M' | 'mM' | 'uM' | 'μM' | 'nM' | 'kmol' | 'mol' | 'mmol' | 'umol' | 'μmol' | 'nmol'

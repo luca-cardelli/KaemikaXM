@@ -68,6 +68,7 @@ namespace KaemikaXM.Pages {
                     textOutputButton.IsEnabled = true;
                 });
             }
+            Gui.gui.OutputSetText("");
             Exec.Execute_Exporter(true, export);
         }
 

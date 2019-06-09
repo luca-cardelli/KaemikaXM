@@ -134,6 +134,15 @@ namespace KaemikaWPF
             }
         }
 
+        public override void ChartClearData() {
+            if (form.chart1.InvokeRequired) {
+                VoidArgVoidReturnDelegate d = new VoidArgVoidReturnDelegate(ChartClearData);
+                form.Invoke(d, new object[] { });
+            } else {
+                form.ChartClearData();
+            }
+        }
+
         public override void ChartUpdate() {
             if (form.chart1.InvokeRequired) {
                 VoidArgVoidReturnDelegate d = new VoidArgVoidReturnDelegate(ChartUpdate);

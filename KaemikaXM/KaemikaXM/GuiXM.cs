@@ -119,6 +119,11 @@ namespace Kaemika {
             LegendUpdate();
         }
 
+        public override void ChartClearData() {
+            this.timecourse.ClearData();
+        }
+
+
         public override void OutputClear(string title) {
             MainTabbedPage.theOutputPage.OutputClear();
             this.title = title;

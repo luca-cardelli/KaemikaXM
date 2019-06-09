@@ -86,7 +86,7 @@ namespace Kaemika {
                 if (executionMutex.IsExecuting()) return; // we are already running an executor worker thread
                 else executionMutex.BeginningExecution();
             }
-            ProtocolActuator.continueExecution = true;
+            Protocol.continueExecution = true;
             if (forkWorker) {
                 Thread thread = new Thread(() => Execute_Worker(doParse, doAST, doScope, autoContinue));
                 thread.SetApartmentState(ApartmentState.STA); // required to use the clipboard
@@ -169,7 +169,6 @@ namespace Kaemika {
         private static void Execute_Exporter_Worker(ExportAs exportAs) {
             try {
                 var execution = lastExecution; // atomically copy it
-                Gui.gui.OutputSetText("");
                 if (execution == null) {
                 } else if (exportAs == ExportAs.None) {
 

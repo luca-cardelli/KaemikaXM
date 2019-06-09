@@ -52,95 +52,98 @@ Terminals
  31     '->'
  32     '>='
  33     '>>'
- 34     amount
- 35     and
- 36     as
- 37     bool
- 38     by
- 39     define
- 40     dispose
- 41     Double
- 42     else
- 43     elseif
- 44     end
- 45     equilibrate
- 46     false
- 47     Float
- 48     flow
- 49     for
- 50     fun
- 51     function
- 52     Id
- 53     if
- 54     in
- 55     Integer
- 56     mix
- 57     net
- 58     network
- 59     not
- 60     number
- 61     or
- 62     QuotedString
- 63     report
- 64     return
- 65     sample
- 66     species
- 67     split
- 68     string
- 69     then
- 70     transfer
- 71     true
- 72     with
+ 34     '∂'
+ 35     amount
+ 36     and
+ 37     as
+ 38     bool
+ 39     by
+ 40     define
+ 41     dispose
+ 42     Double
+ 43     else
+ 44     elseif
+ 45     end
+ 46     equilibrate
+ 47     false
+ 48     Float
+ 49     flow
+ 50     for
+ 51     fun
+ 52     function
+ 53     Id
+ 54     if
+ 55     in
+ 56     Integer
+ 57     minimize
+ 58     mix
+ 59     net
+ 60     network
+ 61     not
+ 62     number
+ 63     or
+ 64     QuotedString
+ 65     report
+ 66     return
+ 67     sample
+ 68     species
+ 69     split
+ 70     string
+ 71     then
+ 72     transfer
+ 73     true
+ 74     with
 
 
 ========================================
 Nonterminals
 ========================================
 
-73      <Allocation>
-74      <And Exp>
-75      <Args>
-76      <Base Exp>
-77      <Comp Exp>
-78      <Complex>
-79      <Distribution>
-80      <Else>
-81      <Else Exp>
-82      <EmptySample>
-83      <Expression>
-84      <Fun>
-85      <Fun Instance>
-86      <Function>
-87      <Header>
-88      <Headers>
-89      <Ids>
-90      <Mult Exp>
-91      <Neg Exp>
-92      <Net>
-93      <Net Instance>
-94      <Network>
-95      <Not Exp>
-96      <Or Exp>
-97      <Param>
-98      <Params>
-99      <Powr Exp>
-100     <Quantity>
-101     <Rate>
-102     <Reaction>
-103     <Report>
-104     <Reports>
-105     <Sample>
-106     <Simplex>
-107     <Species>
-108     <Statement>
-109     <Statements>
-110     <Substance>
-111     <Substances>
-112     <Sum Exp>
-113     <Temperature>
-114     <Top>
-115     <Transition>
-116     <Volume>
+75      <Allocation>
+76      <And Exp>
+77      <Args>
+78      <Base Exp>
+79      <Comp Exp>
+80      <Complex>
+81      <Distribution>
+82      <Else>
+83      <Else Exp>
+84      <EmptySample>
+85      <EndCondition>
+86      <Expression>
+87      <Fun>
+88      <Fun Instance>
+89      <Function>
+90      <Header>
+91      <Headers>
+92      <Ids>
+93      <Mult Exp>
+94      <Neg Exp>
+95      <Net>
+96      <Net Instance>
+97      <Network>
+98      <Not Exp>
+99      <Or Exp>
+100     <Param>
+101     <Params>
+102     <Powr Exp>
+103     <Quantity>
+104     <Rate>
+105     <Reaction>
+106     <Report>
+107     <Reports>
+108     <Sample>
+109     <Simplex>
+110     <Species>
+111     <Statement>
+112     <Statements>
+113     <Substance>
+114     <Substances>
+115     <Sum Exp>
+116     <Temperature>
+117     <Top>
+118     <Transition>
+119     <Volume>
 
 
 ========================================
@@ -203,9 +206,9 @@ Rules
 53      <Statement> ::= mix Id ':=' <Expression> with <Expression>
 54      <Statement> ::= mix Id with <Expression>
 55      <Statement> ::= split Id ',' Id ':=' <Expression> by <Expression>
-56      <Statement> ::= equilibrate Id ':=' <Expression> for <Expression>
-57      <Statement> ::= equilibrate Id for <Expression>
-58      <Statement> ::= equilibrate for <Expression>
+56      <Statement> ::= equilibrate Id ':=' <Expression> <EndCondition>
+57      <Statement> ::= equilibrate Id <EndCondition>
+58      <Statement> ::= equilibrate <EndCondition>
 59      <Statement> ::= transfer <EmptySample> ':=' <Expression>
 60      <Statement> ::= dispose <Expression>
 61      <Net Instance> ::= Id '(' ')'
@@ -256,31 +259,34 @@ Rules
 106     <Report> ::= <Expression> as <Expression>
 107     <Report> ::= <Expression>
 108     <Distribution> ::= Id '(' <Args> ')'
-109     <Or Exp> ::= <Or Exp> or <And Exp>
-110     <Or Exp> ::= <And Exp>
-111     <And Exp> ::= <And Exp> and <Not Exp>
-112     <And Exp> ::= <Not Exp>
-113     <Not Exp> ::= not <Comp Exp>
-114     <Not Exp> ::= <Comp Exp>
-115     <Comp Exp> ::= <Sum Exp> '=' <Sum Exp>
-116     <Comp Exp> ::= <Sum Exp> '<>' <Sum Exp>
-117     <Comp Exp> ::= <Sum Exp> '<=' <Sum Exp>
-118     <Comp Exp> ::= <Sum Exp> '>=' <Sum Exp>
-119     <Comp Exp> ::= <Sum Exp> '<' <Sum Exp>
-120     <Comp Exp> ::= <Sum Exp> '>' <Sum Exp>
-121     <Comp Exp> ::= <Sum Exp>
-122     <Sum Exp> ::= <Sum Exp> '+' <Mult Exp>
-123     <Sum Exp> ::= <Sum Exp> '-' <Mult Exp>
-124     <Sum Exp> ::= <Mult Exp>
-125     <Mult Exp> ::= <Mult Exp> '*' <Neg Exp>
-126     <Mult Exp> ::= <Mult Exp> '/' <Neg Exp>
-127     <Mult Exp> ::= <Neg Exp>
-128     <Neg Exp> ::= '-' <Powr Exp>
-129     <Neg Exp> ::= <Powr Exp>
-130     <Powr Exp> ::= <Powr Exp> '^' <Base Exp>
-131     <Powr Exp> ::= <Base Exp>
-132     <Volume> ::= Id
-133     <Temperature> ::= Id
-134     <Quantity> ::= Id
+109     <EndCondition> ::= for <Expression>
+110     <EndCondition> ::= for <Expression> minimize <Expression>
+111     <Or Exp> ::= <Or Exp> or <And Exp>
+112     <Or Exp> ::= <And Exp>
+113     <And Exp> ::= <And Exp> and <Not Exp>
+114     <And Exp> ::= <Not Exp>
+115     <Not Exp> ::= not <Comp Exp>
+116     <Not Exp> ::= <Comp Exp>
+117     <Comp Exp> ::= <Sum Exp> '=' <Sum Exp>
+118     <Comp Exp> ::= <Sum Exp> '<>' <Sum Exp>
+119     <Comp Exp> ::= <Sum Exp> '<=' <Sum Exp>
+120     <Comp Exp> ::= <Sum Exp> '>=' <Sum Exp>
+121     <Comp Exp> ::= <Sum Exp> '<' <Sum Exp>
+122     <Comp Exp> ::= <Sum Exp> '>' <Sum Exp>
+123     <Comp Exp> ::= <Sum Exp>
+124     <Sum Exp> ::= <Sum Exp> '+' <Mult Exp>
+125     <Sum Exp> ::= <Sum Exp> '-' <Mult Exp>
+126     <Sum Exp> ::= <Mult Exp>
+127     <Mult Exp> ::= <Mult Exp> '*' <Neg Exp>
+128     <Mult Exp> ::= <Mult Exp> '/' <Neg Exp>
+129     <Mult Exp> ::= <Neg Exp>
+130     <Neg Exp> ::= '-' <Powr Exp>
+131     <Neg Exp> ::= '∂' <Powr Exp>
+132     <Neg Exp> ::= <Powr Exp>
+133     <Powr Exp> ::= <Powr Exp> '^' <Base Exp>
+134     <Powr Exp> ::= <Base Exp>
+135     <Volume> ::= Id
+136     <Temperature> ::= Id
+137     <Quantity> ::= Id
 
 

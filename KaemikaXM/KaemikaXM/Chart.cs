@@ -73,6 +73,14 @@ namespace Microcharts {
             this.lastEntryCount = 0;
         }
 
+        public void ClearData() {
+            lock (mutex) {
+                this.list = new List<ChartEntry>();
+                this.lastEntry = null;
+                this.lastEntryCount = 0;
+            }
+        }
+
         public string AddSeries(Series series) {
             lock (mutex) {
                 if (seriesList.Exists(e => e.name == series.name)) return null;  // give null on duplicate series
@@ -286,7 +294,7 @@ namespace Microcharts {
             float Xloc = XlocOfXvalInPlotarea(0, minX, maxX, plotSize); // initialize to screen coordinates height of X=0
             do {
                 float Xval = XvalOfXlocInPlotarea(Xloc, minX, maxX, plotSize);
-                SKRect bounds = Inner_DrawLabel_Hor(canvas, Xval.ToString("g3"), plotOrigin.X + Xloc, plotOrigin.Y + plotSize.Height, true, textHeight, axisTextColor, pinchPan);
+                SKRect bounds = Inner_DrawLabel_Hor(canvas, Kaemika.Gui.FormatUnit(Xval, " ", "s", "g3"), plotOrigin.X + Xloc, plotOrigin.Y + plotSize.Height, true, textHeight, axisTextColor, pinchPan);
                 Xloc += bounds.Width + 2 * textHeight; //using textHeigth for horizontal spacing
             } while (Xloc < plotSize.Width - plotOrigin.X);
         }
@@ -297,14 +305,14 @@ namespace Microcharts {
             Yloc = YlocOfYvalInPlotarea(Math.Max(0,minY), minY, maxY, plotSize);
             while (Yloc > textHeight) {
                 float Yval = YvalOfYlocInPlotarea(Yloc, minY, maxY, plotSize);
-                Inner_DrawLabel_Ver(canvas, Yval.ToString("g3"), plotOrigin.X, plotOrigin.Y + Yloc, false, textHeight, axisTextColor, pinchPan);
+                Inner_DrawLabel_Ver(canvas, Kaemika.Gui.FormatUnit(Yval, " ", "M", "g3"), plotOrigin.X, plotOrigin.Y + Yloc, false, textHeight, axisTextColor, pinchPan);
                 Yloc -= 3 * textHeight;
             }
             // draw <=0 labels goind downwards from 0 or maxY
             Yloc = YlocOfYvalInPlotarea(Math.Min(0,maxY), minY, maxY, plotSize);
             while (Yloc < plotSize.Height - 2 * textHeight) {
                 float Yval = YvalOfYlocInPlotarea(Yloc, minY, maxY, plotSize);
-                Inner_DrawLabel_Ver(canvas, Yval.ToString("g3"), plotOrigin.X, plotOrigin.Y + Yloc, false, textHeight, axisTextColor, pinchPan);
+                Inner_DrawLabel_Ver(canvas, Kaemika.Gui.FormatUnit(Yval, " ", "M", "g3"), plotOrigin.X, plotOrigin.Y + Yloc, false, textHeight, axisTextColor, pinchPan);
                 Yloc += 3 * textHeight;
             }
         }

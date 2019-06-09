@@ -422,7 +422,7 @@ namespace Kaemika
 
             // fill the second part of deriv - the covariances                                
             Matrix J = NordsieckState.Jacobian((t, x) => Flux(t, x, style), meanState, 0.0);       // The Jacobian of the flux in this state
-            result.AddCovar((J * covarState) + (covarState * J.Transpose()) + Drift(actionA));      // LNA equation
+            result.AddCovar((J * covarState) + (covarState * J.Transpose()) + Drift(actionA));     // LNA equation
 
             return result.ToArray();
         }
@@ -682,7 +682,7 @@ namespace Kaemika
         //}
 
         public List<ReportEntry> Reports(List<SpeciesValue> species) {
-            // return the list of report in this netlist that involve any of the species in the species list
+            // return the list of reports in this netlist that involve any of the species in the species list
             // but include only those reports that are fully covered by those species, just ignore the others
             List<ReportEntry> reportList = new List<ReportEntry> { };
             foreach (Entry entry in this.entries) {

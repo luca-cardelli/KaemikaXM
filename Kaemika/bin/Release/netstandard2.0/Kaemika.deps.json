@@ -1,7 +1,7 @@
 {
   "runtimeTarget": {
     "name": ".NETStandard,Version=v2.0/",
-    "signature": "e07c5c80b51a9caa12e6610327018284fb9e96c9"
+    "signature": "8db6141b040f129e95a96934d7f7546f6d2718f7"
   },
   "compilationOptions": {},
   "targets": {
@@ -10,12 +10,21 @@
       "Kaemika/1.0.0": {
         "dependencies": {
           "CalithaGOLD": "1.0.0",
+          "MathNet.Numerics": "4.8.0",
           "NETStandard.Library": "2.0.3",
           "Oslo": "1.0.0",
           "QuickGraphStd": "1.0.0"
         },
         "runtime": {
           "Kaemika.dll": {}
+        }
+      },
+      "MathNet.Numerics/4.8.0": {
+        "runtime": {
+          "lib/netstandard2.0/MathNet.Numerics.dll": {
+            "assemblyVersion": "4.8.0.0",
+            "fileVersion": "4.8.0.0"
+          }
         }
       },
       "Microsoft.NETCore.Platforms/1.1.0": {},
@@ -57,6 +66,13 @@
       "type": "project",
       "serviceable": false,
       "sha512": ""
+    },
+    "MathNet.Numerics/4.8.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-haZ6IgPU51AKnI2PGjdbx+h2y41PV0fTPciZ0y2E8Crm6bI6VNGym5d+NmiT7MCxVWVV207rzYlfE+DuelaQEQ==",
+      "path": "mathnet.numerics/4.8.0",
+      "hashPath": "mathnet.numerics.4.8.0.nupkg.sha512"
     },
     "Microsoft.NETCore.Platforms/1.1.0": {
       "type": "package",
