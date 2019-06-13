@@ -256,7 +256,7 @@ namespace Kaemika
             else if (style.dataFormat == "header") return "equilibrate " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " for " + time.Format(style)
                     + Environment.NewLine + "   => " + outSample.Format(style);
             else if (style.dataFormat == "full") return "equilibrate " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " for " + time.Format(style)
-                    + Environment.NewLine + "   => " + outSample.Format(style);
+                    + Environment.NewLine + "   => " + inSample.Format(style); // show inSample so we can see the RelevantReactions at reactionsAsConsumed time
             else return "unknown format: " + style.dataFormat;
         }
     }

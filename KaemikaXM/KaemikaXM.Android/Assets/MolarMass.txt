@@ -23,7 +23,7 @@ amount NaCl @ 0.1 mol in s
 */
 
 // then NaCl will have a concentration 
-// of 0.1/volume(s) M in s
+// of 0.1/observe(volume,s) M in s
 
 // Altenatively again, we can impose a
 // concentration from weight of matter.
@@ -34,13 +34,13 @@ amount NaCl @ 0.1 mol in s
 // which is 58.44 grams/mol, then 8/58.44 mol 
 // in 0.8 L gives 0.1711 mol/L. 
 // We could compute this as follows,
-// where volume(s) is in L units:
+// where observe(volume,s) is in L units:
 
 /*
 sample s {800mL, 20C}
 species {NaCl, KCl}
-amount NaCl @ (8/58.44)/volume(s) M in s
-amount KCl @ (0.2/74.5513)/volume(s) M in s 
+amount NaCl @ (8/58.44)/observe(volume,s) M in s
+amount KCl @ (0.2/74.5513)/observe(volume,s) M in s 
 */
 
 // RESULT: sample s {800mL, 293.2K} 

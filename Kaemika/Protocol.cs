@@ -362,74 +362,72 @@ namespace Kaemika
                 if (result.ReasonForExit == ExitCondition.Converged || result.ReasonForExit == ExitCondition.AbsoluteGradient)
                     return (endTime: result.MinimizingPoint[0], endState: lastEndState, pointsCounter: lastPointsCounter, renderedCounter: lastRenderereCounter);
                 else throw new Error("reason '" + result.ReasonForExit.ToString() + "' at time " + result.MinimizingPoint[0].ToString());
-            } catch (Exception e) {
-                throw new Error("Minimization ended: " + ((e.InnerException == null) ? e.Message : e.InnerException.Message)); } // somehow we need to recatch the inner exception coming from CostAndGradient
+            } catch (Exception e) {throw new Error("Minimization ended: " + ((e.InnerException == null) ? e.Message : e.InnerException.Message)); } // somehow we need to recatch the inner exception coming from CostAndGradient
         }
 
-        //### HMMM BFGS requires a gradient
-        //public static Value Argmin(Value function, Value initial, Style style) {
-        //    if (!(initial is ListValue)) throw new Error("");
-        //    Value[] elements = (initial as ListValue).elements;
-        //    double[] v = new double[elements.Length];
-        //    for (int i = 0; i < elements.Length; i++) { if (elements[i] is NumberValue) v[i] = (elements[i] as NumberValue).value; else throw new Error(""); }
-        //    Vector<double> initialGuess = CreateVector.Dense(v);
-        //    if (!(function is FunctionValue)) throw new Error("");
-        //    FunctionValue closure = function as FunctionValue;
-        //    if (closure.parameters.parameters.Count != elements.Length) throw new Error("");
+        // BFGF Minimizer
+        public static Value Argmin(Value function, Value initial, Netlist netlist, Style style) {
+            if (!(initial is NumberValue)) throw new Error("argmin: expecting a number for second argument");
+            Vector<double> initialGuess = CreateVector.Dense(new double[1] { (initial as NumberValue).value });
+            if (!(function is FunctionValue)) throw new Error("argmin: expecting a function as first argument");
+            FunctionValue closure = function as FunctionValue;
+            if (closure.parameters.ids.Count != 1) throw new Error("argmin: initial values and function parameters have different lengths");
 
-        //    IObjectiveFunction objectiveFunction = ObjectiveFunction.Value(
-        //        (Vector<double> parameters) => {
-        //            List<Value> arguments = new List<Value>();
-        //            for (int i = 0; i < parameters.Count; i++) arguments.Add(new NumberValue(parameters[i]));
-        //            Value result = closure.ApplyFlow(arguments, style);
-        //            if (!(result is NumberValue)) throw new Error("");
-        //            Gui.gui.OutputAppendText("argmin: " + Expressions.FormatValues(arguments, style) + " => " + result.Format(style));
-        //            return (result as NumberValue).value;
-        //        });
+            IObjectiveFunction objectiveFunction = ObjectiveFunction.Gradient(
+                (Vector<double> parameters) => {
+                    List<Value> arguments = new List<Value>(); arguments.Add(new NumberValue(parameters[0]));
+                    bool autoContinue = netlist.autoContinue; netlist.autoContinue = true;
+                    Value result = closure.Apply(arguments, netlist, style);
+                    netlist.autoContinue = autoContinue;
+                    if (!(result is ListValue)) throw new Error("argmin: objective function should return a list or two numbers");
+                    List<Value> list = (result as ListValue).elements;
+                    if (list.Count != 2 || !(list[0] is NumberValue) || !(list[1] is NumberValue)) throw new Error("argmin: objective function should return a list or two numbers");
+                    double cost = (list[0] as NumberValue).value;
+                    double gradient = (list[1] as NumberValue).value;
+                    Gui.gui.OutputAppendText("argmin: parameter=" + style.FormatDouble(parameters[0]) + " => cost=" + style.FormatDouble(cost) + ", gradient=" + style.FormatDouble(gradient) + Environment.NewLine);
+                    return new Tuple<double, Vector<double>>(cost, CreateVector.Dense(1, gradient));
+                });
 
-        //    try {
-        //        BfgsMinimizer minimizer = new BfgsMinimizer(1e-2, 1e-2, 1e-2); //### tolerances????
-        //        MinimizationResult result = minimizer.FindMinimum(objectiveFunction, initialGuess);
-        //        if (result.ReasonForExit == ExitCondition.Converged || result.ReasonForExit == ExitCondition.AbsoluteGradient) {
-        //            Vector<double> minimizingPoint = result.MinimizingPoint;
-        //            Value[] minim = new Value[minimizingPoint.Count];
-        //            for (int i = 0; i < minimizingPoint.Count; i++) minim[i] = new NumberValue(minimizingPoint[i]);
-        //            return new ListValue(minim);
-        //         } else throw new Error("reason '" + result.ReasonForExit.ToString());
-        //    } catch (Exception e) { throw new Error("Minimization ended: " + ((e.InnerException == null) ? e.Message : e.InnerException.Message)); } // somehow we need to recatch the inner exception coming from CostAndGradient
-        //}
+            try {
+                BfgsMinimizer minimizer = new BfgsMinimizer(1e-2, 1e-2, 1e-2); //### tolerances????
+                MinimizationResult result = minimizer.FindMinimum(objectiveFunction, initialGuess);
+                if (result.ReasonForExit == ExitCondition.Converged || result.ReasonForExit == ExitCondition.AbsoluteGradient) {
+                    Gui.gui.OutputAppendText("argmin: converged with parameter=" + result.MinimizingPoint[0] + Environment.NewLine);
+                    return new NumberValue(result.MinimizingPoint[0]);
+                 } else throw new Error("reason '" + result.ReasonForExit.ToString());
+            } catch (Exception e) { throw new Error("argmin ended: " + ((e.InnerException == null) ? e.Message : e.InnerException.Message)); } // somehow we need to recatch the inner exception coming from CostAndGradient
+        }
 
         // try this for multiparameter optimization: https://numerics.mathdotnet.com/api/MathNet.Numerics.Optimization.TrustRegion/index.htm
 
+        // Golden Section Minimizer
         public static Value Argmin(Value function, Value lowerBound, Value upperBound, Netlist netlist, Style style) {
-            if (!(lowerBound is NumberValue) || !(upperBound is NumberValue)) throw new Error("");
+            if (!(lowerBound is NumberValue) || !(upperBound is NumberValue)) throw new Error("argmin: expecting numbers for lower and upper bounds");
             double lower = (lowerBound as NumberValue).value;
             double upper = (upperBound as NumberValue).value;
-            if (lower > upper) throw new Error("");
-            if (!(function is FunctionValue)) throw new Error("");
+            if (lower > upper) throw new Error("argmin: lower bound greater than upper bound");
+            if (!(function is FunctionValue)) throw new Error("argmin: expecting a function as first argument");
             FunctionValue closure = function as FunctionValue;
-            if (closure.parameters.ids.Count != 1) throw new Error("");
+            if (closure.parameters.ids.Count != 1) throw new Error("argmin: initial values and function parameters have different lengths");
 
             IScalarObjectiveFunction objectiveFunction = ObjectiveFunction.ScalarValue(
                 (double parameter) => {
-                    List<Value> arguments = new List<Value>();
-                    arguments.Add(new NumberValue(parameter));
+                    List<Value> arguments = new List<Value>(); arguments.Add(new NumberValue(parameter));
                     bool autoContinue = netlist.autoContinue; netlist.autoContinue = true;
                     Value result = closure.Apply(arguments, netlist, style);
                     netlist.autoContinue = autoContinue;
                     if (!(result is NumberValue)) throw new Error("Objective function must return a number, not: " + result.Format(style));
-                    Gui.gui.OutputAppendText("argmin: " + Expressions.FormatValues(arguments, style) + " => " + result.Format(style) + Environment.NewLine);
+                    Gui.gui.OutputAppendText("argmin: parameter=" + Expressions.FormatValues(arguments, style) + " => cost=" + result.Format(style) + Environment.NewLine);
                     return (result as NumberValue).value;
                 });
 
             try {
                 ScalarMinimizationResult result = GoldenSectionMinimizer.Minimum(objectiveFunction, lower, upper);
                 if (result.ReasonForExit == ExitCondition.Converged || result.ReasonForExit == ExitCondition.BoundTolerance) {
-                    double minimizingPoint = result.MinimizingPoint;
+                    Gui.gui.OutputAppendText("argmin: converged with parameter=" + result.MinimizingPoint + Environment.NewLine);
                     return new NumberValue(result.MinimizingPoint);
                  } else throw new Error("reason '" + result.ReasonForExit.ToString());
-            } catch (Exception e) {
-                throw new Error("Minimization ended: " + ((e.InnerException == null) ? e.Message : e.InnerException.Message)); } // somehow we need to recatch the inner exception coming from CostAndGradient
+            } catch (Exception e) { throw new Error("argmin ended: " + ((e.InnerException == null) ? e.Message : e.InnerException.Message)); } // somehow we need to recatch the inner exception coming from CostAndGradient
         }
 
     }

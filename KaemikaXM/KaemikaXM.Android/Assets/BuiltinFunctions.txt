@@ -66,10 +66,25 @@ observe(f,s) // observe a flow f in sample s
 observe(kelvin,s) // temperature of s
 observe(volume,s) // volume of s (L)
 observe(a,s) // molarity of a in s (mol/L)
-observe(∂(a),s)   // derivative of a
+observe(∂a,s)     // derivative of a
 observe(a+2b^2,s) // combinations
 observe(var(a),s) // = 0 (at time 0)
 observe(time,s)   // = 0 (at time 0)
+
+// Optimization
+
+argmin(f, l, h) // Golden Section optimizer
+//f: number -> number  function to minimize
+//   input is a parameter, output is cost
+//l: number            lower bound
+//h: number            upper bound
+
+argmin(f, i) // BFGF Optimizer
+//f: number -> [number, number]
+//   function of time to minimize
+//   input t is used for 'equilibrate S for t'
+//   outputs are cost and gradient for that t
+//   obtained by: [observe(cost,S), observe(∂cost,S)] 
 
 //======================================
 // Flow-expressions

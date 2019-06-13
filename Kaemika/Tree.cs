@@ -508,15 +508,22 @@ namespace Kaemika
         }
         public string FormatContent(Style style, bool breaks = false) {
             string s = "";
-            foreach (KeyValuePair<SpeciesValue, NumberValue> keyPair in this.speciesSet) {
+            foreach (KeyValuePair<SpeciesValue, NumberValue> keyPair in this.speciesSet)
                 s += (breaks ? (Environment.NewLine + "   ") : "") + keyPair.Key.Format(style) + " = " + Gui.FormatUnit(keyPair.Value.value, "", "M", style.numberFormat);
-            }
             return s;
+        }
+        public string FormatReactions(Style style, bool breaks = false) {
+            if (reactionsAsConsumed == null) return "";
+            string s = "";
+            foreach (ReactionValue reaction in reactionsAsConsumed)
+                s += (breaks ? (Environment.NewLine + "   ") : "") + reaction.Format(style);
+            return s;
+
         }
         public override string Format(Style style) {
             if (style.dataFormat == "symbol") return symbol.Format(style);
             else if (style.dataFormat == "header") return "sample " + FormatHeader(style);
-            else if (style.dataFormat == "full") return "sample " + FormatHeader(style) + " {" + FormatContent(style, true) + Environment.NewLine + "}";
+            else if (style.dataFormat == "full") return "sample " + FormatHeader(style) + " {" + FormatContent(style, true) + FormatReactions(style, true) + Environment.NewLine + "}";
             else return "unknown format: " + style.dataFormat;
         }
 
@@ -996,9 +1003,10 @@ namespace Kaemika
             } else if (arguments.Count == 1) {
                 return ApplyFlow(arguments, style);
             } else if (arguments.Count == 2) {
-                return ApplyFlow(arguments, style);
+                if (name == "argmin") return Protocol.Argmin(arguments[0], arguments[1], netlist, style); // BFGF
+                else return ApplyFlow(arguments, style);
             } else if (arguments.Count == 3) {
-                if (name == "argmin") return Protocol.Argmin(arguments[0], arguments[1], arguments[2], netlist, style);
+                if (name == "argmin") return Protocol.Argmin(arguments[0], arguments[1], arguments[2], netlist, style); // GoldenSection
                 else throw new Error(BadArguments + name);
             } else throw new Error(BadArguments + name);
         }
@@ -1274,6 +1282,10 @@ namespace Kaemika
             if (arg1 is NumberFlow && (arg1 as NumberFlow).value == 0.0) return arg2;
             if (arg2 is NumberFlow && (arg2 as NumberFlow).value == 0.0) return arg1;
             return new OpFlow("+", true, arg1, arg2);
+        }
+        public Flow OpFlowMinus(Flow arg) {
+            if (arg is NumberFlow && (arg as NumberFlow).value == 0.0) return arg;
+            return new OpFlow("-", true, arg);
         }
         public Flow OpFlowMinus(Flow arg1, Flow arg2) {
             if (arg1 is NumberFlow && (arg1 as NumberFlow).value == 0.0) return new OpFlow("-", true, arg2);
@@ -1682,7 +1694,7 @@ namespace Kaemika
                 else return new NumberFlow(0.0); // "kelvin", "celsius", "volume" // ∂k = 0.0
             } else if (arity == 1) {
                 if (op == "-") // ∂-f(time) = -∂f(time)
-                    return new OpFlow("-", true, args[0].Differentiate(style));
+                    return OpFlowMinus(args[0].Differentiate(style));
                 else if (op == "exp") // ∂(e^f(time)) = e^f(time) * ∂f(time)
                     return OpFlowMult(this, args[0].Differentiate(style));
                 else if (op == "log") // ∂ln(f(time)) = 1/time * ∂f(time), for time > 0
