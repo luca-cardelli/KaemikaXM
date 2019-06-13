@@ -106,6 +106,7 @@ namespace Kaemika
                     Thread.Sleep(100);
                 }
                 Gui.gui.ContinueEnable(false); continueExecution = false;
+                Gui.gui.OutputSetText(""); // clear last results in preparation for the next, only if not autoContinue
             }
         }
 
@@ -153,7 +154,6 @@ namespace Kaemika
             double initialTime = 0.0;
             double finalTime = fortime;
 
-            Gui.gui.OutputSetText(""); // clear last results in preparation for the next
             Gui.gui.ChartClear((resultSample.symbol.Raw() == "vessel") ? "" : "Sample " + resultSample.symbol.Format(style));
 
             List<SpeciesValue> species = sample.Species(out double[] speciesState);
@@ -356,15 +356,82 @@ namespace Kaemika
             // Vector<double> initialGuess_Value = a Vector built from random List<InitialValue> minimizationParameters;
 
             // --- FindMinimum(objectiveFunction, initialGuess)
-            try
-            {
+            try {
                 BfgsMinimizer minimizer = new BfgsMinimizer(1e-2, 1e-2, 1e-2); //### tolerances????
                 MinimizationResult result = minimizer.FindMinimum(objectiveFunction, initialGuess);
                 if (result.ReasonForExit == ExitCondition.Converged || result.ReasonForExit == ExitCondition.AbsoluteGradient)
                     return (endTime: result.MinimizingPoint[0], endState: lastEndState, pointsCounter: lastPointsCounter, renderedCounter: lastRenderereCounter);
                 else throw new Error("reason '" + result.ReasonForExit.ToString() + "' at time " + result.MinimizingPoint[0].ToString());
-            } catch (Exception e) { throw new Error("Minimization ended: " + ((e.InnerException == null) ? e.Message : e.InnerException.Message)); } // somehow we need to recatch the inner exception coming from CostAndGradient
+            } catch (Exception e) {
+                throw new Error("Minimization ended: " + ((e.InnerException == null) ? e.Message : e.InnerException.Message)); } // somehow we need to recatch the inner exception coming from CostAndGradient
         }
+
+        //### HMMM BFGS requires a gradient
+        //public static Value Argmin(Value function, Value initial, Style style) {
+        //    if (!(initial is ListValue)) throw new Error("");
+        //    Value[] elements = (initial as ListValue).elements;
+        //    double[] v = new double[elements.Length];
+        //    for (int i = 0; i < elements.Length; i++) { if (elements[i] is NumberValue) v[i] = (elements[i] as NumberValue).value; else throw new Error(""); }
+        //    Vector<double> initialGuess = CreateVector.Dense(v);
+        //    if (!(function is FunctionValue)) throw new Error("");
+        //    FunctionValue closure = function as FunctionValue;
+        //    if (closure.parameters.parameters.Count != elements.Length) throw new Error("");
+
+        //    IObjectiveFunction objectiveFunction = ObjectiveFunction.Value(
+        //        (Vector<double> parameters) => {
+        //            List<Value> arguments = new List<Value>();
+        //            for (int i = 0; i < parameters.Count; i++) arguments.Add(new NumberValue(parameters[i]));
+        //            Value result = closure.ApplyFlow(arguments, style);
+        //            if (!(result is NumberValue)) throw new Error("");
+        //            Gui.gui.OutputAppendText("argmin: " + Expressions.FormatValues(arguments, style) + " => " + result.Format(style));
+        //            return (result as NumberValue).value;
+        //        });
+
+        //    try {
+        //        BfgsMinimizer minimizer = new BfgsMinimizer(1e-2, 1e-2, 1e-2); //### tolerances????
+        //        MinimizationResult result = minimizer.FindMinimum(objectiveFunction, initialGuess);
+        //        if (result.ReasonForExit == ExitCondition.Converged || result.ReasonForExit == ExitCondition.AbsoluteGradient) {
+        //            Vector<double> minimizingPoint = result.MinimizingPoint;
+        //            Value[] minim = new Value[minimizingPoint.Count];
+        //            for (int i = 0; i < minimizingPoint.Count; i++) minim[i] = new NumberValue(minimizingPoint[i]);
+        //            return new ListValue(minim);
+        //         } else throw new Error("reason '" + result.ReasonForExit.ToString());
+        //    } catch (Exception e) { throw new Error("Minimization ended: " + ((e.InnerException == null) ? e.Message : e.InnerException.Message)); } // somehow we need to recatch the inner exception coming from CostAndGradient
+        //}
+
+        // try this for multiparameter optimization: https://numerics.mathdotnet.com/api/MathNet.Numerics.Optimization.TrustRegion/index.htm
+
+        public static Value Argmin(Value function, Value lowerBound, Value upperBound, Netlist netlist, Style style) {
+            if (!(lowerBound is NumberValue) || !(upperBound is NumberValue)) throw new Error("");
+            double lower = (lowerBound as NumberValue).value;
+            double upper = (upperBound as NumberValue).value;
+            if (lower > upper) throw new Error("");
+            if (!(function is FunctionValue)) throw new Error("");
+            FunctionValue closure = function as FunctionValue;
+            if (closure.parameters.ids.Count != 1) throw new Error("");
+
+            IScalarObjectiveFunction objectiveFunction = ObjectiveFunction.ScalarValue(
+                (double parameter) => {
+                    List<Value> arguments = new List<Value>();
+                    arguments.Add(new NumberValue(parameter));
+                    bool autoContinue = netlist.autoContinue; netlist.autoContinue = true;
+                    Value result = closure.Apply(arguments, netlist, style);
+                    netlist.autoContinue = autoContinue;
+                    if (!(result is NumberValue)) throw new Error("Objective function must return a number, not: " + result.Format(style));
+                    Gui.gui.OutputAppendText("argmin: " + Expressions.FormatValues(arguments, style) + " => " + result.Format(style) + Environment.NewLine);
+                    return (result as NumberValue).value;
+                });
+
+            try {
+                ScalarMinimizationResult result = GoldenSectionMinimizer.Minimum(objectiveFunction, lower, upper);
+                if (result.ReasonForExit == ExitCondition.Converged || result.ReasonForExit == ExitCondition.BoundTolerance) {
+                    double minimizingPoint = result.MinimizingPoint;
+                    return new NumberValue(result.MinimizingPoint);
+                 } else throw new Error("reason '" + result.ReasonForExit.ToString());
+            } catch (Exception e) {
+                throw new Error("Minimization ended: " + ((e.InnerException == null) ? e.Message : e.InnerException.Message)); } // somehow we need to recatch the inner exception coming from CostAndGradient
+        }
+
     }
 
 }

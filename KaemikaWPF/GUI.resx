@@ -123,9 +123,16 @@
   <metadata name="imageList1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
   </metadata>
-  <metadata name="toolTip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>127, 17</value>
-  </metadata>
+  <data name="button_ChartSnap.ToolTip" xml:space="preserve">
+    <value>Copies chart image to clipboard
+as resolution-independent .emf
+(paste it into e.g. PowerPoint)
+
+Also saves it as a file in:
+&lt;Application.StartupPath&gt;\chart.emf
+which can be opened in InkScape
+and then saved as .svg</value>
+  </data>
   <metadata name="notifyIcon1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>224, 17</value>
   </metadata>

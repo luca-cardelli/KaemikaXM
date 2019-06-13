@@ -162,6 +162,7 @@ namespace Kaemika
                 ((this.type == "bool") && (value is BoolValue)) ||
                 ((this.type == "number") && (value is NumberValue)) ||
                 ((this.type == "string") && (value is StringValue)) ||
+                ((this.type == "list") && (value is ListValue)) ||
                 ((this.type == "flow") && (value is Flow)) ||
                 ((this.type == "function") && (value is FunctionValue || value is OperatorValue)) ||
                 ((this.type == "network") && (value is NetworkValue)) ||
@@ -179,11 +180,11 @@ namespace Kaemika
         public abstract Value LookupValue(string name);
         public abstract void AssignValue(Symbol symbol, Value value);
         public abstract string Format(Style style);
-        public Env ExtendValues<T>(Symbol symbol, List<Parameter> parameters, List<T> arguments, Style style) where T : Value {  // bounded polymorphism :)
-            if (parameters.Count != arguments.Count) throw new Error("Different number of parameters and arguments for '" + (symbol == null ? "<nameless>" : symbol.Format(style)) + "'");
+        public Env ExtendValues<T>(List<Parameter> parameters, List<T> arguments, Netlist netlist, string source, Style style) where T : Value {  // bounded polymorphism :)
+            if (parameters.Count != arguments.Count) throw new Error("Different number of parameters and arguments for '" + source + "'");
             Env env = this;
             for (int i = 0; i < parameters.Count; i++) {
-                env = new ValueEnv(parameters[i].name, parameters[i].type, arguments[i], env);
+                env = new ValueEnv(parameters[i].name, parameters[i].type, arguments[i], netlist, env);
             }
             return env;
         }
@@ -249,16 +250,19 @@ namespace Kaemika
                 builtIn = new ValueEnv("sqrt", null, new OperatorValue("sqrt"), builtIn);
                 builtIn = new ValueEnv("tan", null, new OperatorValue("tan"), builtIn);
                 builtIn = new ValueEnv("tanh", null, new OperatorValue("tanh"), builtIn);
-                builtIn = new ValueEnv("volume", null, new OperatorValue("volume"), builtIn);
-                builtIn = new ValueEnv("temperature", null, new OperatorValue("temperature"), builtIn);
-                builtIn = new ValueEnv("molarity", null, new OperatorValue("molarity"), builtIn);         // one or two arguments
+                builtIn = new ValueEnv("observe", null, new OperatorValue("observe"), builtIn);       // evaluate flow expressions
                 builtIn = new ValueEnv("time", null, new OperatorValue("time"), builtIn);             // for flow expressions
                 builtIn = new ValueEnv("kelvin", null, new OperatorValue("kelvin"), builtIn);           // for flow expressions
                 builtIn = new ValueEnv("celsius", null, new OperatorValue("celsius"), builtIn);          // for flow expressions
+                builtIn = new ValueEnv("volume", null, new OperatorValue("volume"), builtIn);          // for flow expressions
                 builtIn = new ValueEnv("poisson", null, new OperatorValue("poisson"), builtIn);          // for flow expressions
                 builtIn = new ValueEnv("gauss", null, new OperatorValue("gauss"), builtIn);            // for flow expressions
                 builtIn = new ValueEnv("var", null, new OperatorValue("var"), builtIn);              // for flow expressions
                 builtIn = new ValueEnv("cov", null, new OperatorValue("cov"), builtIn);              // for flow expressions
+                builtIn = new ValueEnv("argmin", null, new OperatorValue("argmin"), builtIn);
+                //### map, foldl, foldr, filter, length, append    http://www.cse.unsw.edu.au/~en1000/haskell/hof.html
+                //### filter could be given the index number to emulate range selection
+                //### init(f,n) = [f(0),f(1),...,f(n-1)]
             }
             return builtIn;
         }
@@ -280,6 +284,9 @@ namespace Kaemika
                 throw new Error("Binding var " + symbol.Raw() + " of type " + type.Format() + " to value " + value.Format(new Style()) + " of type " + value.type.Format());
         }
         public ValueEnv(string name, Type type, Value value, Env next) : this(new Symbol(name), type, value, next) {
+        }
+        public ValueEnv(string name, Type type, Value value, Netlist netlist, Env next) : this(new Symbol(name), type, value, next) {  
+            if (netlist != null) netlist.Emit(new ValueEntry(this.symbol, type, value));   // also emit the new binding to netlist
         }
         public override Symbol LookupSymbol(string name) {
             if (name == this.symbol.Raw()) return this.symbol;
@@ -582,9 +589,13 @@ namespace Kaemika
         //    RecomputeSpecies();
         //}
 
-        public NumberValue MolarityOp(Symbol species, Style style) {
-            if (this.consumed) throw new Error("molarity(" + this.symbol.Format(style) + ", " + species.Format(style) + "): sample already disposed");
-            return Molarity(species, style);
+        public NumberValue Observe(Flow flow, Netlist netlist, Style style) {
+            if (this.consumed) throw new Error("observe(" + this.symbol.Format(style) + ", " + flow.Format(style) + "): sample already disposed");
+            if (!flow.CoveredBy(this.species, out Symbol notCovered)) throw new Error("observe : species '" + notCovered.Format(style) + "' in flow '" + flow.Format(style) + "' is not one of the species in sample '" + this.FormatSymbol(style));
+            var species = this.Species(out double[] s);
+            State state = new State(species.Count, true).InitMeans(s); // initialize all covariances to 0, since we are at time 0
+            CRN crn = new CRN(this, RelevantReactions(netlist, style));
+            return new NumberValue(flow.ReportMean(this, 0, state, ((double x, Vector st) => { return crn.Flux(x, st, style); }), style));
         }
 
         public NumberValue Molarity(Symbol species, Style style) {
@@ -644,9 +655,10 @@ namespace Kaemika
                 if (reaction.ReactantsCoveredBy(species, out Symbol notCoveredReactant)) {
                     if (reaction.ProductsCoveredBy(species, out Symbol notCoveredProduct)) {
                         reactionList.Add(reaction);
-                    } else throw new Error(
-                        "Reaction '" + reaction.Format(style) + "' produces species '" + notCoveredProduct.Format(style) + 
-                        "' in sample '" + this.symbol.Format(style) + "', but that species is uninitialized in that sample");
+                    } // else ignore because it is not relevant
+                    //} else throw new Error( // N.B.: this would give a spurious error on reactions like # -> a where reactants are always covered
+                    //    "Reaction '" + reaction.Format(style) + "' produces species '" + notCoveredProduct.Format(style) + 
+                    //    "' in sample '" + this.symbol.Format(style) + "', but that species is uninitialized in that sample");
                 } // else ignore reaction because it cannot fire
             }
             return reactionList;
@@ -708,6 +720,40 @@ namespace Kaemika
         }
         public override string Format(Style style) {
             return Parser.FormatString(this.value);
+        }
+    }
+
+    public class ListValue : Value {
+        public List<Value> elements;
+        public ListValue(List<Value> elements) {
+            this.type = new Type("list");
+            this.elements = elements;
+        }
+        public override string Format(Style style) {
+            string s = "";
+            foreach (Value element in elements) s += element.Format(style) + ", ";
+            if (s.Length > 0) s = s.Substring(0, s.Length - 2);
+            return "[" + s + "]";
+        }
+        public Value Select(List<Value> arguments, Style style) {
+            if (arguments.Count == 1) {
+                Value arg1 = arguments[0];
+                if (!(arg1 is NumberValue)) throw new Error("List index is not a number: " + this.Format(style) + "(" + arg1.Format(style) + ")");
+                int n = Convert.ToInt32((arg1 as NumberValue).value);
+                if (n < 0 || n >= elements.Count) throw new Error("List index out of range: " + this.Format(style) + "(" + arg1.Format(style) + ")");
+                return elements[n];
+            } else if (arguments.Count == 2) {
+                Value arg1 = arguments[0];
+                Value arg2 = arguments[1];
+                if (!(arg1 is NumberValue) || !(arg2 is NumberValue)) throw new Error("List index is not a number: " + this.Format(style) + "(" + arg1.Format(style) + ", " + arg2.Format(style) + ")");
+                int n = Convert.ToInt32((arg1 as NumberValue).value);
+                int m = Convert.ToInt32((arg2 as NumberValue).value);
+                if (n < 0 || m < 0 || n + m > elements.Count) throw new Error("List index out of range: " + this.Format(style) + "(" + arg1.Format(style) + ", " + arg2.Format(style) + ")");
+                List<Value> result = new List<Value>();
+                for (int i = 0; i < m; i++) result.Add(elements[n + i]);
+                return new ListValue(result);
+            }
+            else throw new Error("Bad arguments for list selection: " + this.Format(style) + "(" + Expressions.FormatValues(elements, style));
         }
     }
 
@@ -924,13 +970,13 @@ namespace Kaemika
             else return "unknown format: " + style.dataFormat;
         }
         public Value Apply(List<Value> arguments, Netlist netlist, Style style) {
-            return body.Eval(env.ExtendValues(symbol, parameters.parameters, arguments, style), netlist, style);
+            return body.Eval(env.ExtendValues(parameters.ids, arguments, null, (symbol == null ? "<nameless>" : symbol.Format(style)), style), netlist, style); 
         }
         public Value ApplyFlow(List<Value> arguments, Style style) {
-            return body.EvalFlow(env.ExtendValues(symbol, parameters.parameters, arguments, style), style);
+            return body.EvalFlow(env.ExtendValues(parameters.ids, arguments, null, (symbol == null ? "<nameless>" : symbol.Format(style)), style), style);
         }
         public Flow BuildFlow(List<Flow> arguments, Style style) {
-            return body.BuildFlow(env.ExtendValues(symbol, parameters.parameters, arguments, style), style); // note that even in this case the arguments are Values, not Flows
+            return body.BuildFlow(env.ExtendValues(parameters.ids, arguments, null, (symbol == null ? "<nameless>" : symbol.Format(style)), style), style); // note that even in this case the arguments are Values, not Flows
         }
     }
 
@@ -943,20 +989,17 @@ namespace Kaemika
         public override string Format(Style style) {
             return name;
         }
-        public Value Apply(List<Value> arguments, Style style, Value vessel) {
+        public Value Apply(List<Value> arguments, Netlist netlist, Style style) {
             const string BadArguments = "Bad arguments to: ";
             if (arguments.Count == 0) {
                 throw new Error(BadArguments + name);
             } else if (arguments.Count == 1) {
-                Value arg1 = arguments[0];
-                if (name == "temperature") if (arg1 is SampleValue) return new NumberValue(((SampleValue)arg1).TemperatureOp(style)); else throw new Error(BadArguments + name);
-                else if (name == "molarity") if (vessel is SampleValue && arg1 is SpeciesValue) return ((SampleValue)vessel).MolarityOp(((SpeciesValue)arg1).symbol, style); else throw new Error(BadArguments + name);
-                else return ApplyFlow(arguments, style);
+                return ApplyFlow(arguments, style);
             } else if (arguments.Count == 2) {
-                Value arg1 = arguments[0];
-                Value arg2 = arguments[1];
-                if (name == "molarity") if (arg1 is SampleValue && arg2 is SpeciesValue) return ((SampleValue)arg1).MolarityOp(((SpeciesValue)arg2).symbol, style); else throw new Error(BadArguments + name);
-                else return ApplyFlow(arguments, style);
+                return ApplyFlow(arguments, style);
+            } else if (arguments.Count == 3) {
+                if (name == "argmin") return Protocol.Argmin(arguments[0], arguments[1], arguments[2], netlist, style);
+                else throw new Error(BadArguments + name);
             } else throw new Error(BadArguments + name);
         }
         public Value ApplyFlow(List<Value> arguments, Style style) { // a subset of Apply
@@ -985,7 +1028,6 @@ namespace Kaemika
                 else if (name == "sqrt") if (arg1 is NumberValue) return new NumberValue(Math.Sqrt(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
                 else if (name == "tan") if (arg1 is NumberValue) return new NumberValue(Math.Tan(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
                 else if (name == "tanh") if (arg1 is NumberValue) return new NumberValue(Math.Tanh(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
-                else if (name == "volume") if (arg1 is SampleValue) return new NumberValue(((SampleValue)arg1).VolumeOp(style)); else throw new Error(BadArguments + name);
                 else throw new Error(BadArguments + name);
             } else if (arguments.Count == 2) {
                 Value arg1 = arguments[0];
@@ -1023,7 +1065,7 @@ namespace Kaemika
         public Flow BuildFlow(List<Flow> arguments, Style style) {
             const string BadArguments = "Flow-expression: Bad arguments to: ";
             if (arguments.Count == 0) {
-                // "time", "kelvin", and "celsius" are placed in the initial environment as Operators and converted to OpFlow when fetched as variables
+                // "time", "kelvin", "celsius", "volume" are placed in the initial environment as Operators and converted to OpFlow when fetched as variables
                 throw new Error(BadArguments + name);
             } else if (arguments.Count == 1) {
                 Flow arg1 = arguments[0];
@@ -1072,7 +1114,7 @@ namespace Kaemika
             else return "unknown format: " + style.dataFormat;
         }
         public void Apply(List<Value> arguments, Netlist netlist, Style style) {
-            Env ignoreEnv = body.Eval(env.ExtendValues(symbol, parameters.parameters, arguments, style), netlist, style);
+            Env ignoreEnv = body.Eval(env.ExtendValues(parameters.ids, arguments, null, (symbol == null ? "<nameless>" : symbol.Format(style)), style), netlist, style);
         }
     }
 
@@ -1348,6 +1390,7 @@ namespace Kaemika
                 if (op == "time") return time;
                 else if (op == "kelvin") return sample.Temperature();
                 else if (op == "celsius") return sample.Temperature() - 273.15;
+                else if (op == "volume") return sample.Volume();
                 else throw new Error(BadResult + op);
             } else if (arity == 1) {
                 double arg1 = args[0].ReportMean(sample, time, state, flux, style);
@@ -1410,7 +1453,7 @@ namespace Kaemika
             if (arity == 0) {
                 if (op == "time") // ∂time = 1.0
                     return 1.0; 
-                else return 0.0; // "kelvin", "celsius" // ∂k = 0.0
+                else return 0.0; // "kelvin", "celsius", "volume" // ∂k = 0.0
             } else if (arity == 1) {
                 if (op == "-") // ∂-f(time) = -∂f(time)
                     return -args[0].ReportDiff(sample, time, state, flux, style);
@@ -1472,7 +1515,7 @@ namespace Kaemika
         }
         private bool CacheHasDeterministicValue() {
             if (arity == 0) {
-                return true; // "time", "kelvin", "celsius"
+                return true; // "time", "kelvin", "celsius", "volume"
             } else if (arity == 1) {
                 return (op != "var" && op != "poisson") && args[0].HasDeterministicValue();  // includes ∂
                 // Although var(X) is a number, we need the LNA info to compute it, so we say it is not deterministic
@@ -1490,7 +1533,7 @@ namespace Kaemika
         }
         private bool CacheHasStochasticMean() {
             if (arity == 0) {
-                return true; // "time", "kelvin", "celsius"
+                return true; // "time", "kelvin", "celsius", "volume"
             } else if (arity == 1) { 
                 if (op == "∂") return false; //### if we set this to true, we get an error InitAll: wrong size
                 else if (op == "var") return args[0].LinearCombination();
@@ -1502,12 +1545,12 @@ namespace Kaemika
                 return args[0].HasStochasticMean() && args[1].HasStochasticMean() && args[2].HasStochasticMean();
             } else throw new Error("HasStochasticMean: " + op);
         }
-        public override bool LinearCombination() { // returns true for linear combinations of species and zero-variance flows (time, kelvin, celsius)
+        public override bool LinearCombination() { // returns true for linear combinations of species and zero-variance flows (time, kelvin, celsius, volume)
             return this.linearCombination;
         }
         private bool CacheLinearCombination() {
             if (arity == 0) {
-                return true; // "time", "kelvin", "celsius"
+                return true; // "time", "kelvin", "celsius", "volume"
             } else if (arity == 1) {                                     // exclude (op == "var" || op == "poisson" || op == "∂" )
                 if (op == "-") return args[0].LinearCombination();
                 else return false;
@@ -1525,7 +1568,7 @@ namespace Kaemika
         }
         private bool CacheHasNullVariance() {
             if (arity == 0) {
-                return true; // "time", "kelvin", "celsius"
+                return true; // "time", "kelvin", "celsius", "volume"
             } else if (arity == 1) {
                 if (op == "var") return true;                                    // var(X) is a number so it has a zero variance
                 else if (op == "poisson") return false;
@@ -1544,7 +1587,7 @@ namespace Kaemika
             const string BadResult = "Flow expression: Variance invalid for operator: ";
             Func<double, Vector, Vector> flux = null; // disallow "∂", we can't allow "∂(var(a))", but we could build in "∂var(a)" evaluated via flux.CovarMatrix
             if (arity == 0) {
-                return 0.0; // "time", "kelvin", "celsius"                                                // Var(constant) = 0
+                return 0.0; // "time", "kelvin", "celsius", "volume"                                       // Var(constant) = 0
             } else if (arity == 1) {
                 if (op == "var") {
                     return 0.0;      // yes needed for e.g. "report a + var(a)"                            // Var(var(X)) = 0 since var(X) is a number
@@ -1592,7 +1635,7 @@ namespace Kaemika
             const string BadResult = "Flow expression: Covariance invalid for operator: ";
             Func<double, Vector, Vector> flux = null; // disallow "∂", we can't allow "∂(cov(a,b))", but we could build in "∂cov(a,b)" evaluated via flux.CovarMatrix
             if (arity == 0) {
-                return 0.0; // "time", "kelvin", "celsius"                                                    // Cov(number,Y) = 0
+                return 0.0; // "time", "kelvin", "celsius", "volume"                                         // Cov(number,Y) = 0
             } else if (arity == 1) {
                 if (op == "var") {
                     return 0.0;      // yes needed for e.g. "report a + cov(a,a)"                            // Cov(var(X),Z) = 0 since var(X) is a number
@@ -1636,7 +1679,7 @@ namespace Kaemika
             if (arity == 0) {
                 if (op == "time") // ∂time = 1.0
                     return new NumberFlow(1.0);
-                else return new NumberFlow(1.0); // "kelvin", "celsius" // ∂k = 0.0
+                else return new NumberFlow(0.0); // "kelvin", "celsius", "volume" // ∂k = 0.0
             } else if (arity == 1) {
                 if (op == "-") // ∂-f(time) = -∂f(time)
                     return new OpFlow("-", true, args[0].Differentiate(style));
@@ -1745,6 +1788,7 @@ namespace Kaemika
                 if (((OperatorValue)value).name == "time") return new OpFlow("time", 0, false, new List<Flow>());
                 else if (((OperatorValue)value).name == "kelvin") return new OpFlow("kelvin", 0, false, new List<Flow>());
                 else if (((OperatorValue)value).name == "celsius") return new OpFlow("celsius", 0, false, new List<Flow>());
+                else if (((OperatorValue)value).name == "volume") return new OpFlow("volume", 0, false, new List<Flow>());
                 else throw new Error("Flow expression: Variable '" + this.Format() + "' should denote a flow");
             } else throw new Error("Flow expression: Variable '" + this.Format() + "' should denote a flow");
         }
@@ -1780,11 +1824,33 @@ namespace Kaemika
         public override Flow BuildFlow(Env env, Style style) { return new StringFlow(this.value); }
     }
 
+    public class ListLiteral : Expression {
+        public Expressions elements;
+        public ListLiteral(Expressions elements) { this.elements = elements; }
+        public override string Format() { return "[" + elements.Format() + "]";}
+        public override void Scope(Scope scope) {
+            foreach (Expression element in elements.expressions) element.Scope(scope);
+        }
+        public override Value Eval(Env env, Netlist netlist, Style style) {
+            List<Value> values = new List<Value>();
+            foreach (Expression element in elements.expressions) values.Add(element.Eval(env, netlist, style));
+            return new ListValue(values);
+        }
+        public override Value EvalFlow(Env env, Style style) {
+            List<Value> values = new List<Value>();
+            foreach (Expression element in elements.expressions) values.Add(element.EvalFlow(env, style));
+            return new ListValue(values);
+        }
+        public override Flow BuildFlow(Env env, Style style) {
+            throw new Error("Flow expression: a list is not a flow: " + this.Format());
+        }
+    }
+
     public class Distribution {
         private static Random random = new Random();
         string distribution;
-        Arguments arguments;
-        public Distribution(string distribution, Arguments arguments) {
+        Expressions arguments;
+        public Distribution(string distribution, Expressions arguments) {
             this.distribution = distribution;
             this.arguments = arguments;
         }
@@ -1888,7 +1954,7 @@ namespace Kaemika
             return "fun (" + parameters.Format() + ") {" + body.Format() + "}";
         }
         public override void Scope(Scope scope) {
-            body.Scope(scope.Extend(parameters.parameters));
+            body.Scope(scope.Extend(parameters.ids));
         }
         public override Value Eval(Env env, Netlist netlist, Style style) {
             return new FunctionValue(null, parameters, body, env);
@@ -1912,7 +1978,7 @@ namespace Kaemika
             return "net (" + parameters.Format() + ") {" + body.Format() + "}";
         }
         public override void Scope(Scope scope) {
-            body.Scope(scope.Extend(parameters.parameters));
+            body.Scope(scope.Extend(parameters.ids));
         }
         public override Value Eval(Env env, Netlist netlist, Style style) {
             return new NetworkValue(null, parameters, body, env);
@@ -1945,7 +2011,7 @@ namespace Kaemika
         }
         public override Value EvalFlow(Env env, Style style) {
             // this should never happen because BuildFlow of a BlockExpression will directly call BuildFlow of the value definition statements and of the final expression
-            throw new Error("BlockExpression EvalFlow");
+            throw new Error("BlockExpression EvalFlow " + this.Format());
         }
         public override Flow BuildFlow(Env env, Style style) {
             Env extEnv = env;
@@ -1959,10 +2025,10 @@ namespace Kaemika
 
     public class FunctionInstance : Expression {
         private Expression function;
-        private Arguments arguments;
+        private Expressions arguments;
         private bool infix; // just for Format
         private int arity; // just for Format
-        public FunctionInstance(Expression function, Arguments arguments, bool infix = false, int arity = 0) {
+        public FunctionInstance(Expression function, Expressions arguments, bool infix = false, int arity = 0) {
             this.function = function;
             this.arguments = arguments;
             this.infix = infix;
@@ -1970,7 +2036,7 @@ namespace Kaemika
         }
         public override string Format() {
             if (!infix) return function.Format() + "(" + arguments.Format() + ")";
-            List<Expression> args = arguments.arguments;
+            List<Expression> args = arguments.expressions;
             if (arity == 1) return "(" + function.Format() + " " + args[0].Format() + ")";
             if (arity == 2) return "(" + args[0].Format() + " " + function.Format() + " " + args[1].Format() + ")";
             if (arity == 3) return "if " + args[0].Format() + " then " + args[1].Format() + " else " + args[2].Format() + " end";
@@ -1988,7 +2054,7 @@ namespace Kaemika
                 string invocation = "";
                 if (style.traceComputational) {
                     Style restyle = style.RestyleAsDataFormat("symbol");
-                    invocation = closure.Format(restyle) + "(" + this.arguments.FormatValues(arguments, restyle) + ")";
+                    invocation = closure.Format(restyle) + "(" + Expressions.FormatValues(arguments, restyle) + ")";
                     netlist.Emit(new CommentEntry("BEGIN " + invocation));
                 }
                 Value result = closure.Apply(arguments, netlist, style);
@@ -1999,15 +2065,28 @@ namespace Kaemika
             } else if (value is OperatorValue) {
                 OperatorValue oper = (OperatorValue)value;
                 if (oper.name == "if") { // it was surely parsed with 3 arguments
-                    List<Expression> actuals = this.arguments.arguments;
+                    List<Expression> actuals = this.arguments.expressions;
                     Value cond = actuals[0].Eval(env, netlist, style);
                     if (cond is BoolValue) if (((BoolValue)cond).value) return actuals[1].Eval(env, netlist, style); else return actuals[2].Eval(env, netlist, style);
                     else throw new Error("'if' predicate should be a bool: " + Format());
+                } else if (oper.name == "observe") {
+                    List<Expression> actuals = this.arguments.expressions;
+                    if (actuals.Count != 1 && actuals.Count != 2) throw new Error("'observe' wrong number of arguments " + Format()); ;
+                    Flow flow = actuals[0].BuildFlow(env, style);
+                    Value sample = env.LookupValue("vessel");
+                    if (actuals.Count == 2) sample = actuals[1].Eval(env, netlist, style);
+                    if (!(sample is SampleValue)) throw new Error("'observe' second argument should be a sample: " + Format());
+                    return (sample as SampleValue).Observe(flow, netlist, style);
                 } else {
                     List<Value> arguments = this.arguments.Eval(env, netlist, style);
-                    return oper.Apply(arguments, style, env.LookupValue("vessel"));
+                    return oper.Apply(arguments, netlist, style);
                 }
-            } else throw new Error("Invocation of a non-function or non-operator: " + Format());
+            } else if (value is ListValue) {
+                ListValue list = (ListValue)value;
+                List<Value> arguments = this.arguments.Eval(env, netlist, style);
+                return list.Select(arguments, style);
+            }
+            else throw new Error("Invocation of a non-function or non-operator: " + Format());
         }
         public override Value EvalFlow(Env env, Style style) {
             Value value = this.function.EvalFlow(env, style);
@@ -2018,7 +2097,7 @@ namespace Kaemika
             } else if (value is OperatorValue) {
                 OperatorValue oper = (OperatorValue)value;
                 if (oper.name == "if") { // it was surely parsed with 3 arguments
-                    List<Expression> actuals = this.arguments.arguments;
+                    List<Expression> actuals = this.arguments.expressions;
                     Value cond = actuals[0].EvalFlow(env, style);
                     if (cond is BoolValue) if (((BoolValue)cond).value) return actuals[1].EvalFlow(env, style); else return actuals[2].EvalFlow(env, style);
                     else throw new Error("Flow expression: 'if' predicate should be a bool: " + Format());
@@ -2037,7 +2116,7 @@ namespace Kaemika
             } else if (value is OperatorValue) {
                 OperatorValue oper = (OperatorValue)value;
                 if (oper.name == "if") { // it was surely parsed with 3 arguments
-                    List<Expression> actuals = this.arguments.arguments;
+                    List<Expression> actuals = this.arguments.expressions;
                     Value cond = actuals[0].EvalFlow(env, style); // this is a real boolean value, not a flow
                     if (cond is BoolValue) if (((BoolValue)cond).value) return actuals[1].BuildFlow(env, style); else return actuals[2].BuildFlow(env, style);
                     else throw new Error("Flow expression: 'if' predicate should be a bool: " + Format());
@@ -2223,17 +2302,45 @@ namespace Kaemika
             return new ConsScope(this.name, scope);
         }
         public override Env Eval(Env env, Netlist netlist, Style style) {
-            Symbol symbol = new Symbol(this.name);                                                                   // create a new symbol from name    
             Value value = (type.Is("flow")) ? definee.BuildFlow(env, style) : definee.Eval(env, netlist, style);     // evaluate
-            Env extEnv = new ValueEnv(symbol, type, value, env);                                                     // checks that the types match
-            netlist.Emit(new ValueEntry(symbol, type, value));                                                       // embed the new symbol also in the netlist
-            return extEnv;                                                                                           // return the extended environment
+            //Symbol symbol = new Symbol(this.name);                                                                   // create a new symbol from name    
+            //Env extEnv = new ValueEnv(symbol, type, value, env);                                                     // checks that the types match
+            //netlist.Emit(new ValueEntry(symbol, type, value));                                                       // embed the new symbol also in the netlist
+            //return extEnv;                                                                                           // return the extended environment
+            return new ValueEnv(this.name, type, value, netlist, env);  // make new symbol, check that types match, emit also in the netlist, return extended env
         }
         public Env BuildFlow(Env env, Style style) {   // special case: only value definitions among all statements support BuildFlow
-            Symbol symbol = new Symbol(this.name);                                      // create a new symbol from name
-            Flow flow = definee.BuildFlow(env, style);                                  // evaluate
-            Env extEnv = new ValueEnv(symbol, new Type("flow"), flow, env);             // checks that the ("flow") types match
-            return extEnv;                                                              // return the extended environment
+            Flow flow = definee.BuildFlow(env, style);                                   // evaluate
+            return new ValueEnv(this.name, new Type("flow"), flow, env);                   // checks that the ("flow") types match
+        }
+    }
+
+    public class ListDefinition : Statement {
+        private Parameters ids;
+        private Expression definee;
+        public ListDefinition(Parameters ids, Expression definee) {
+            this.ids = ids;
+            this.definee = definee;
+        }
+        public override string Format() {
+            return "[" + ids.Format() + "]" + " = " + definee.Format();
+        }
+        public override Scope Scope(Scope scope) {
+            definee.Scope(scope);
+            return scope.Extend(ids.ids);
+        }
+        public override Env Eval(Env env, Netlist netlist, Style style) {
+            Value value = definee.Eval(env, netlist, style); 
+            if (!(value is ListValue)) throw new Error("Binding a list definition to a non-list: " + this.Format());
+            List<Value> arguments = (value as ListValue).elements;
+            return env.ExtendValues<Value>(ids.ids, arguments, netlist, ids.Format(), style);
+        }
+        public Env BuildFlow(Env env, Style style) {   // special case: only value definitions among all statements support BuildFlow
+            throw new Error("Flow expression: a list definition is not a flow definition: " + this.Format()); // would have to support ListFlow first
+            //Flow flow = definee.BuildFlow(env, style);
+            //if (!(flow is ListFlow)) throw new Error("Binding a list of flows definition to a non list of flows: " + this.Format()");
+            //List<Flow> arguments = (flow as ListFlow).elements;
+            //return env.ExtendValues<Flow>(ids.ids, arguments, null, ids.Format(), style);
         }
     }
 
@@ -2399,7 +2506,7 @@ namespace Kaemika
             return "new function " + name + "(" + parameters.Format() + ") {" + Environment.NewLine + body.Format() + Environment.NewLine + "}";
         }
         public override Scope Scope(Scope scope) {
-            body.Scope(scope.Extend(parameters.parameters));
+            body.Scope(scope.Extend(parameters.ids));
             return new ConsScope(this.name, scope);
         }
         public FunctionValue FunctionClosure(Symbol symbol, Env env) {
@@ -2428,7 +2535,7 @@ namespace Kaemika
             return "new network " + name + "(" + parameters.Format() + ") {" + Environment.NewLine + body.Format() + Environment.NewLine + "}";
         }
         public override Scope Scope(Scope scope) {
-            body.Scope(scope.Extend(parameters.parameters));
+            body.Scope(scope.Extend(parameters.ids));
             return new ConsScope(this.name, scope);
         }
         public NetworkValue NetworkClosure(Symbol symbol, Env env) {
@@ -2473,8 +2580,8 @@ namespace Kaemika
 
     public class NetworkInstance : Statement {
         private Variable network;
-        private Arguments arguments;
-        public NetworkInstance(Variable network, Arguments arguments) {
+        private Expressions arguments;
+        public NetworkInstance(Variable network, Expressions arguments) {
             this.network = network;
             this.arguments = arguments;
         }
@@ -2494,7 +2601,7 @@ namespace Kaemika
                 string invocation = "";
                 if (style.traceComputational) {
                     Style restyle = style.RestyleAsDataFormat("symbol");
-                    invocation = closure.Format(restyle) + "(" + this.arguments.FormatValues(arguments, restyle) + ")";
+                    invocation = closure.Format(restyle) + "(" + Expressions.FormatValues(arguments, restyle) + ")";
                     netlist.Emit(new CommentEntry("BEGIN " + invocation));
                 }
                 closure.Apply(arguments, netlist, style);
@@ -2587,8 +2694,8 @@ namespace Kaemika
             if (!(ae is NumberValue)) throw new Error("Reaction rate activation energy must be a number: " + activationEnergy.Format());
             double cfv = ((NumberValue)cf).value;
             double aev = ((NumberValue)ae).value;
-            if (cfv < 0) throw new Error("Reaction rate collision frequency must be non-negative: " + collisionFrequency.Format());
-            if (aev < 0) throw new Error("Reaction rate activation energy must be non-negative: " + activationEnergy.Format());
+            if (cfv < 0) throw new Error("Reaction rate collision frequency must be non-negative: " + collisionFrequency.Format() + " = " + style.FormatDouble(cfv));
+            if (aev < 0) throw new Error("Reaction rate activation energy must be non-negative: " + activationEnergy.Format() + " = " + style.FormatDouble(aev));
             return new MassActionRateValue(cfv, aev);
         }
     }
@@ -2868,36 +2975,27 @@ namespace Kaemika
 
     public class Report : Statement {
         public Expression expression;   // just a subset of numerical arithmetic expressions that can be plotted
-        public List<Expression> asList; // can be null
-        public Report(Expression expression, List<Expression> asList) {
+        public Expression asExpr; // can be null
+        public Report(Expression expression, Expression asExpr) {
             this.expression = expression;
-            this.asList = asList;
+            this.asExpr = asExpr;
         }
         public override string Format() {
             string s = "report " + this.expression.Format();
-            if (asList != null) {
-                s += " as [";
-                string l = "";
-                foreach (Expression item in this.asList) l += item.Format() + ", ";
-                if (l.Length > 0) l = l.Substring(0, l.Length - 2);
-                s += l + "]";
-            }
+            if (asExpr != null) s += " as " + this.asExpr.Format();
             return s;
         }
         public override Scope Scope(Scope scope) {
             this.expression.Scope(scope);
-            if (this.asList != null) foreach (Expression item in this.asList) item.Scope(scope);
+            if (this.asExpr != null) this.asExpr.Scope(scope);
             return scope;
         }
         public override Env Eval(Env env, Netlist netlist, Style style) {
             string asLabel = null;
-            if (this.asList != null) {
-                asLabel = "";
-                foreach (Expression item in this.asList) {
-                    Value value = item.EvalFlow(env, style);
-                    if (value is StringValue) asLabel += ((StringValue)value).value; // the raw string contents, unquoted
-                    else asLabel += value.Format(style);
-                }
+            if (this.asExpr != null) {
+                Value value = this.asExpr.EvalFlow(env, style);
+                if (value is StringValue) asLabel = ((StringValue)value).value; // the raw string contents, unquoted
+                else asLabel = value.Format(style);
             }
             netlist.Emit(new ReportEntry(expression.BuildFlow(env, style), asLabel));
             return env;
@@ -2974,16 +3072,16 @@ namespace Kaemika
     // PARAMETERS
 
     public class Parameters : Tree {
-        public List<Parameter> parameters;
+        public List<Parameter> ids;
         public Parameters() {
-            this.parameters = new List<Parameter> { };
+            this.ids = new List<Parameter> { };
         }
         public Parameters Add(Parameter param) {
-            this.parameters.Add(param);
+            this.ids.Add(param);
             return this;
         }
         public override string Format() {
-            return this.parameters.Aggregate("", (a, b) => (a == "") ? b.Format() : a + ", " + b.Format());
+            return this.ids.Aggregate("", (a, b) => (a == "") ? b.Format() : a + ", " + b.Format());
         }
     }
     public class Parameter : Tree {
@@ -3000,39 +3098,45 @@ namespace Kaemika
 
     // ARGUMENTS
 
-    public class Arguments : Tree {
-        public List<Expression> arguments;
-        public Arguments() {
-            this.arguments = new List<Expression> { };
+    public class Expressions : Tree {
+        public List<Expression> expressions;
+        public Expressions() {
+            this.expressions = new List<Expression> { };
         }
-        public Arguments Add(Expression argument) {
-            this.arguments.Add(argument);
+        public Expressions Add(Expression expression) {
+            this.expressions.Add(expression);
             return this;
         }
         public override string Format() {
-            return this.arguments.Aggregate("", (a, b) => (a == "") ? b.Format() : a + ", " + b.Format());
+            return this.expressions.Aggregate("", (a, b) => (a == "") ? b.Format() : a + ", " + b.Format());
         }
         public void Scope(Scope scope) {
-            foreach (Expression argument in this.arguments) { argument.Scope(scope); }
+            foreach (Expression expression in this.expressions) { expression.Scope(scope); }
         }
         public List<Value> Eval(Env env, Netlist netlist, Style style) {
-            List<Value> arguments = new List<Value>();
-            foreach (Expression argument in this.arguments) { arguments.Add(argument.Eval(env, netlist, style)); }
-            return arguments;
+            List<Value> expressions = new List<Value>();
+            foreach (Expression expression in this.expressions) { expressions.Add(expression.Eval(env, netlist, style)); }
+            return expressions;
         }
         public List<Value> EvalFlow(Env env, Style style) {
-            List<Value> arguments = new List<Value>();
-            foreach (Expression argument in this.arguments) { arguments.Add(argument.EvalFlow(env, style)); }
-            return arguments;
+            List<Value> expressions = new List<Value>();
+            foreach (Expression expression in this.expressions) { expressions.Add(expression.EvalFlow(env, style)); }
+            return expressions;
         }
         public List<Flow> BuildFlow(Env env, Style style) {
-            List<Flow> arguments = new List<Flow>();
-            foreach (Expression argument in this.arguments) { arguments.Add(argument.BuildFlow(env, style)); }
-            return arguments;
+            List<Flow> expressions = new List<Flow>();
+            foreach (Expression expression in this.expressions) { expressions.Add(expression.BuildFlow(env, style)); }
+            return expressions;
         }
-        public string FormatValues(List<Value> values, Style style) {
+        public static string FormatValues(List<Value> values, Style style) {
             string s = "";
             foreach (Value value in values) { s += value.Format(style) + ", "; }
+            if (s.Length > 0) s = s.Substring(0, s.Length - 2); // remove last comma
+            return s;
+        }
+        public static string FormatValues(Value[] values, Style style) {
+            string s = "";
+            for (int i = 0; i < values.Length; i++) { s += values[i].Format(style) + ", "; }
             if (s.Length > 0) s = s.Substring(0, s.Length - 2); // remove last comma
             return s;
         }

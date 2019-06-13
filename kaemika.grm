@@ -45,15 +45,17 @@ Comment Block @= { Nesting = All }
 <Headers>        ::= <Headers> <Header>
                     | <Header>
                                       
-<Header>         ::= '(' ')'
-                    | '(' <Params> ')'
-                                                  
-<Params>         ::= <Params> ',' <Param>
+<Header>         ::= '(' <Params> ')'
+
+<Params>           ::= <ParamSeq>
+                    |                                                  
+<ParamSeq>         ::= <ParamSeq> ',' <Param>
                     | <Param>
 
 <Param>          ::= 'bool' <Ids>                  ! booleans      
                     | 'number' <Ids>               ! numbers
                     | 'string' <Ids>               ! strings
+                    | 'list' <Ids>                 ! lists
                     | 'flow' <Ids>                 ! for functions parameterized by flows in flow-expressions                   
                     | 'species' <Ids>              ! species are values. n.b. individual reactions are not values, but networks are
                     | 'sample' <Ids>               ! samples are containers that have volume and temperature, populated with species that have concentrations
@@ -78,16 +80,18 @@ Comment Block @= { Nesting = All }
 <Statement>     ::=   <Net Instance>                          ! there are no obligatory delimiter characters between statements. LALR FTW!
                     | <Reaction>                              ! reactions are the only statements not prefixed by a keyword (other than instances)
                     | 'bool' Id '=' <Expression>              ! binding a bool value to a bool id
-                    | 'number' Id '=' <Expression>            ! binding a number value (to a number id
+                    | 'number' Id '=' <Expression>            ! binding a number value to a number id
                     | 'number' Id '=?' <Distribution>         ! binding a number value drawn from a distribution to a number id
                     | 'string' Id '=' <Expression>            ! binding a string value to a string id
+                    | 'list' Id '=' <Expression>              ! binding a list value to a list id
                     | 'flow' Id '=' <Expression>              ! binding a flow value to a flow id
-                    | 'sample' <Sample>                       ! binding a sample to a sample id or sample def
                     | 'species' <Species>                     ! binding a species to a species id or species def
+                    | 'sample' <Sample>                       ! binding a sample to a sample id or sample def
                     | 'function' <Function>                   ! binding a function to a function id or function def
                     | 'network' <Network>                     ! binding a network to a network id or network def
+                    | '[' <Params> ']' '=' <Expression>       ! binding list elements to ids; length and types must match                  
                     | 'amount' <Ids> '@' <Expression> <Quantity> <Allocation>  ! set initial quantity of species in a sample
-                    | 'report' <Reports>                                       ! report species for plotting (can use arithmetic, but restrictions apply to <Args>)
+                    | 'report' <Reports>                                       ! report species for plotting (can use arithmetic, but restrictions apply)
                     | 'if' <Expression> 'then' <Statements> <Else>             ! conditional
                     | ';'                                                      ! rarely used optional syntactic noise for same-line multiple statements
                     
@@ -100,8 +104,7 @@ Comment Block @= { Nesting = All }
                     | 'transfer' <EmptySample> ':=' <Expression>            ! change sample volume (evaporate/dilute) and temperature
                     | 'dispose' <Expression>                                ! dispose of a sample (sample cannot be reused)
                 
-<Net Instance>    ::= Id  '(' ')'
-                    | Id  '(' <Args> ')'
+<Net Instance>   ::= Id '(' <Expressions> ')'
 
 <Else>           ::=  'elseif' <Expression> 'then' <Statements> <Else>  ! cascading if statements: else is optional
                     | 'else' <Statements> 'end'
@@ -142,29 +145,30 @@ Comment Block @= { Nesting = All }
                     | 'if' <Expression> 'then' <Expression> <Else Exp>      ! no statements allowed inside if-expressions: uses if-statements for that
                     | 'fun' <Fun>                                           ! function abstraction
                     | 'net' <Net>                                           ! network abstraction
-                    | '(' <Expression> ')'
-                    | 'define' <Statements> 'return' <Expression>           ! numerous but mild shift-reduce conflicts becuase no 'end' bracket. 
+                    | '(' <Expression> ')'                                  ! parenthesized expression
+                    | '[' <Expressions> ']'                                 ! list
+                    | 'define' <Statements> 'return' <Expression>           ! numerous but mild shift-reduce conflicts because no 'end' bracket. 
                                                                             ! E.g. (define number n = 3 return n) + 3   vs. define number n = 3 return (n + 3)
                                                                             ! resolved as the latter
                   
 <Fun Instance>      ::= Id                                                  ! built-in math library operators, and pi and e, follow this syntax too
-                    | <Fun Instance>  '(' ')'                               ! function invocations can use currying
-                    | <Fun Instance>  '(' <Args> ')'                        
+                    | <Fun Instance> '(' <Expressions> ')'                  ! function invocations can use currying             
                      
 <Else Exp>       ::=  'elseif' <Expression> 'then' <Expression> <Else Exp>  ! cascading if expressions: else is compulsory
                     | 'else' <Expression> 'end'
                            
-<Args>           ::= <Args> ',' <Expression>
+<Expressions>    ::= <ExpressionSeq>
+                    |
+<ExpressionSeq>  ::= <ExpressionSeq> ',' <Expression>
                     | <Expression>
-                    
+                                        
 <Reports>        ::= <Reports> ',' <Report>
                     | <Report>
                     
-<Report>         ::= <Expression> 'as' '[' <Args> ']'
-                    | <Expression> 'as' <Expression>
+<Report>         ::= <Expression> 'as' <Expression>
                     | <Expression> 
 
-<Distribution>   ::= Id '(' <Args> ')'     ! uniform(lo,hi), normal(mean,stdev), exponential(lambda), bernoulli(p)
+<Distribution>   ::= Id '(' <ExpressionSeq> ')'     ! uniform(lo,hi), normal(mean,stdev), exponential(lambda), bernoulli(p)
                   
 <EndCondition>   ::= 'for' <Expression>
                     | 'for' <Expression> 'minimize' <Expression>

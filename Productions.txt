@@ -75,33 +75,33 @@ Terminals
  54     if
  55     in
  56     Integer
- 57     minimize
- 58     mix
- 59     net
- 60     network
- 61     not
- 62     number
- 63     or
- 64     QuotedString
- 65     report
- 66     return
- 67     sample
- 68     species
- 69     split
- 70     string
- 71     then
- 72     transfer
- 73     true
- 74     with
+ 57     list
+ 58     minimize
+ 59     mix
+ 60     net
+ 61     network
+ 62     not
+ 63     number
+ 64     or
+ 65     QuotedString
+ 66     report
+ 67     return
+ 68     sample
+ 69     species
+ 70     split
+ 71     string
+ 72     then
+ 73     transfer
+ 74     true
+ 75     with
 
 
 ========================================
 Nonterminals
 ========================================
 
-75      <Allocation>
-76      <And Exp>
-77      <Args>
+76      <Allocation>
+77      <And Exp>
 78      <Base Exp>
 79      <Comp Exp>
 80      <Complex>
@@ -111,39 +111,42 @@ Nonterminals
 84      <EmptySample>
 85      <EndCondition>
 86      <Expression>
-87      <Fun>
-88      <Fun Instance>
-89      <Function>
-90      <Header>
-91      <Headers>
-92      <Ids>
-93      <Mult Exp>
-94      <Neg Exp>
-95      <Net>
-96      <Net Instance>
-97      <Network>
-98      <Not Exp>
-99      <Or Exp>
-100     <Param>
-101     <Params>
-102     <Powr Exp>
-103     <Quantity>
-104     <Rate>
-105     <Reaction>
-106     <Report>
-107     <Reports>
-108     <Sample>
-109     <Simplex>
-110     <Species>
-111     <Statement>
-112     <Statements>
-113     <Substance>
-114     <Substances>
-115     <Sum Exp>
-116     <Temperature>
-117     <Top>
-118     <Transition>
-119     <Volume>
+87      <Expressions>
+88      <ExpressionSeq>
+89      <Fun>
+90      <Fun Instance>
+91      <Function>
+92      <Header>
+93      <Headers>
+94      <Ids>
+95      <Mult Exp>
+96      <Neg Exp>
+97      <Net>
+98      <Net Instance>
+99      <Network>
+100     <Not Exp>
+101     <Or Exp>
+102     <Param>
+103     <Params>
+104     <ParamSeq>
+105     <Powr Exp>
+106     <Quantity>
+107     <Rate>
+108     <Reaction>
+109     <Report>
+110     <Reports>
+111     <Sample>
+112     <Simplex>
+113     <Species>
+114     <Statement>
+115     <Statements>
+116     <Substance>
+117     <Substances>
+118     <Sum Exp>
+119     <Temperature>
+120     <Top>
+121     <Transition>
+122     <Volume>
 
 
 ========================================
@@ -166,127 +169,131 @@ Rules
 13      <Species> ::= <Substances> '@' <Expression> <Quantity> <Allocation>
 14      <Headers> ::= <Headers> <Header>
 15      <Headers> ::= <Header>
-16      <Header> ::= '(' ')'
-17      <Header> ::= '(' <Params> ')'
-18      <Params> ::= <Params> ',' <Param>
-19      <Params> ::= <Param>
-20      <Param> ::= bool <Ids>
-21      <Param> ::= number <Ids>
-22      <Param> ::= string <Ids>
-23      <Param> ::= flow <Ids>
-24      <Param> ::= species <Ids>
-25      <Param> ::= sample <Ids>
-26      <Param> ::= function <Ids>
-27      <Param> ::= network <Ids>
-28      <Ids> ::= <Ids> Id
-29      <Ids> ::= Id
-30      <Allocation> ::= in <Expression>
-31      <Allocation> ::= 
-32      <Substances> ::= <Substances> ',' <Substance>
-33      <Substances> ::= <Substance>
-34      <Substance> ::= Id '#' <Expression>
-35      <Substance> ::= Id
-36      <Statements> ::= <Statements> <Statement>
-37      <Statements> ::= 
-38      <Statement> ::= <Net Instance>
-39      <Statement> ::= <Reaction>
-40      <Statement> ::= bool Id '=' <Expression>
-41      <Statement> ::= number Id '=' <Expression>
-42      <Statement> ::= number Id '=?' <Distribution>
-43      <Statement> ::= string Id '=' <Expression>
-44      <Statement> ::= flow Id '=' <Expression>
-45      <Statement> ::= sample <Sample>
-46      <Statement> ::= species <Species>
-47      <Statement> ::= function <Function>
-48      <Statement> ::= network <Network>
-49      <Statement> ::= amount <Ids> '@' <Expression> <Quantity> <Allocation>
-50      <Statement> ::= report <Reports>
-51      <Statement> ::= if <Expression> then <Statements> <Else>
-52      <Statement> ::= ';'
-53      <Statement> ::= mix Id ':=' <Expression> with <Expression>
-54      <Statement> ::= mix Id with <Expression>
-55      <Statement> ::= split Id ',' Id ':=' <Expression> by <Expression>
-56      <Statement> ::= equilibrate Id ':=' <Expression> <EndCondition>
-57      <Statement> ::= equilibrate Id <EndCondition>
-58      <Statement> ::= equilibrate <EndCondition>
-59      <Statement> ::= transfer <EmptySample> ':=' <Expression>
-60      <Statement> ::= dispose <Expression>
-61      <Net Instance> ::= Id '(' ')'
-62      <Net Instance> ::= Id '(' <Args> ')'
-63      <Else> ::= elseif <Expression> then <Statements> <Else>
-64      <Else> ::= else <Statements> end
-65      <Else> ::= end
-66      <Reaction> ::= <Transition>
-67      <Reaction> ::= <Complex> '>>' <Transition>
-68      <Transition> ::= <Complex> '->' <Complex>
-69      <Transition> ::= <Complex> '->' '{' <Rate> '}' <Complex>
-70      <Transition> ::= <Complex> '->' <Complex> '{' <Rate> '}'
-71      <Transition> ::= <Complex> '<->' <Complex>
-72      <Transition> ::= <Complex> '{' <Rate> '}' '<->' '{' <Rate> '}' <Complex>
-73      <Transition> ::= <Complex> '<->' <Complex> '{' <Rate> '}' '{' <Rate> '}'
-74      <Rate> ::= <Expression>
-75      <Rate> ::= <Expression> ',' <Expression>
-76      <Rate> ::= '{' <Expression> '}'
-77      <Complex> ::= <Complex> '+' <Simplex>
-78      <Complex> ::= <Simplex>
-79      <Simplex> ::= Integer Id
-80      <Simplex> ::= Id '*' Id
-81      <Simplex> ::= Id
-82      <Simplex> ::= '#'
-83      <Expression> ::= <Or Exp>
-84      <Base Exp> ::= <Fun Instance>
-85      <Base Exp> ::= true
-86      <Base Exp> ::= false
-87      <Base Exp> ::= Integer
-88      <Base Exp> ::= Float
-89      <Base Exp> ::= Double
-90      <Base Exp> ::= QuotedString
-91      <Base Exp> ::= if <Expression> then <Expression> <Else Exp>
-92      <Base Exp> ::= fun <Fun>
-93      <Base Exp> ::= net <Net>
-94      <Base Exp> ::= '(' <Expression> ')'
-95      <Base Exp> ::= define <Statements> return <Expression>
-96      <Fun Instance> ::= Id
-97      <Fun Instance> ::= <Fun Instance> '(' ')'
-98      <Fun Instance> ::= <Fun Instance> '(' <Args> ')'
-99      <Else Exp> ::= elseif <Expression> then <Expression> <Else Exp>
-100     <Else Exp> ::= else <Expression> end
-101     <Args> ::= <Args> ',' <Expression>
-102     <Args> ::= <Expression>
-103     <Reports> ::= <Reports> ',' <Report>
-104     <Reports> ::= <Report>
-105     <Report> ::= <Expression> as '[' <Args> ']'
-106     <Report> ::= <Expression> as <Expression>
-107     <Report> ::= <Expression>
-108     <Distribution> ::= Id '(' <Args> ')'
-109     <EndCondition> ::= for <Expression>
-110     <EndCondition> ::= for <Expression> minimize <Expression>
-111     <Or Exp> ::= <Or Exp> or <And Exp>
-112     <Or Exp> ::= <And Exp>
-113     <And Exp> ::= <And Exp> and <Not Exp>
-114     <And Exp> ::= <Not Exp>
-115     <Not Exp> ::= not <Comp Exp>
-116     <Not Exp> ::= <Comp Exp>
-117     <Comp Exp> ::= <Sum Exp> '=' <Sum Exp>
-118     <Comp Exp> ::= <Sum Exp> '<>' <Sum Exp>
-119     <Comp Exp> ::= <Sum Exp> '<=' <Sum Exp>
-120     <Comp Exp> ::= <Sum Exp> '>=' <Sum Exp>
-121     <Comp Exp> ::= <Sum Exp> '<' <Sum Exp>
-122     <Comp Exp> ::= <Sum Exp> '>' <Sum Exp>
-123     <Comp Exp> ::= <Sum Exp>
-124     <Sum Exp> ::= <Sum Exp> '+' <Mult Exp>
-125     <Sum Exp> ::= <Sum Exp> '-' <Mult Exp>
-126     <Sum Exp> ::= <Mult Exp>
-127     <Mult Exp> ::= <Mult Exp> '*' <Neg Exp>
-128     <Mult Exp> ::= <Mult Exp> '/' <Neg Exp>
-129     <Mult Exp> ::= <Neg Exp>
-130     <Neg Exp> ::= '-' <Powr Exp>
-131     <Neg Exp> ::= '∂' <Powr Exp>
-132     <Neg Exp> ::= <Powr Exp>
-133     <Powr Exp> ::= <Powr Exp> '^' <Base Exp>
-134     <Powr Exp> ::= <Base Exp>
-135     <Volume> ::= Id
-136     <Temperature> ::= Id
-137     <Quantity> ::= Id
+16      <Header> ::= '(' <Params> ')'
+17      <Params> ::= <ParamSeq>
+18      <Params> ::= 
+19      <ParamSeq> ::= <ParamSeq> ',' <Param>
+20      <ParamSeq> ::= <Param>
+21      <Param> ::= bool <Ids>
+22      <Param> ::= number <Ids>
+23      <Param> ::= string <Ids>
+24      <Param> ::= list <Ids>
+25      <Param> ::= flow <Ids>
+26      <Param> ::= species <Ids>
+27      <Param> ::= sample <Ids>
+28      <Param> ::= function <Ids>
+29      <Param> ::= network <Ids>
+30      <Ids> ::= <Ids> Id
+31      <Ids> ::= Id
+32      <Allocation> ::= in <Expression>
+33      <Allocation> ::= 
+34      <Substances> ::= <Substances> ',' <Substance>
+35      <Substances> ::= <Substance>
+36      <Substance> ::= Id '#' <Expression>
+37      <Substance> ::= Id
+38      <Statements> ::= <Statements> <Statement>
+39      <Statements> ::= 
+40      <Statement> ::= <Net Instance>
+41      <Statement> ::= <Reaction>
+42      <Statement> ::= bool Id '=' <Expression>
+43      <Statement> ::= number Id '=' <Expression>
+44      <Statement> ::= number Id '=?' <Distribution>
+45      <Statement> ::= string Id '=' <Expression>
+46      <Statement> ::= list Id '=' <Expression>
+47      <Statement> ::= flow Id '=' <Expression>
+48      <Statement> ::= species <Species>
+49      <Statement> ::= sample <Sample>
+50      <Statement> ::= function <Function>
+51      <Statement> ::= network <Network>
+52      <Statement> ::= '[' <Params> ']' '=' <Expression>
+53      <Statement> ::= amount <Ids> '@' <Expression> <Quantity> <Allocation>
+54      <Statement> ::= report <Reports>
+55      <Statement> ::= if <Expression> then <Statements> <Else>
+56      <Statement> ::= ';'
+57      <Statement> ::= mix Id ':=' <Expression> with <Expression>
+58      <Statement> ::= mix Id with <Expression>
+59      <Statement> ::= split Id ',' Id ':=' <Expression> by <Expression>
+60      <Statement> ::= equilibrate Id ':=' <Expression> <EndCondition>
+61      <Statement> ::= equilibrate Id <EndCondition>
+62      <Statement> ::= equilibrate <EndCondition>
+63      <Statement> ::= transfer <EmptySample> ':=' <Expression>
+64      <Statement> ::= dispose <Expression>
+65      <Net Instance> ::= Id '(' <Expressions> ')'
+66      <Else> ::= elseif <Expression> then <Statements> <Else>
+67      <Else> ::= else <Statements> end
+68      <Else> ::= end
+69      <Reaction> ::= <Transition>
+70      <Reaction> ::= <Complex> '>>' <Transition>
+71      <Transition> ::= <Complex> '->' <Complex>
+72      <Transition> ::= <Complex> '->' '{' <Rate> '}' <Complex>
+73      <Transition> ::= <Complex> '->' <Complex> '{' <Rate> '}'
+74      <Transition> ::= <Complex> '<->' <Complex>
+75      <Transition> ::= <Complex> '{' <Rate> '}' '<->' '{' <Rate> '}' <Complex>
+76      <Transition> ::= <Complex> '<->' <Complex> '{' <Rate> '}' '{' <Rate> '}'
+77      <Rate> ::= <Expression>
+78      <Rate> ::= <Expression> ',' <Expression>
+79      <Rate> ::= '{' <Expression> '}'
+80      <Complex> ::= <Complex> '+' <Simplex>
+81      <Complex> ::= <Simplex>
+82      <Simplex> ::= Integer Id
+83      <Simplex> ::= Id '*' Id
+84      <Simplex> ::= Id
+85      <Simplex> ::= '#'
+86      <Expression> ::= <Or Exp>
+87      <Base Exp> ::= <Fun Instance>
+88      <Base Exp> ::= true
+89      <Base Exp> ::= false
+90      <Base Exp> ::= Integer
+91      <Base Exp> ::= Float
+92      <Base Exp> ::= Double
+93      <Base Exp> ::= QuotedString
+94      <Base Exp> ::= if <Expression> then <Expression> <Else Exp>
+95      <Base Exp> ::= fun <Fun>
+96      <Base Exp> ::= net <Net>
+97      <Base Exp> ::= '(' <Expression> ')'
+98      <Base Exp> ::= '[' <Expressions> ']'
+99      <Base Exp> ::= define <Statements> return <Expression>
+100     <Fun Instance> ::= Id
+101     <Fun Instance> ::= <Fun Instance> '(' <Expressions> ')'
+102     <Else Exp> ::= elseif <Expression> then <Expression> <Else Exp>
+103     <Else Exp> ::= else <Expression> end
+104     <Expressions> ::= <ExpressionSeq>
+105     <Expressions> ::= 
+106     <ExpressionSeq> ::= <ExpressionSeq> ',' <Expression>
+107     <ExpressionSeq> ::= <Expression>
+108     <Reports> ::= <Reports> ',' <Report>
+109     <Reports> ::= <Report>
+110     <Report> ::= <Expression> as <Expression>
+111     <Report> ::= <Expression>
+112     <Distribution> ::= Id '(' <ExpressionSeq> ')'
+113     <EndCondition> ::= for <Expression>
+114     <EndCondition> ::= for <Expression> minimize <Expression>
+115     <Or Exp> ::= <Or Exp> or <And Exp>
+116     <Or Exp> ::= <And Exp>
+117     <And Exp> ::= <And Exp> and <Not Exp>
+118     <And Exp> ::= <Not Exp>
+119     <Not Exp> ::= not <Comp Exp>
+120     <Not Exp> ::= <Comp Exp>
+121     <Comp Exp> ::= <Sum Exp> '=' <Sum Exp>
+122     <Comp Exp> ::= <Sum Exp> '<>' <Sum Exp>
+123     <Comp Exp> ::= <Sum Exp> '<=' <Sum Exp>
+124     <Comp Exp> ::= <Sum Exp> '>=' <Sum Exp>
+125     <Comp Exp> ::= <Sum Exp> '<' <Sum Exp>
+126     <Comp Exp> ::= <Sum Exp> '>' <Sum Exp>
+127     <Comp Exp> ::= <Sum Exp>
+128     <Sum Exp> ::= <Sum Exp> '+' <Mult Exp>
+129     <Sum Exp> ::= <Sum Exp> '-' <Mult Exp>
+130     <Sum Exp> ::= <Mult Exp>
+131     <Mult Exp> ::= <Mult Exp> '*' <Neg Exp>
+132     <Mult Exp> ::= <Mult Exp> '/' <Neg Exp>
+133     <Mult Exp> ::= <Neg Exp>
+134     <Neg Exp> ::= '-' <Powr Exp>
+135     <Neg Exp> ::= '∂' <Powr Exp>
+136     <Neg Exp> ::= <Powr Exp>
+137     <Powr Exp> ::= <Powr Exp> '^' <Base Exp>
+138     <Powr Exp> ::= <Base Exp>
+139     <Volume> ::= Id
+140     <Temperature> ::= Id
+141     <Quantity> ::= Id
 
 

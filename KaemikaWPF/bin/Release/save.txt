@@ -1,41 +1,17 @@
 //======================================
-// Build a chain of reactions from a to b 
-// with n intermediate species c_i
-// a -> c_0 -> c_1 ->  ... -> c_(n-1) -> b
+// Differential Test Signal - Sine
 //======================================
 
-network Erlang(species a b, number n) {
-   if n <= 0 then 
-      // just one reaction from a to b
-      a -> b                        
-   else
-      // new intermediate species c, initially 0
-      species c @ 0M
-      // plot (report) at most 3 of those
-      if n <= 3 then report c end
-      // build a chain from a to c with n-1 steps
-      Erlang(a, c, n-1) 
-      // plus one reaction from c to b
-      c -> b                        
-   end
+// Turn a (positive/negative) function into a waveform
+network DSignal(species X⁺ X⁻, function f) {
+   number precision = 100
+   # ->{{precision*pos(f())}} X⁺;   X⁺ ->{precision} #
+   # ->{{precision*pos(-f())}} X⁻;   X⁻ ->{precision } #
 }
 
-// Connect two such chains in a loop
-// to produced a dampened ring oscillator
+species A⁺, A⁻ @ 0 M
+DSignal(A⁺, A⁻, fun(){sin(time)})
 
-network RingOscillator(species a b, number n) {
-    Erlang(a,b,n/2)
-    Erlang(b,a,n/2)
-}
-
-// Initialize some species and activate the oscillator
-
-species a @ 1M
-species b @ 0M
-RingOscillator(a, b, 10)
-
-// Simulate the reactions and produce a plot
-// the multiple 'c' species are distinguished by a suffix
-
-equilibrate for 20           
-                             
+report A⁺ - A⁻ , A⁺, A⁻   // plot test signal A⁺-A⁻
+report sin(time)         // compare with true function
+equilibrate for 10

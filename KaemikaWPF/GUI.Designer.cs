@@ -29,9 +29,10 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(GUI));
             this.btnConstruct = new System.Windows.Forms.Button();
             this.txtTarget = new System.Windows.Forms.TextBox();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
@@ -256,32 +257,32 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.chart1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.chart1.BorderSkin.PageColor = System.Drawing.SystemColors.Control;
-            chartArea2.AxisX.MajorGrid.LineColor = System.Drawing.Color.Gray;
-            chartArea2.AxisX.MajorGrid.LineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dot;
-            chartArea2.AxisX.ScrollBar.BackColor = System.Drawing.Color.White;
-            chartArea2.AxisX.ScrollBar.ButtonColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            chartArea2.AxisX.Title = "Time (s)";
-            chartArea2.AxisY.MajorGrid.LineColor = System.Drawing.Color.Gray;
-            chartArea2.AxisY.MajorGrid.LineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dot;
-            chartArea2.AxisY.ScrollBar.BackColor = System.Drawing.Color.White;
-            chartArea2.AxisY.ScrollBar.ButtonColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            chartArea2.AxisY.Title = "Molarity (M)";
-            chartArea2.BorderWidth = 10;
-            chartArea2.Name = "ChartArea1";
-            this.chart1.ChartAreas.Add(chartArea2);
-            legend2.Font = new System.Drawing.Font("Lucida Sans Unicode", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            legend2.IsTextAutoFit = false;
-            legend2.Name = "Legend1";
-            this.chart1.Legends.Add(legend2);
+            chartArea1.AxisX.MajorGrid.LineColor = System.Drawing.Color.Gray;
+            chartArea1.AxisX.MajorGrid.LineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dot;
+            chartArea1.AxisX.ScrollBar.BackColor = System.Drawing.Color.White;
+            chartArea1.AxisX.ScrollBar.ButtonColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            chartArea1.AxisX.Title = "Time (s)";
+            chartArea1.AxisY.MajorGrid.LineColor = System.Drawing.Color.Gray;
+            chartArea1.AxisY.MajorGrid.LineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dot;
+            chartArea1.AxisY.ScrollBar.BackColor = System.Drawing.Color.White;
+            chartArea1.AxisY.ScrollBar.ButtonColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            chartArea1.AxisY.Title = "Molarity (M)";
+            chartArea1.BorderWidth = 10;
+            chartArea1.Name = "ChartArea1";
+            this.chart1.ChartAreas.Add(chartArea1);
+            legend1.Font = new System.Drawing.Font("Lucida Sans Unicode", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            legend1.IsTextAutoFit = false;
+            legend1.Name = "Legend1";
+            this.chart1.Legends.Add(legend1);
             this.chart1.Location = new System.Drawing.Point(6, 396);
             this.chart1.Margin = new System.Windows.Forms.Padding(6, 4, 6, 4);
             this.chart1.Name = "chart1";
             this.chart1.Palette = System.Windows.Forms.DataVisualization.Charting.ChartColorPalette.Bright;
-            series2.ChartArea = "ChartArea1";
-            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series2.Legend = "Legend1";
-            series2.Name = "-";
-            this.chart1.Series.Add(series2);
+            series1.ChartArea = "ChartArea1";
+            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series1.Legend = "Legend1";
+            series1.Name = "-";
+            this.chart1.Series.Add(series1);
             this.chart1.Size = new System.Drawing.Size(624, 296);
             this.chart1.TabIndex = 24;
             this.chart1.Text = "chart1";
@@ -297,6 +298,7 @@
             this.comboBox_Examples.Items.AddRange(new object[] {
             "   Tutorial",
             "►Basic",
+            "   Start Here",
             "   RingOscillator",
             "   Reactions",
             "   Enzyme Kinetics",
@@ -490,8 +492,7 @@
             this.button_ChartSnap.Size = new System.Drawing.Size(75, 32);
             this.button_ChartSnap.TabIndex = 35;
             this.button_ChartSnap.Text = "Snap";
-            this.toolTip1.SetToolTip(this.button_ChartSnap, "Copy chart image to clipboard\r\nas resolution-independent .emf\r\n(paste into e.g. P" +
-        "owerPoint)");
+            this.toolTip1.SetToolTip(this.button_ChartSnap, resources.GetString("button_ChartSnap.ToolTip"));
             this.button_ChartSnap.UseVisualStyleBackColor = false;
             this.button_ChartSnap.Click += new System.EventHandler(this.button_ChartSnap_Click);
             // 

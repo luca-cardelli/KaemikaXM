@@ -58,20 +58,18 @@ tanh(n)
 
 vessel
 
-// Volume of sample s, in L = Liters:
+// Observation (see Flow-expressions)
 
-volume(s)
-
-// Temperature of sample s, in K = Kelvin:
-
-temperature(s)  
-
-// Molarity of species a in sample s, 
-// in M = mol/L
-
-molarity(s,a)   
-molarity(a) // same as molarity(vessel,a)
-
+observe(f)   // same as observe(f,vessel)
+observe(f,s) // observe a flow f in sample s
+     // at time 0, returning a number; e.g.:
+observe(kelvin,s) // temperature of s
+observe(volume,s) // volume of s (L)
+observe(a,s) // molarity of a in s (mol/L)
+observe(∂(a),s)   // derivative of a
+observe(a+2b^2,s) // combinations
+observe(var(a),s) // = 0 (at time 0)
+observe(time,s)   // = 0 (at time 0)
 
 //======================================
 // Flow-expressions

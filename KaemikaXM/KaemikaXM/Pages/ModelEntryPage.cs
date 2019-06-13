@@ -32,6 +32,7 @@ namespace KaemikaXM.Pages {
                     if (Clipboard.HasText) {
                         string text = await Clipboard.GetTextAsync();
                         MainTabbedPage.theModelEntryPage.SetText(text);
+                        SaveEditor(); // otherwise it would not be saved becauese there is no focus change
                     }
                 });
         }

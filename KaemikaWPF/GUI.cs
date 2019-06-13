@@ -696,11 +696,13 @@ namespace KaemikaWPF
                 //}
 
                 //== Save a .emf file to Application.StartupPath directory
-                //chart1.SaveImage(Application.StartupPath + "\\chart.emf", ChartImageFormat.EmfPlus);
+                //chart1.SaveImage(Application.StartupPath + "\\chart.emf", ChartImageFormat.EmfPlus); // InkScape cannot read EmfPlus
+                chart1.SaveImage(Application.StartupPath + "\\chart.emf", ChartImageFormat.Emf);
 
                 //== Save a .emf file to the Clipboard
                 using (MemoryStream stream = new MemoryStream()) {
                     this.chart1.SaveImage(stream, ChartImageFormat.EmfPlus);
+                    // this.chart1.SaveImage(stream, ChartImageFormat.Emf);  // Emf does not deal well with shaded areas
                     stream.Seek(0, SeekOrigin.Begin);
                     Metafile metafile = new Metafile(stream);
                     //Clipboard.SetDataObject(metafile, true); // this should work but apparently does not paste correctly to Windows applications
@@ -862,7 +864,9 @@ namespace KaemikaWPF
             // https://stackoverflow.com/questions/433171/how-to-embed-a-text-file-in-a-net-assembly
 
             // Basic group
-            if (comboBox_Examples.Text == "   RingOscillator") {
+            if (comboBox_Examples.Text == "   Start Here") {
+                InputSetText(Properties.Resources.StartHere);
+            } else if (comboBox_Examples.Text == "   RingOscillator") {
                 InputSetText(Properties.Resources.RingOscillator);
             } else if (comboBox_Examples.Text == "   Reactions") {
                 InputSetText(Properties.Resources.Reactions);
