@@ -187,4 +187,40 @@
   <data name="EnzymeKinetics" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\EnzymeKinetics.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
+  <data name="Addition_Block" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\Addition Block.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="Derivative_Block" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\Derivative Block.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="DualRailConverter_Block" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\DualRailConverter Block.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="Integral_Block" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\Integral Block.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="PIDController" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\PIDController.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="PIDController_Block" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\PIDController Block.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="PosTestSignal_Sine" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\PosTestSignal Sine.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="PosTestSignal_Step" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\PosTestSignal Step.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="Proportional_Block" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\Proportional Block.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="Subtraction_Block" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\Subtraction Block.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="TestSignal_Sine" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\TestSignal Sine.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="TestSignal_Step" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\TestSignal Step.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
 </root>

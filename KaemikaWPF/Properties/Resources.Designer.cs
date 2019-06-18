@@ -88,6 +88,29 @@ namespace KaemikaWPF.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to //======================================
+        ///// Addition Block
+        /////======================================
+        ///
+        /////------------------ Addition Block -------------------
+        ///
+        ///// U = P + I + D
+        ///network SumBlock(species P⁺ P⁻ I⁺ I⁻ D⁺ D⁻ U⁺ U⁻) {
+        ///      P⁺ -&gt; P⁺ + U⁺                       {1}
+        ///      P⁻ -&gt; P⁻  + U⁻                    {1}
+        ///      I⁺ -&gt; I⁺ + U⁺                       {1}
+        ///      I⁻ -&gt; I⁻  + U⁻                    {1}
+        ///      D⁺ -&gt; D⁺ + U⁺                      {1}
+        ///      D⁻ -&gt; D⁻  + U⁻                     {1}
+        ///  [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Addition_Block {
+            get {
+                return ResourceManager.GetString("Addition_Block", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
         ///// Approximate Majority bistable system
         /////======================================
         ///
@@ -147,6 +170,29 @@ namespace KaemikaWPF.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to //======================================
+        ///// Derivative Block
+        /////======================================
+        ///
+        ///number precision = 10
+        ///
+        /////------------------ Derivative Block -------------------
+        ///network DBlock(species E⁺ E⁻ D⁺ D⁻, number Kd) {
+        ///       species A⁺, A⁻ @ 0M  // D block auxiliary species
+        ///       E⁺-&gt;E⁺ + A⁺         {precision}
+        ///       A⁺ -&gt;#             {precision}
+        ///       E⁻ -&gt;E⁻ + A⁻        {precision}
+        ///       A⁻ -&gt;#             {precision}
+        ///       E⁺ -&gt;E⁺ + D⁺        {precision*precision*Kd}
+        ///   [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Derivative_Block {
+            get {
+                return ResourceManager.GetString("Derivative_Block", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
         ///// Single-rail Derivative.
         ///// This network computes the derivative 
         ///// on an input signal A as the difference 
@@ -162,9 +208,9 @@ namespace KaemikaWPF.Properties {
         ///	number r = 1000
         ///	number s = 1000
         ///	amount B⁺ B⁻ @ 0 M
-        ///	species A&apos; @ molarity(A) M
+        ///	species A&apos; @ observe(A) M
         ///	
-        ///	// A [rest of string was truncated]&quot;;.
+        ///	// A&apos; [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Derivative1 {
             get {
@@ -187,17 +233,53 @@ namespace KaemikaWPF.Properties {
         ///	number s = 1000
         ///	amount B⁺ @ 0 M
         ///	amount B⁻ @ 0 M
-        ///	species A&apos;⁺ @ molarity(A⁺)M
-        ///	species A&apos;⁻ @ molarity(A⁻)M
+        ///	species A&apos;⁺ @ observe(A⁺)M
+        ///	species A&apos;⁻ @ observe(A⁻)M
         ///	
         ///	// A&apos;⁺ tracks A⁺ by r
         ///	A⁺ -&gt;{r} A⁺ + A&apos;⁺;   A&apos;⁺ -&gt;{r} #
         ///	
-        ///	 [rest of string was truncated]&quot;;.
+        ///	// [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Derivative2 {
             get {
                 return ResourceManager.GetString("Derivative2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// Dual Rail Converter Block
+        /////======================================
+        ///
+        /////------------- Dual Rail Converter Block --------------
+        ///network DualRail (species A A⁺ A⁻) {
+        ///       A -&gt; A + A⁺ 
+        ///       A⁺ -&gt; #
+        ///       A⁺ + A⁻ -&gt; #
+        ///}
+        ///
+        /////----------------- Unit testing ------------------
+        ///
+        ///// Input
+        ///species A @ 1.5 M
+        ///
+        ///// Output
+        ///species A⁺ @ 2.0 M
+        ///species A⁻ @ 0.0 M
+        ///
+        ///DualRail (A, A⁺, A⁻) 
+        ///
+        ///// Plotting
+        ///report A, A⁺ - A⁻
+        ///equilibrate for 4
+        ///
+        ///
+        ///.
+        /// </summary>
+        internal static string DualRailConverter_Block {
+            get {
+                return ResourceManager.GetString("DualRailConverter_Block", resourceCulture);
             }
         }
         
@@ -258,10 +340,9 @@ namespace KaemikaWPF.Properties {
         /////======================================
         ///
         ///function factorial(number n) {
-        ///	return 
-        ///		if n &lt;= 0 then 1 
-        ///		else n * factorial(n-1) 
-        ///		end
+        ///	if n &lt;= 0 then 1 
+        ///	else n * factorial(n-1) 
+        ///	end
         ///}
         ///
         ///// Plot results:
@@ -274,10 +355,10 @@ namespace KaemikaWPF.Properties {
         /////======================================
         ///
         ///function f(number n) {
-        ///	return if n &lt;= 0 then 0 else 1 + g(n-1) end
+        ///	if n &lt;= 0 then 0 else 1 + g(n-1) end
         ///}
         ///function g(number n){
-        ///	return  [rest of string was truncated]&quot;;.
+        ///	if n &lt;= 0 then 0 else 1 + f [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Functions {
             get {
@@ -311,6 +392,32 @@ namespace KaemikaWPF.Properties {
         internal static string HighPassFilter {
             get {
                 return ResourceManager.GetString("HighPassFilter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// Integral Block
+        /////======================================
+        ///
+        ///number precision = 10
+        ///
+        /////------------------- Integral Block --------------------
+        ///network IBlock (species E⁺ E⁻ I⁺ I⁻, number Ki) {
+        ///       E⁺ -&gt; E⁺ + I⁺            {Ki}
+        ///       E⁻ -&gt; E⁻ + I⁻            {Ki}
+        ///       I⁻ + I⁺ -&gt; #             {precision}
+        ///}
+        ///
+        /////----------------- Unit testing ------------------
+        ///
+        ///// Input waveform
+        ///network DSignal(species X⁺ X⁻, function f) {
+        ///   number precision = 100        /// [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Integral_Block {
+            get {
+                return ResourceManager.GetString("Integral_Block", resourceCulture);
             }
         }
         
@@ -381,15 +488,28 @@ namespace KaemikaWPF.Properties {
         ///// Example of Sample Manipulation
         /////======================================
         ///
+        ///species {c}
+        ///
         ///sample A 
-        ///sample D
+        ///species a @ 1M in A
+        ///amount c @ 0.1M in A
+        ///a + c -&gt; a + a
+        ///equilibrate A1 := A for 1
         ///
-        ///split B,C := A by 0.5
-        ///equilibrate E := D for 3
-        ///mix F := B with E
+        ///sample B
+        ///species b @ 1M in B
+        ///amount c @ 0.1M in B
+        ///b + c -&gt; c + c
+        ///equilibrate B1 := B for 1
+        ///
+        ///split C,D := A1 by 0.5
         ///dispose C
-        ///dispose F
         ///
+        ///mix E := D with B1
+        ///a + b -&gt; b + b
+        ///
+        ///equilibrate F := E for 20
+        ///dispose F
         ///.
         /// </summary>
         internal static string MixAndSplit {
@@ -452,6 +572,125 @@ namespace KaemikaWPF.Properties {
         internal static string PBS {
             get {
                 return ResourceManager.GetString("PBS", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// PID Controller
+        /////======================================
+        ///
+        ///number precision = 10
+        ///
+        ///network PBlock (species E⁺ E⁻ P⁺ P⁻,  number Kp) {
+        ///       E⁺ -&gt; E⁺ + P⁺                    {precision * Kp}
+        ///       E⁻ -&gt; E⁻ + P⁻                    {precision * Kp}
+        ///       P⁺ -&gt; #                          {precision} 
+        ///       P⁻ -&gt; #                          {precision} 
+        ///       P⁻ + P⁺ -&gt; #                     {precision}
+        ///}
+        ///
+        ///network IBlock (species E⁺ E⁻ I⁺ I⁻, number Ki)  [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string PIDController {
+            get {
+                return ResourceManager.GetString("PIDController", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// PID Controller Block
+        /////======================================
+        ///
+        /////------------- PID Controller --------------
+        ///
+        ///network PIDController(
+        ///   species R⁺ R⁻, 
+        ///   number Kp Ki Kd,
+        ///   network Plant){
+        ///
+        ///   species E⁺,E⁻,P⁺,P⁻,I⁺,I⁻,  D⁺,D⁻,U⁺,U⁻,Y,Y⁺,Y⁻ @ 0M
+        ///
+        ///   PBlock(E⁺, E⁻, P⁺, P⁻, Kp) 
+        ///   IBlock(E⁺, E⁻, I⁺, I⁻, Ki)
+        ///   DBlock(E⁺, E⁻, D⁺, D⁻, Kd)
+        ///   SumBloc(P⁺, P⁻, I⁺, I⁻, D⁺, D⁻, U⁺, U⁻)
+        ///   Plant(U⁺, U⁻, Y)
+        ///   DualRail(Y, Y⁺, Y⁻)
+        ///   SubBlock(R⁺, R⁻, Y⁺, [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string PIDController_Block {
+            get {
+                return ResourceManager.GetString("PIDController_Block", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// Positive Test Signal - Sine
+        /////======================================
+        ///
+        ///// Turn a positive function into a waveform
+        ///network Signal(species X, function f) {
+        ///   # -&gt;{{100*f()}} X;   X -&gt;{100} #
+        ///}
+        ///
+        ///species A @ 0 M
+        ///Signal(A, fun(){1+sin(time)})
+        ///
+        ///report A            // plot test signal
+        ///report 1+sin(time)  // compare with true function
+        ///equilibrate for 10
+        ///.
+        /// </summary>
+        internal static string PosTestSignal_Sine {
+            get {
+                return ResourceManager.GetString("PosTestSignal_Sine", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// Positive Test Signal - Step
+        /////======================================
+        ///
+        ///// Turn a positive function into a waveform
+        ///network Signal(species X, function f) {
+        ///   # -&gt;{{100*f()}} X;   X -&gt;{100} #
+        ///}
+        ///
+        ///species A @ 0 M
+        ///Signal(A, fun(){cond(time&lt;1, 1, 2)})
+        ///
+        ///report A
+        ///equilibrate for 2
+        ///.
+        /// </summary>
+        internal static string PosTestSignal_Step {
+            get {
+                return ResourceManager.GetString("PosTestSignal_Step", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// Proportional Block
+        /////======================================
+        ///
+        ///number precision = 10
+        ///
+        /////-------------- Proportional Block ---------------
+        ///network PBlock (species E⁺ E⁻ P⁺ P⁻,  number Kp) {
+        ///       E⁺ -&gt; E⁺ + P⁺                    {precision * Kp}
+        ///       E⁻ -&gt; E⁻ + P⁻                    {precision * Kp}
+        ///       P⁺ -&gt; #                              {precision} 
+        ///       P⁻ -&gt; #                              {precision} 
+        ///       P⁻ + P⁺ -&gt; #                     { [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Proportional_Block {
+            get {
+                return ResourceManager.GetString("Proportional_Block", resourceCulture);
             }
         }
         
@@ -543,15 +782,12 @@ namespace KaemikaWPF.Properties {
         ///
         ///network SerialDilution(number count, sample s, network f) {
         ///  if count &gt; 0 then
-        ///    sample solvent {9*volume(s) L, temperature(s) K}
+        ///    sample solvent {9*observe(volume,s) L, observe(kelvin,s) K}
         ///    mix s with solvent
         ///    split s, dilution := s by 0.1
         ///    f(dilution)
         ///    SerialDilution(count-1, s, f)
-        ///  end
-        ///}
-        ///
-        /////  [rest of string was truncated]&quot;;.
+        ///  en [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string SerialDilution {
             get {
@@ -639,6 +875,81 @@ namespace KaemikaWPF.Properties {
         internal static string StartHere {
             get {
                 return ResourceManager.GetString("StartHere", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// Substraction Block
+        /////======================================
+        ///
+        /////------------------ Substraction Block ------------------
+        ///
+        /////  E = A - B
+        ///network SubBlock (species A⁺ A⁻ B⁺ B⁻ E⁺ E⁻) {
+        ///       A⁺ -&gt; A⁺ + E⁺        {1}
+        ///       A⁻ -&gt; A⁻ + E⁻        {1}
+        ///       B⁻ -&gt; B⁻ + E⁺      {1}
+        ///       B⁺  -&gt; B⁺ + E⁻    {1}
+        ///       E⁺ -&gt; #             {1}
+        ///       E⁻ -&gt; #             {1}
+        ///       E⁺ + E⁻-&gt; #         {1}
+        ///}
+        ///
+        /////----------------- Unit testing ----------------- [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Subtraction_Block {
+            get {
+                return ResourceManager.GetString("Subtraction_Block", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// Differential Test Signal - Sine
+        /////======================================
+        ///
+        ///// Turn a (positive/negative) function into a waveform
+        ///network DSignal(species X⁺ X⁻, function f) {
+        ///   number precision = 100
+        ///   # -&gt;{{precision*pos(f())}} X⁺;   X⁺ -&gt;{precision} #
+        ///   # -&gt;{{precision*pos(-f())}} X⁻;   X⁻ -&gt;{precision } #
+        ///}
+        ///
+        ///species A⁺, A⁻ @ 0 M
+        ///DSignal(A⁺, A⁻, fun(){sin(time)})
+        ///
+        ///report A⁺ - A⁻ , A⁺, A⁻   // plot test signal A⁺-A⁻
+        ///report sin(time)         // co [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string TestSignal_Sine {
+            get {
+                return ResourceManager.GetString("TestSignal_Sine", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// Differential Test Signal - Step
+        /////======================================
+        ///
+        ///// Turn a (positive/negative) function into a waveform
+        ///network DSignal(species X⁺ X⁻, function f) {
+        ///   number precision = 100
+        ///   # -&gt;{{precision*pos(f())}} X⁺;   X⁺ -&gt;{precision} #
+        ///   # -&gt;{{precision*pos(-f())}} X⁻;   X⁻ -&gt;{precision } #
+        ///}
+        ///
+        ///species A⁺, A⁻ @ 0 M
+        ///DSignal(A⁺, A⁻, fun(){cond(time&lt;1,-1,1)})
+        ///
+        ///report A⁺ - A⁻ , A⁺, A⁻ 
+        ///equilibrate for 2
+        ///.
+        /// </summary>
+        internal static string TestSignal_Step {
+            get {
+                return ResourceManager.GetString("TestSignal_Step", resourceCulture);
             }
         }
         

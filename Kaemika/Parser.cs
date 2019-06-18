@@ -150,8 +150,6 @@ namespace Kaemika {
         public static EndCondition ParseEndCondition(IReduction reduction) {
             if (reduction.Production()                   == "<EndCondition> ::= for <Expression>") {
                 return new EndConditionSimple(ParseExpression(reduction.Nonterminal(1)));
-            } else if ((reduction.Production()               == "<EndCondition> ::= for <Expression> minimize <Expression>")) {
-                return new EndConditionMinimize(ParseExpression(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(3)));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }
 

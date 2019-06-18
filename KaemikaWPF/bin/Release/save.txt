@@ -1,46 +1,41 @@
-//======================================
-// Serial Dilution
-//
-// Prepare a series of increasingly 
-// diluted solutions and we apply a 
-// network f to each (f can add 
-// species to the solutions)
-//======================================
+// argmin/observe OPTIMIZER
 
-network SerialDilution(number count, sample s, network f) {
-  if count > 0 then
-    sample solvent {9*volume(s) L, temperature(s) K}
-    mix s with solvent
-    split s, dilution := s by 0.1
-    f(dilution)
-    SerialDilution(count-1, s, f)
-  end
+// GoldenSection optimize rate
+function f(number r) {
+   define
+      sample s
+      species a @ 2μM in s
+      a -> #     {pos(r)} 
+      equilibrate s for 1
+      flow cost = (a-1)^2
+    return
+      observe(cost, s)
 }
+//number r = argmin(f, 0.5, 0.8)
 
-// initial sample to be diluted:
-
-sample init {1mL, 25C}          
-species A @ 1M in init
-species B @ 1M in init
-A + B ->{20} A
-A -> #
-
-// apply this network to each dilution;
-// note that this invokes a simulation
-// each time in each solution
-
-network test(sample s) {        
-   equilibrate s for 10
-   dispose s
+// GoldenSection optimize initial condition
+function g(number i) {
+   define
+      sample s
+      species a @ i M in s
+      a -> #
+      equilibrate s for 1
+      flow cost = (a-1)^2
+    return
+      observe(cost, s)
 }
+//number i = argmin(g, 2, 4)
 
-// dilute 4 times
+// BFGF optimize endtime with gradient
 
-SerialDilution(4, init, test)      
-
-// RESULT:
-// sample init {1mL, 298.2K} {A = 1M, B = 1M}
-// sample s•2 {1mL, 298.2K} {A = 100mM, B = 100mM}
-// sample s•4 {1mL, 298.2K} {A = 10mM, B = 10mM}
-// sample s•7 {1mL, 298.2K} {A = 1mM, B = 1mM}
-// sample s•10 {1mL, 298.2K} {A = 100uM, B = 100uM}
+function h(number endtime) {
+   define
+      sample s
+      species a @ 2M in s
+      a -> #
+      equilibrate s for pos(endtime)
+      flow cost = (a-1)^2
+    return
+      [observe(cost, s), observe(∂ cost, s)]
+}
+number t = argmin(h, 1)

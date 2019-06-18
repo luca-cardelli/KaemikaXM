@@ -267,6 +267,66 @@
       <Link>Resources\EnzymeKinetics.txt</Link>
     </Resource>
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\PosTestSignal Sine.txt">
+      <Link>Resources\PosTestSignal Sine.txt</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\PosTestSignal Step.txt">
+      <Link>Resources\PosTestSignal Step.txt</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\TestSignal Sine.txt">
+      <Link>Resources\TestSignal Sine.txt</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\TestSignal Step.txt">
+      <Link>Resources\TestSignal Step.txt</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\Proportional Block.txt">
+      <Link>Resources\Proportional Block.txt</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\Integral Block.txt">
+      <Link>Resources\Integral Block.txt</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\Derivative Block.txt">
+      <Link>Resources\Derivative Block.txt</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\Addition Block.txt">
+      <Link>Resources\Addition Block.txt</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\Subtraction Block.txt">
+      <Link>Resources\Subtraction Block.txt</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\DualRailConverter Block.txt">
+      <Link>Resources\DualRailConverter Block.txt</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\PIDController Block.txt">
+      <Link>Resources\PIDController Block.txt</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\PIDController.txt">
+      <Link>Resources\PIDController.txt</Link>
+    </Resource>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\SkiaSharp.1.68.0\build\net45\SkiaSharp.targets" Condition="Exists('..\packages\SkiaSharp.1.68.0\build\net45\SkiaSharp.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

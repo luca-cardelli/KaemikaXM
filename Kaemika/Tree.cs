@@ -2874,18 +2874,8 @@ namespace Kaemika
             SampleValue resultSample = new SampleValue(resultSymbol, new NumberValue(inSample.Volume()), new NumberValue(inSample.Temperature()), produced: true);
             if (endcondition is EndConditionSimple) {
                 Protocol.PauseEquilibrate(netlist, style); // Gui pause between successive equilibrate, if enabled
-                NumberValue outTime = Protocol.Equilibrate(resultSample, inSample, noise, forTime, null, null, netlist, style);
+                NumberValue outTime = Protocol.Equilibrate(resultSample, inSample, noise, forTime, netlist, style);
                 netlist.Emit(new EquilibrateEntry(resultSample, inSample, outTime));
-                return new ValueEnv(resultSymbol, null, resultSample, env);
-            }
-            if (endcondition is EndConditionMinimize) {
-                Expression minimize = (endcondition as EndConditionMinimize).minimize;
-                Flow minimizeFlow = minimize.BuildFlow(env, style);
-                Flow minimizeFlowDiff = minimizeFlow.Differentiate(style);
-                // note that minimizeFlow is scoped in its surrounding environment, but is later evaluated for the species in the sample, and the sample may come from some other scope, hence this check:
-                if (!minimizeFlow.CoveredBy(inSample.species, out Symbol notCovered)) throw new Error("Species '" + notCovered.Format(style) + "' in flow '" + minimizeFlow.Format(style) + "' is not one of the species in sample '" + inSample.FormatSymbol(style) + "', when evaluating: " + this.Format());
-                NumberValue forTimevalue = Protocol.Equilibrate(resultSample, inSample, noise, forTime, minimizeFlow, minimizeFlowDiff, netlist, style);
-                netlist.Emit(new EquilibrateEntry(resultSample, inSample, forTimevalue));
                 return new ValueEnv(resultSymbol, null, resultSample, env);
             }
             throw new Error("Equilibrate");
@@ -2901,12 +2891,6 @@ namespace Kaemika
         public EndConditionSimple(Expression fortime) { this.fortime = fortime; }
         public override string Format() { return fortime.Format(); }
         public override void Scope(Scope scope) { fortime.Scope(scope); }
-    }
-    public class EndConditionMinimize : EndCondition {
-        public Expression minimize;
-        public EndConditionMinimize(Expression fortime, Expression minimize) { this.fortime = fortime; this.minimize = minimize; }
-        public override string Format() { return " for " + fortime.Format() + " minimize " + minimize.Format(); }
-        public override void Scope(Scope scope) { fortime.Scope(scope); minimize.Scope(scope); }
     }
 
     public class TransferSample : Statement {

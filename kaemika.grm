@@ -6,7 +6,7 @@
 "Case Sensitive" = True
 "Start Symbol"   = <Top>
 
-Id        = {Letter}({AlphaNumeric}|'_'|{Superscripts and Subscripts}|'')*           ! Letter followed by alphanumerics or single-quote, underscore, Unicode sup/sub
+Id        = ({Letter}|{Greek and Coptic})({AlphaNumeric}|{Greek and Coptic}|'_'|{Superscripts and Subscripts}|'')*           ! Letter followed by alphanumerics or single-quote, underscore, Unicode sup/sub
 Integer   = {Digit}+
 Float     = {Digit}+ '.' {Digit}+
 Double    = {Digit}+ ('.' {Digit}+)? [Ee] [+-]? {Digit}+
@@ -171,7 +171,6 @@ Comment Block @= { Nesting = All }
 <Distribution>   ::= Id '(' <ExpressionSeq> ')'     ! uniform(lo,hi), normal(mean,stdev), exponential(lambda), bernoulli(p)
                   
 <EndCondition>   ::= 'for' <Expression>
-                    | 'for' <Expression> 'minimize' <Expression>
                   
 ! OPERATORS  --------------------------------------------                                 
 

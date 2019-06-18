@@ -150,7 +150,7 @@ namespace Kaemika
             return (series, seriesLNA);
         }
 
-        public static NumberValue Equilibrate(SampleValue resultSample, SampleValue sample, Noise noise, double fortime, Flow mintimeFlow, Flow mintimeFlowDiff, Netlist netlist, Style style) {
+        public static NumberValue Equilibrate(SampleValue resultSample, SampleValue sample, Noise noise, double fortime, Netlist netlist, Style style) {
             double initialTime = 0.0;
             double finalTime = fortime;
 
@@ -178,7 +178,7 @@ namespace Kaemika
                 && finalTime > 0;            // we don't want to run when fortime==0
 
             (double lastTime, State lastState, int pointsCounter, int renderedCounter) =
-                Integrate(mintimeFlow, mintimeFlowDiff, Solver, initialState, initialTime, finalTime, Flux, sample, reports, noise, series, seriesLNA, nonTrivialSolution, style);
+                Integrate(Solver, initialState, initialTime, finalTime, Flux, sample, reports, noise, series, seriesLNA, nonTrivialSolution, style);
 
             if (lastState == null) lastState = initialState;
             for (int i = 0; i < species.Count; i++) {
@@ -216,24 +216,7 @@ namespace Kaemika
         }
 
         private static (double lastTime, State lastState, int pointsCounter, int renderedCounter)
-            Integrate(Flow mintimeFlow, Flow mintimeFlowDiff, Func<double, double, Vector, Func<double, Vector, Vector>, IEnumerable<SolPoint>> Solver,
-                State initialState, double initialTime, double finalTime, Func<double, Vector, Vector> Flux,
-                SampleValue sample, List<ReportEntry> reports, Noise noise, string[] series, string[] seriesLNA, bool nonTrivialSolution, Style style) {
-        
-            if (mintimeFlow == null) {
-                (double lastTime, State lastState, int pointsCounter, int renderedCounter) =
-                     NormalIntegrate( Solver, initialState, initialTime, finalTime, Flux, sample, reports, noise, series, seriesLNA, nonTrivialSolution, style);
-                return (lastTime, lastState, pointsCounter, renderedCounter);
-            } else { 
-                Gui.gui.OutputAppendText("Cost = " + mintimeFlow.Format(style) + Environment.NewLine + "∂Cost = " + mintimeFlowDiff.Format(style) + Environment.NewLine);
-                (double lastTime, State lastState, int pointsCounter, int renderedCounter) =
-                     OptimalIntegrate(mintimeFlow, mintimeFlowDiff, Solver, initialState, initialTime, finalTime, Flux, sample, reports, noise, series, seriesLNA, nonTrivialSolution, style);
-                return (lastTime, lastState, pointsCounter, renderedCounter);
-            }
-        }
-
-        private static (double lastTime, State lastState, int pointsCounter, int renderedCounter)
-            NormalIntegrate(Func<double, double, Vector, Func<double, Vector, Vector>, IEnumerable<SolPoint>> Solver,
+            Integrate(Func<double, double, Vector, Func<double, Vector, Vector>, IEnumerable<SolPoint>> Solver,
                 State initialState, double initialTime, double finalTime, Func<double, Vector, Vector> Flux,
                 SampleValue sample, List<ReportEntry> reports, Noise noise, string[] series, string[] seriesLNA, bool nonTrivialSolution, Style style) {
             double redrawTick = initialTime; double redrawStep = (finalTime - initialTime) / 50;
@@ -298,71 +281,6 @@ namespace Kaemika
             Gui.gui.ChartUpdate();
 
             return (lastTime, lastState, pointsCounter, renderedCounter);
-        }
-
-        // https://numerics.mathdotnet.com/api/MathNet.Numerics.Optimization/ObjectiveFunction.htm
-
-        private static (double endTime, State endState, int pointsCounter, int renderedCounter)
-            OptimalIntegrate( Flow minimize, Flow mintimeDiff, Func<double, double, Vector, Func<double, Vector, Vector>, IEnumerable<SolPoint>> Solver,
-                State initialState, double initialTime, double finalTimeGuess, Func<double, Vector, Vector> Flux,
-                SampleValue sample, List<ReportEntry> reports, Noise noise, string[] series, string[] seriesLNA, bool nonTrivialSolution, Style style) {
-
-            double lastEndTime = finalTimeGuess; State lastEndState = null; int lastPointsCounter = 0; int lastRenderereCounter = 0;
-
-            // --- Cost function minimizing simulation endtime, with time-derivative gradient function
-            (double cost, double gradient) CostAndGradient(double endTimeGuess) {
-
-                if (Double.IsNaN(endTimeGuess)) throw new Error("time = NaN");
-                if (endTimeGuess <= 0) return (cost: double.MaxValue, gradient: -1.0);
-                (double endTime, State endState, int pointsCounter, int renderedCounter) =
-                    NormalIntegrate(Solver, initialState, initialTime, endTimeGuess, Flux, sample, reports, noise, series, seriesLNA, nonTrivialSolution, style);
-                lastEndTime = endTime; lastEndState = endState; lastPointsCounter = pointsCounter; lastRenderereCounter = renderedCounter;
-
-                double cost = minimize.ReportMean(sample, endTime, endState, null, style); // compute cost on basis of endTimeGuess or true endTime?
-                double gradient = mintimeDiff.ReportMean(sample, endTime, endState, Flux, style);
-                double gradientNum = minimize.ReportDiff(sample, endTime, endState, Flux, style);
-
-                Gui.gui.OutputAppendText("BFGS: endTimeGuess = " + endTimeGuess.ToString("G4") + ", cost = " + cost.ToString("G4") 
-                    + ", symbolic gradient = " + gradient.ToString("G4") + ", numeric gradient = " + gradientNum.ToString("G4") + Environment.NewLine);
-                return (cost, gradient);
-            }
-
-            // Set objectiveFunction = ObjectiveFunction.Gradient(CostAndGradient)
-            // but need to adapt the type of CostAndGradient to the type that ObjectiveFunction.Gradient wants:
-            IObjectiveFunction objectiveFunction = ObjectiveFunction.Gradient(                                                                    
-                (Vector<double> parameters) => {
-                    (double cost, double gradient) = CostAndGradient(parameters[0]);
-                    return new Tuple<double, Vector<double>>(cost, CreateVector.Dense(1, gradient));
-                });
-            // Set initialGuess = endTimeGuess
-            Vector<double> initialGuess = CreateVector.Dense(1, finalTimeGuess);
-
-            // --- Cost function minimizing a vector of simulation parameters, with no gradient function
-            double Cost(Vector<double> parameters) { //presumably same size as initialGuess_Value
-                // assign parameters values so that Distribution.distrEval will find them 
-                // for (int i = 0; i < parameters.Count; i++) optimalIntegrateMinimizationParameters[i].drawn = parameters[i];
-
-                (double endTime, State endState, int pointsCounter, int renderedCounter) =
-                    NormalIntegrate(Solver, initialState, initialTime, finalTimeGuess, Flux, sample, reports, noise, series, seriesLNA, nonTrivialSolution, style);
-                lastEndTime = endTime; lastEndState = endState; lastPointsCounter = pointsCounter; lastRenderereCounter = renderedCounter;
-
-                double cost = minimize.ReportMean(sample, endTime, endState, null, style); 
-                Gui.gui.OutputAppendText("BFGS: cost = " + cost.ToString("G4") + Environment.NewLine);
-                return cost;
-            }
-            IObjectiveFunction objectiveFunction_Value = ObjectiveFunction.Value(
-                (Vector<double> parameters) => { return Cost(parameters); } );
-            // optimalIntegrateMinimizationParameters = minimizationParameters; //### this won't work because we do not get the list of random distribution parameters until after the first simulation
-            // Vector<double> initialGuess_Value = a Vector built from random List<InitialValue> minimizationParameters;
-
-            // --- FindMinimum(objectiveFunction, initialGuess)
-            try {
-                BfgsMinimizer minimizer = new BfgsMinimizer(1e-2, 1e-2, 1e-2); //### tolerances????
-                MinimizationResult result = minimizer.FindMinimum(objectiveFunction, initialGuess);
-                if (result.ReasonForExit == ExitCondition.Converged || result.ReasonForExit == ExitCondition.AbsoluteGradient)
-                    return (endTime: result.MinimizingPoint[0], endState: lastEndState, pointsCounter: lastPointsCounter, renderedCounter: lastRenderereCounter);
-                else throw new Error("reason '" + result.ReasonForExit.ToString() + "' at time " + result.MinimizingPoint[0].ToString());
-            } catch (Exception e) {throw new Error("Minimization ended: " + ((e.InnerException == null) ? e.Message : e.InnerException.Message)); } // somehow we need to recatch the inner exception coming from CostAndGradient
         }
 
         // BFGF Minimizer

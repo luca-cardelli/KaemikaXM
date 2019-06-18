@@ -893,6 +893,32 @@ namespace KaemikaWPF
             } else if (comboBox_Examples.Text == "   Derivative2") {
                 InputSetText(Properties.Resources.Derivative2);
 
+            // PID Controller group
+            } else if (comboBox_Examples.Text == "   PosTestSignal Sine") {
+                InputSetText(Properties.Resources.PosTestSignal_Sine);
+            } else if (comboBox_Examples.Text == "   PosTestSignal Step") {
+                InputSetText(Properties.Resources.PosTestSignal_Step);
+            } else if (comboBox_Examples.Text == "   TestSignal Sine") {
+                InputSetText(Properties.Resources.TestSignal_Sine);
+            } else if (comboBox_Examples.Text == "   TestSignal Step") {
+                InputSetText(Properties.Resources.TestSignal_Step);
+            } else if (comboBox_Examples.Text == "   Proportional Block") {
+                InputSetText(Properties.Resources.Proportional_Block);
+            } else if (comboBox_Examples.Text == "   Integral Block") {
+                InputSetText(Properties.Resources.Integral_Block);
+            } else if (comboBox_Examples.Text == "   Derivative Block") {
+                InputSetText(Properties.Resources.Derivative_Block);
+            } else if (comboBox_Examples.Text == "   Addition Block") {
+                InputSetText(Properties.Resources.Addition_Block);
+            } else if (comboBox_Examples.Text == "   Subtraction Block") {
+                InputSetText(Properties.Resources.Subtraction_Block);
+            } else if (comboBox_Examples.Text == "   DualRailConverter Block") {
+                InputSetText(Properties.Resources.DualRailConverter_Block);
+            } else if (comboBox_Examples.Text == "   PIDController Block") {
+                InputSetText(Properties.Resources.PIDController_Block);
+            } else if (comboBox_Examples.Text == "   PIDController") {
+                InputSetText(Properties.Resources.PIDController);
+
             // Samples group
             } else if (comboBox_Examples.Text == "   Samples") {
                 InputSetText(Properties.Resources.Samples);
