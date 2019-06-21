@@ -245,18 +245,18 @@ namespace Kaemika
     public class EquilibrateEntry : OperationEntry {
         public SampleValue outSample;
         public SampleValue inSample;
-        public NumberValue time;
-        public EquilibrateEntry(SampleValue outValue, SampleValue inValue, NumberValue time) {
+        public double fortime;
+        public EquilibrateEntry(SampleValue outValue, SampleValue inValue, double fortime) {
             this.outSample = outValue;
             this.inSample = inValue;
-            this.time = time;
+            this.fortime = fortime;
         }
         public override string Format(Style style) {
             if (style.dataFormat == "symbol") return "equilibrate " + outSample.symbol.Format(style);
-            else if (style.dataFormat == "header") return "equilibrate " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " for " + time.Format(style)
+            else if (style.dataFormat == "header") return "equilibrate " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " for " + style.FormatDouble(fortime)
                     + Environment.NewLine + "   => " + outSample.Format(style);
-            else if (style.dataFormat == "full") return "equilibrate " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " for " + time.Format(style)
-                    + Environment.NewLine + "   => " + inSample.Format(style); // show inSample so we can see the RelevantReactions at reactionsAsConsumed time
+            else if (style.dataFormat == "full") return "equilibrate " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " for " + style.FormatDouble(fortime)
+                    + Environment.NewLine + "   => " + outSample.Format(style);
             else return "unknown format: " + style.dataFormat;
         }
     }
@@ -355,48 +355,87 @@ namespace Kaemika
             return trivial;
         }
 
+        //public string FormatAsODE(Style style, string prefixDiff = "∂", string suffixDiff = "") {
+        //    string ODEs = "";
+        //    foreach (SpeciesValue variable in sample.species) {
+        //        string polynomial = "";
+        //        foreach (ReactionValue reaction in this.reactions) {
+        //            string monomial = "";
+        //            int netStoichiometry = reaction.NetStoichiometry(variable.symbol);
+        //            if (netStoichiometry != 0) {
+        //                if (reaction.rate is MassActionRateValue) {
+        //                    foreach (SpeciesValue sp in sample.species) {
+        //                        int spStoichio = reaction.Stoichiometry(sp.symbol, reaction.reactants);
+        //                        if (spStoichio > 0) {
+        //                            string factor = sp.Format(style);
+        //                            if (spStoichio != 1) factor = factor + "^" + spStoichio;
+        //                            monomial = (monomial == "") ? factor : monomial + "*" + factor;
+        //                        }
+        //                    }
+        //                    double rate = ((MassActionRateValue)reaction.rate).Rate(this.temperature);
+        //                    if ((rate != 1) && (monomial != "")) monomial = "*" + monomial;
+        //                    if (rate != 1) monomial = style.FormatDouble(rate) + monomial;
+        //                } else if (reaction.rate is GeneralRateValue) {
+        //                    Flow rate = (reaction.rate as GeneralRateValue).rateFunction;
+        //                    monomial = rate.Format(style);
+        //                } else {
+        //                    throw new Error("FormatAsODE");
+        //                }
+        //                if ((netStoichiometry == -1) && (monomial == "")) monomial = "-1";
+        //                else if ((netStoichiometry == -1) && (monomial != "")) monomial = "-" + monomial;
+        //                else if ((netStoichiometry == 1) && (monomial != "")) { }
+        //                else if (monomial == "") monomial = netStoichiometry.ToString();
+        //                else if (monomial != "") monomial = netStoichiometry.ToString() + "*" + monomial;
+        //            }
+        //            if (monomial != "") {
+        //                if (polynomial == "") polynomial = monomial;
+        //                else if (monomial.Substring(0,1) == "-") polynomial = polynomial + " - " + monomial.Substring(1);
+        //                else polynomial = polynomial + " + " + monomial;
+        //            }
+        //        }
+        //        if (polynomial != "")
+        //            ODEs = ODEs + prefixDiff + variable.Format(style) + suffixDiff + " = " + polynomial + Environment.NewLine;
+        //    }
+        //    return ODEs;
+        //}
+
         public string FormatAsODE(Style style, string prefixDiff = "∂", string suffixDiff = "") {
+            Flow[] flows = FluxFlows();
             string ODEs = "";
-            foreach (SpeciesValue variable in sample.species) {
-                string polynomial = "";
-                foreach (ReactionValue reaction in this.reactions) {
-                    string monomial = "";
-                    int netStoichiometry = reaction.NetStoichiometry(variable.symbol);
-                    if (netStoichiometry != 0) {
-                        if (reaction.rate is MassActionRateValue) {
-                            foreach (SpeciesValue sp in sample.species) {
-                                int spStoichio = reaction.Stoichiometry(sp.symbol, reaction.reactants);
-                                if (spStoichio > 0) {
-                                    string factor = sp.Format(style);
-                                    if (spStoichio != 1) factor = factor + "^" + spStoichio;
-                                    monomial = (monomial == "") ? factor : monomial + "*" + factor;
-                                }
-                            }
-                            double rate = ((MassActionRateValue)reaction.rate).Rate(this.temperature);
-                            if ((rate != 1) && (monomial != "")) monomial = "*" + monomial;
-                            if (rate != 1) monomial = style.FormatDouble(rate) + monomial;
-                        } else if (reaction.rate is GeneralRateValue) {
-                            Flow rate = (reaction.rate as GeneralRateValue).rateFunction;
-                            monomial = rate.Format(style);
-                        } else {
-                            throw new Error("FormatAsODE");
-                        }
-                        if ((netStoichiometry == -1) && (monomial == "")) monomial = "-1";
-                        else if ((netStoichiometry == -1) && (monomial != "")) monomial = "-" + monomial;
-                        else if ((netStoichiometry == 1) && (monomial != "")) { }
-                        else if (monomial == "") monomial = netStoichiometry.ToString();
-                        else if (monomial != "") monomial = netStoichiometry.ToString() + "*" + monomial;
-                    }
-                    if (monomial != "") {
-                        if (polynomial == "") polynomial = monomial;
-                        else if (monomial.Substring(0,1) == "-") polynomial = polynomial + " - " + monomial.Substring(1);
-                        else polynomial = polynomial + " + " + monomial;
-                    }
-                }
-                if (polynomial != "")
-                    ODEs = ODEs + prefixDiff + variable.Format(style) + suffixDiff + " = " + polynomial + Environment.NewLine;
+            for (int speciesIx = 0; speciesIx < flows.Length; speciesIx++) {
+                SpeciesValue variable = sample.species[speciesIx];
+                ODEs = ODEs + prefixDiff + variable.Format(style) + suffixDiff + " = " + flows[speciesIx].TopFormat(style) + Environment.NewLine;
             }
             return ODEs;
+        }
+
+        public Flow[] FluxFlows() {
+            Flow[] flows = new Flow[sample.species.Count];
+            for (int speciesIx = 0; speciesIx < flows.Length; speciesIx++) {
+                SpeciesValue variable = sample.species[speciesIx];
+                Flow polynomial = NumberFlow.numberFlowZero;
+                foreach (ReactionValue reaction in this.reactions) {
+                    Flow monomial = NumberFlow.numberFlowOne;
+                    int netStoichiometry = reaction.NetStoichiometry(variable.symbol);
+                    if (netStoichiometry == 0) monomial = NumberFlow.numberFlowZero;
+                    else {
+                        if (reaction.rate is MassActionRateValue) {
+                            double rate = ((MassActionRateValue)reaction.rate).Rate(this.temperature);
+                            foreach (SpeciesValue sp in sample.species) {
+                                int spStoichio = reaction.Stoichiometry(sp.symbol, reaction.reactants);
+                                monomial = OpFlow.Op("*", monomial, OpFlow.Op("^", new SpeciesFlow(sp.symbol), new NumberFlow(spStoichio)));
+                            }
+                            monomial = OpFlow.Op("*", new NumberFlow(rate), monomial);
+                        } else if (reaction.rate is GeneralRateValue) {
+                            monomial = (reaction.rate as GeneralRateValue).rateFunction;
+                        } else throw new Error("FluxFlows");
+                        monomial = OpFlow.Op("*", new NumberFlow(netStoichiometry), monomial);
+                    }
+                    polynomial = OpFlow.Op("+", polynomial, monomial);
+                }
+                flows[speciesIx] = polynomial;
+            }
+            return flows;
         }
 
         public Vector Action(double time, Vector state, Style style) {          // the mass action of all reactions in this state

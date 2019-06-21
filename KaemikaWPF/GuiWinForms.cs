@@ -91,7 +91,7 @@ namespace KaemikaWPF
 
         public override void OutputClear(string text) {
             OutputSetText("");
-            //### also clear any graph
+            // also clear any graph
         }
 
         public override void ProcessGraph(string graphFamily) {

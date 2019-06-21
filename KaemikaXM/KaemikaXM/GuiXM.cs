@@ -199,11 +199,11 @@ namespace Kaemika {
         }
 
         public override void SaveInput() {
-            //### throw new Error("GUI_Xamarin : not implemented");
+            // throw new Error("GUI_Xamarin : not implemented");
         }
 
         public override void RestoreInput() {
-            //### throw new Error("GUI_Xamarin : not implemented");
+            // throw new Error("GUI_Xamarin : not implemented");
         }
        
         public override void BeginningExecution() {

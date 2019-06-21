@@ -379,7 +379,7 @@ namespace Kaemika {
                     GraphAddEdge(graph, veticesDict[inS], veticesDict[outS2], "split " + (1 - node.proportion.value).ToString("G3"));
                 } else if (entry is EquilibrateEntry) {
                     var node = entry as EquilibrateEntry; var inS = node.inSample.FormatSymbol(style); var outS = node.outSample.FormatSymbol(style);
-                    GraphAddEdge(graph, veticesDict[inS], veticesDict[outS], "equilibrate for " + node.time.value.ToString("G3"));
+                    GraphAddEdge(graph, veticesDict[inS], veticesDict[outS], "equilibrate for " + node.fortime.ToString("G3"));
                 } else if (entry is TransferEntry) {
                     var node = entry as TransferEntry; var inS = node.inSample.FormatSymbol(style); var outS = node.outSample.FormatSymbol(style);
                     GraphAddEdge(graph, veticesDict[inS], veticesDict[outS], "transfer");
@@ -447,7 +447,7 @@ namespace Kaemika {
                             SampleValue sample = (transition.entry as EquilibrateEntry).inSample;
                             List<ReactionValue> reactions = sample.ReactionsAsConsumed(style);
                             // List<ReactionValue> reactions = sample.RelevantReactions(netlist, style); // this would pick up reactions that were added after the sample was consumed
-                            s += "KINETICS for STATE_" + transition.source.id.ToString() + " (sample " + sample.FormatSymbol(style) + ") for " + (transition.entry as EquilibrateEntry).time.Format(style) + " time units:" + Environment.NewLine;
+                            s += "KINETICS for STATE_" + transition.source.id.ToString() + " (sample " + sample.FormatSymbol(style) + ") for " + style.FormatDouble((transition.entry as EquilibrateEntry).fortime) + " time units:" + Environment.NewLine;
                             if (showReactions) {
                                 foreach (ReactionValue reaction in reactions) s += reaction.Format(style) + Environment.NewLine;
                             } else {
@@ -670,7 +670,7 @@ namespace Kaemika {
                         newState.Add(outSample);
                         newState = closure.AddUniqueState(newState, style); // may replace it with an existing state
                         closure.AddTransition(new Transition(state, newState, entry,
-                            "equilibrate " + outSample.FormatSymbol(style) + " := " + inSample.FormatSymbol(style) + " for " + (entry as EquilibrateEntry).time.value.ToString("G3")));
+                            "equilibrate " + outSample.FormatSymbol(style) + " := " + inSample.FormatSymbol(style) + " for " + (entry as EquilibrateEntry).fortime.ToString("G3")));
                         nextStates.AddUnique(newState, style);
                         if (sequential) return nextStates; // otherwise keep accumulating
                     }

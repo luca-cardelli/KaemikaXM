@@ -1,41 +1,6 @@
-// argmin/observe OPTIMIZER
 
-// GoldenSection optimize rate
-function f(number r) {
-   define
-      sample s
-      species a @ 2μM in s
-      a -> #     {pos(r)} 
-      equilibrate s for 1
-      flow cost = (a-1)^2
-    return
-      observe(cost, s)
-}
-//number r = argmin(f, 0.5, 0.8)
-
-// GoldenSection optimize initial condition
-function g(number i) {
-   define
-      sample s
-      species a @ i M in s
-      a -> #
-      equilibrate s for 1
-      flow cost = (a-1)^2
-    return
-      observe(cost, s)
-}
-//number i = argmin(g, 2, 4)
-
-// BFGF optimize endtime with gradient
-
-function h(number endtime) {
-   define
-      sample s
-      species a @ 2M in s
-      a -> #
-      equilibrate s for pos(endtime)
-      flow cost = (a-1)^2
-    return
-      [observe(cost, s), observe(∂ cost, s)]
-}
-number t = argmin(h, 1)
+sample s 
+species a@1M in s
+a -> #
+equilibrate s1 := s for 1
+number n = observe (∂ var(a), s)

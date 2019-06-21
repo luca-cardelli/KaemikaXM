@@ -62,14 +62,15 @@ vessel
 
 observe(f)   // same as observe(f,vessel)
 observe(f,s) // observe a flow f in sample s
-     // at time 0, returning a number; e.g.:
+             // returning a number; e.g.:
 observe(kelvin,s) // temperature of s
 observe(volume,s) // volume of s (L)
 observe(a,s) // molarity of a in s (mol/L)
 observe(∂a,s)     // derivative of a
-observe(a+2b^2,s) // combinations
-observe(var(a),s) // = 0 (at time 0)
-observe(time,s)   // = 0 (at time 0)
+observe(a+2b^2,s) // combined observations
+observe(var(a),s) // requires LNA active
+observe(time,s) // nonzero only if s was the
+ // *input* sample of equilibrate s':=s for t
 
 // Optimization
 
@@ -132,30 +133,31 @@ cov(a,b)
 cond(a,b,c)
 
 /* Flow-expressions denote time courses
-and are found in 'report ...' statements 
-for plotting and in {{ ... }} special
+and are found in 'observe( ... , S)'
+for samples, in 'report ...' statements 
+for plotting, and in {{ ... }} special
 rate brackets to express arbitrary
 kinetic  functions. Flow-expressions are
 a subset of expressions that include
-boolean and  numerical operators and
+boolean and numerical operators and
 where species 's' are intepreted as
-'molarity(s)(t)': the  numeric
+molarity(s)(t): the  numeric
 concentration value of 's' at time 't'.
 
 More technically, flow-expressions are
 first *evaluated* to produce *flows* 
 (while ordinary expressions are
 evaluated to produce *values*). Flows
-are data  structures consisting
+are data structures consisting
 exclusively of numeric and boolean
 operators over  booleans, numbers,
 species, and some special entities such
 as 'time'. The  process of producing
 flows can involve ordinary function
-invocation and if-then- else conditional
+invocation and if-then-else conditional
 execution, but those do not appear in
 resulting flows. At a  later stage,
-flows are *reported*, that is evaluated
+flows are *oberved*, that is evaluated
 at multiple time points,  during
 plotting or in the evaluation of
 reaction rates during simulations. Flows 
@@ -172,13 +174,14 @@ expression in that context.
 // Ex.: Arrhenius equation
 // (temperature-dependante rates)
 
-function Arrhenius(number cf ae) { 
-   return cf*exp(-ae/(8.3144598*kelvin)) 
+function Arrhenius(flow cf ae) { 
+   cf*exp(-ae/(8.3144598*kelvin)) 
 }
 
 // Use the Arrhenius function for 
 // the rate of a reaction
 
+species a,b @ 1M
 a + b -> #  {{ Arrhenius(2,50)*a*b }}
 
 // plot a, b, and the instantanous 

@@ -18,9 +18,9 @@ namespace Kaemika
 
         public static double NormalizeVolume(double volume, string unit) {
             if (unit == "L") { return volume; } // ok
-            else if (unit == "mL") { return volume * 1e-3; }
-            else if (unit == "uL" || unit == "μL") { return volume * 1e-6; }
-            else if (unit == "nL") { return volume * 1e-9; }
+            else if (unit == "mL" || unit == "ml") { return volume * 1e-3; }
+            else if (unit == "uL" || unit == "μL" || unit == "ul" || unit == "μl") { return volume * 1e-6; }
+            else if (unit == "nL" || unit == "nl") { return volume * 1e-9; }
             else throw new Error("Invalid volume unit '" + unit + "'");
         }
 
@@ -57,9 +57,9 @@ namespace Kaemika
             else return -1;
         }
 
-        public static SampleValue Mix(Symbol symbol, SampleValue mixFst, SampleValue mixSnd, Style style) {
-            mixFst.Consume(new List<ReactionValue> (), style);
-            mixSnd.Consume(new List<ReactionValue> (), style);
+        public static SampleValue Mix(Symbol symbol, SampleValue mixFst, SampleValue mixSnd, Netlist netlist, Style style) {
+            mixFst.Consume(null, 0, null, netlist, style);
+            mixSnd.Consume(null, 0, null, netlist, style);
             double fstVolume = mixFst.Volume();
             double sndVolume = mixSnd.Volume();
             NumberValue volume = new NumberValue(fstVolume + sndVolume);
@@ -70,8 +70,8 @@ namespace Kaemika
             return result;
         }
 
-        public static (SampleValue, SampleValue) Split(Symbol symbol1, Symbol symbol2, SampleValue sample, double proportion, Style style) {
-            sample.Consume(new List<ReactionValue>(), style);
+        public static (SampleValue, SampleValue) Split(Symbol symbol1, Symbol symbol2, SampleValue sample, double proportion, Netlist netlist, Style style) {
+            sample.Consume(null, 0, null, netlist, style);
             double sampleVolume = sample.Volume();
 
             NumberValue volume1 = new NumberValue(sampleVolume * proportion);
@@ -87,15 +87,15 @@ namespace Kaemika
             return (result1, result2);
         }
 
-        public static SampleValue Transfer(Symbol symbol, double volume, double temperature, SampleValue inSample, Style style) {
-            inSample.Consume(new List<ReactionValue>(), style);
+        public static SampleValue Transfer(Symbol symbol, double volume, double temperature, SampleValue inSample, Netlist netlist, Style style) {
+            inSample.Consume(null, 0, null, netlist, style);
             SampleValue result = new SampleValue(symbol, new NumberValue(volume), new NumberValue(temperature), produced: true);
             result.AddSpecies(inSample, volume, inSample.Volume());
             return result;
         }
 
-        public static void Dispose(SampleValue sample, Style style) {
-            sample.Consume(new List<ReactionValue>(), style);
+        public static void Dispose(SampleValue sample, Netlist netlist, Style style) {
+            sample.Consume(null, 0, null, netlist, style);
         }
 
         public static void PauseEquilibrate(Netlist netlist, Style style) {
@@ -150,18 +150,19 @@ namespace Kaemika
             return (series, seriesLNA);
         }
 
-        public static NumberValue Equilibrate(SampleValue resultSample, SampleValue sample, Noise noise, double fortime, Netlist netlist, Style style) {
+        public static SampleValue Equilibrate(Symbol outSymbol, SampleValue inSample, Noise noise, double fortime, Netlist netlist, Style style) {
             double initialTime = 0.0;
             double finalTime = fortime;
 
-            Gui.gui.ChartClear((resultSample.symbol.Raw() == "vessel") ? "" : "Sample " + resultSample.symbol.Format(style));
+            Gui.gui.ChartClear((outSymbol.Raw() == "vessel") ? "" : "Sample " + inSample.FormatSymbol(style));
 
-            List<SpeciesValue> species = sample.Species(out double[] speciesState);
+            List<SpeciesValue> species = inSample.Species(out double[] speciesState);
             State initialState = new State(species.Count, noise != Noise.None).InitMeans(speciesState);
-            List<ReactionValue> reactions = sample.RelevantReactions(netlist, style);
-            CRN crn = new CRN(sample, reactions, precomputeLNA: (noise != Noise.None) && Gui.gui.PrecomputeLNA());
+            List<ReactionValue> reactions = inSample.RelevantReactions(netlist, style);
+            CRN crn = new CRN(inSample, reactions, precomputeLNA: (noise != Noise.None) && Gui.gui.PrecomputeLNA());
             List<ReportEntry> reports = netlist.Reports(species);
-            sample.Consume(reactions, style);
+
+            SampleValue outSample = new SampleValue(outSymbol, new NumberValue(inSample.Volume()), new NumberValue(inSample.Temperature()), produced: true);
 
             Func<double, double, Vector, Func<double, Vector, Vector>, IEnumerable<SolPoint>> Solver;
             if (Gui.gui.Solver() == "GearBDF") Solver = Ode.GearBDF; else if (Gui.gui.Solver() == "RK547M") Solver = Ode.RK547M; else throw new Error("No solver");
@@ -178,18 +179,20 @@ namespace Kaemika
                 && finalTime > 0;            // we don't want to run when fortime==0
 
             (double lastTime, State lastState, int pointsCounter, int renderedCounter) =
-                Integrate(Solver, initialState, initialTime, finalTime, Flux, sample, reports, noise, series, seriesLNA, nonTrivialSolution, style);
+                Integrate(Solver, initialState, initialTime, finalTime, Flux, inSample, reports, noise, series, seriesLNA, nonTrivialSolution, style);
 
             if (lastState == null) lastState = initialState;
             for (int i = 0; i < species.Count; i++) {
                 double molarity = lastState.Mean(i);
                 if (molarity < 0) molarity = 0; // the ODE solver screwed up
-                resultSample.SetMolarity(species[i], new NumberValue(molarity), style);
+                outSample.SetMolarity(species[i], new NumberValue(molarity), style);
             }
 
-            Exec.lastReport = "======= Last report: time=" + lastTime.ToString() + ", " + lastState.FormatReports(reports, sample, Flux, lastTime, noise, series, seriesLNA, style);
+            inSample.Consume(reactions, lastTime, lastState, netlist, style);
+
+            Exec.lastReport = "======= Last report: time=" + lastTime.ToString() + ", " + lastState.FormatReports(reports, inSample, Flux, lastTime, noise, series, seriesLNA, style);
             Exec.lastState = "======= Last state: total points=" + pointsCounter + ", drawn points=" + renderedCounter + ", time=" + lastTime.ToString() + ", " + lastState.FormatSpecies(species, style);
-            return new NumberValue(lastTime);
+            return outSample;
         }
 
         private static IEnumerable<SolPoint> SolutionGererator (
@@ -254,13 +257,13 @@ namespace Kaemika
                             // generate deterministic series
                             if ((noise == Noise.None && reports[i].flow.HasDeterministicValue()) ||
                                 (noise != Noise.None && reports[i].flow.HasStochasticMean())) {
-                                double mean = reports[i].flow.ReportMean(sample, solPoint.T, state, Flux, style);
+                                double mean = reports[i].flow.ObserveMean(sample, solPoint.T, state, Flux, style);
                                 Gui.gui.ChartAddPoint(series[i], solPoint.T, mean, 0.0, Noise.None);
                             }
                             // generate LNA-dependent series
                             if (noise != Noise.None && reports[i].flow.HasStochasticVariance() && !reports[i].flow.HasNullVariance()) {
-                                double mean = reports[i].flow.ReportMean(sample, solPoint.T, state, Flux, style);
-                                double variance = reports[i].flow.ReportVariance(sample, solPoint.T, state, style);
+                                double mean = reports[i].flow.ObserveMean(sample, solPoint.T, state, Flux, style);
+                                double variance = reports[i].flow.ObserveVariance(sample, solPoint.T, state, style);
                                 Gui.gui.ChartAddPoint(seriesLNA[i], solPoint.T, mean, variance, noise);
                             }
                         }
@@ -307,12 +310,12 @@ namespace Kaemika
                 });
 
             try {
-                BfgsMinimizer minimizer = new BfgsMinimizer(1e-2, 1e-2, 1e-2); //### tolerances????
+                BfgsMinimizer minimizer = new BfgsMinimizer(1e-3, 1e-3, 1e-3); // tolerances????
                 MinimizationResult result = minimizer.FindMinimum(objectiveFunction, initialGuess);
-                if (result.ReasonForExit == ExitCondition.Converged || result.ReasonForExit == ExitCondition.AbsoluteGradient) {
-                    Gui.gui.OutputAppendText("argmin: converged with parameter=" + result.MinimizingPoint[0] + Environment.NewLine);
+                if (result.ReasonForExit == ExitCondition.Converged || result.ReasonForExit == ExitCondition.AbsoluteGradient || result.ReasonForExit == ExitCondition.RelativeGradient) {
+                    Gui.gui.OutputAppendText("argmin: converged with parameter=" + result.MinimizingPoint[0] + " and reason '" + result.ReasonForExit + "'" + Environment.NewLine);
                     return new NumberValue(result.MinimizingPoint[0]);
-                 } else throw new Error("reason '" + result.ReasonForExit.ToString());
+                 } else throw new Error("reason '" + result.ReasonForExit.ToString() + "'");
             } catch (Exception e) { throw new Error("argmin ended: " + ((e.InnerException == null) ? e.Message : e.InnerException.Message)); } // somehow we need to recatch the inner exception coming from CostAndGradient
         }
 
@@ -342,9 +345,9 @@ namespace Kaemika
             try {
                 ScalarMinimizationResult result = GoldenSectionMinimizer.Minimum(objectiveFunction, lower, upper);
                 if (result.ReasonForExit == ExitCondition.Converged || result.ReasonForExit == ExitCondition.BoundTolerance) {
-                    Gui.gui.OutputAppendText("argmin: converged with parameter=" + result.MinimizingPoint + Environment.NewLine);
+                    Gui.gui.OutputAppendText("argmin: converged with parameter=" + result.MinimizingPoint + " and reason '" + result.ReasonForExit + "'" + Environment.NewLine);
                     return new NumberValue(result.MinimizingPoint);
-                 } else throw new Error("reason '" + result.ReasonForExit.ToString());
+                 } else throw new Error("reason '" + result.ReasonForExit.ToString() + "'");
             } catch (Exception e) { throw new Error("argmin ended: " + ((e.InnerException == null) ? e.Message : e.InnerException.Message)); } // somehow we need to recatch the inner exception coming from CostAndGradient
         }
 
