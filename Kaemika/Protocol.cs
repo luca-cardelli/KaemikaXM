@@ -36,7 +36,7 @@ namespace Kaemika
             else if (dimension == "mg") return weight * 1e-3;
             else if (dimension == "ug" || dimension == "μg") return weight * 1e-6;
             else if (dimension == "ng") return weight * 1e-9;
-            else return -1;
+            else return -1; // don't give error because we'll try another conversion
         }
 
         public static double NormalizeMole(double mole, string dimension) {
@@ -45,7 +45,7 @@ namespace Kaemika
             else if (dimension == "mmol") return mole * 1e-3;
             else if (dimension == "umol" || dimension == "μmol") return mole * 1e-6;
             else if (dimension == "nmol") return mole * 1e-9;
-            else return -1;
+            else return -1; // don't give error because we'll try another conversion
         }
 
         public static double NormalizeMolarity(double molarity, string dimension) {
@@ -54,7 +54,7 @@ namespace Kaemika
             else if (dimension == "mM") return molarity * 1e-3;
             else if (dimension == "uM" || dimension == "μM") return molarity * 1e-6;
             else if (dimension == "nM") return molarity * 1e-9;
-            else return -1;
+            else return -1; // don't give error because we'll try another conversion
         }
 
         public static SampleValue Mix(Symbol symbol, SampleValue mixFst, SampleValue mixSnd, Netlist netlist, Style style) {
@@ -106,7 +106,7 @@ namespace Kaemika
                     Thread.Sleep(100);
                 }
                 Gui.gui.ContinueEnable(false); continueExecution = false;
-                Gui.gui.OutputSetText(""); // clear last results in preparation for the next, only if not autoContinue
+                //Gui.gui.OutputSetText(""); // clear last results in preparation for the next, only if not autoContinue
             }
         }
 
@@ -287,34 +287,42 @@ namespace Kaemika
         }
 
         // BFGF Minimizer
-        public static Value Argmin(Value function, Value initial, Netlist netlist, Style style) {
-            if (!(initial is NumberValue)) throw new Error("argmin: expecting a number for second argument");
-            Vector<double> initialGuess = CreateVector.Dense(new double[1] { (initial as NumberValue).value });
+        public static Value Argmin(Value function, Value initial, Value tolerance, Netlist netlist, Style style) {
+            if (!(initial is ListValue<Value>)) throw new Error("argmin: expecting a list for second argument");
+            Vector<double> initialGuess = CreateVector.Dense((initial as ListValue<Value>).ToDoubleArray("argmin: expecting a list of numbers for second argument"));
+            if (!(tolerance is NumberValue)) throw new Error("argmin: expecting a number for third argument");
+            double toler = (tolerance as NumberValue).value;
             if (!(function is FunctionValue)) throw new Error("argmin: expecting a function as first argument");
             FunctionValue closure = function as FunctionValue;
-            if (closure.parameters.ids.Count != 1) throw new Error("argmin: initial values and function parameters have different lengths");
+            if (closure.parameters.parameters.Count != 1) throw new Error("argmin: initial values and function parameters have different lengths");
 
             IObjectiveFunction objectiveFunction = ObjectiveFunction.Gradient(
-                (Vector<double> parameters) => {
-                    List<Value> arguments = new List<Value>(); arguments.Add(new NumberValue(parameters[0]));
-                    bool autoContinue = netlist.autoContinue; netlist.autoContinue = true;
-                    Value result = closure.Apply(arguments, netlist, style);
-                    netlist.autoContinue = autoContinue;
-                    if (!(result is ListValue)) throw new Error("argmin: objective function should return a list or two numbers");
-                    List<Value> list = (result as ListValue).elements;
-                    if (list.Count != 2 || !(list[0] is NumberValue) || !(list[1] is NumberValue)) throw new Error("argmin: objective function should return a list or two numbers");
-                    double cost = (list[0] as NumberValue).value;
-                    double gradient = (list[1] as NumberValue).value;
-                    Gui.gui.OutputAppendText("argmin: parameter=" + style.FormatDouble(parameters[0]) + " => cost=" + style.FormatDouble(cost) + ", gradient=" + style.FormatDouble(gradient) + Environment.NewLine);
-                    return new Tuple<double, Vector<double>>(cost, CreateVector.Dense(1, gradient));
-                });
+                (Vector<double> objParameters) => {
+                const string badResult = "argmin: objective function should return a list with a number (cost) and a list of numbers (partial derivatives of cost)";
+                List<Value> parameters = new List<Value>(); foreach (double parameter in objParameters) parameters.Add(new NumberValue(parameter));
+                ListValue<Value> arg1 = new ListValue<Value>(parameters);
+                List<Value> arguments = new List<Value>(); arguments.Add(arg1);
+                bool autoContinue = netlist.autoContinue; netlist.autoContinue = true;
+                Value result = closure.Apply(arguments, netlist, style);
+                netlist.autoContinue = autoContinue;
+                if (!(result is ListValue<Value>)) throw new Error(badResult);
+                List<Value> results = (result as ListValue<Value>).elements;
+                if (results.Count != 2 || !(results[0] is NumberValue) || !(results[1] is ListValue<Value>)) throw new Error(badResult);
+                double cost = (results[0] as NumberValue).value;
+                ListValue<Value> gradients = results[1] as ListValue<Value>;
+                Gui.gui.OutputAppendText("argmin: parameters=" + arg1.Format(style) + " => cost=" + style.FormatDouble(cost) + ", gradients=" + results[1].Format(style) + Environment.NewLine);
+                return new Tuple<double, Vector<double>>(cost, CreateVector.Dense(gradients.ToDoubleArray(badResult)));
+            });
 
             try {
-                BfgsMinimizer minimizer = new BfgsMinimizer(1e-3, 1e-3, 1e-3); // tolerances????
+                BfgsMinimizer minimizer = new BfgsMinimizer(toler, toler, toler);
                 MinimizationResult result = minimizer.FindMinimum(objectiveFunction, initialGuess);
                 if (result.ReasonForExit == ExitCondition.Converged || result.ReasonForExit == ExitCondition.AbsoluteGradient || result.ReasonForExit == ExitCondition.RelativeGradient) {
-                    Gui.gui.OutputAppendText("argmin: converged with parameter=" + result.MinimizingPoint[0] + " and reason '" + result.ReasonForExit + "'" + Environment.NewLine);
-                    return new NumberValue(result.MinimizingPoint[0]);
+                    List<Value> elements = new List<Value>();
+                    for (int i = 0; i < result.MinimizingPoint.Count; i++) elements.Add(new NumberValue(result.MinimizingPoint[i]));
+                    ListValue<Value> list = new ListValue<Value>(elements);
+                    Gui.gui.OutputAppendText("argmin: converged with parameters " + list.Format(style) + " and reason '" + result.ReasonForExit + "'" + Environment.NewLine);
+                    return list;
                  } else throw new Error("reason '" + result.ReasonForExit.ToString() + "'");
             } catch (Exception e) { throw new Error("argmin ended: " + ((e.InnerException == null) ? e.Message : e.InnerException.Message)); } // somehow we need to recatch the inner exception coming from CostAndGradient
         }
@@ -322,14 +330,14 @@ namespace Kaemika
         // try this for multiparameter optimization: https://numerics.mathdotnet.com/api/MathNet.Numerics.Optimization.TrustRegion/index.htm
 
         // Golden Section Minimizer
-        public static Value Argmin(Value function, Value lowerBound, Value upperBound, Netlist netlist, Style style) {
+        public static Value Argmin(Value function, Value lowerBound, Value upperBound, Value tolerance, Netlist netlist, Style style) {
             if (!(lowerBound is NumberValue) || !(upperBound is NumberValue)) throw new Error("argmin: expecting numbers for lower and upper bounds");
             double lower = (lowerBound as NumberValue).value;
             double upper = (upperBound as NumberValue).value;
             if (lower > upper) throw new Error("argmin: lower bound greater than upper bound");
             if (!(function is FunctionValue)) throw new Error("argmin: expecting a function as first argument");
             FunctionValue closure = function as FunctionValue;
-            if (closure.parameters.ids.Count != 1) throw new Error("argmin: initial values and function parameters have different lengths");
+            if (closure.parameters.parameters.Count != 1) throw new Error("argmin: initial values and function parameters have different lengths");
 
             IScalarObjectiveFunction objectiveFunction = ObjectiveFunction.ScalarValue(
                 (double parameter) => {

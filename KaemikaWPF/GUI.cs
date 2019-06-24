@@ -918,6 +918,8 @@ namespace KaemikaWPF
                 InputSetText(Properties.Resources.PIDController_Block);
             } else if (comboBox_Examples.Text == "   PIDController") {
                 InputSetText(Properties.Resources.PIDController);
+            } else if (comboBox_Examples.Text == "   PIDController Optimization") {
+                InputSetText(Properties.Resources.PIDController_Optimization);
 
             // Samples group
             } else if (comboBox_Examples.Text == "   Samples") {

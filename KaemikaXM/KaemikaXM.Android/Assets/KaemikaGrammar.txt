@@ -1,4 +1,4 @@
-"Name"    = Kaemika grammar
+ï»¿"Name"    = Kaemika grammar
 "Author"  = Luca Cardelli
 "Version" = 1
 "About"   = A Language for Modularizing Chemistry
@@ -6,7 +6,7 @@
 "Case Sensitive" = True
 "Start Symbol"   = <Top>
 
-Id        = {Letter}({AlphaNumeric}|'_'|{Superscripts and Subscripts}|'')*           ! Letter followed by alphanumerics or single-quote, underscore, Unicode sup/sub
+Id        = ({Letter}|{Greek and Coptic})({AlphaNumeric}|{Greek and Coptic}|'_'|{Superscripts and Subscripts}|'')*           ! Letter followed by alphanumerics or single-quote, underscore, Unicode sup/sub
 Integer   = {Digit}+
 Float     = {Digit}+ '.' {Digit}+
 Double    = {Digit}+ ('.' {Digit}+)? [Ee] [+-]? {Digit}+
@@ -60,7 +60,8 @@ Comment Block @= { Nesting = All }
                     | 'species' <Ids>              ! species are values. n.b. individual reactions are not values, but networks are
                     | 'sample' <Ids>               ! samples are containers that have volume and temperature, populated with species that have concentrations
                     | 'function' <Ids>             ! functions can receive and return values, species, functions, and networks  
-                    | 'network' <Ids>              ! networks can receive values, species, functions, and networks, and return nothing                  
+                    | 'network' <Ids>              ! networks can receive values, species, functions, and networks, and return nothing        
+                    | '[' <Params> ']'             ! list pattern matching          
 
 <Ids>           ::= <Ids> Id
                     | Id
@@ -147,8 +148,8 @@ Comment Block @= { Nesting = All }
                     | 'net' <Net>                                           ! network abstraction
                     | '(' <Expression> ')'                                  ! parenthesized expression
                     | '[' <Expressions> ']'                                 ! list
-                    | 'define' <Statements> 'return' <Expression>           ! numerous but mild shift-reduce conflicts because no 'end' bracket. 
-                                                                            ! E.g. (define number n = 3 return n) + 3   vs. define number n = 3 return (n + 3)
+                    | 'define' <Statements> 'yield' <Expression>            ! numerous but mild shift-reduce conflicts because no 'end' bracket. 
+                                                                            ! E.g. (define number n = 3 yield n) + 3   vs. define number n = 3 return (n + 3)
                                                                             ! resolved as the latter
                   
 <Fun Instance>      ::= Id                                                  ! built-in math library operators, and pi and e, follow this syntax too
@@ -200,7 +201,7 @@ Comment Block @= { Nesting = All }
                     | <Neg Exp> 
 
 <Neg Exp>       ::= '-' <Powr Exp> 
-                    | '?' <Powr Exp>
+                    | 'âˆ‚' <Powr Exp>
                     | <Powr Exp>
                     
 <Powr Exp>      ::= <Powr Exp> '^' <Base Exp>                               ! -2^2 = -4;  -2^-2 is error, use -2^(-2)
@@ -208,6 +209,6 @@ Comment Block @= { Nesting = All }
 
 ! UNITS  --------------------------------------------                                 
 
-<Volume>        ::= Id     ! 'L' | 'mL' | 'uL' | 'µL' | 'nL'
+<Volume>        ::= Id     ! 'L' | 'mL' | 'uL' | 'Î¼L' | 'nL' | 'ml' | 'ul' | 'Î¼l' | 'nl'
 <Temperature>   ::= Id     ! 'K' | 'Kelvin' | 'C' | 'Celsius'
-<Quantity>      ::= Id     ! 'kg' | 'g' | 'mg' | 'ug' | 'µg' | 'ng' | 'kM' | 'M' | 'mM' | 'uM' | 'µM' | 'nM' | 'kmol' | 'mol' | 'mmol' | 'umol' | 'µmol' | 'nmol'
+<Quantity>      ::= Id     ! 'kg' | 'g' | 'mg' | 'ug' | 'Î¼g' | 'ng' | 'kM' | 'M' | 'mM' | 'uM' | 'Î¼M' | 'nM' | 'kmol' | 'mol' | 'mmol' | 'umol' | 'Î¼mol' | 'nmol'

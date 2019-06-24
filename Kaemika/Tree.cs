@@ -101,10 +101,14 @@ namespace Kaemika
     public abstract class Scope {
         public abstract bool Lookup(string var); // return true if var is defined
         public abstract string Format();
-        public Scope Extend(List<Parameter> parameters) {
+        public Scope Extend(List<NewParameter> parameters) {
             Scope scope = this;
-            foreach (Parameter parameter in parameters) {
-                scope = new ConsScope(parameter.name, scope);
+            foreach (NewParameter parameter in parameters) { //  (a,b,c)+this = c,b,a,this
+                if (parameter is SingleParameter)
+                    scope = new ConsScope((parameter as SingleParameter).name, scope);
+                else if (parameter is ListParameter)
+                    scope = scope.Extend((parameter as ListParameter).list.parameters);
+                else throw new Error("Parameter");
             }
             return scope;
         }
@@ -162,7 +166,7 @@ namespace Kaemika
                 ((this.type == "bool") && (value is BoolValue)) ||
                 ((this.type == "number") && (value is NumberValue)) ||
                 ((this.type == "string") && (value is StringValue)) ||
-                ((this.type == "list") && (value is ListValue)) ||
+                ((this.type == "list") && (value is ListValue<Value> || value is ListValue<Flow>)) ||
                 ((this.type == "flow") && (value is Flow)) ||
                 ((this.type == "function") && (value is FunctionValue || value is OperatorValue)) ||
                 ((this.type == "network") && (value is NetworkValue)) ||
@@ -180,11 +184,20 @@ namespace Kaemika
         public abstract Value LookupValue(string name);
         public abstract void AssignValue(Symbol symbol, Value value);
         public abstract string Format(Style style);
-        public Env ExtendValues<T>(List<Parameter> parameters, List<T> arguments, Netlist netlist, string source, Style style) where T : Value {  // bounded polymorphism :)
+        public Env ExtendValues<T>(List<NewParameter> parameters, List<T> arguments, Netlist netlist, string source, Style style) where T : Value {  // bounded polymorphism :)
             if (parameters.Count != arguments.Count) throw new Error("Different number of parameters and arguments for '" + source + "'");
             Env env = this;
             for (int i = 0; i < parameters.Count; i++) {
-                env = new ValueEnv(parameters[i].name, parameters[i].type, arguments[i], netlist, env);
+                if (parameters[i] is SingleParameter) {
+                    SingleParameter parameter = parameters[i] as SingleParameter;
+                    env = new ValueEnv(parameter.name, parameter.type, arguments[i], netlist, env);
+                } else if (parameters[i] is ListParameter) {
+                    List<NewParameter> subParameters = (parameters[i] as ListParameter).list.parameters;
+                    if (!(arguments[i] is ListValue<T>)) throw new Error("xxxx");
+                    List<T> subArguments = (arguments[i] as ListValue<T>).elements;
+                    if (subParameters.Count != subArguments.Count) throw new Error("Different number of list pattern parameters and arguments for '" + source + "'");
+                    env = env.ExtendValues(subParameters, subArguments, netlist, source, style);
+                } else throw new Error("Parameter");
             }
             return env;
         }
@@ -227,6 +240,11 @@ namespace Kaemika
                 builtIn = new ValueEnv("∂", null, new OperatorValue("∂"), builtIn);
                 builtIn = new ValueEnv("diff", null, new OperatorValue("∂"), builtIn);
                 builtIn = new ValueEnv("sdiff", null, new OperatorValue("sdiff"), builtIn);
+                builtIn = new ValueEnv("maxNumber", null, new NumberValue(Double.MaxValue), builtIn);
+                builtIn = new ValueEnv("minNumber", null, new NumberValue(Double.MinValue), builtIn);
+                builtIn = new ValueEnv("positiveInfinity", null, new NumberValue(Double.PositiveInfinity), builtIn);
+                builtIn = new ValueEnv("negativeInfinity", null, new NumberValue(Double.NegativeInfinity), builtIn);
+                builtIn = new ValueEnv("NaN", null, new NumberValue(Double.NaN), builtIn);
                 builtIn = new ValueEnv("pi", null, new NumberValue(Math.PI), builtIn);
                 builtIn = new ValueEnv("e", null, new NumberValue(Math.E), builtIn);
                 builtIn = new ValueEnv("abs", null, new OperatorValue("abs"), builtIn);
@@ -669,7 +687,7 @@ namespace Kaemika
                     + "' was given no molar mass, hence its amount in sample '" + this.symbol.Format(style)
                     + "' should have dimension 'M' (concentration) or 'mol' (mole), not '" + dimension + "'");
             }
-            throw new Error("Invalid dimension '" + dimension + "'");
+            throw new Error("Invalid dimension '" + dimension + "'" + " or dimension value " + style.FormatDouble(value));
         }
         public List<ReactionValue> RelevantReactions(Netlist netlist, Style style) { 
             // return the list of reactions in the netlist that can fire in this sample
@@ -734,6 +752,12 @@ namespace Kaemika
         public override string Format(Style style) {
             return style.FormatDouble(this.value);
         }
+        public static bool EqualDouble(double n, double m) {
+            if (double.IsNaN(n) && double.IsNaN(m)) return true; // allow "if n = NaN then ... " clearly violating IEEE 754
+            if (double.IsPositiveInfinity(n) && double.IsPositiveInfinity(m)) return true;
+            if (double.IsNegativeInfinity(n) && double.IsNegativeInfinity(m)) return true;
+            return n == m;
+        }
     }
 
     public class StringValue : Value {
@@ -747,37 +771,40 @@ namespace Kaemika
         }
     }
 
-    public class ListValue : Value {
-        public List<Value> elements;
-        public ListValue(List<Value> elements) {
+    public class ListValue<T> : Value {
+        public List<T> elements;
+        public ListValue(List<T> elements) {
             this.type = new Type("list");
             this.elements = elements;
         }
         public override string Format(Style style) {
             string s = "";
-            foreach (Value element in elements) s += element.Format(style) + ", ";
+            foreach (T element in elements) s += ((element is Value) ? (element as Value).Format(style) : (element is Flow) ? (element as Flow).Format(style) : "") + ", ";
             if (s.Length > 0) s = s.Substring(0, s.Length - 2);
             return "[" + s + "]";
         }
-        public Value Select(List<Value> arguments, Style style) {
-            if (arguments.Count == 1) {
-                Value arg1 = arguments[0];
-                if (!(arg1 is NumberValue)) throw new Error("List index is not a number: " + this.Format(style) + "(" + arg1.Format(style) + ")");
-                int n = Convert.ToInt32((arg1 as NumberValue).value);
-                if (n < 0 || n >= elements.Count) throw new Error("List index out of range: " + this.Format(style) + "(" + arg1.Format(style) + ")");
-                return elements[n];
-            } else if (arguments.Count == 2) {
-                Value arg1 = arguments[0];
-                Value arg2 = arguments[1];
-                if (!(arg1 is NumberValue) || !(arg2 is NumberValue)) throw new Error("List index is not a number: " + this.Format(style) + "(" + arg1.Format(style) + ", " + arg2.Format(style) + ")");
-                int n = Convert.ToInt32((arg1 as NumberValue).value);
-                int m = Convert.ToInt32((arg2 as NumberValue).value);
-                if (n < 0 || m < 0 || n + m > elements.Count) throw new Error("List index out of range: " + this.Format(style) + "(" + arg1.Format(style) + ", " + arg2.Format(style) + ")");
-                List<Value> result = new List<Value>();
-                for (int i = 0; i < m; i++) result.Add(elements[n + i]);
-                return new ListValue(result);
+        public T Select(Value arg, Style style) {
+            if (!(arg is NumberValue)) throw new Error("List index is not a number: " + this.Format(style) + "(" + arg.Format(style) + ")");
+            int n = Convert.ToInt32((arg as NumberValue).value);
+            if (n < 0 || n >= elements.Count) throw new Error("List index out of range: " + this.Format(style) + "(" + arg.Format(style) + ")");
+            return elements[n];
+        }
+        public ListValue<T> Sublist(Value arg1, Value arg2, Style style) {
+            if (!(arg1 is NumberValue) || !(arg2 is NumberValue)) throw new Error("List index is not a number: " + this.Format(style) + "(" + arg1.Format(style) + ", " + arg2.Format(style) + ")");
+            int n = Convert.ToInt32((arg1 as NumberValue).value);
+            int m = Convert.ToInt32((arg2 as NumberValue).value);
+            if (n < 0 || m < 0 || n + m > elements.Count) throw new Error("List index out of range: " + this.Format(style) + "(" + arg1.Format(style) + ", " + arg2.Format(style) + ")");
+            List<T> result = new List<T>();
+            for (int i = 0; i < m; i++) result.Add(elements[n + i]);
+            return new ListValue<T>(result);
+        }
+        public double[] ToDoubleArray(string error) {
+            double[] result = new double[elements.Count];
+            for (int i = 0; i < elements.Count; i++) {
+                T element = elements[i]; if (!(element is NumberValue)) throw new Error(error);
+                result[i] = (element as NumberValue).value;
             }
-            else throw new Error("Bad arguments for list selection: " + this.Format(style) + "(" + Expressions.FormatValues(elements, style));
+            return result;
         }
     }
 
@@ -994,13 +1021,13 @@ namespace Kaemika
             else return "unknown format: " + style.dataFormat;
         }
         public Value Apply(List<Value> arguments, Netlist netlist, Style style) {
-            return body.Eval(env.ExtendValues(parameters.ids, arguments, null, (symbol == null ? "<nameless>" : symbol.Format(style)), style), netlist, style); 
+            return body.Eval(env.ExtendValues(parameters.parameters, arguments, null, (symbol == null ? "<nameless>" : symbol.Format(style)), style), netlist, style); 
         }
         public Value ApplyFlow(List<Value> arguments, Style style) {
-            return body.EvalFlow(env.ExtendValues(parameters.ids, arguments, null, (symbol == null ? "<nameless>" : symbol.Format(style)), style), style);
+            return body.EvalFlow(env.ExtendValues<Value>(parameters.parameters, arguments, null, (symbol == null ? "<nameless>" : symbol.Format(style)), style), style);
         }
         public Flow BuildFlow(List<Flow> arguments, Style style) {
-            return body.BuildFlow(env.ExtendValues(parameters.ids, arguments, null, (symbol == null ? "<nameless>" : symbol.Format(style)), style), style); // note that even in this case the arguments are Values, not Flows
+            return body.BuildFlow(env.ExtendValues<Flow>(parameters.parameters, arguments, null, (symbol == null ? "<nameless>" : symbol.Format(style)), style), style); // note that even in this case the arguments are Values, not Flows
         }
     }
 
@@ -1014,84 +1041,86 @@ namespace Kaemika
             return name;
         }
         public Value Apply(List<Value> arguments, Netlist netlist, Style style) {
-            const string BadArguments = "Bad arguments to: ";
+            string BadArgs() { return "Bad arguments to '" + name + "': " + Expressions.FormatValues(arguments, style); }
             if (arguments.Count == 0) {
-                throw new Error(BadArguments + name);
+                throw new Error(BadArgs());
             } else if (arguments.Count == 1) {
                 return ApplyFlow(arguments, style);
             } else if (arguments.Count == 2) {
-                if (name == "argmin") return Protocol.Argmin(arguments[0], arguments[1], netlist, style); // BFGF
-                else return ApplyFlow(arguments, style);
+                return ApplyFlow(arguments, style);
             } else if (arguments.Count == 3) {
-                if (name == "argmin") return Protocol.Argmin(arguments[0], arguments[1], arguments[2], netlist, style); // GoldenSection
-                else throw new Error(BadArguments + name);
-            } else throw new Error(BadArguments + name);
+                if (name == "argmin") return Protocol.Argmin(arguments[0], arguments[1], arguments[2], netlist, style); // BFGF
+                else return ApplyFlow(arguments, style);
+                //} else if (arguments.Count == 4) {
+                //    if (name == "argmin") return Protocol.Argmin(arguments[0], arguments[1], arguments[2], arguments[3], netlist, style); // GoldenSection
+                //else throw new Error(BadArgs());
+            } else throw new Error(BadArgs());
         }
         public Value ApplyFlow(List<Value> arguments, Style style) { // a subset of Apply
-            const string BadArguments = "Bad arguments to: ";
+            string BadArgs() { return "Bad arguments to '" + name + "': " + Expressions.FormatValues(arguments, style); }
             if (arguments.Count == 0) {
-                throw new Error(BadArguments + name);
+                throw new Error(BadArgs());
             } else if (arguments.Count == 1) {
                 Value arg1 = arguments[0];
-                if (name == "not") if (arg1 is BoolValue) return new BoolValue(!((BoolValue)arg1).value); else throw new Error(BadArguments + name);
-                else if (name == "-") if (arg1 is NumberValue) return new NumberValue(-((NumberValue)arg1).value); else throw new Error(BadArguments + name);
-                else if (name == "abs") if (arg1 is NumberValue) return new NumberValue(Math.Abs(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
-                else if (name == "arccos") if (arg1 is NumberValue) return new NumberValue(Math.Acos(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
-                else if (name == "arcsin") if (arg1 is NumberValue) return new NumberValue(Math.Asin(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
-                else if (name == "arctan") if (arg1 is NumberValue) return new NumberValue(Math.Atan(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
-                else if (name == "ceiling") if (arg1 is NumberValue) return new NumberValue(Math.Ceiling(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
-                else if (name == "cos") if (arg1 is NumberValue) return new NumberValue(Math.Cos(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
-                else if (name == "cosh") if (arg1 is NumberValue) return new NumberValue(Math.Cosh(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
-                else if (name == "exp") if (arg1 is NumberValue) return new NumberValue(Math.Exp(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
-                else if (name == "floor") if (arg1 is NumberValue) return new NumberValue(Math.Floor(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
-                else if (name == "int") if (arg1 is NumberValue) { double num1 = ((NumberValue)arg1).value; return new NumberValue(Math.Round(num1)); } else throw new Error(BadArguments + name);          // convert number to integer number by rounding
-                else if (name == "log") if (arg1 is NumberValue) return new NumberValue(Math.Log(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
-                else if (name == "pos") if (arg1 is NumberValue) { double num1 = ((NumberValue)arg1).value; return new NumberValue((num1 > 0) ? num1 : 0); } else throw new Error(BadArguments + name);     // convert number to positive number by returning 0 if negative
-                else if (name == "sign") if (arg1 is NumberValue) return new NumberValue(Math.Sign(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
-                else if (name == "sin") if (arg1 is NumberValue) return new NumberValue(Math.Sin(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
-                else if (name == "sinh") if (arg1 is NumberValue) return new NumberValue(Math.Sinh(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
-                else if (name == "sqrt") if (arg1 is NumberValue) return new NumberValue(Math.Sqrt(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
-                else if (name == "tan") if (arg1 is NumberValue) return new NumberValue(Math.Tan(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
-                else if (name == "tanh") if (arg1 is NumberValue) return new NumberValue(Math.Tanh(((NumberValue)arg1).value)); else throw new Error(BadArguments + name);
-                else throw new Error(BadArguments + name);
+                if (name == "not") if (arg1 is BoolValue) return new BoolValue(!((BoolValue)arg1).value); else throw new Error(BadArgs());
+                else if (name == "-") if (arg1 is NumberValue) return new NumberValue(-((NumberValue)arg1).value); else throw new Error(BadArgs());
+                else if (name == "abs") if (arg1 is NumberValue) return new NumberValue(Math.Abs(((NumberValue)arg1).value)); else throw new Error(BadArgs());
+                else if (name == "arccos") if (arg1 is NumberValue) return new NumberValue(Math.Acos(((NumberValue)arg1).value)); else throw new Error(BadArgs());
+                else if (name == "arcsin") if (arg1 is NumberValue) return new NumberValue(Math.Asin(((NumberValue)arg1).value)); else throw new Error(BadArgs());
+                else if (name == "arctan") if (arg1 is NumberValue) return new NumberValue(Math.Atan(((NumberValue)arg1).value)); else throw new Error(BadArgs());
+                else if (name == "ceiling") if (arg1 is NumberValue) return new NumberValue(Math.Ceiling(((NumberValue)arg1).value)); else throw new Error(BadArgs());
+                else if (name == "cos") if (arg1 is NumberValue) return new NumberValue(Math.Cos(((NumberValue)arg1).value)); else throw new Error(BadArgs());
+                else if (name == "cosh") if (arg1 is NumberValue) return new NumberValue(Math.Cosh(((NumberValue)arg1).value)); else throw new Error(BadArgs());
+                else if (name == "exp") if (arg1 is NumberValue) return new NumberValue(Math.Exp(((NumberValue)arg1).value)); else throw new Error(BadArgs());
+                else if (name == "floor") if (arg1 is NumberValue) return new NumberValue(Math.Floor(((NumberValue)arg1).value)); else throw new Error(BadArgs());
+                else if (name == "int") if (arg1 is NumberValue) { double num1 = ((NumberValue)arg1).value; return new NumberValue(Math.Round(num1)); } else throw new Error(BadArgs());          // convert number to integer number by rounding
+                else if (name == "log") if (arg1 is NumberValue) return new NumberValue(Math.Log(((NumberValue)arg1).value)); else throw new Error(BadArgs());
+                else if (name == "pos") if (arg1 is NumberValue) { double num1 = ((NumberValue)arg1).value; return new NumberValue((num1 > 0) ? num1 : 0); } else throw new Error(BadArgs());     // convert number to positive number by returning 0 if negative
+                else if (name == "sign") if (arg1 is NumberValue) return new NumberValue(Math.Sign(((NumberValue)arg1).value)); else throw new Error(BadArgs());
+                else if (name == "sin") if (arg1 is NumberValue) return new NumberValue(Math.Sin(((NumberValue)arg1).value)); else throw new Error(BadArgs());
+                else if (name == "sinh") if (arg1 is NumberValue) return new NumberValue(Math.Sinh(((NumberValue)arg1).value)); else throw new Error(BadArgs());
+                else if (name == "sqrt") if (arg1 is NumberValue) return new NumberValue(Math.Sqrt(((NumberValue)arg1).value)); else throw new Error(BadArgs());
+                else if (name == "tan") if (arg1 is NumberValue) return new NumberValue(Math.Tan(((NumberValue)arg1).value)); else throw new Error(BadArgs());
+                else if (name == "tanh") if (arg1 is NumberValue) return new NumberValue(Math.Tanh(((NumberValue)arg1).value)); else throw new Error(BadArgs());
+                else throw new Error(BadArgs());
             } else if (arguments.Count == 2) {
                 Value arg1 = arguments[0];
                 Value arg2 = arguments[1];
-                if (name == "or") if (arg1 is BoolValue && arg2 is BoolValue) return new BoolValue(((BoolValue)arg1).value || ((BoolValue)arg2).value); else throw new Error(BadArguments + name);
-                else if (name == "and") if (arg1 is BoolValue && arg2 is BoolValue) return new BoolValue(((BoolValue)arg1).value && ((BoolValue)arg2).value); else throw new Error(BadArguments + name);
+                if (name == "or") if (arg1 is BoolValue && arg2 is BoolValue) return new BoolValue(((BoolValue)arg1).value || ((BoolValue)arg2).value); else throw new Error(BadArgs());
+                else if (name == "and") if (arg1 is BoolValue && arg2 is BoolValue) return new BoolValue(((BoolValue)arg1).value && ((BoolValue)arg2).value); else throw new Error(BadArgs());
                 else if (name == "+")
                     if (arg1 is NumberValue && arg2 is NumberValue) return new NumberValue(((NumberValue)arg1).value + ((NumberValue)arg2).value);
                     else if (arg1 is StringValue && arg2 is StringValue) return new StringValue(((StringValue)arg1).value + ((StringValue)arg2).value);
-                    else throw new Error(BadArguments + name);
-                else if (name == "-") if (arg1 is NumberValue && arg2 is NumberValue) return new NumberValue(((NumberValue)arg1).value - ((NumberValue)arg2).value); else throw new Error(BadArguments + name);
-                else if (name == "*") if (arg1 is NumberValue && arg2 is NumberValue) return new NumberValue(((NumberValue)arg1).value * ((NumberValue)arg2).value); else throw new Error(BadArguments + name);
-                else if (name == "/") if (arg1 is NumberValue && arg2 is NumberValue) return new NumberValue(((NumberValue)arg1).value / ((NumberValue)arg2).value); else throw new Error(BadArguments + name);
-                else if (name == "^") if (arg1 is NumberValue && arg2 is NumberValue) return new NumberValue(Math.Pow(((NumberValue)arg1).value, ((NumberValue)arg2).value)); else throw new Error(BadArguments + name);
+                    else throw new Error(BadArgs());
+                else if (name == "-") if (arg1 is NumberValue && arg2 is NumberValue) return new NumberValue(((NumberValue)arg1).value - ((NumberValue)arg2).value); else throw new Error(BadArgs());
+                else if (name == "*") if (arg1 is NumberValue && arg2 is NumberValue) return new NumberValue(((NumberValue)arg1).value * ((NumberValue)arg2).value); else throw new Error(BadArgs());
+                else if (name == "/") if (arg1 is NumberValue && arg2 is NumberValue) return new NumberValue(((NumberValue)arg1).value / ((NumberValue)arg2).value); else throw new Error(BadArgs());
+                else if (name == "^") if (arg1 is NumberValue && arg2 is NumberValue) return new NumberValue(Math.Pow(((NumberValue)arg1).value, ((NumberValue)arg2).value)); else throw new Error(BadArgs());
                 else if (name == "=")
                     if (arg1 is BoolValue && arg2 is BoolValue) return new BoolValue(((BoolValue)arg1).value == ((BoolValue)arg2).value);
-                    else if (arg1 is NumberValue && arg2 is NumberValue) return new BoolValue(((NumberValue)arg1).value == ((NumberValue)arg2).value);
+                    else if (arg1 is NumberValue && arg2 is NumberValue) return new BoolValue(NumberValue.EqualDouble(((NumberValue)arg1).value, ((NumberValue)arg2).value));
                     else if (arg1 is StringValue && arg2 is StringValue) return new BoolValue(((StringValue)arg1).value == ((StringValue)arg2).value);
-                    else throw new Error(BadArguments + name);
+                    else throw new Error(BadArgs());
                 else if (name == "<>")
                     if (arg1 is BoolValue && arg2 is BoolValue) return new BoolValue(((BoolValue)arg1).value != ((BoolValue)arg2).value);
-                    else if (arg1 is NumberValue && arg2 is NumberValue) return new BoolValue(((NumberValue)arg1).value != ((NumberValue)arg2).value);
+                    else if (arg1 is NumberValue && arg2 is NumberValue) return new BoolValue(!NumberValue.EqualDouble(((NumberValue)arg1).value, ((NumberValue)arg2).value));
                     else if (arg1 is StringValue && arg2 is StringValue) return new BoolValue(((StringValue)arg1).value != ((StringValue)arg2).value);
-                    else throw new Error(BadArguments + name);
-                else if (name == "<=") if (arg1 is NumberValue && arg2 is NumberValue) return new BoolValue(((NumberValue)arg1).value <= ((NumberValue)arg2).value); else throw new Error(BadArguments + name);
-                else if (name == "<") if (arg1 is NumberValue && arg2 is NumberValue) return new BoolValue(((NumberValue)arg1).value < ((NumberValue)arg2).value); else throw new Error(BadArguments + name);
-                else if (name == ">=") if (arg1 is NumberValue && arg2 is NumberValue) return new BoolValue(((NumberValue)arg1).value >= ((NumberValue)arg2).value); else throw new Error(BadArguments + name);
-                else if (name == ">") if (arg1 is NumberValue && arg2 is NumberValue) return new BoolValue(((NumberValue)arg1).value > ((NumberValue)arg2).value); else throw new Error(BadArguments + name);
-                else if (name == "arctan2") if (arg1 is NumberValue && arg2 is NumberValue) return new NumberValue(Math.Atan2(((NumberValue)arg1).value, ((NumberValue)arg2).value)); else throw new Error(BadArguments + name);
-                else if (name == "max") if (arg1 is NumberValue && arg2 is NumberValue) return new NumberValue(Math.Max(((NumberValue)arg1).value, ((NumberValue)arg2).value)); else throw new Error(BadArguments + name);
-                else if (name == "min") if (arg1 is NumberValue && arg2 is NumberValue) return new NumberValue(Math.Min(((NumberValue)arg1).value, ((NumberValue)arg2).value)); else throw new Error(BadArguments + name);
-                else throw new Error(BadArguments + name);
-            } else throw new Error(BadArguments + name);
+                    else throw new Error(BadArgs());
+                else if (name == "<=") if (arg1 is NumberValue && arg2 is NumberValue) return new BoolValue(((NumberValue)arg1).value <= ((NumberValue)arg2).value); else throw new Error(BadArgs());
+                else if (name == "<") if (arg1 is NumberValue && arg2 is NumberValue) return new BoolValue(((NumberValue)arg1).value < ((NumberValue)arg2).value); else throw new Error(BadArgs());
+                else if (name == ">=") if (arg1 is NumberValue && arg2 is NumberValue) return new BoolValue(((NumberValue)arg1).value >= ((NumberValue)arg2).value); else throw new Error(BadArgs());
+                else if (name == ">") if (arg1 is NumberValue && arg2 is NumberValue) return new BoolValue(((NumberValue)arg1).value > ((NumberValue)arg2).value); else throw new Error(BadArgs());
+                else if (name == "arctan2") if (arg1 is NumberValue && arg2 is NumberValue) return new NumberValue(Math.Atan2(((NumberValue)arg1).value, ((NumberValue)arg2).value)); else throw new Error(BadArgs());
+                else if (name == "max") if (arg1 is NumberValue && arg2 is NumberValue) return new NumberValue(Math.Max(((NumberValue)arg1).value, ((NumberValue)arg2).value)); else throw new Error(BadArgs());
+                else if (name == "min") if (arg1 is NumberValue && arg2 is NumberValue) return new NumberValue(Math.Min(((NumberValue)arg1).value, ((NumberValue)arg2).value)); else throw new Error(BadArgs());
+                else throw new Error(BadArgs());
+            } else throw new Error(BadArgs());
         }
         public Flow BuildFlow(List<Flow> arguments, Style style) {
-            const string BadArguments = "Flow-expression: Bad arguments to: ";
+            string BadArgs() { return "Flow-expression: Bad arguments to '" + name + "': " + Expressions.FormatFlows(arguments, style); }
             if (arguments.Count == 0) {
                 // "time", "kelvin", "celsius", "volume" are placed in the initial environment as Operators and converted to OpFlow when fetched as variables
-                throw new Error(BadArguments + name);
+                throw new Error(BadArgs());
             } else if (arguments.Count == 1) {
                 Flow arg1 = arguments[0];
                 if (name == "not" || name == "-" || name == "∂") {
@@ -1102,7 +1131,7 @@ namespace Kaemika
                         || name == "cos" || name == "cosh" || name == "exp" || name == "floor" || name == "int" || name == "log"
                         || name == "pos" || name == "sign" || name == "sin" || name == "sinh" || name == "sqrt" || name == "tan" || name == "tanh") {
                     return new OpFlow(name, false, new List<Flow> { arg1 });
-                } else throw new Error(BadArguments + name);
+                } else throw new Error(BadArgs());
             } else if (arguments.Count == 2) {
                 Flow arg1 = arguments[0];
                 Flow arg2 = arguments[1];
@@ -1111,12 +1140,12 @@ namespace Kaemika
                     return new OpFlow(name, true, new List<Flow> { arg1, arg2 });
                 } else if (name == "cov" || name == "gauss" || name == "arctan2" || name == "min" || name == "max") {
                     return new OpFlow(name, false, new List<Flow> { arg1, arg2 });
-                } else throw new Error(BadArguments + name);
+                } else throw new Error(BadArgs());
             } else if (arguments.Count == 3) {
                 if (name == "cond") {
                     return new OpFlow(name, false, new List<Flow> { arguments[0], arguments[1], arguments[2] });
-                } else throw new Error(BadArguments + name);
-            } else throw new Error(BadArguments + name);
+                } else throw new Error(BadArgs());
+            } else throw new Error(BadArgs());
         }
     }
 
@@ -1139,7 +1168,7 @@ namespace Kaemika
             else return "unknown format: " + style.dataFormat;
         }
         public void Apply(List<Value> arguments, Netlist netlist, Style style) {
-            Env ignoreEnv = body.Eval(env.ExtendValues(parameters.ids, arguments, null, (symbol == null ? "<nameless>" : symbol.Format(style)), style), netlist, style);
+            Env ignoreEnv = body.Eval(env.ExtendValues(parameters.parameters, arguments, null, (symbol == null ? "<nameless>" : symbol.Format(style)), style), netlist, style);
         }
     }
 
@@ -1370,10 +1399,7 @@ namespace Kaemika
             return new OpFlow("*", true, arg1, arg2);
         }
         private static Flow Div(Flow arg1, Flow arg2) {
-            if (arg1 is NumberFlow && (arg1 as NumberFlow).value == 0.0) return NumberFlow.numberFlowZero; // 0 / a = 0
-            if (arg2 is NumberFlow && (arg2 as NumberFlow).value == 0.0) return new NumberFlow(double.MaxValue); // a / 0 = maxvalue
-            if (arg2 is NumberFlow && (arg2 as NumberFlow).value == 1.0) return arg1; // a / 1 = a
-            if (arg1 is NumberFlow && arg2 is NumberFlow) return new NumberFlow((arg1 as NumberFlow).value / (arg2 as NumberFlow).value); // n / m = n/m
+            if (arg1 is NumberFlow && arg2 is NumberFlow) return new NumberFlow((arg1 as NumberFlow).value / (arg2 as NumberFlow).value); // n / m = n/m  including +/-infinity or NaN if arg2=0
             if (arg1 is OpFlow && (arg1 as OpFlow).op == "-" && (arg1 as OpFlow).arity == 1) return Minus(Div((arg1 as OpFlow).args[0], arg2)); // (-a) / b = -(a/b)
             if (arg2 is OpFlow && (arg2 as OpFlow).op == "-" && (arg2 as OpFlow).arity == 1) return Minus(Div(arg1, (arg2 as OpFlow).args[0])); // a / (-b) = -(a/b)
             if (arg2 is OpFlow && (arg2 as OpFlow).op == "/") return Mult(arg1, Div((arg2 as OpFlow).args[1], (arg2 as OpFlow).args[0]));  // a / (b/c) = a * (c/b)
@@ -1389,7 +1415,6 @@ namespace Kaemika
             return new OpFlow("^", true, arg1, arg2);
         }
         private static Flow Log(Flow arg) {
-            if (arg is NumberFlow && (arg as NumberFlow).value <= 0.0) return new NumberFlow(double.MinValue); // log(nonpositive) = minvalue
             if (arg is NumberFlow && (arg as NumberFlow).value == 1.0) return NumberFlow.numberFlowZero; // log(1) = 0
             if (arg is NumberFlow && (arg as NumberFlow).value == Math.E) return NumberFlow.numberFlowOne; // log(e) = 1
             return new OpFlow("log", false, arg);
@@ -1454,14 +1479,14 @@ namespace Kaemika
         }
 
         public override bool ObserveBool(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) {
-            const string BadArguments = "Flow expression: Bad arguments to: ";
-            const string BadResult = "Flow expression: boolean operator expected instead of: ";
+            string BadArgs() { return "Flow expression: Bad arguments to '" + op + "'"; }
+            string BadResult() { return "Flow expression: boolean operator expected instead of '" + op + "'"; }
             if (arity == 0) {
-                throw new Error(BadResult + op);
+                throw new Error(BadResult());
             } else if (arity == 1) {
                 bool arg1 = args[0].ObserveBool(sample, time, state, flux, style);
                 if (op == "not") return !arg1;
-                else throw new Error(BadResult + op);
+                else throw new Error(BadResult());
             } else if (arity == 2) {
                 if (op == "or") return args[0].ObserveBool(sample, time, state, flux, style) || args[1].ObserveBool(sample, time, state, flux, style);
                 else if (op == "and") return args[0].ObserveBool(sample, time, state, flux, style) && args[1].ObserveBool(sample, time, state, flux, style);
@@ -1472,31 +1497,33 @@ namespace Kaemika
                 else if (op == "=") {
                     if (args[0] is BoolFlow && args[1] is BoolFlow) return ((BoolFlow)args[0]).value == ((BoolFlow)args[1]).value;
                     else if (args[0] is StringFlow && args[1] is StringFlow) return ((StringFlow)args[0]).value == ((StringFlow)args[1]).value;
-                    else if ((args[0] is NumberFlow || args[0] is SpeciesFlow) && (args[1] is NumberFlow || args[1] is SpeciesFlow)) return args[0].ObserveMean(sample, time, state, flux, style) == args[1].ObserveMean(sample, time, state, flux, style);
-                    else throw new Error(BadArguments + op);
+                    else if ((args[0] is NumberFlow || args[0] is SpeciesFlow) && (args[1] is NumberFlow || args[1] is SpeciesFlow))
+                        return NumberValue.EqualDouble(args[0].ObserveMean(sample, time, state, flux, style), args[1].ObserveMean(sample, time, state, flux, style));
+                    else throw new Error(BadArgs());
                 } else if (op == "<>") {
                     if (args[0] is BoolFlow && args[1] is BoolFlow) return ((BoolFlow)args[0]).value != ((BoolFlow)args[1]).value;
                     else if (args[0] is StringFlow && args[1] is StringFlow) return ((StringFlow)args[0]).value != ((StringFlow)args[1]).value;
-                    else if ((args[0] is NumberFlow || args[0] is SpeciesFlow) && (args[1] is NumberFlow || args[1] is SpeciesFlow)) return args[0].ObserveMean(sample, time, state, flux, style) != args[1].ObserveMean(sample, time, state, flux, style);
-                    else throw new Error(BadArguments + op);
-                } else throw new Error(BadResult + op);
+                    else if ((args[0] is NumberFlow || args[0] is SpeciesFlow) && (args[1] is NumberFlow || args[1] is SpeciesFlow))
+                        return !NumberValue.EqualDouble(args[0].ObserveMean(sample, time, state, flux, style), args[1].ObserveMean(sample, time, state, flux, style));
+                    else throw new Error(BadArgs());
+                } else throw new Error(BadResult());
             } else if (arity == 3) {
                 if (op == "cond") {
                     if (args[0].ObserveBool(sample, time, state, flux, style))
                         return args[1].ObserveBool(sample, time, state, flux, style);
                     else return args[2].ObserveBool(sample, time, state, flux, style);
-                } else throw new Error(BadResult + op);
-            } else throw new Error(BadArguments + op);
+                } else throw new Error(BadResult());
+            } else throw new Error(BadArgs());
         }
         public override double ObserveMean(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) {
-            const string BadArguments = "Flow expression: Bad arguments to: ";
-            const string BadResult = "Flow expression: numerical operator expected instead of: ";
+            string BadArgs() { return "Flow expression: Bad arguments to '" + op + "'"; }
+            string BadResult() { return "Flow expression: numerical operator expected instead of '" + op + "'"; }
             if (arity == 0) {
                 if (op == "time") return time;
                 else if (op == "kelvin") return sample.Temperature();
                 else if (op == "celsius") return sample.Temperature() - 273.15;
                 else if (op == "volume") return sample.Volume();
-                else throw new Error(BadResult + op);
+                else throw new Error(BadResult());
             } else if (arity == 1) {
                 double arg1 = args[0].ObserveMean(sample, time, state, flux, style);
                 if (op == "var") {
@@ -1517,15 +1544,15 @@ namespace Kaemika
                     else if (op == "exp") return Math.Exp(arg1);
                     else if (op == "floor") return Math.Floor(arg1);
                     else if (op == "int") return Math.Round(arg1);
-                    else if (op == "log") if (arg1 > 0) return Math.Log(arg1); else return 0.0;
-                    else if (op == "pos") return (arg1 > 0) ? arg1 : 0;
+                    else if (op == "log") return Math.Log(arg1);
+                    else if (op == "pos") return (double.IsNaN(arg1) || (arg1 < 0)) ? 0 : arg1;
                     else if (op == "sign") return Math.Sign(arg1);
                     else if (op == "sin") return Math.Sin(arg1);
                     else if (op == "sinh") return Math.Sinh(arg1);
-                    else if (op == "sqrt") if (arg1 >= 0) return Math.Sqrt(arg1); else return 0.0;
+                    else if (op == "sqrt") return Math.Sqrt(arg1);
                     else if (op == "tan") return Math.Tan(arg1);
                     else if (op == "tanh") return Math.Tanh(arg1);
-                    else throw new Error(BadResult + op);
+                    else throw new Error(BadResult());
                 }
             } else if (arity == 2) {
                 if (op == "cov") {
@@ -1538,20 +1565,20 @@ namespace Kaemika
                     if (op == "+") return arg1 + arg2;
                     else if (op == "-") return arg1 - arg2;
                     else if (op == "*") return arg1 * arg2;
-                    else if (op == "/") if (arg2 != 0.0) return arg1 / arg2; else return 0.0;
+                    else if (op == "/") return arg1 / arg2;
                     else if (op == "^") return Math.Pow(arg1, arg2);
                     else if (op == "arctan2") return Math.Atan2(arg1, arg2);
                     else if (op == "min") return Math.Min(arg1, arg2);
                     else if (op == "max") return Math.Max(arg1, arg2);
-                    else throw new Error(BadResult + op);
+                    else throw new Error(BadResult());
                 }
             } else if (arity == 3) {
                 if (op == "cond") {
                     if (args[0].ObserveBool(sample, time, state, flux, style))
                         return args[1].ObserveMean(sample, time, state, flux, style);
                     else return args[2].ObserveMean(sample, time, state, flux, style);
-                } else throw new Error(BadResult + op);
-            } else throw new Error(BadArguments + op);
+                } else throw new Error(BadResult());
+            } else throw new Error(BadArgs());
         }
         public override double ObserveDiff(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) {
             const string Bad = "Non differentiable: ";
@@ -1565,8 +1592,7 @@ namespace Kaemika
                 else if (op == "exp") // ∂(e^f(time)) = e^f(time) * ∂f(time)
                     return this.ObserveMean(sample, time, state, flux, style) * args[0].ObserveDiff(sample, time, state, flux, style);
                 else if (op == "log") // ∂ln(f(time)) = 1/time * ∂f(time), for time > 0
-                    if (time == 0.0) return double.MinValue;
-                    else return 1.0/time * args[0].ObserveDiff(sample, time, state, flux, style);
+                    return 1.0/time * args[0].ObserveDiff(sample, time, state, flux, style);
                 else if (op == "sqrt") // ∂sqrt(f(time)) = 1/(2*sqrt(f(time))) * ∂f(time)
                     return (1/(2*Math.Sqrt(args[0].ObserveMean(sample, time, state, flux, style)))) * args[0].ObserveDiff(sample, time, state, flux, style);
                 else if (op == "sign") // ∂sign(f(time)) = 0
@@ -1700,8 +1726,8 @@ namespace Kaemika
             } else throw new Error("HasNullVariance: " + op);
         }
         public override double ObserveVariance(SampleValue sample, double time, State state, Style style) {
-            const string BadArguments = "Flow expression: Bad arguments to: ";
-            const string BadResult = "Flow expression: Variance invalid for operator: ";
+            string BadArgs() { return "Flow expression: Bad arguments to '" + op + "'"; }
+            string BadResult() { return "Flow expression: Variance invalid for operator '" + op + "'"; }
             Func<double, Vector, Vector> flux = null; // disallow "∂", we can't allow "∂(var(a))", but we could build in "∂var(a)" evaluated via flux.CovarMatrix
             if (arity == 0) {
                 return 0.0; // "time", "kelvin", "celsius", "volume"                                       // Var(constant) = 0
@@ -1712,7 +1738,7 @@ namespace Kaemika
                     return Math.Abs(args[0].ObserveMean(sample, time, state, flux, style));                 // Var(poisson(X)) = Abs(mean(X))
                 else if (op == "-") {
                     return args[0].ObserveVariance(sample, time, state, style);                             // Var(-X) = Var(X)
-                } else throw new Error(BadResult + op); // all other arithmetic operators and "∂": we only handle linear combinations
+                } else throw new Error(BadResult()); // all other arithmetic operators and "∂": we only handle linear combinations
             } else if (arity == 2) {
                 if (op == "cov") {
                     return 0.0;      // yes needed                                                          // Var(cov(X,Y)) = 0 since cov(X,Y) is a number
@@ -1737,19 +1763,19 @@ namespace Kaemika
                         double arg1 = args[0].ObserveVariance(sample, time, state, style);
                         double arg2 = args[1].ObserveMean(sample, time, state, flux, style);
                         return arg1 * arg2 * arg2;
-                    } else throw new Error(BadResult + op); // this will be prevented by checking ahead of time
-                } else throw new Error(BadResult + op); // all other operators, including "/" , "^" , "arctan2" , "min" , "max"
+                    } else throw new Error(BadResult()); // this will be prevented by checking ahead of time
+                } else throw new Error(BadResult()); // all other operators, including "/" , "^" , "arctan2" , "min" , "max"
             } else if (arity == 3) {
                 if (op == "cond") {
                     if (args[0].ObserveBool(sample, time, state, flux, style))
                         return args[1].ObserveVariance(sample, time, state, style);
                     else return args[2].ObserveVariance(sample, time, state, style);
-                } else throw new Error(BadResult + op);
-            } else throw new Error(BadArguments + op);
+                } else throw new Error(BadResult());
+            } else throw new Error(BadArgs());
         }
         public override double ObserveCovariance(Flow other, SampleValue sample, double time, State state, Style style) {
-            const string BadArguments = "Flow expression: Bad arguments to: ";
-            const string BadResult = "Flow expression: Covariance invalid for operator: ";
+            string BadArgs() { return "Flow expression: Bad arguments to '" + op + "'"; }
+            string BadResult() { return "Flow expression: Covariance invalid for operator '" + op + "'"; }
             Func<double, Vector, Vector> flux = null; // disallow "∂", we can't allow "∂(cov(a,b))", but we could build in "∂cov(a,b)" evaluated via flux.CovarMatrix
             if (arity == 0) {
                 return 0.0; // "time", "kelvin", "celsius", "volume"                                         // Cov(number,Y) = 0
@@ -1760,7 +1786,7 @@ namespace Kaemika
                     return 0.0;
                 else if (op == "-")
                     return 0.0 - args[0].ObserveCovariance(other, sample, time, state, style);                // Cov(-X,Y) = -Cov(X,Y)
-                else throw new Error(BadResult + op); // all other arithmetic operators and "∂": we only handle linear combinations
+                else throw new Error(BadResult()); // all other arithmetic operators and "∂": we only handle linear combinations
             } else if (arity == 2) {
                 if (op == "cov") {
                     return 0.0;      // yes needed                                                           // Cov(cov(X,Y),Z) = 0 since cov(X,Y) is a number
@@ -1781,15 +1807,15 @@ namespace Kaemika
                     } else if ((!args[0].HasNullVariance()) && args[1].HasNullVariance()) {                    // Cov(X*n,Y) = Cov(X,Y)*n
                         return args[0].ObserveCovariance(other, sample, time, state, style) *
                             args[1].ObserveMean(sample, time, state, flux, style);
-                    } else throw new Error(BadResult + op); // all other operators, including "/" , "^" , "arctan2" , "min" , "max"
-                } else throw new Error(BadResult + op);
+                    } else throw new Error(BadResult()); // all other operators, including "/" , "^" , "arctan2" , "min" , "max"
+                } else throw new Error(BadResult());
             } else if (arity == 3) {
                 if (op == "cond") {
                     if (args[0].ObserveBool(sample, time, state, flux, style))
                         return args[1].ObserveCovariance(other, sample, time, state, style);
                     else return args[2].ObserveCovariance(other, sample, time, state, style);
-                } else throw new Error(BadResult + op);
-            } else throw new Error(BadArguments + op);
+                } else throw new Error(BadResult());
+            } else throw new Error(BadArgs());
         }
         public override Flow Differentiate(Style style) { // symbolic differentiation w.r.t. "time". 
             const string Bad = "Non differentiable: ";
@@ -1963,12 +1989,12 @@ namespace Kaemika
         public override Value Eval(Env env, Netlist netlist, Style style) {
             List<Value> values = new List<Value>();
             foreach (Expression element in elements.expressions) values.Add(element.Eval(env, netlist, style));
-            return new ListValue(values);
+            return new ListValue<Value>(values);
         }
         public override Value EvalFlow(Env env, Style style) {
             List<Value> values = new List<Value>();
             foreach (Expression element in elements.expressions) values.Add(element.EvalFlow(env, style));
-            return new ListValue(values);
+            return new ListValue<Value>(values);
         }
         public override Flow BuildFlow(Env env, Style style) {
             throw new Error("Flow expression: a list is not a flow: " + this.Format());
@@ -2083,7 +2109,7 @@ namespace Kaemika
             return "fun (" + parameters.Format() + ") {" + body.Format() + "}";
         }
         public override void Scope(Scope scope) {
-            body.Scope(scope.Extend(parameters.ids));
+            body.Scope(scope.Extend(parameters.parameters));
         }
         public override Value Eval(Env env, Netlist netlist, Style style) {
             return new FunctionValue(null, parameters, body, env);
@@ -2107,7 +2133,7 @@ namespace Kaemika
             return "net (" + parameters.Format() + ") {" + body.Format() + "}";
         }
         public override void Scope(Scope scope) {
-            body.Scope(scope.Extend(parameters.ids));
+            body.Scope(scope.Extend(parameters.parameters));
         }
         public override Value Eval(Env env, Netlist netlist, Style style) {
             return new NetworkValue(null, parameters, body, env);
@@ -2210,10 +2236,12 @@ namespace Kaemika
                     List<Value> arguments = this.arguments.Eval(env, netlist, style);
                     return oper.Apply(arguments, netlist, style);
                 }
-            } else if (value is ListValue) {
-                ListValue list = (ListValue)value;
+            } else if (value is ListValue<Value>) {
+                ListValue<Value> list = (ListValue<Value>)value;
                 List<Value> arguments = this.arguments.Eval(env, netlist, style);
-                return list.Select(arguments, style);
+                if (arguments.Count == 1) return list.Select(arguments[0], style);
+                else if (arguments.Count == 2) return list.Sublist(arguments[0], arguments[1], style);
+                else throw new Error("Wrong number of parameters to list selection: " + Format());
             }
             else throw new Error("Invocation of a non-function or non-operator: " + Format());
         }
@@ -2456,13 +2484,13 @@ namespace Kaemika
         }
         public override Scope Scope(Scope scope) {
             definee.Scope(scope);
-            return scope.Extend(ids.ids);
+            return scope.Extend(ids.parameters);
         }
         public override Env Eval(Env env, Netlist netlist, Style style) {
             Value value = definee.Eval(env, netlist, style); 
-            if (!(value is ListValue)) throw new Error("Binding a list definition to a non-list: " + this.Format());
-            List<Value> arguments = (value as ListValue).elements;
-            return env.ExtendValues<Value>(ids.ids, arguments, netlist, ids.Format(), style);
+            if (!(value is ListValue<Value>)) throw new Error("Binding a list definition to a non-list: " + this.Format());
+            List<Value> arguments = (value as ListValue<Value>).elements;
+            return env.ExtendValues<Value>(ids.parameters, arguments, netlist, ids.Format(), style);
         }
         public Env BuildFlow(Env env, Style style) {   // special case: only value definitions among all statements support BuildFlow
             throw new Error("Flow expression: a list definition is not a flow definition: " + this.Format()); // would have to support ListFlow first
@@ -2635,7 +2663,7 @@ namespace Kaemika
             return "new function " + name + "(" + parameters.Format() + ") {" + Environment.NewLine + body.Format() + Environment.NewLine + "}";
         }
         public override Scope Scope(Scope scope) {
-            body.Scope(scope.Extend(parameters.ids));
+            body.Scope(scope.Extend(parameters.parameters));
             return new ConsScope(this.name, scope);
         }
         public FunctionValue FunctionClosure(Symbol symbol, Env env) {
@@ -2664,7 +2692,7 @@ namespace Kaemika
             return "new network " + name + "(" + parameters.Format() + ") {" + Environment.NewLine + body.Format() + Environment.NewLine + "}";
         }
         public override Scope Scope(Scope scope) {
-            body.Scope(scope.Extend(parameters.ids));
+            body.Scope(scope.Extend(parameters.parameters));
             return new ConsScope(this.name, scope);
         }
         public NetworkValue NetworkClosure(Symbol symbol, Env env) {
@@ -3184,29 +3212,42 @@ namespace Kaemika
     // PARAMETERS
 
     public class Parameters : Tree {
-        public List<Parameter> ids;
+        public List<NewParameter> parameters;
         public Parameters() {
-            this.ids = new List<Parameter> { };
+            this.parameters = new List<NewParameter> { };
         }
-        public Parameters Add(Parameter param) {
-            this.ids.Add(param);
+        public Parameters Add(NewParameter param) {
+            this.parameters.Add(param);
             return this;
         }
         public override string Format() {
-            return this.ids.Aggregate("", (a, b) => (a == "") ? b.Format() : a + ", " + b.Format());
+            return this.parameters.Aggregate("", (a, b) => (a == "") ? b.Format() : a + ", " + b.Format());
         }
     }
-    public class Parameter : Tree {
+    public abstract class NewParameter : Tree {
+    }
+    public class SingleParameter : NewParameter {
         public Type type;
         public string name;
-        public Parameter(Type type, string id) {
+        public SingleParameter(Type type, string id) {
             this.type = type;
             this.name = id;
         }
         public override string Format() {
             return this.type.Format() + " " + this.name;
         }
-    } 
+    }
+    public class ListParameter : NewParameter {
+        public Parameters list;
+        public ListParameter(Parameters list) {
+            this.list = list;
+        }
+        public override string Format() {
+            return "[" + this.list.Format() + "]";
+        }
+
+    }
+
 
     // ARGUMENTS
 
@@ -3243,6 +3284,12 @@ namespace Kaemika
         public static string FormatValues(List<Value> values, Style style) {
             string s = "";
             foreach (Value value in values) { s += value.Format(style) + ", "; }
+            if (s.Length > 0) s = s.Substring(0, s.Length - 2); // remove last comma
+            return s;
+        }
+        public static string FormatFlows(List<Flow> values, Style style) {
+            string s = "";
+            foreach (Flow value in values) { s += value.Format(style) + ", "; }
             if (s.Length > 0) s = s.Substring(0, s.Length - 2); // remove last comma
             return s;
         }

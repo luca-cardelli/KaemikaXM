@@ -27,7 +27,7 @@ namespace KaemikaXM.Pages {
 
     public class MainTabbedPage : Xamarin.Forms.TabbedPage {
 
-        public static Color barColor = Color.FromHex("6200ED"); // standard blue: "2195F3"; https://www.color-hex.com/
+        public static Color barColor = Color.FromHex("6200ED"); // Electric Indigo: "6F00FF" // standard blue: "2195F3"; https://www.color-hex.com/
         public static Color secondBarColor = Color.FromHex("E8F2FC"); // formerly "61D5ff"; 
         public static Color pickerColor = Color.FromHex("E0F2FC");
         public static int buttonHeightRequest = 40;

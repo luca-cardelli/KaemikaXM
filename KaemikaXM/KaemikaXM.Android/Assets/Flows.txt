@@ -140,7 +140,7 @@ report a, n*a
 equilibrate for 1
 
 species a @ 1M
-function f(flow n) { return n*a }	
+function f(flow n) { n*a }	
 // note that the correct parameter type
 // for n is 'flow', the returned value n*a
 // is also a flow

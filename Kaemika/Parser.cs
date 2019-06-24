@@ -302,18 +302,20 @@ namespace Kaemika {
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }
         public static void ParseParam(Parameters parameters, IReduction reduction) {
-            if ((reduction.Production()               == "<Param> ::= bool <Ids>") || 
-                (reduction.Production()               == "<Param> ::= number <Ids>") ||
-                (reduction.Production()               == "<Param> ::= string <Ids>") ||
-                (reduction.Production()               == "<Param> ::= list <Ids>") ||
-                (reduction.Production()               == "<Param> ::= flow <Ids>") ||
-                (reduction.Production()               == "<Param> ::= species <Ids>") ||
-                (reduction.Production()               == "<Param> ::= sample <Ids>") ||
-                (reduction.Production()               == "<Param> ::= function <Ids>") ||
-                (reduction.Production()               == "<Param> ::= network <Ids>")) {
-                    string type = reduction.Terminal(0);
+            if ((reduction.Production() == "<Param> ::= bool <Ids>") ||
+                (reduction.Production() == "<Param> ::= number <Ids>") ||
+                (reduction.Production() == "<Param> ::= string <Ids>") ||
+                (reduction.Production() == "<Param> ::= list <Ids>") ||
+                (reduction.Production() == "<Param> ::= flow <Ids>") ||
+                (reduction.Production() == "<Param> ::= species <Ids>") ||
+                (reduction.Production() == "<Param> ::= sample <Ids>") ||
+                (reduction.Production() == "<Param> ::= function <Ids>") ||
+                (reduction.Production() == "<Param> ::= network <Ids>")) {
+                string type = reduction.Terminal(0);
                 List<string> ids = ParseIds(reduction.Nonterminal(1));
-                foreach (string id in ids) { parameters.Add(new Parameter(new Type(type), id)); }
+                foreach (string id in ids) { parameters.Add(new SingleParameter(new Type(type), id)); }
+            } else if (reduction.Production() == "<Param> ::= '[' <Params> ']'") {
+                parameters.Add(new ListParameter(ParseParams(reduction.Nonterminal(1))));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); }
         }
 
@@ -493,7 +495,7 @@ namespace Kaemika {
                 return ParseExpression(reduction.Nonterminal(1));
             } else  if (reduction.Production()       == "<Base Exp> ::= '[' <Expressions> ']'") {
                 return new ListLiteral(ParseExpressions(reduction.Nonterminal(1)));
-            } else  if (reduction.Production()       == "<Base Exp> ::= define <Statements> return <Expression>") {
+            } else  if (reduction.Production()       == "<Base Exp> ::= define <Statements> yield <Expression>") {
                 return new BlockExpression(ParseStatements(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(3)));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }

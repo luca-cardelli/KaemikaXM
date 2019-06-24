@@ -60,7 +60,8 @@ Comment Block @= { Nesting = All }
                     | 'species' <Ids>              ! species are values. n.b. individual reactions are not values, but networks are
                     | 'sample' <Ids>               ! samples are containers that have volume and temperature, populated with species that have concentrations
                     | 'function' <Ids>             ! functions can receive and return values, species, functions, and networks  
-                    | 'network' <Ids>              ! networks can receive values, species, functions, and networks, and return nothing                  
+                    | 'network' <Ids>              ! networks can receive values, species, functions, and networks, and return nothing        
+                    | '[' <Params> ']'             ! list pattern matching          
 
 <Ids>           ::= <Ids> Id
                     | Id
@@ -147,8 +148,8 @@ Comment Block @= { Nesting = All }
                     | 'net' <Net>                                           ! network abstraction
                     | '(' <Expression> ')'                                  ! parenthesized expression
                     | '[' <Expressions> ']'                                 ! list
-                    | 'define' <Statements> 'return' <Expression>           ! numerous but mild shift-reduce conflicts because no 'end' bracket. 
-                                                                            ! E.g. (define number n = 3 return n) + 3   vs. define number n = 3 return (n + 3)
+                    | 'define' <Statements> 'yield' <Expression>            ! numerous but mild shift-reduce conflicts because no 'end' bracket. 
+                                                                            ! E.g. (define number n = 3 yield n) + 3   vs. define number n = 3 return (n + 3)
                                                                             ! resolved as the latter
                   
 <Fun Instance>      ::= Id                                                  ! built-in math library operators, and pi and e, follow this syntax too

@@ -329,5 +329,8 @@
   <ItemGroup>
     <AndroidAsset Include="Assets\PIDController.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <AndroidAsset Include="Assets\PIDController Optimization.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
 </Project>

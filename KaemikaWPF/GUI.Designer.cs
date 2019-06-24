@@ -325,6 +325,7 @@
             "   DualRailConverter Block",
             "   PIDController Block",
             "   PIDController",
+            "   PIDController Optimization",
             "►Protocols",
             "   Samples",
             "   Molar Mass",

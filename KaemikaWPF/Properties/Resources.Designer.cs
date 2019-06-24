@@ -440,12 +440,11 @@ namespace KaemikaWPF.Properties {
         ///&quot;Case Sensitive&quot; = True
         ///&quot;Start Symbol&quot;   = &lt;Top&gt;
         ///
-        ///Id        = {Letter}({AlphaNumeric}|&apos;_&apos;|{Superscripts and Subscripts}|&apos;&apos;)*           ! Letter followed by alphanumerics or single-quote, underscore, Unicode sup/sub
+        ///Id        = ({Letter}|{Greek and Coptic})({AlphaNumeric}|{Greek and Coptic}|&apos;_&apos;|{Superscripts and Subscripts}|&apos;&apos;)*           ! Letter followed by alphanumerics or single-quote, underscore, Unicode sup/sub
         ///Integer   = {Digit}+
         ///Float     = {Digit}+ &apos;.&apos; {Digit}+
         ///Double    = {Digit}+ (&apos;.&apos; {Digit}+)? [Ee] [+-]? {Digit}+
-        ///{StringChar} = {Printable} - [&quot;\]
-        ///QuotedStr [rest of string was truncated]&quot;;.
+        ///{Str [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string KaemikaGrammar {
             get {
@@ -628,6 +627,29 @@ namespace KaemikaWPF.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to //======================================
+        ///// PID Controller Parameter Optimization
+        /////======================================
+        ///
+        ///number precision = 10
+        ///
+        ///network PBlock (species E⁺ E⁻ P⁺ P⁻,  number Kp, sample S) {
+        ///       E⁺ -&gt; E⁺ + P⁺                    {precision * Kp}
+        ///       E⁻ -&gt; E⁻ + P⁻                    {precision * Kp}
+        ///       P⁺ -&gt; #                          {precision} 
+        ///       P⁻ -&gt; #                          {precision} 
+        ///       P⁻ + P⁺ -&gt; #                     {precision}
+        ///}
+        ///
+        ///network IBlock  [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string PIDController_Optimization {
+            get {
+                return ResourceManager.GetString("PIDController_Optimization", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
         ///// Positive Test Signal - Sine
         /////======================================
         ///
@@ -661,11 +683,19 @@ namespace KaemikaWPF.Properties {
         ///}
         ///
         ///species A @ 0 M
-        ///Signal(A, fun(){cond(time&lt;1, 1, 2)})
-        ///
         ///report A
+        ///
+        ///// Step function
+        ///Signal(A, fun(){cond(time&lt;1, 1, 2)})
         ///equilibrate for 2
-        ///.
+        ///
+        ///// Hyperbolic Tangent
+        /////Signal(A, fun(){1+tanh(time-pi)})
+        /////equilibrate for 2*pi
+        ///
+        ///// Logistic Function
+        /////Signal(A, fun(){1/(1 + e^(2*pi-time))})
+        /////equilib [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string PosTestSignal_Step {
             get {
@@ -941,11 +971,13 @@ namespace KaemikaWPF.Properties {
         ///}
         ///
         ///species A⁺, A⁻ @ 0 M
-        ///DSignal(A⁺, A⁻, fun(){cond(time&lt;1,-1,1)})
-        ///
         ///report A⁺ - A⁻ , A⁺, A⁻ 
+        ///
+        ///// Step function
+        ///DSignal(A⁺, A⁻, fun(){cond(time&lt;1,-1,1)})
         ///equilibrate for 2
-        ///.
+        ///
+        ///// Hyperbo [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string TestSignal_Step {
             get {

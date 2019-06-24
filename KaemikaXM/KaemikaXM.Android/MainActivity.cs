@@ -38,7 +38,7 @@ namespace KaemikaXM.Droid {
             groups.Add(group2);
 
             var group5 = new KaemikaXM.Pages.ModelInfoGroup("PID Controller");
-            foreach (string a in new List<string> { "PosTestSignal Sine", "PosTestSignal Step", "TestSignal Sine", "TestSignal Step", "Proportional Block", "Integral Block", "Derivative Block", "Addition Block", "Subtraction Block", "DualRailConverter Block", "PIDController Block", "PIDController" }) AddAsset(group5, a);
+            foreach (string a in new List<string> { "PosTestSignal Sine", "PosTestSignal Step", "TestSignal Sine", "TestSignal Step", "Proportional Block", "Integral Block", "Derivative Block", "Addition Block", "Subtraction Block", "DualRailConverter Block", "PIDController Block", "PIDController", "PIDController Optimization" }) AddAsset(group5, a);
             groups.Add(group5);
 
             var group3 = new KaemikaXM.Pages.ModelInfoGroup("Protocols");

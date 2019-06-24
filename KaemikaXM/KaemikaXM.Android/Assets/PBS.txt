@@ -24,7 +24,7 @@ function Autoclave(sample PBS, number t) {
       equilibrate hot for t	
       // decrease temperature, preserve volume:
       transfer PBS { observe(volume,hot)L, 20C }	:= hot	
-   return PBS
+   yield PBS
 }
 
 function MakePBS() {
@@ -37,7 +37,7 @@ function MakePBS() {
 
       sample topup {200mL, 20C}  
       mix PBS with topup
-   return Autoclave(PBS, 20*60)
+   yield Autoclave(PBS, 20*60)
 }
 
 sample PBS = MakePBS()
