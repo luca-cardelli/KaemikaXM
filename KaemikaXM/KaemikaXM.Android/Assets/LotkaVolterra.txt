@@ -1,13 +1,13 @@
-//======================================
+﻿//======================================
 // Lotka 1920, Volterra 1926
 // (simplified with all rates = 1)
 //======================================
 
-number x10 =? uniform(0,1) // random x10
-number x20 =? uniform(0,1) // random x20
+number x1₀ =? uniform(0,1) // random x1₀
+number x2₀ =? uniform(0,1) // random x2₀
 
-species x1 @ x10 M     // prey
-species x2 @ x20 M     // predator
+species x1 @ x1₀ M     // prey
+species x2 @ x2₀ M     // predator
 
 x1 -> x1 + x1       {1}// prey reproduces
 x1 + x2 -> x2 + x2  {1}// predator eats prey

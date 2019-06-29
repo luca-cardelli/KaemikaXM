@@ -1,28 +1,16 @@
 //======================================
-// Build a reaction network
+// Lotka 1920, Volterra 1926
+// (simplified with all rates = 1)
 //======================================
 
-// Declare some species and
-// their molarity (M, mM, ...)
+number x1₀ =? uniform(0,1) // random x10
+number x2₀ =? uniform(0,1) // random x20
 
-species a,b @ 1 M   
+species x1 @ x1₀ M     // prey
+species x2 @ x2₀ M     // predator
 
-// Make some reactions (# is 'nothing')
+x1 -> x1 + x1       {1}// prey reproduces
+x1 + x2 -> x2 + x2  {1}// predator eats prey
+x2 -> #             {1}// predator dies
 
-a + 2b -> a
-a -> #
-
-// Decide what to plot
-
-report a, b, b-a, sin(time)
-
-// Run a simulation 
-// (or nothing much will happen)
-
-equilibrate for 2*pi
-
-// Optionally select noise (μ, ±σ, ...)
-
-//----------------------
-// Press the Play button
-//----------------------
+equilibrate for 40
