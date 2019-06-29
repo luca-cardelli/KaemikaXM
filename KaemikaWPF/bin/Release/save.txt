@@ -1,21 +1,28 @@
-// a = 2
-// b = -3
-// c = a + b
+//======================================
+// Build a reaction network
+//======================================
 
-species a⁺ @ 2 M
-species a⁻ @ 0 M
+// Declare some species and
+// their molarity (M, mM, ...)
 
-species b⁺ @ 0 M
-species b⁻ @ 3 M
+species a,b @ 1 M   
 
-species c⁺ @ 0 M
-species c⁻ @ 0 M
+// Make some reactions (# is 'nothing')
 
-a⁺ -> c⁺
-b⁺ -> c⁺
-a⁻ -> c⁻
-b⁻ -> c⁻
+a + 2b -> a
+a -> #
 
-// report a⁺ - a⁻, b⁺ - b⁻, c⁺ - c⁻
+// Decide what to plot
 
-equilibrate for 5
+report a, b, b-a, sin(time)
+
+// Run a simulation 
+// (or nothing much will happen)
+
+equilibrate for 2*pi
+
+// Optionally select noise (μ, ±σ, ...)
+
+//----------------------
+// Press the Play button
+//----------------------
