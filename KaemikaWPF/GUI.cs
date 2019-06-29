@@ -25,7 +25,8 @@ namespace KaemikaWPF
             InitializeComponent();
             txtInput = richTextBox;
             kaemikaFont = new Font("Matura MT Script Capitals", 24F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            textFont = new Font("Lucida Sans Unicode", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+//            textFont = new Font("Lucida Sans Unicode", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            textFont = new Font("Lucida Sans Typewriter", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             chartFont = new Font("Lucida Sans Unicode", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
         }
 
@@ -866,6 +867,8 @@ namespace KaemikaWPF
             // Basic group
             if (comboBox_Examples.Text == "   Start Here") {
                 InputSetText(Properties.Resources.StartHere);
+            } else if (comboBox_Examples.Text == "   Lotka Volterra") {
+                InputSetText(Properties.Resources.LotkaVolterra);
             } else if (comboBox_Examples.Text == "   RingOscillator") {
                 InputSetText(Properties.Resources.RingOscillator);
             } else if (comboBox_Examples.Text == "   Reactions") {

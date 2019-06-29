@@ -413,7 +413,8 @@ namespace KaemikaWPF.Properties {
         ///
         ///// Input waveform
         ///network DSignal(species X⁺ X⁻, function f) {
-        ///   number precision = 100        /// [rest of string was truncated]&quot;;.
+        ///   number precision = 100
+        /// [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Integral_Block {
             get {
@@ -479,6 +480,32 @@ namespace KaemikaWPF.Properties {
         internal static string LorenzAttractor {
             get {
                 return ResourceManager.GetString("LorenzAttractor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// Lotka 1920, Volterra 1926
+        ///// (simplified with all rates = 1)
+        /////======================================
+        ///
+        ///number x10 =? uniform(0,1) // random x10
+        ///number x20 =? uniform(0,1) // random x20
+        ///
+        ///species x1 @ x10 M     // prey
+        ///species x2 @ x20 M     // predator
+        ///
+        ///x1 -&gt; x1 + x1       {1}// prey reproduces
+        ///x1 + x2 -&gt; x2 + x2  {1}// predator eats prey
+        ///x2 -&gt; #             {1}// predator dies
+        ///
+        ///equilibrate for 40
+        ///
+        ///.
+        /// </summary>
+        internal static string LotkaVolterra {
+            get {
+                return ResourceManager.GetString("LotkaVolterra", resourceCulture);
             }
         }
         

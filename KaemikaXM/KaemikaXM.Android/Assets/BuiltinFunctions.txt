@@ -64,6 +64,20 @@ tanh(n)
 
 vessel
 
+// Distributions
+
+// number n =? ...(...)
+// samples n from a distribution
+// and adds n as a parameter to the GUI
+// where the values it assumes can be monitored
+// The builtindistributions are:
+
+uniform(lo,hi), 
+normal(mean,stdev)        // Gauss
+parabolic(mean,halfwidth) // Epanechnikov
+exponential(lambda)
+bernoulli(p)  // either 0 with prob. p, or 1
+
 // Observation (see Flow-expressions)
 
 observe(f)   // same as observe(f,vessel)

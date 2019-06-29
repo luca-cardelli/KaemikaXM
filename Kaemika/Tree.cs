@@ -2049,6 +2049,18 @@ namespace Kaemika
                     if (lambda > 0) return new DistributionValue(parameter, Math.Log(1 - random.NextDouble()) / (-lambda), distribution, args);
                     else throw new Error("Bad distribution: " + this.Format());
                 } else throw new Error("Bad distribution: " + this.Format());
+            } else if (distribution == "parabolic" && arguments.Count == 2) {
+                if (arguments[0] is NumberValue && arguments[1] is NumberValue) {
+                    double center = (arguments[0] as NumberValue).value;
+                    double halfwidth = (arguments[1] as NumberValue).value;
+                    if (halfwidth >= 0) { //https://stats.stackexchange.com/questions/173637/generating-a-sample-from-epanechnikovs-kernel
+                        double u1 = 2 * random.NextDouble() - 1.0;
+                        double u2 = 2 * random.NextDouble() - 1.0;
+                        double u3 = 2 * random.NextDouble() - 1.0;
+                        double sample01 = (Math.Abs(u3) >= Math.Abs(u2) && Math.Abs(u3) >= Math.Abs(u1)) ? u2 : u3; 
+                        return new DistributionValue(parameter, center + halfwidth * sample01, distribution, args);
+                    } else throw new Error("Bad distribution: " + this.Format());
+                } else throw new Error("Bad distribution: " + this.Format());
             } else if (distribution == "bernoulli" && arguments.Count == 1) {
                 if (arguments[0] is NumberValue) {
                     double p = (arguments[0] as NumberValue).value;
@@ -2083,6 +2095,9 @@ namespace Kaemika
             } else if (distribution == "exponential") {
                 this.rangeMin = 0;
                 this.rangeMax = Math.Max(5 / arguments[0], drawn);
+            } else if (distribution == "parabolic") {
+                this.rangeMin = Math.Min(arguments[0] - arguments[1], drawn);
+                this.rangeMax = Math.Max(arguments[0] + arguments[1], drawn);
             } else if (distribution == "bernoulli") {
                 this.rangeMin = 0;
                 this.rangeMax = 1;

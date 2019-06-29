@@ -332,6 +332,11 @@
       <Link>Resources\PIDController Optimization.txt</Link>
     </Resource>
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\LotkaVolterra.txt">
+      <Link>Resources\LotkaVolterra.txt</Link>
+    </Resource>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\SkiaSharp.1.68.0\build\net45\SkiaSharp.targets" Condition="Exists('..\packages\SkiaSharp.1.68.0\build\net45\SkiaSharp.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

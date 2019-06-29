@@ -169,7 +169,7 @@ Comment Block @= { Nesting = All }
 <Report>         ::= <Expression> 'as' <Expression>
                     | <Expression> 
 
-<Distribution>   ::= Id '(' <ExpressionSeq> ')'     ! uniform(lo,hi), normal(mean,stdev), exponential(lambda), bernoulli(p)
+<Distribution>   ::= Id '(' <ExpressionSeq> ')'     ! uniform(lo,hi), normal(mean,stdev), parabolic(mean,halfwidth), exponential(lambda), bernoulli(p)
                   
 <EndCondition>   ::= 'for' <Expression>
                   
