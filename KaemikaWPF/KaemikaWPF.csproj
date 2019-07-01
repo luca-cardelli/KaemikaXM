@@ -337,6 +337,51 @@
       <Link>Resources\LotkaVolterra.txt</Link>
     </Resource>
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\A01 Copy.txt">
+      <Link>Resources\A01 Copy.txt</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\A02 Addition.txt">
+      <Link>Resources\A02 Addition.txt</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\A03 CopyAndAdd.txt">
+      <Link>Resources\A03 CopyAndAdd.txt</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\A04 Multiplication.txt">
+      <Link>Resources\A04 Multiplication.txt</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\A05 Division.txt">
+      <Link>Resources\A05 Division.txt</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\B01 DifferentialSignals.txt">
+      <Link>Resources\B01 DifferentialSignals.txt</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\B02 DifferentialAddition.txt">
+      <Link>Resources\B02 DifferentialAddition.txt</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\B03 DifferentialSubtraction.txt">
+      <Link>Resources\B03 DifferentialSubtraction.txt</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\B04 DifferentialAbstractions.txt">
+      <Link>Resources\B04 DifferentialAbstractions.txt</Link>
+    </Resource>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\SkiaSharp.1.68.0\build\net45\SkiaSharp.targets" Condition="Exists('..\packages\SkiaSharp.1.68.0\build\net45\SkiaSharp.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

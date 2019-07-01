@@ -89,6 +89,7 @@
     <Compile Include="SplashScreen.cs" />
   </ItemGroup>
   <ItemGroup>
+    <AndroidAsset Include="Assets\A01 Copy.txt" />
     <AndroidAsset Include="Assets\kaemikaCGT.cgt" />
     <AndroidAsset Include="Assets\DroidSansMono.ttf" />
     <None Include="Resources\AboutResources.txt" />
@@ -334,6 +335,30 @@
   </ItemGroup>
   <ItemGroup>
     <AndroidAsset Include="Assets\LotkaVolterra.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidAsset Include="Assets\A02 Addition.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidAsset Include="Assets\A03 CopyAndAdd.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidAsset Include="Assets\A04 Multiplication.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidAsset Include="Assets\A05 Division.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidAsset Include="Assets\B01 DifferentialSignals.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidAsset Include="Assets\B02 DifferentialAddition.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidAsset Include="Assets\B03 DifferentialSubtraction.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidAsset Include="Assets\B04 DifferentialAbstractions.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
 </Project>

@@ -896,6 +896,26 @@ namespace KaemikaWPF
             } else if (comboBox_Examples.Text == "   Derivative2") {
                 InputSetText(Properties.Resources.Derivative2);
 
+            // Arithmetic group
+            } else if (comboBox_Examples.Text == "   Copy") {
+                InputSetText(Properties.Resources.A01_Copy);
+            } else if (comboBox_Examples.Text == "   Addition") {
+                InputSetText(Properties.Resources.A02_Addition);
+            } else if (comboBox_Examples.Text == "   CopyAndAdd") {
+                InputSetText(Properties.Resources.A03_CopyAndAdd);
+            } else if (comboBox_Examples.Text == "   Multiplication") {
+                InputSetText(Properties.Resources.A04_Multiplication);
+            } else if (comboBox_Examples.Text == "   Division") {
+                InputSetText(Properties.Resources.A05_Division);
+            } else if (comboBox_Examples.Text == "   DifferentialSignals") {
+                InputSetText(Properties.Resources.B01_DifferentialSignals);
+            } else if (comboBox_Examples.Text == "   DifferentialAddition") {
+                InputSetText(Properties.Resources.B02_DifferentialAddition);
+            } else if (comboBox_Examples.Text == "   DifferentialSubtraction") {
+                InputSetText(Properties.Resources.B03_DifferentialSubtraction);
+            } else if (comboBox_Examples.Text == "   DifferentialAbstractions") {
+                InputSetText(Properties.Resources.B04_DifferentialAbstractions);
+
             // PID Controller group
             } else if (comboBox_Examples.Text == "   PosTestSignal Sine") {
                 InputSetText(Properties.Resources.PosTestSignal_Sine);

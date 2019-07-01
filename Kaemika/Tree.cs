@@ -474,6 +474,21 @@ namespace Kaemika
             if (s.Length > 0 && s.Substring(0, 1) == "(" && s.Substring(s.Length - 1, 1) == ")") s = s.Substring(1, s.Length - 2);
             return s;
         }
+        public Flow ToFlow() {
+            if (this is Flow) return (Flow)this;
+            else if (this is BoolValue) return new BoolFlow(((BoolValue)this).value);
+            else if (this is NumberValue) return new NumberFlow(((NumberValue)this).value);
+            else if (this is SpeciesValue) return new SpeciesFlow(((SpeciesValue)this).symbol);
+            else if (this is OperatorValue)
+            { // handle the nullary operators from the built-in environment
+                if (((OperatorValue)this).name == "time") return new OpFlow("time", false, new List<Flow>());
+                else if (((OperatorValue)this).name == "kelvin") return new OpFlow("kelvin", false, new List<Flow>());
+                else if (((OperatorValue)this).name == "celsius") return new OpFlow("celsius", false, new List<Flow>());
+                else if (((OperatorValue)this).name == "volume") return new OpFlow("volume", false, new List<Flow>());
+                else return null;
+            } else return null;
+
+        }
     }
 
     public class SampleValue : Value {
@@ -1935,17 +1950,9 @@ namespace Kaemika
         }
         public override Flow BuildFlow(Env env, Style style) {
             Value value = env.LookupValue(this.name); // we must convert this Value into a Flow
-            if (value is Flow) return (Flow)value; // this must have been a variable declared of type flow
-            else if (value is BoolValue) return new BoolFlow(((BoolValue)value).value);
-            else if (value is NumberValue) return new NumberFlow(((NumberValue)value).value);
-            else if (value is SpeciesValue) return new SpeciesFlow(((SpeciesValue)value).symbol);
-            else if (value is OperatorValue) { // handle the nullary operators from the built-in environment
-                if (((OperatorValue)value).name == "time") return new OpFlow("time", false, new List<Flow>());
-                else if (((OperatorValue)value).name == "kelvin") return new OpFlow("kelvin", false, new List<Flow>());
-                else if (((OperatorValue)value).name == "celsius") return new OpFlow("celsius", false, new List<Flow>());
-                else if (((OperatorValue)value).name == "volume") return new OpFlow("volume", false, new List<Flow>());
-                else throw new Error("Flow expression: Variable '" + this.Format() + "' should denote a flow");
-            } else throw new Error("Flow expression: Variable '" + this.Format() + "' should denote a flow");
+            Flow flow = value.ToFlow();
+            if (flow == null) new Error("Flow expression: Variable '" + this.Format() + "' should denote a flow");
+            return flow;
         }
     }
 
@@ -2258,7 +2265,7 @@ namespace Kaemika
                 else if (arguments.Count == 2) return list.Sublist(arguments[0], arguments[1], style);
                 else throw new Error("Wrong number of parameters to list selection: " + Format());
             }
-            else throw new Error("Invocation of a non-function or non-operator: " + Format());
+            else throw new Error("Invocation of a non-function, non-list, or non-operator: " + Format());
         }
         public override Value EvalFlow(Env env, Style style) {
             Value value = this.function.EvalFlow(env, style);
@@ -2277,7 +2284,13 @@ namespace Kaemika
                     List<Value> arguments = this.arguments.EvalFlow(env, style);
                     return oper.ApplyFlow(arguments, style);
                 }
-            } else throw new Error("Flow expression: Invocation of a non-function or non-operator: " + Format());
+            } else if (value is ListValue<Value>) {
+                ListValue<Value> list = (ListValue<Value>)value;
+                List<Value> arguments = this.arguments.EvalFlow(env, style);
+                if (arguments.Count == 1) return list.Select(arguments[0], style);
+                else if (arguments.Count == 2) return list.Sublist(arguments[0], arguments[1], style);
+                else throw new Error("Flow expression: Wrong number of parameters to list selection: " + Format());
+            } else throw new Error("Flow expression: Invocation of a non-function, non-list, or non-operator: " + Format());
         }
         public override Flow BuildFlow(Env env, Style style) {
             Value value = this.function.EvalFlow(env, style);
@@ -2296,6 +2309,16 @@ namespace Kaemika
                     List<Flow> arguments = this.arguments.BuildFlow(env, style); // operator arguments are Flows that are composed with the operator
                     return oper.BuildFlow(arguments, style);
                 }
+            } else if (value is ListValue<Value>) {
+                ListValue<Value> list = (ListValue<Value>)value;
+                List<Value> arguments = this.arguments.EvalFlow(env, style);
+                Value selection = null; // we must convert this Value into a Flow
+                if (arguments.Count == 1) selection = list.Select(arguments[0], style);
+                else if (arguments.Count == 2) selection = list.Sublist(arguments[0], arguments[1], style);
+                else throw new Error("Flow expression: Wrong number of parameters to list selection: " + Format());
+                Flow flow = selection.ToFlow();
+                if (flow == null) new Error("Flow expression: list selection '" + this.Format() + "' should denote a flow");
+                return flow;
             } else throw new Error("Flow expression: Invocation of a non-function or non-operator: " + Format());
         }
     }

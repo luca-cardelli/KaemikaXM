@@ -33,6 +33,10 @@ namespace KaemikaXM.Droid {
             foreach (string a in new List<string> { "StartHere", "LotkaVolterra", "RingOscillator", "Reactions", "EnzymeKinetics", "ApproximateMajority", "2AM Oscillator", "Transporters" }) AddAsset(group1, a);
             groups.Add(group1);
 
+            var group2a = new KaemikaXM.Pages.ModelInfoGroup("Arithmetic");
+            foreach (string a in new List<string> { "Copy", "Addition", "CopyAndAdd", "Multiplication", "Division", "DifferentialSignals", "DifferentialAddition", "DifferentialSubtraction", "DifferentialAbstractions" }) AddAsset(group2a, a);
+            groups.Add(group2a);
+
             var group2 = new KaemikaXM.Pages.ModelInfoGroup("Differential Signals");
             foreach (string a in new List<string> { "SineWave", "SquareWave", "HighPassFilter", "LorenzAttractor", "Derivative1", "Derivative2" }) AddAsset(group2, a);
             groups.Add(group2);

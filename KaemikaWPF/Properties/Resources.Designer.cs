@@ -88,6 +88,119 @@ namespace KaemikaWPF.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to //======================================
+        ///// Copy
+        /////======================================
+        ///
+        ///species a @ 2 M
+        ///species a&apos; @ 0 M
+        ///report a, a&apos;
+        ///
+        ///a -&gt; a + a&apos;
+        ///a&apos; -&gt; #
+        ///
+        ///equilibrate for 5
+        ///.
+        /// </summary>
+        internal static string A01_Copy {
+            get {
+                return ResourceManager.GetString("A01_Copy", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// Addition
+        /////======================================
+        ///
+        ///species a @ 2 M
+        ///species b @ 3 M
+        ///species c @ 0 M
+        ///report a, b, c
+        ///
+        ///a -&gt; c
+        ///b -&gt; c
+        ///
+        ///equilibrate for 5
+        ///.
+        /// </summary>
+        internal static string A02_Addition {
+            get {
+                return ResourceManager.GetString("A02_Addition", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// Non-destructive Addition
+        /////======================================
+        ///
+        ///species a @ 2 M
+        ///species b @ 3 M
+        ///species c @ 0 M
+        ///report a, b, c
+        ///
+        ///a -&gt; a + c
+        ///b -&gt; b + c
+        ///c -&gt; #
+        ///
+        ///equilibrate for 5
+        ///.
+        /// </summary>
+        internal static string A03_CopyAndAdd {
+            get {
+                return ResourceManager.GetString("A03_CopyAndAdd", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// Multiplication
+        /////======================================
+        ///
+        ///species a @ 2 M
+        ///species b @ 3 M
+        ///species c @ 0 M
+        ///report a, b, c
+        ///
+        ///a + b -&gt; a + b + c
+        ///c -&gt; #
+        ///
+        ///equilibrate for 5
+        ///
+        ///.
+        /// </summary>
+        internal static string A04_Multiplication {
+            get {
+                return ResourceManager.GetString("A04_Multiplication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// Division
+        /////======================================
+        ///
+        ///species a @ 2 M
+        ///species b @ 3 M
+        ///species c @ 0 M
+        ///report a, b, c
+        ///
+        ///a -&gt; a + c
+        ///b + c -&gt; b
+        ///
+        ///equilibrate for 5
+        ///
+        ///
+        ///.
+        /// </summary>
+        internal static string A05_Division {
+            get {
+                return ResourceManager.GetString("A05_Division", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
         ///// Addition Block
         /////======================================
         ///
@@ -132,6 +245,145 @@ namespace KaemikaWPF.Properties {
         internal static string ApproximateMajority {
             get {
                 return ResourceManager.GetString("ApproximateMajority", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// Differential Signals
+        /////======================================
+        ///
+        ///// a = a⁺ - a⁻
+        ///
+        ///species a⁺ @ 1 M
+        ///species a⁻ @ 3 M
+        ///report a⁺, a⁻
+        ///report a⁺ - a⁻ 
+        ///
+        ///# -&gt; a⁺
+        ///# -&gt; a⁻
+        ///
+        ///// normalization:
+        ///// a⁺ + a⁻ -&gt; #
+        ///
+        ///equilibrate for 5
+        ///
+        ///
+        ///
+        ///.
+        /// </summary>
+        internal static string B01_DifferentialSignals {
+            get {
+                return ResourceManager.GetString("B01_DifferentialSignals", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// Differential Addition
+        /////======================================
+        ///
+        ///// a + b = (a⁺ - a⁻) + (b⁺ - b⁻)
+        /////       = (a⁺ + b⁺) - (a⁻ + b⁻)
+        /////       = c⁺ - c⁻ = c
+        ///
+        ///species a⁺ @ 2 M
+        ///species a⁻ @ 0 M
+        ///
+        ///species b⁺ @ 0 M
+        ///species b⁻ @ 3 M
+        ///
+        ///species c⁺ @ 0 M
+        ///species c⁻ @ 0 M
+        ///
+        ///report a⁺ - a⁻, b⁺ - b⁻, c⁺ - c⁻
+        ///
+        ///a⁺ -&gt; c⁺
+        ///b⁺ -&gt; c⁺
+        ///
+        ///a⁻ -&gt; c⁻
+        ///b⁻ -&gt; c⁻
+        ///
+        ///equilibrate for 5
+        ///
+        ///
+        ///.
+        /// </summary>
+        internal static string B02_DifferentialAddition {
+            get {
+                return ResourceManager.GetString("B02_DifferentialAddition", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// Differential Subtraction
+        /////======================================
+        ///
+        ///// a - b = (a⁺ - a⁻) - (b⁺ - b⁻)
+        /////       = (a⁺ + b⁻) - (a⁻ + b⁺)
+        /////       = c⁺ - c⁻ = c
+        ///
+        ///species a⁺ @ 2 M
+        ///species a⁻ @ 0 M
+        ///
+        ///species b⁺ @ 0 M
+        ///species b⁻ @ 3 M
+        ///
+        ///species c⁺ @ 0 M
+        ///species c⁻ @ 0 M
+        ///
+        ///report a⁺ - a⁻, b⁺ - b⁻, c⁺ - c⁻
+        ///
+        ///a⁺ -&gt; c⁺
+        ///b⁻ -&gt; c⁺
+        ///
+        ///a⁻ -&gt; c⁻
+        ///b⁺ -&gt; c⁻
+        ///
+        ///equilibrate for 5
+        ///
+        ///
+        ///
+        ///.
+        /// </summary>
+        internal static string B03_DifferentialSubtraction {
+            get {
+                return ResourceManager.GetString("B03_DifferentialSubtraction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// Differential Abstractions
+        /////======================================
+        ///
+        ///// Encoding a positive or negative number
+        ///function signal(number n) {
+        ///  define
+        ///    species n⁺ @ pos(n) M
+        ///    species n⁻ @ pos(-n) M
+        ///    n⁺ + n⁻ -&gt; #
+        ///  yield
+        ///    [n⁺, n⁻]
+        ///}
+        ///
+        ///// Addition
+        ///function add([species a⁺ a⁻], [species b⁺ b⁻]) {
+        ///  define
+        ///    [species c⁺ c⁻] = signal(0)
+        ///    a⁺ -&gt; c⁺; b⁺ -&gt; c⁺
+        ///    a⁻ -&gt; c⁻; b⁻ -&gt; c⁻
+        ///  yield
+        ///    [c⁺, c⁻]
+        ///}
+        ///
+        ///// Subtraction
+        ///function sub([s [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string B04_DifferentialAbstractions {
+            get {
+                return ResourceManager.GetString("B04_DifferentialAbstractions", resourceCulture);
             }
         }
         
@@ -489,11 +741,11 @@ namespace KaemikaWPF.Properties {
         ///// (simplified with all rates = 1)
         /////======================================
         ///
-        ///number x10 =? uniform(0,1) // random x10
-        ///number x20 =? uniform(0,1) // random x20
+        ///number x1₀ =? uniform(0,1) // random x1₀
+        ///number x2₀ =? uniform(0,1) // random x2₀
         ///
-        ///species x1 @ x10 M     // prey
-        ///species x2 @ x20 M     // predator
+        ///species x1 @ x1₀ M     // prey
+        ///species x2 @ x2₀ M     // predator
         ///
         ///x1 -&gt; x1 + x1       {1}// prey reproduces
         ///x1 + x2 -&gt; x2 + x2  {1}// predator eats prey

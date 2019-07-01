@@ -229,4 +229,31 @@
   <data name="LotkaVolterra" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\LotkaVolterra.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
+  <data name="A01_Copy" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\A01 Copy.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="A02_Addition" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\A02 Addition.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="A03_CopyAndAdd" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\A03 CopyAndAdd.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="A04_Multiplication" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\A04 Multiplication.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="A05_Division" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\A05 Division.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="B01_DifferentialSignals" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\B01 DifferentialSignals.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="B02_DifferentialAddition" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\B02 DifferentialAddition.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="B03_DifferentialSubtraction" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\B03 DifferentialSubtraction.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="B04_DifferentialAbstractions" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\KaemikaXM\KaemikaXM.Android\Assets\B04 DifferentialAbstractions.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
 </root>
