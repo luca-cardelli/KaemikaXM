@@ -34,7 +34,7 @@ namespace KaemikaXM.Droid {
             groups.Add(group1);
 
             var group2a = new KaemikaXM.Pages.ModelInfoGroup("Arithmetic");
-            foreach (string a in new List<string> { "Copy", "Addition", "CopyAndAdd", "Multiplication", "Division", "DifferentialSignals", "DifferentialAddition", "DifferentialSubtraction", "DifferentialAbstractions" }) AddAsset(group2a, a);
+            foreach (string a in new List<string> { "A01 Copy", "A02 Addition", "A03 CopyAndAdd", "A04 Multiplication", "A05 Division", "B01 DifferentialSignals", "B02 DifferentialAddition", "B03 DifferentialSubtraction", "B04 DifferentialAbstractions" }) AddAsset(group2a, a);
             groups.Add(group2a);
 
             var group2 = new KaemikaXM.Pages.ModelInfoGroup("Differential Signals");
