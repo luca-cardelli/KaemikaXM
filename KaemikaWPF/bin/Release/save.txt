@@ -1,127 +1,119 @@
 //======================================
-// Sine wave between +1 and -1 produced 
-// as the difference of two species S⁺, S⁻
+// PID Controller
 //======================================
 
-network Sine(species S⁺ S⁻, number freq ampl phase) {
-    // initialize parameter species S⁺,S⁻ 
-    // based on desired ampl and phase
-    // pos(n) == if n>=0 then n else 0 end
-    number S₀ = ampl*sin(phase)	
-    amount S⁺ @ pos(S₀) M		
-    amount S⁻ @ pos(-S₀) M
-    // initialize also new local species  
-    // C⁺,C⁻ that trace the cosine
-    number C₀ = ampl*cos(phase)	
-    species C⁺ @ pos(C₀) M
-    species C⁻ @ pos(-C₀) M
-    // freq in Hz, cycles per unit time
-    number r = freq*2*pi                      
+number precision = 10
 
-    // the reactions producing sin and 
-    // cos waves at given freq
-    C⁺ -> C⁺ + S⁺    {r}		
-    C⁻ -> C⁻ + S⁻    {r}
-    S⁺ -> S⁺ + C⁻    {r}
-    S⁻ -> S⁻ + C⁺    {r}
-
-    // dampening to prevent exponential growth
-    C⁺ + C⁻ -> #      {10*r}		
-    S⁺ + S⁻ -> #      {10*r}
+network PBlock (species E⁺ E⁻ P⁺ P⁻,  number Kp) {
+       E⁺ -> E⁺ + P⁺                    {precision * Kp}
+       E⁻ -> E⁻ + P⁻                    {precision * Kp}
+       P⁺ -> #                          {precision} 
+       P⁻ -> #                          {precision} 
+       P⁻ + P⁺ -> #                     {precision}
 }
 
-number freq = 2.0
-number ampl = 1.0
-number phase = pi/2
-
-// declare two new (uninitialized) species A⁺,A⁻
-
-species {A⁺, A⁻}	
-
-// plot both them and their difference
-
-report A⁺, A⁻, A⁺ - A⁻
-
-// invoke the sine network 
-// (which will initialize A⁺,A⁻)
-
-Sine(A⁺, A⁻, freq, ampl, phase)	
-
-// compare this sine wave to the real one
-// report ampl*sin(freq*2*pi*time+phase)	
-
-equilibrate for 1
-
-//======================================
-// Version with additional lift parameter
-// raising the wave vertically
-//======================================
-
-network SineLift(species Q⁺  Q⁻, number freq ampl phase lift) {
-    // initialize new local species  
-    // S⁺,S⁻ that trace the sine
-    // based on desired ampl and phase
-    // pos(n) == if n>=0 then n else 0 end
-    number S₀ = ampl*sin(phase)	
-    species S⁺ @ pos(S₀) M		
-    species S⁻ @ pos(-S₀) M
-
-    // initialize also new local species  
-    // C⁺,C⁻ that trace the cosine
-    number C₀ = ampl*cos(phase)	
-    species C⁺ @ pos(C₀) M
-    species C⁻ @ pos(-C₀) M
-
-    // initialize output species
-    // Q⁺,Q⁻ with the extra lift
-    number Q₀ = lift + ampl*sin(phase)	
-    amount Q⁺ @ pos(Q₀) M
-    amount Q⁻ @ pos(-Q₀) M
-
-    // freq in Hz, cycles per unit time
-    number r = freq*2*pi
-
-    // the reactions producing sin and 
-    // cos waves at given freq
-    C⁺ -> C⁺ + S⁺    {r}		
-    C⁻ -> C⁻ + S⁻    {r}
-    S⁺ -> S⁺ + C⁻    {r}
-    S⁻ -> S⁻ + C⁺    {r}
-
-    // the lifted sin wave reactions
-    C⁺ -> C⁺ + Q⁺   {r}	
-    C⁻ -> C⁻ + Q⁻   {r}	
-
-    // dampening to prevent exponential growth
-    C⁺ + C⁻ -> #    {10*r}		
-    S⁺ + S⁻ -> #    {10*r}
-    Q⁺ + Q⁻ -> #    {10*r}   
+network IBlock (species E⁺ E⁻ I⁺ I⁻, number Ki) {
+       E⁺ -> E⁺ + I⁺            {Ki}
+       E⁻ -> E⁻ + I⁻            {Ki}
+       I⁻ + I⁺ -> #             {precision}
 }
 
-/*
+network DBlock(species E⁺ E⁻ D⁺ D⁻, number Kd) {
+       species A⁺, A⁻ @ 0M  // D block auxiliary species
+       E⁺->E⁺ + A⁺         {precision}
+       A⁺ ->#             {precision}
+       E⁻ ->E⁻ + A⁻        {precision}
+       A⁻ ->#             {precision}
+       E⁺ ->E⁺ + D⁺        {precision*precision*Kd}
+       A⁻ ->A⁻ + D⁺        {precision*precision*Kd}
+       D⁺ -> #            {precision}
+       E⁻ -> E⁻ + D⁻       {precision*precision*Kd}
+       A⁺ -> A⁺ + D⁻       {precision*precision*Kd}
+       D⁻ -> #            {precision}
+       D⁺ + D⁻ -> #       {precision}
+}
 
-number freq = 2.0
-number ampl = 1.0
-number phase = pi/2
-number lift = 1
+network SumBlock(species P⁺ P⁻ I⁺ I⁻ D⁺ D⁻ U⁺ U⁻) {
+      P⁺ -> P⁺ + U⁺                       {1}
+      P⁻ -> P⁻  + U⁻                    {1}
+      I⁺ -> I⁺ + U⁺                       {1}
+      I⁻ -> I⁻  + U⁻                    {1}
+      D⁺ -> D⁺ + U⁺                      {1}
+      D⁻ -> D⁻  + U⁻                     {1}
+      U⁺ -> #              {1}
+      U⁻ -> #              {1}
+      U⁺ + U⁻ -> #         {1}
+}
 
-// declare two new (uninitialized) species B⁺,B⁻
+network SubBlock (species A⁺ A⁻ B⁺ B⁻ E⁺ E⁻) {
+       A⁺ -> A⁺ + E⁺        {1}
+       A⁻ -> A⁻ + E⁻        {1}
+       B⁻ -> B⁻ + E⁺      {1}
+       B⁺  -> B⁺ + E⁻    {1}
+       E⁺ -> #             {1}
+       E⁻ -> #             {1}
+       E⁺ + E⁻-> #         {1}
+}
 
-species {B⁺, B⁻}	
+network DualRail (species A A⁺ A⁻) {
+       A -> A + A⁺ 
+       A⁺ -> #
+       A⁺ + A⁻ -> #
+}
 
-// plot both them and their difference
 
-report B⁺, B⁻, B⁺ - B⁻
+network PIDController(
+   species R⁺ R⁻ Y,
+   number Kp Ki Kd,
+   network Plant){
 
-// invoke the sine network 
-// (which will initialize B⁺,B⁻)
+   species E⁺,E⁻,P⁺,P⁻,I⁺,I⁻,D⁺,D⁻,U⁺,U⁻,Y⁺,Y⁻ @ 0M
 
-SineLift(B⁺, B⁻, freq, ampl, phase, lift)
+   PBlock(E⁺, E⁻, P⁺, P⁻, Kp) 
+   IBlock(E⁺, E⁻, I⁺, I⁻, Ki)
+   DBlock(E⁺, E⁻, D⁺, D⁻, Kd)
+   SumBlock(P⁺, P⁻, I⁺, I⁻, D⁺, D⁻, U⁺, U⁻)
+   Plant(U⁺, U⁻, Y)
+   DualRail(Y, Y⁺, Y⁻)
+   SubBlock(R⁺, R⁻, Y⁺, Y⁻, E⁺, E⁻)
+}
 
-// compare this sine wave to the real one
-// report lift + ampl*sin(freq*2*pi*time+phase)	
+network Plant(species U⁺ U⁻ Y) {
+   U⁺ -> U⁺ + Y
+   U⁻ + Y -> U⁻
+}
 
-equilibrate for 1
+// Input waveform
+network DSignal(species X⁺ X⁻, function f) {
+   number precision = 100
+   # ->{{precision*pos(f())}} X⁺;   X⁺ ->{precision} #
+   # ->{{precision*pos(-f())}} X⁻;  X⁻ ->{precision } #
+}
 
+species R⁺, R⁻, Y @ 0M
+
+/*  
+// CONSTANT REFEFENCE
+ DSignal(R⁺,R⁻, fun(){3})
+ PIDController(R⁺,R⁻, Y, 0.1, 0.02, 0.02, Plant)
+ //PIDController(R⁺,R⁻, Y, 0.1889, 0.07987, 0.08625, Plant) // found by argmin optimization
+ //PIDController(R⁺,R⁻, Y, 0.1412, 0.0566, 0.04966, Plant) // found by argmin optimization
+ report R⁺ - R⁻, Y
+ equilibrate for 40
+// END CONSTANT REFEFENCE
 */
+
+/* */
+// OSCILLATING REFERENCE
+number Kp =? uniform(0,2)
+number Ki =? uniform(0,2)
+number Kd =? uniform(0,2)
+
+DSignal(R⁺,R⁻, fun(){1.5+sin(0.25*time)})
+PIDController(R⁺,R⁻, Y, pos(Kp), pos(Ki), pos(Kd), Plant)
+//PIDController(R⁺,R⁻, Y, 0.8, 0.2, 0.06, Plant)
+
+report R⁺ - R⁻, Y
+equilibrate for 75
+// END OSCILLATING REFERENCE
 

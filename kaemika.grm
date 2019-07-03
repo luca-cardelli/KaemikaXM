@@ -10,8 +10,8 @@ Id        = ({Letter}|{Greek and Coptic})({AlphaNumeric}|{Greek and Coptic}|'_'|
 Integer   = {Digit}+
 Float     = {Digit}+ '.' {Digit}+
 Double    = {Digit}+ ('.' {Digit}+)? [Ee] [+-]? {Digit}+
-{StringChar} = {Printable} - ["\]
-QuotedString = '"' ({StringChar} | '\'{Printable})* '"'
+{StringChar} = {All Printable} - ["\]
+QuotedString = '"' ({StringChar} | '\'{All Printable})* '"'
           
 Comment Line  = '//'
 Comment Start = '/*'
