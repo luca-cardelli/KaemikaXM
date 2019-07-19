@@ -94,18 +94,15 @@ observe(time,s) // nonzero only if s was the
 
 // Optimization
 
-argmin(f, l, h) // Golden Section optimizer
-//f: number -> number  function to minimize
-//   input is a parameter, output is cost
-//l: number            lower bound
-//h: number            upper bound
-
-argmin(f, i) // BFGF Optimizer
-//f: number -> [number, number]
-//   function of time to minimize
-//   input t is used for 'equilibrate S for t'
-//   outputs are cost and gradient for that t
-//   obtained by: [observe(cost,S), observe(∂cost,S)] 
+argmin(f, i, d) // BFGS Optimizer
+//f: list -> [number, list]
+//   input is a list of numbers (the parameters to optimize)
+//   outputs are the number cost of those parameters 
+//   and a list of partial gradients for the parameters 
+//i: list of numbers
+//   initial guess for the parameters
+//d: number
+//   numeric tolerance for convergence, e.g. 1e-2
 
 //======================================
 // Flow-expressions

@@ -4,7 +4,7 @@
 // http://cshprotocols.cshlp.org/content/2006/1/pdb.rec8247
 //======================================
 
-// The'change' instruction is used for 
+// The'transfer' instruction is used for 
 // extra-chemical manipulations. It is 
 // meant to capture miscellaneous lab 
 // procedures that cannot be easily 

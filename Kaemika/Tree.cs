@@ -1209,9 +1209,9 @@ namespace Kaemika
         public abstract bool HasStochasticMean();
         // = Can appear in LNA charts as means and variance. 
         // Inside var/cov only linear combinations of species are allowed, also because of issues like cov(poisson(X),poisson(X)) =? var(poisson(X))
-        public bool HasStochasticVariance() { return LinearCombination(); } // currently defined as LinearCombination
+        public bool HasStochasticVariance() { return HasStochasticMean(); } // currently defined as HasStochasticMean
+        // public bool HasStochasticVariance() { return LinearCombination(); } // this prevents poisson(3) to appear in LNA report
         // = Can appear in LNA charts as means and variance. 
-        // Includes only those things for which var(...) makes sense.
         public abstract bool LinearCombination();
         // = Is a linear combination of species and time/kelvin/celsius flows only
         public abstract bool HasNullVariance();
@@ -1798,7 +1798,7 @@ namespace Kaemika
                 if (op == "var") {
                     return 0.0;      // yes needed for e.g. "report a + cov(a,a)"                            // Cov(var(X),Z) = 0 since var(X) is a number
                 } else if (op == "poisson")
-                    return 0.0;
+                    return 0.0; // hmm, cov(X,X) = var(X) is violated here
                 else if (op == "-")
                     return 0.0 - args[0].ObserveCovariance(other, sample, time, state, style);                // Cov(-X,Y) = -Cov(X,Y)
                 else throw new Error(BadResult()); // all other arithmetic operators and "∂": we only handle linear combinations
