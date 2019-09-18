@@ -1798,14 +1798,14 @@ namespace Kaemika
                 if (op == "var") {
                     return 0.0;      // yes needed for e.g. "report a + cov(a,a)"                            // Cov(var(X),Z) = 0 since var(X) is a number
                 } else if (op == "poisson")
-                    return 0.0; // hmm, cov(X,X) = var(X) is violated here
+                    return 0.0;                                                                              // Cov(poisson(X),Y) = 0  (even if Y = poisson(X)!)
                 else if (op == "-")
                     return 0.0 - args[0].ObserveCovariance(other, sample, time, state, style);                // Cov(-X,Y) = -Cov(X,Y)
                 else throw new Error(BadResult()); // all other arithmetic operators and "∂": we only handle linear combinations
             } else if (arity == 2) {
                 if (op == "cov") {
                     return 0.0;      // yes needed                                                           // Cov(cov(X,Y),Z) = 0 since cov(X,Y) is a number
-                } else if (op == "gauss") {
+                } else if (op == "gauss") {                                                                  // Cov(gauss(X,Y),Z) = 0   (even if Z = gauss(X,Y)!)
                     return 0.0;
                 } else if (op == "+") {                                                                      // Cov(X+Z,Y) = Cov(X,Y) + Cov(Z,Y)
                     return args[0].ObserveCovariance(other, sample, time, state, style) +

@@ -11,7 +11,7 @@ namespace Kaemika {
         ReactionGraph, ComplexGraph,
         MSRC_LBS, MSRC_CRN, ODE,
         Protocol, ProtocolGraph,
-        PDMPreactions, PDMPequations, // or PDMP_Parallel,
+        PDMPreactions, PDMPequations, PDMPstoichiometry, // or PDMP_Parallel,
         PDMPGraph, // or PDMPGraph_Parallel,
         PDMP_GraphViz, // or PDMP_Parallel_GraphViz, 
     }
@@ -177,10 +177,13 @@ namespace Kaemika {
                 } else if (exportAs == ExportAs.ComputationalTrace) {
                     Gui.gui.OutputAppendText(execution.netlist.Format(execution.style.RestyleAsTraceComputational(true)) + execution.ElapsedTime());
                 } else if (exportAs == ExportAs.PDMPreactions) {
-                    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).HybridSystem(true, execution.style));
+                    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).HybridSystem(Export.Presentation.Reactions, execution.style));
                     try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
                 } else if (exportAs == ExportAs.PDMPequations) {
-                    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).HybridSystem(false, execution.style));
+                    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).HybridSystem(Export.Presentation.ODEs, execution.style));
+                    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
+                } else if (exportAs == ExportAs.PDMPstoichiometry) {
+                    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).HybridSystem(Export.Presentation.Stoichiometry, execution.style));
                     try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
 
                 } else if (exportAs == ExportAs.ReactionGraph) {

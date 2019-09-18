@@ -351,6 +351,30 @@ namespace Kaemika
             return str;
         }
 
+        public string FormatStoichiometry(Style style) {
+            string str = "CRN species = [";
+            string s1 = "";
+            foreach (SpeciesValue sp in sample.species) { s1 += sp.Format(style) + " "; }
+
+            str += s1 + "]" + Environment.NewLine + "stoichiometry = [" + Environment.NewLine;
+            string s2 = "";
+            for (int r = 0; r <= reactions.Count -1; r++) {
+                for (int s = 0; s <= sample.species.Count - 1; s++) {
+                    s2 += stoichio[s, r].ToString() + " ";
+                }
+                s2 += Environment.NewLine;
+            }
+
+            str += s2 + "]" + Environment.NewLine + "reaction rates = [" + Environment.NewLine;
+            string s3 = "";
+            foreach (ReactionValue re in this.reactions) {
+                string rt = re.rate.Format(style);
+                if (rt == "") rt = "{1}";
+                s3 += rt + Environment.NewLine; }
+            str += s3 + "]";
+            return str;
+        }
+
         public bool Trivial(Style style) {
             return trivial;
         }

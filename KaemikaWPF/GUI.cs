@@ -765,6 +765,7 @@ namespace KaemikaWPF
             else if (comboBox_Export.Text == "Protocol State Graph") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPGraph); }
             else if (comboBox_Export.Text == "System Reactions") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPreactions); }
             else if (comboBox_Export.Text == "System Equations") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPequations); }
+            else if (comboBox_Export.Text == "System Stoichiometry") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPstoichiometry); }
 
             else if (comboBox_Export.Text == "CRN (LBS silverlight)") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.MSRC_LBS); }
             else if (comboBox_Export.Text == "CRN (LBS html5)") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.MSRC_CRN); }

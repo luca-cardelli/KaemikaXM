@@ -397,6 +397,8 @@ namespace Kaemika {
 
         // Building a PDMP GRAPH from a Netlist, via a Closure
 
+        public enum Presentation { Reactions, ODEs, Stoichiometry };
+
         public static AdjacencyGraph<Vertex, Edge<Vertex>> PDMPGraph(Netlist netlist, Style style, bool sequential) {
             Closure closure = PDMP(netlist, style, sequential);
             return closure.PDMPGraph(style);
@@ -430,7 +432,7 @@ namespace Kaemika {
                 }
                 return s;
             }
-            public string HybridSystem(bool showReactions, Style style) {
+            public string HybridSystem(Presentation rep, Style style) {
                 string s = "";
                 //s += "TRANSITIONS" + Environment.NewLine;
                 //foreach (Transition transition in transitions) {
@@ -448,10 +450,12 @@ namespace Kaemika {
                             List<ReactionValue> reactions = sample.ReactionsAsConsumed(style);
                             // List<ReactionValue> reactions = sample.RelevantReactions(netlist, style); // this would pick up reactions that were added after the sample was consumed
                             s += "KINETICS for STATE_" + transition.source.id.ToString() + " (sample " + sample.FormatSymbol(style) + ") for " + style.FormatDouble((transition.entry as EquilibrateEntry).fortime) + " time units:" + Environment.NewLine;
-                            if (showReactions) {
+                            if (rep == Presentation.Reactions) {
                                 foreach (ReactionValue reaction in reactions) s += reaction.Format(style) + Environment.NewLine;
-                            } else {
+                            } else if (rep == Presentation.ODEs) {
                                 s += (new CRN(sample, reactions)).FormatAsODE(style);
+                            } else if (rep == Presentation.Stoichiometry) {
+                                s += (new CRN(sample, reactions)).FormatStoichiometry(style);
                             }
                             s += Environment.NewLine;
                             found = true;

@@ -610,6 +610,7 @@
             "Protocol State Graph",
             "System Reactions",
             "System Equations",
+            "System Stoichiometry",
             " ",
             "Protocol",
             "ODE (Oscill8)",

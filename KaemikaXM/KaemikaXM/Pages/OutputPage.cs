@@ -48,6 +48,7 @@ namespace KaemikaXM.Pages {
                 new OutputAction(this, "Protocol State Graph", OutputKind.Graph, ExportAs.PDMPGraph),
                 new OutputAction(this, "System Reactions", OutputKind.Text, ExportAs.PDMPreactions),
                 new OutputAction(this, "System Equations", OutputKind.Text, ExportAs.PDMPequations),
+                new OutputAction(this, "System Stoichiometry", OutputKind.Text, ExportAs.PDMPstoichiometry),
                 //new OutputAction(this, "Protocol State Graph (Par.)", OutputKind.Graph, ExportAs.PDMPGraph_Parallel),
             };
         }
