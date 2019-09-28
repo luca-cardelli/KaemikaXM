@@ -64,9 +64,9 @@ namespace Kaemika
             double sndVolume = mixSnd.Volume();
             NumberValue volume = new NumberValue(fstVolume + sndVolume);
             NumberValue temperature = new NumberValue((fstVolume * mixFst.Temperature() + sndVolume * mixSnd.Temperature()) / (fstVolume + sndVolume));
-            SampleValue result = new SampleValue(symbol, volume, temperature, produced: true);
-            result.AddSpecies(mixFst, volume.value, fstVolume);
-            result.AddSpecies(mixSnd, volume.value, sndVolume);
+            SampleValue result = new SampleValue(symbol, new StateMap(symbol, new List<SpeciesValue> { }, new State(0, lna: mixFst.stateMap.state.lna || mixSnd.stateMap.state.lna)), volume, temperature, produced: true);
+            result.stateMap.Mix(mixFst.stateMap, volume.value, fstVolume, style); // mix adding the means and covariances, scaled by volume
+            result.stateMap.Mix(mixSnd.stateMap, volume.value, sndVolume, style); // mix adding the means and covariances, scaled by volume
             return result;
         }
 
@@ -76,21 +76,21 @@ namespace Kaemika
 
             NumberValue volume1 = new NumberValue(sampleVolume * proportion);
             NumberValue temperature1 = new NumberValue(sample.Temperature());
-            SampleValue result1 = new SampleValue(symbol1, volume1, temperature1, produced: true);
-            result1.AddSpecies(sample, sampleVolume, sampleVolume); // add species from other sample without changing their concentations
+            SampleValue result1 = new SampleValue(symbol1, new StateMap(symbol1, new List<SpeciesValue> { }, new State(0, lna: sample.stateMap.state.lna)), volume1, temperature1, produced: true);
+            result1.stateMap.Mix(sample.stateMap, sampleVolume, sampleVolume, style); // mix without changing the means or covariances
 
             NumberValue volume2 = new NumberValue(sampleVolume * (1 - proportion));
             NumberValue temperature2 = new NumberValue(sample.Temperature());
-            SampleValue result2 = new SampleValue(symbol2, volume2, temperature2, produced: true);
-            result2.AddSpecies(sample, sampleVolume, sampleVolume); // add species from other sample without changing their concentations
+            SampleValue result2 = new SampleValue(symbol2, new StateMap(symbol2, new List<SpeciesValue> { }, new State(0, lna: sample.stateMap.state.lna)), volume2, temperature2, produced: true);
+            result2.stateMap.Mix(sample.stateMap, sampleVolume, sampleVolume, style); // mix without changing the means or covariances
 
             return (result1, result2);
         }
 
         public static SampleValue Transfer(Symbol symbol, double volume, double temperature, SampleValue inSample, Netlist netlist, Style style) {
             inSample.Consume(null, 0, null, netlist, style);
-            SampleValue result = new SampleValue(symbol, new NumberValue(volume), new NumberValue(temperature), produced: true);
-            result.AddSpecies(inSample, volume, inSample.Volume());
+            SampleValue result = new SampleValue(symbol, new StateMap(symbol, new List<SpeciesValue> { }, new State(0, lna: inSample.stateMap.state.lna)), new NumberValue(volume), new NumberValue(temperature), produced: true);
+            result.stateMap.Mix(inSample.stateMap, volume, inSample.Volume(), style);// mix changing the concentration ### need to adjust covariance matrix by volume/inSample.volume ???
             return result;
         }
 
@@ -156,13 +156,13 @@ namespace Kaemika
 
             Gui.gui.ChartClear((outSymbol.Raw() == "vessel") ? "" : "Sample " + inSample.FormatSymbol(style));
 
-            List<SpeciesValue> species = inSample.Species(out double[] speciesState);
-            State initialState = new State(species.Count, noise != Noise.None).InitMeans(speciesState);
+            List<SpeciesValue> inSpecies = inSample.stateMap.species;
+            State initialState = inSample.stateMap.state;
+            if ((noise == Noise.None) && initialState.lna) initialState = new State(initialState.size, lna: false).InitMeans(initialState.MeanVector());
+            if ((noise != Noise.None) && !initialState.lna) initialState = new State(initialState.size, lna: true).InitMeans(initialState.MeanVector());
             List<ReactionValue> reactions = inSample.RelevantReactions(netlist, style);
             CRN crn = new CRN(inSample, reactions, precomputeLNA: (noise != Noise.None) && Gui.gui.PrecomputeLNA());
-            List<ReportEntry> reports = netlist.Reports(species);
-
-            SampleValue outSample = new SampleValue(outSymbol, new NumberValue(inSample.Volume()), new NumberValue(inSample.Temperature()), produced: true);
+            List<ReportEntry> reports = netlist.Reports(inSpecies);
 
             Func<double, double, Vector, Func<double, Vector, Vector>, IEnumerable<SolPoint>> Solver;
             if (Gui.gui.Solver() == "GearBDF") Solver = Ode.GearBDF; else if (Gui.gui.Solver() == "RK547M") Solver = Ode.RK547M; else throw new Error("No solver");
@@ -174,24 +174,22 @@ namespace Kaemika
             (string[] series, string[] seriesLNA) = GenerateSeries(reports, noise, style);
 
             bool nonTrivialSolution =
-                (species.Count > 0)        // we don't want to run on the empty species list: Oslo crashes
+                (inSpecies.Count > 0)        // we don't want to run on the empty species list: Oslo crashes
                 && (!crn.Trivial(style))   // we don't want to run trivial ODEs: some Oslo solvers hang on very small stepping
                 && finalTime > 0;            // we don't want to run when fortime==0
 
             (double lastTime, State lastState, int pointsCounter, int renderedCounter) =
                 Integrate(Solver, initialState, initialTime, finalTime, Flux, inSample, reports, noise, series, seriesLNA, nonTrivialSolution, style);
 
-            if (lastState == null) lastState = initialState;
-            for (int i = 0; i < species.Count; i++) {
-                double molarity = lastState.Mean(i);
-                if (molarity < 0) molarity = 0; // the ODE solver screwed up
-                outSample.SetMolarity(species[i], new NumberValue(molarity), style);
-            }
+            if (lastState == null) lastState = initialState.Clone();
+            lastState = lastState.Positive();
+            List<SpeciesValue> outSpecies = new List<SpeciesValue> { }; foreach (SpeciesValue sp in inSpecies) outSpecies.Add(sp); // the species list may be destructively modified (added to) later in the new sample
+            SampleValue outSample = new SampleValue(outSymbol, new StateMap(outSymbol, outSpecies, lastState), new NumberValue(inSample.Volume()), new NumberValue(inSample.Temperature()), produced: true);
 
             inSample.Consume(reactions, lastTime, lastState, netlist, style);
 
             Exec.lastReport = "======= Last report: time=" + lastTime.ToString() + ", " + lastState.FormatReports(reports, inSample, Flux, lastTime, noise, series, seriesLNA, style);
-            Exec.lastState = "======= Last state: total points=" + pointsCounter + ", drawn points=" + renderedCounter + ", time=" + lastTime.ToString() + ", " + lastState.FormatSpecies(species, style);
+            Exec.lastState = "======= Last state: total points=" + pointsCounter + ", drawn points=" + renderedCounter + ", time=" + lastTime.ToString() + ", " + lastState.FormatSpecies(inSpecies, style);
             return outSample;
         }
 
@@ -251,7 +249,7 @@ namespace Kaemika
                 // LOOP BODY of foreach (SolPoint solPoint in solution):
                 if (!Exec.IsExecuting()) break;
                 if (solPoint.T >= densityTick) { // avoid drawing too many points
-                    State state = new State(sample.species.Count, noise != Noise.None).InitAll(solPoint.X);
+                    State state = new State(sample.Count(), lna: noise != Noise.None).InitAll(solPoint.X);
                     for (int i = 0; i < reports.Count; i++) {
                         if (series[i] != null) { // if a series was actually generated from this report
                             // generate deterministic series
@@ -280,7 +278,7 @@ namespace Kaemika
                 // END foreach (SolPoint solPoint in solution)
             } while (true);
 
-            if (hasSolPoint) lastState = new State(sample.species.Count, noise != Noise.None).InitAll(solPoint.X);
+            if (hasSolPoint) lastState = new State(sample.Count(), lna: noise != Noise.None).InitAll(solPoint.X);
             Gui.gui.ChartUpdate();
 
             return (lastTime, lastState, pointsCounter, renderedCounter);

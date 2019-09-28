@@ -330,17 +330,141 @@ namespace Kaemika
         }
     }
 
-    // PROTOCOL ACTUATORS
+    // STATE
+
+    public class StateMap { // associate a list of species to a state
+        private Symbol sample; // the sample this stateMap belongs to
+        public List<SpeciesValue> species;
+        public Dictionary<Symbol, int> index; // reverse indexing of speciesList
+        public State state; // indexed compatibly with speciesList. N.B.: a new state is allocated at each AddSpecies
+        public StateMap(Symbol sample, List<SpeciesValue> species, State state) {
+            this.sample = sample;
+            this.species = species;
+            RecomputeIndex();
+            this.state = state;
+        }
+        private void RecomputeIndex() {
+            this.index = new Dictionary<Symbol, int> { };
+            for (int i = 0; i < this.species.Count; i++) { this.index[this.species[i].symbol] = i; }
+        }
+        public bool HasSpecies(Symbol species, out int index) {
+            index = 0;
+            foreach (SpeciesValue s in this.species) {
+                if (s.symbol.SameSymbol(species)) return true;
+                index++;
+            }
+            return false;
+        }
+        public double Molarity(Symbol species, Style style) { // checks if species exists
+            if (this.HasSpecies(species, out int index)) return this.state.Mean(index);
+            else throw new Error("Uninitialized species '" + species.Format(style) + "' in sample '" + this.sample.Format(style) + "'");
+        }
+        public double Mean(Symbol species) {
+            return this.state.Mean(this.index[species]);
+        }
+        public double Covar(Symbol species1, Symbol species2) {
+            return this.state.Covar(this.index[species1], this.index[species2]);
+        }
+        //public void AddSpecies(SpeciesValue species, double molarity, Style style) {
+        //    if (this.HasSpecies(species.symbol, out int index))
+        //        throw new Error("AddSpecies: Repeated amount of '" + species.Format(style) + "' in sample '" + this.sample.Format(style) + "' with value " + style.FormatDouble(molarity));
+        //    else if (molarity < 0)
+        //        throw new Error("AddSpecies: Amount of '" + species.Format(style) + "' in sample '" + this.sample.Format(style) + "' must be non-negative: " + style.FormatDouble(molarity));
+        //    else {
+        //        this.species.Add(species);
+        //        RecomputeIndex();
+        //        this.state = this.state.Add(molarity);
+        //    }
+        //}
+        public void AddDimensionedSpecies(SpeciesValue species, double molarity, string dimension, double volume, Style style) {
+            if (this.HasSpecies(species.symbol, out int index))
+                throw new Error("Repeated amount of '" + species.Format(style) + "' in sample '" + this.sample.Format(style) + "' with value " + style.FormatDouble(molarity));
+            else if (molarity < 0)
+                throw new Error("Amount of '" + species.Format(style) + "' in sample '" + this.sample.Format(style) + "' must be non-negative: " + style.FormatDouble(molarity));
+            else {
+                this.species.Add(species);
+                RecomputeIndex();
+                this.state = this.state.Extend(1);
+                this.state.MixMean(this.state.size-1, Normalize(species, molarity, dimension, volume, style));
+            }
+        }
+        //public void MixSpecies(SampleValue other, double thisVolume, double otherVolume, Style style) { // mix the species of another sample into this one
+        //    foreach (SpeciesValue otherSpecies in other.stateMap.species) { 
+        //        double otherMolarity = (other.stateMap.Molarity(otherSpecies.symbol, style) * otherVolume) / thisVolume;
+        //        if (this.HasSpecies(otherSpecies.symbol, out int index)) {
+        //            this.state.AddMean(index, otherMolarity);
+        //        } else {
+        //            this.species.Add(otherSpecies);
+        //            RecomputeIndex();
+        //            this.state = this.state.Add(otherMolarity);
+        //        }
+        //    }
+        //}
+        public void MixMean(Symbol species, double x) {
+            this.state.MixMean(index[species], x);
+        }
+        public void MixCovar(Symbol species1, Symbol species2, double x) {
+            this.state.MixCovar(index[species1], index[species2], x);
+        }
+        public void Mix(StateMap other, double thisVolume, double otherVolume, Style style) { // mix another stateMap into this one
+            int n = 0;
+            foreach (SpeciesValue otherSpecies in other.species)
+                if (!this.HasSpecies(otherSpecies.symbol, out int i)) {
+                    this.species.Add(otherSpecies);
+                    n++;
+                }
+            RecomputeIndex();
+            if (n > 0) this.state = this.state.Extend(n);
+            foreach (SpeciesValue otherSpecies in other.species) {
+                double otherMean = (other.Mean(otherSpecies.symbol) * otherVolume) / thisVolume;  // Mean is scaled w.r.t. new volume
+                MixMean(otherSpecies.symbol, otherMean);
+                if (this.state.lna && other.state.lna) {
+                    foreach (SpeciesValue otherSpecies2 in other.species) {
+                        double otherCovar = (other.Covar(otherSpecies.symbol, otherSpecies2.symbol) * otherVolume) / thisVolume; // Covar is similarly scaled w.r.t. new volume
+                        MixCovar(otherSpecies.symbol, otherSpecies2.symbol, otherCovar);
+                    }
+                }
+            }
+        }
+        public double Normalize(SpeciesValue species, double value, string dimension, double volume, Style style) {
+            double normal;
+            normal = Protocol.NormalizeMolarity(value, dimension);
+            if (normal >= 0) return normal; // value had dimension M = mol/L
+            normal = Protocol.NormalizeMole(value, dimension);
+            if (normal >= 0) return normal / volume; // value had dimension mol, convert it to M = mol/L
+            normal = Protocol.NormalizeWeight(value, dimension);
+            if (normal >= 0) {
+                if (species.HasMolarMass())
+                    return (normal / species.MolarMass()) / volume;    // value had dimension g, convert it to M = (g/(g/M))/L
+                throw new Error("Species '" + species.Format(style)
+                    + "' was given no molar mass, hence its amount in sample '" + this.sample.Format(style)
+                    + "' should have dimension 'M' (concentration) or 'mol' (mole), not '" + dimension + "'");
+            }
+            throw new Error("Invalid dimension '" + dimension + "'" + " or dimension value " + style.FormatDouble(value));
+        }
+    }
 
     public class State {
-        private int size;
-        private bool lna;
-        private double[] state;
-        private bool inited;
+        public int size;       // number of species
+        public bool lna;       // whether covariances are included
+        private double[] state; // of length size if not lna, of length size+size*size if lna; only allocated if inited=true
+        private bool inited;    // whether state is allocated
         public State(int size, bool lna = false) {
             this.size = size;
             this.lna = lna;
+            this.state = new double[0];
             this.inited = false;
+        }
+        public State Clone() {
+            double[] clone = new double[state.Length];
+            for (int i = 0; i < state.Length; i++) clone[i] = state[i];
+            return new State(this.size, this.lna).InitAll(clone);
+        }
+        public State Positive() {
+            for (int i = 0; i < size; i++) {
+                if (state[i] < 0) state[i] = 0; // the ODE solver screwed up
+            }
+            return this;
         }
         public State InitZero() {
             if (this.inited) throw new Error("InitZero: already inited");
@@ -369,47 +493,55 @@ namespace Kaemika
             this.inited = true;
             return this;
         }
-        public double[] ToArray() {
+        //public State Add(double molarity) {
+        //    State newState = new State(this.size + 1, lna: this.lna).InitZero();
+        //    // copy the old means:
+        //    for (int i = 0; i < this.size; i++) newState.MixMean(i, this.Mean(i));
+        //    // the mean of the new state component is set to molarity:
+        //    newState.MixMean(this.size, molarity);
+        //    if (this.lna) {
+        //        // copy the old covariances:
+        //        for (int i = 0; i < this.size; i++)
+        //            for (int j = 0; j < this.size; j++)
+        //                newState.MixCovar(i, j, this.Covar(i, j));
+        //        // the covariance of the new state component with all the other components remains zero
+        //    }
+        //    return newState;
+        //}
+        public State Extend(int n) {
+            State newState = new State(this.size + n, lna: this.lna).InitZero();
+            // copy the old means:
+            for (int i = 0; i < this.size; i++) newState.MixMean(i, this.Mean(i));
+            // the mean of the new state components remains zero
+            if (this.lna) {
+                // copy the old covariances:
+                for (int i = 0; i < this.size; i++)
+                    for (int j = 0; j < this.size; j++)
+                        newState.MixCovar(i, j, this.Covar(i, j));
+                // the covariance of the new state component with all the other components remains zero
+            }
+            return newState;
+        }
+        public double[] ToArray() {  // danger! does not copy the state
             return this.state;
-        }
-        public bool Lna() {
-            return lna;
-        }
-        public int Size() {
-            return size;
         }
         public double Mean(int i) {
             return this.state[i];
         }
-        public double[] RawMean() {
-            if (!this.lna) return this.state;
-            else {
-                double[] m = new double[size];
-                for (int i = 0; i < size; i++) m[i] = this.state[i];
-                return m;
-            }
-        }
         public Vector MeanVector() {
-            return new Vector(this.RawMean());
+            double[] m = new double[size];
+            for (int i = 0; i < size; i++) m[i] = this.state[i];
+            return new Vector(m);
         }
-        public Vector MeanArray() { // danger! abstraction-breaking, only to be used by Report when invoked via a rateFunction
-            return this.state;      // it needs to be this way because we need to give a Vector (not a State) to OSLO
-        }
-        public void AddMean(int i, double x) {
+        public void MixMean(int i, double x) {
             this.state[i] += x;
         }
-        public void AddMean(Vector x) {
+        public void MixMean(Vector x) {
             if (x.Length != size) throw new Error("AddMean: wrong size");
             for (int i = 0; i < size; i++) this.state[i] += x[i];
         }
         public double Covar(int i, int j) {
             return this.state[size + (i * size) + j];
-        }
-        public double[] RawCovar() {
-            if (!this.lna) throw new Error("Covars: not lna state");
-            double[] c = new double[size * size];
-            for (int i = 0; i < size * size; i++) c[i] = this.state[size + i];
-            return c;
         }
         public Matrix CovarMatrix() {
             if (!this.lna) throw new Error("Covars: not lna state");
@@ -419,10 +551,10 @@ namespace Kaemika
                     m[i, j] = this.state[size + (i * size) + j];
             return new Matrix(m);
         }
-        public void AddCovar(int i, int j, double x) {
+        public void MixCovar(int i, int j, double x) {
             this.state[size + (i * size) + j] += x;
         }
-        public void AddCovar(Matrix x) {
+        public void MixCovar(Matrix x) {
             for (int i = 0; i < size; i++)
                 for (int j = 0; j < size; j++)
                     this.state[size + (i * size) + j] += x[i, j];
@@ -487,7 +619,6 @@ namespace Kaemika
                 else if (((OperatorValue)this).name == "volume") return new OpFlow("volume", false, new List<Flow>());
                 else return null;
             } else return null;
-
         }
     }
 
@@ -495,33 +626,32 @@ namespace Kaemika
         public Symbol symbol;
         private NumberValue volume;                                 // L
         private NumberValue temperature;                            // Kelvin
-        private Dictionary<SpeciesValue, NumberValue> speciesSet;   // mol/L
-        public List<SpeciesValue> species;
-        public Dictionary<Symbol, int> speciesIndex;
+        public StateMap stateMap;                                  // maps species to mol/L
         private bool produced; // produced by an operation as opposed as being created as a sample
         private bool consumed; // consumed by an operation, including dispose
         private List<ReactionValue> reactionsAsConsumed;
         private double timeAsConsumed;
         private State stateAsConsumed;
-        public SampleValue(Symbol symbol, NumberValue volume, NumberValue temperature, bool produced) {
+        public SampleValue(Symbol symbol, StateMap stateMap, NumberValue volume, NumberValue temperature, bool produced) {
             this.type = new Type("sample");
             this.symbol = symbol;
             this.volume = volume;           // mL
             this.temperature = temperature; // Kelvin
-            this.speciesSet = new Dictionary<SpeciesValue, NumberValue> { };
-            this.species = new List<SpeciesValue> { };
-            this.speciesIndex = new Dictionary<Symbol, int> { };
+            this.stateMap = stateMap;
             this.produced = produced;
             this.consumed = false;
             this.reactionsAsConsumed = null;
             this.timeAsConsumed = 0.0;
             this.stateAsConsumed = null;
         }
+        public int Count() {
+            return stateMap.species.Count;
+        }
         public void Consume(List<ReactionValue> reactionsAsConsumed, double timeAsConsumed, State stateAsConsumed, Netlist netlist, Style style) {
             if (this.consumed) throw new Error("Sample already used: '" + this.symbol.Format(style) + "'");
             this.consumed = true;
             this.timeAsConsumed = timeAsConsumed;
-            this.stateAsConsumed = (stateAsConsumed == null) ? SpeciesState() : stateAsConsumed;
+            this.stateAsConsumed = (stateAsConsumed == null) ? stateMap.state.Clone() : stateAsConsumed;
             this.reactionsAsConsumed = (reactionsAsConsumed == null) ? RelevantReactions(netlist, style) : reactionsAsConsumed;
         }
         public List<ReactionValue> ReactionsAsConsumed(Style style) {
@@ -530,12 +660,7 @@ namespace Kaemika
         }
         public bool IsProduced() { return this.produced; }
         public bool IsConsumed() { return this.consumed; }
-        public SampleValue Copy() {
-            SampleValue copy = new SampleValue(this.symbol, this.volume, this.temperature, this.produced);
-            foreach (var pair in this.speciesSet) copy.SetMolarity(pair.Key, pair.Value, null, recompute: false);
-            copy.RecomputeSpecies();
-            return copy;
-        }
+
         public string FormatSymbol(Style style) {
             return symbol.Format(style);
         }
@@ -544,8 +669,23 @@ namespace Kaemika
         }
         public string FormatContent(Style style, bool breaks = false) {
             string s = "";
-            foreach (KeyValuePair<SpeciesValue, NumberValue> keyPair in this.speciesSet)
-                s += (breaks ? (Environment.NewLine + "   ") : "") + keyPair.Key.Format(style) + " = " + Gui.FormatUnit(keyPair.Value.value, "", "M", style.numberFormat);
+            foreach (SpeciesValue sp in this.stateMap.species)
+                s += (breaks ? (Environment.NewLine + "   ") : "") + sp.Format(style) + " = " + Gui.FormatUnit(stateMap.Mean(sp.symbol), "", "M", style.numberFormat);
+            if (this.stateMap.state.lna) {
+                for (int i = 0; i < stateMap.state.size; i++) {
+                    Symbol sp1 = stateMap.species[i].symbol;
+                    double mean = stateMap.Mean(sp1);
+                    for (int j = i; j < stateMap.state.size; j++) {
+                        Symbol sp2 = stateMap.species[j].symbol;
+                        double covar = stateMap.Covar(sp1, sp2);
+                        if (covar != 0) {
+                            s += (breaks ? (Environment.NewLine + "   ") : "");
+                            if (i == j) s += "V(" + sp1.Format(style) + ") = " + style.FormatDouble(covar) + ", Fano(" + sp1.Format(style) + ") = " + style.FormatDouble(covar / mean);
+                            else s += "C(" + sp1.Format(style) + "," + sp2.Format(style) + ") = " + style.FormatDouble(covar);
+                        }
+                    }
+                }
+            }
             return s;
         }
         public string FormatReactions(Style style, bool breaks = false) {
@@ -561,49 +701,6 @@ namespace Kaemika
             else if (style.dataFormat == "header") return "sample " + FormatHeader(style);
             else if (style.dataFormat == "full") return "sample " + FormatHeader(style) + " {" + FormatContent(style, true) + FormatReactions(style, true) + Environment.NewLine + "}";
             else return "unknown format: " + style.dataFormat;
-        }
-
-        public List<SpeciesValue> Species(out double[] state) {
-            int i = 0;
-            List<SpeciesValue> species = new List<SpeciesValue> { };
-            state = new double[speciesSet.Count];
-            foreach (var entry in this.speciesSet) {
-                species.Add(entry.Key);
-                state[i] = entry.Value.value;
-                i++;
-            }
-            return species;
-        }
-        public bool HasSpecies(Symbol species, out NumberValue value) { // check that speciesSet contains this species, by checking its variant by SameSymbol
-            foreach (KeyValuePair<SpeciesValue, NumberValue> keyPair in this.speciesSet) {
-                if (keyPair.Key.symbol.SameSymbol(species)) {
-                    value = keyPair.Value;
-                    return true;
-                }
-            }
-            value = null;
-            return false;
-        }
-        private void RecomputeSpecies() {
-            this.species = new List<SpeciesValue> { };
-            foreach (var entry in this.speciesSet) species.Add(entry.Key);
-            this.speciesIndex = new Dictionary<Symbol, int> { };
-            for (int i = 0; i < this.species.Count; i++) { this.speciesIndex[this.species[i].symbol] = i; }
-        }
-        public void AddSpecies(SampleValue other, double thisVolume, double otherVolume) { // add the species of another sample into this one
-            foreach (KeyValuePair<SpeciesValue, NumberValue> keyPair in other.speciesSet) {
-                double newConcentration = (keyPair.Value.value * otherVolume) / thisVolume;
-                if (this.HasSpecies(keyPair.Key.symbol, out NumberValue number))
-                    this.speciesSet[keyPair.Key] = new NumberValue(number.value + newConcentration);
-                else {
-                    this.speciesSet.Add(keyPair.Key, new NumberValue(newConcentration));
-                    RecomputeSpecies();
-                }
-            }
-        }
-        public State SpeciesState() {
-            var species = this.Species(out double[] s);
-            return new State(speciesSet.Count, true).InitMeans(s); // initialize all covariances to 0
         }
 
         public double TemperatureOp(Style style) {
@@ -637,7 +734,7 @@ namespace Kaemika
         //}
 
         public NumberValue Observe(Flow flow, Netlist netlist, Style style) {
-            if (!flow.CoveredBy(this.species, out Symbol notCovered)) throw new Error("observe : species '" + notCovered.Format(style) + "' in flow '" + flow.Format(style) + "' is not one of the species in sample '" + this.FormatSymbol(style));
+            if (!flow.CoveredBy(this.stateMap.species, out Symbol notCovered)) throw new Error("observe : species '" + notCovered.Format(style) + "' in flow '" + flow.Format(style) + "' is not one of the species in sample '" + this.FormatSymbol(style));
             double observeTime;
             State observeState;
             List<ReactionValue> observeReactions;
@@ -647,70 +744,20 @@ namespace Kaemika
                 observeReactions = this.reactionsAsConsumed;
             } else { // throw new Error("observe(" + this.symbol.Format(style) + ", " + flow.Format(style) + "): sample not disposed");
                 observeTime = 0;
-                observeState = SpeciesState();
+                observeState = stateMap.state;
                 observeReactions = RelevantReactions(netlist, style);
             }
             // maybe we should allow observing only samples that have been consumed; otherwise the RelevantReactions and Flux may be still incomplete
             CRN crn = new CRN(this, observeReactions);
             return new NumberValue(flow.ObserveMean(this, observeTime, observeState, ((double x, Vector st) => { return crn.Flux(x, st, style); }), style));
         }
-
-        public NumberValue Molarity(Symbol species, Style style) {
-            if (this.HasSpecies(species, out NumberValue value)) return value;
-            else throw new Error("Uninitialized species '" + species.Format(style) + "' in sample '" + this.symbol.Format(style) + "'");
-        }
-        public void SetMolarity(SpeciesValue species, NumberValue init, Style style, bool recompute = true) {
-            if (this.HasSpecies(species.symbol, out NumberValue value))
-                throw new Error("SetMolarity: Repeated amount of '" + species.Format(style) + "' in sample '" + this.symbol.Format(style) + "' with value " + init.Format(style));
-            else if (init.value < 0)
-                throw new Error("SetMolarity: Amount of '" + species.Format(style) + "' in sample '" + this.symbol.Format(style) + "' must be non-negative: " + init.Format(style));
-            else {
-                this.speciesSet.Add(species, init);
-                if (recompute) RecomputeSpecies();
-            }
-        }
-        public void InitMolarity(SpeciesValue species, NumberValue molarity, string dimension, Style style) {
-            double mol = molarity.value;
-            if (this.HasSpecies(species.symbol, out NumberValue value))
-                throw new Error("Repeated amount of '" + species.Format(style) + "' in sample '" + this.symbol.Format(style) + "' with value " + mol.ToString());
-            else if (mol < 0)
-                throw new Error("Amount of '" + species.Format(style) + "' in sample '" + this.symbol.Format(style) + "' must be non-negative: " + mol.ToString());
-            else {
-                this.speciesSet.Add(species, new NumberValue(Normalize(species, mol, dimension, style)));
-                RecomputeSpecies();
-            }
-        }
-        public void ChangeMolarity(SpeciesValue species, NumberValue molarity, string dimension, Style style) {
-            double mol = molarity.value;
-            if (mol < 0)
-                throw new Error("Species to change '" + species.Format(style) + "' in sample '" + this.symbol.Format(style) + "' must be non-negative: " + mol.ToString());
-            else if (this.HasSpecies(species.symbol, out NumberValue value)) {
-                this.speciesSet[species] = new NumberValue(Normalize(species, mol, dimension, style));
-            } else throw new Error("Species to change not found '" + species.Format(style) + "' in sample '" + this.symbol.Format(style) + "' with value " + mol.ToString());
-        }
-        private double Normalize(SpeciesValue species, double value, string dimension, Style style) {
-            double normal;
-            normal = Protocol.NormalizeMolarity(value, dimension);
-            if (normal >= 0) return normal; // value had dimension M = mol/L
-            normal = Protocol.NormalizeMole(value, dimension);
-            if (normal >= 0) return normal / this.Volume(); // value had dimension mol, convert it to M = mol/L
-            normal = Protocol.NormalizeWeight(value, dimension);
-            if (normal >= 0) {
-                if (species.HasMolarMass())
-                    return (normal / species.MolarMass()) / this.Volume();    // value had dimension g, convert it to M = (g/(g/M))/L
-                throw new Error("Species '" + species.Format(style)
-                    + "' was given no molar mass, hence its amount in sample '" + this.symbol.Format(style)
-                    + "' should have dimension 'M' (concentration) or 'mol' (mole), not '" + dimension + "'");
-            }
-            throw new Error("Invalid dimension '" + dimension + "'" + " or dimension value " + style.FormatDouble(value));
-        }
         public List<ReactionValue> RelevantReactions(Netlist netlist, Style style) { 
             // return the list of reactions in the netlist that can fire in this sample
             // check that those reactions produce only species in this sample, or give error
             List<ReactionValue> reactionList = new List<ReactionValue> { };
             foreach (ReactionValue reaction in netlist.AllReactions()) {
-                if (reaction.ReactantsCoveredBy(species, out Symbol notCoveredReactant)) {
-                    if (reaction.ProductsCoveredBy(species, out Symbol notCoveredProduct)) {
+                if (reaction.ReactantsCoveredBy(stateMap.species, out Symbol notCoveredReactant)) {
+                    if (reaction.ProductsCoveredBy(stateMap.species, out Symbol notCoveredProduct)) {
                         reactionList.Add(reaction);
                     } // else ignore because it is not relevant
                     //} else throw new Error( // N.B.: this would give a spurious error on reactions like # -> a where reactants are always covered
@@ -721,6 +768,237 @@ namespace Kaemika
             return reactionList;
         }
     }
+
+    //public class SampleValue : Value {
+    //    public Symbol symbol;
+    //    private NumberValue volume;                                 // L
+    //    private NumberValue temperature;                            // Kelvin
+    //    private Dictionary<SpeciesValue, NumberValue> speciesSet;   // mol/L     //### this should be replaced by a "State" (including lna info) indexed by the list "species"
+    //    public List<SpeciesValue> species;
+    //    public Dictionary<Symbol, int> speciesIndex;
+    //    private bool produced; // produced by an operation as opposed as being created as a sample
+    //    private bool consumed; // consumed by an operation, including dispose
+    //    private List<ReactionValue> reactionsAsConsumed;
+    //    private double timeAsConsumed;
+    //    private State stateAsConsumed;
+    //    public SampleValue(Symbol symbol, NumberValue volume, NumberValue temperature, bool produced) {
+    //        this.type = new Type("sample");
+    //        this.symbol = symbol;
+    //        this.volume = volume;           // mL
+    //        this.temperature = temperature; // Kelvin
+    //        this.speciesSet = new Dictionary<SpeciesValue, NumberValue> { };
+    //        this.species = new List<SpeciesValue> { };
+    //        this.speciesIndex = new Dictionary<Symbol, int> { };
+    //        this.produced = produced;
+    //        this.consumed = false;
+    //        this.reactionsAsConsumed = null;
+    //        this.timeAsConsumed = 0.0;
+    //        this.stateAsConsumed = null;
+    //    }
+    //    public void Consume(List<ReactionValue> reactionsAsConsumed, double timeAsConsumed, State stateAsConsumed, Netlist netlist, Style style) {
+    //        if (this.consumed) throw new Error("Sample already used: '" + this.symbol.Format(style) + "'");
+    //        this.consumed = true;
+    //        this.timeAsConsumed = timeAsConsumed;
+    //        this.stateAsConsumed = (stateAsConsumed == null) ? SpeciesState() : stateAsConsumed;
+    //        this.reactionsAsConsumed = (reactionsAsConsumed == null) ? RelevantReactions(netlist, style) : reactionsAsConsumed;
+    //    }
+    //    public List<ReactionValue> ReactionsAsConsumed(Style style) {
+    //        if (!consumed) throw new Error("Sample '" + symbol.Format(style) + "' should have been equilibrated and consumed");
+    //        return reactionsAsConsumed;
+    //    }
+    //    public bool IsProduced() { return this.produced; }
+    //    public bool IsConsumed() { return this.consumed; }
+    //    //public SampleValue Copy() {
+    //    //    SampleValue copy = new SampleValue(this.symbol, this.volume, this.temperature, this.produced);
+    //    //    foreach (var pair in this.speciesSet) copy.SetMolarity(pair.Key, pair.Value, null, recompute: false);
+    //    //    copy.RecomputeSpecies();
+    //    //    return copy;
+    //    //}
+    //    public string FormatSymbol(Style style) {
+    //        return symbol.Format(style);
+    //    }
+    //    public string FormatHeader(Style style) {
+    //        return symbol.Format(style) + " {" + Gui.FormatUnit(this.Volume(), "", "L", style.numberFormat) + ", " + temperature.Format(style) + "K}";
+    //    }
+    //    public string FormatContent(Style style, bool breaks = false) {
+    //        string s = "";
+    //        foreach (KeyValuePair<SpeciesValue, NumberValue> keyPair in this.speciesSet)
+    //            s += (breaks ? (Environment.NewLine + "   ") : "") + keyPair.Key.Format(style) + " = " + Gui.FormatUnit(keyPair.Value.value, "", "M", style.numberFormat);
+    //        return s;
+    //    }
+    //    public string FormatReactions(Style style, bool breaks = false) {
+    //        if (reactionsAsConsumed == null) return "";
+    //        string s = breaks ? (Environment.NewLine + "   consumed") : " (consumed) ";
+    //        foreach (ReactionValue reaction in reactionsAsConsumed)
+    //            s += (breaks ? (Environment.NewLine + "   ") : "") + reaction.Format(style);
+    //        return s;
+
+    //    }
+    //    public override string Format(Style style) {
+    //        if (style.dataFormat == "symbol") return symbol.Format(style);
+    //        else if (style.dataFormat == "header") return "sample " + FormatHeader(style);
+    //        else if (style.dataFormat == "full") return "sample " + FormatHeader(style) + " {" + FormatContent(style, true) + FormatReactions(style, true) + Environment.NewLine + "}";
+    //        else return "unknown format: " + style.dataFormat;
+    //    }
+
+    //    public List<SpeciesValue> Species(out double[] state) {
+    //        int i = 0;
+    //        List<SpeciesValue> species = new List<SpeciesValue> { };
+    //        state = new double[speciesSet.Count];
+    //        foreach (var entry in this.speciesSet) {
+    //            species.Add(entry.Key);
+    //            state[i] = entry.Value.value;
+    //            i++;
+    //        }
+    //        return species;
+    //    }
+    //    public bool HasSpecies(Symbol species, out NumberValue value) { // check that speciesSet contains this species, by checking its variant by SameSymbol
+    //        foreach (KeyValuePair<SpeciesValue, NumberValue> keyPair in this.speciesSet) {
+    //            if (keyPair.Key.symbol.SameSymbol(species)) {
+    //                value = keyPair.Value;
+    //                return true;
+    //            }
+    //        }
+    //        value = null;
+    //        return false;
+    //    }
+    //    private void RecomputeSpecies() {
+    //        this.species = new List<SpeciesValue> { };
+    //        foreach (var entry in this.speciesSet) species.Add(entry.Key);
+    //        this.speciesIndex = new Dictionary<Symbol, int> { };
+    //        for (int i = 0; i < this.species.Count; i++) { this.speciesIndex[this.species[i].symbol] = i; }
+    //    }
+    //    public void AddSpecies(SampleValue other, double thisVolume, double otherVolume) { // add the species of another sample into this one
+    //        foreach (KeyValuePair<SpeciesValue, NumberValue> keyPair in other.speciesSet) {
+    //            double newConcentration = (keyPair.Value.value * otherVolume) / thisVolume;
+    //            if (this.HasSpecies(keyPair.Key.symbol, out NumberValue number))
+    //                this.speciesSet[keyPair.Key] = new NumberValue(number.value + newConcentration);
+    //            else {
+    //                this.speciesSet.Add(keyPair.Key, new NumberValue(newConcentration));
+    //                RecomputeSpecies();
+    //            }
+    //        }
+    //    }
+    //    public State SpeciesState() { // N.B. this converts any state to an lna state
+    //        var species = this.Species(out double[] s);
+    //        return new State(speciesSet.Count, true).InitMeans(s); // initialize all covariances to 0
+    //    }
+
+    //    public double TemperatureOp(Style style) {
+    //        if (this.consumed) throw new Error("temperature(" + this.symbol.Format(style) + "): sample already disposed");
+    //        return Temperature();
+    //    }
+    //    public double Temperature() {
+    //        return this.temperature.value;
+    //    }
+    //    //public void ChangeTemperature(double newTemperature) {
+    //    //    this.temperature = new NumberValue(newTemperature);
+    //    //}
+
+    //    public double VolumeOp(Style style) {
+    //        if (this.consumed) throw new Error("volume(" + this.symbol.Format(style) + "): sample already disposed");
+    //        return Volume();
+    //    }
+    //    public double Volume() {
+    //        return volume.value;
+    //    }
+    //    //public void ChangeVolume(double newVolume) {  // evaporate or dilute
+    //    //    double oldVolume = this.Volume();
+    //    //    Dictionary<SpeciesValue, NumberValue> oldspeciesSet = this.speciesSet;
+    //    //    this.volume = new NumberValue(newVolume);
+    //    //    this.speciesSet = new Dictionary<SpeciesValue, NumberValue> ();
+    //    //    double ratio = oldVolume / newVolume;
+    //    //    foreach (KeyValuePair<SpeciesValue, NumberValue> keyPair in oldspeciesSet) {
+    //    //        this.speciesSet.Add(keyPair.Key, new NumberValue(keyPair.Value.value * ratio));
+    //    //    }
+    //    //    RecomputeSpecies();
+    //    //}
+
+    //    public NumberValue Observe(Flow flow, Netlist netlist, Style style) {
+    //        if (!flow.CoveredBy(this.species, out Symbol notCovered)) throw new Error("observe : species '" + notCovered.Format(style) + "' in flow '" + flow.Format(style) + "' is not one of the species in sample '" + this.FormatSymbol(style));
+    //        double observeTime;
+    //        State observeState;
+    //        List<ReactionValue> observeReactions;
+    //        if (consumed) { // throw new Error("observe(" + this.symbol.Format(style) + ", " + flow.Format(style) + "): sample already disposed");
+    //            observeTime = this.timeAsConsumed;
+    //            observeState = this.stateAsConsumed;
+    //            observeReactions = this.reactionsAsConsumed;
+    //        } else { // throw new Error("observe(" + this.symbol.Format(style) + ", " + flow.Format(style) + "): sample not disposed");
+    //            observeTime = 0;
+    //            observeState = SpeciesState();
+    //            observeReactions = RelevantReactions(netlist, style);
+    //        }
+    //        // maybe we should allow observing only samples that have been consumed; otherwise the RelevantReactions and Flux may be still incomplete
+    //        CRN crn = new CRN(this, observeReactions);
+    //        return new NumberValue(flow.ObserveMean(this, observeTime, observeState, ((double x, Vector st) => { return crn.Flux(x, st, style); }), style));
+    //    }
+
+    //    public NumberValue Molarity(Symbol species, Style style) {
+    //        if (this.HasSpecies(species, out NumberValue value)) return value;
+    //        else throw new Error("Uninitialized species '" + species.Format(style) + "' in sample '" + this.symbol.Format(style) + "'");
+    //    }
+    //    public void SetMolarity(SpeciesValue species, NumberValue init, Style style, bool recompute = true) {  // ###  renamed as AddSpecies
+    //        if (this.HasSpecies(species.symbol, out NumberValue value))
+    //            throw new Error("SetMolarity: Repeated amount of '" + species.Format(style) + "' in sample '" + this.symbol.Format(style) + "' with value " + init.Format(style));
+    //        else if (init.value < 0)
+    //            throw new Error("SetMolarity: Amount of '" + species.Format(style) + "' in sample '" + this.symbol.Format(style) + "' must be non-negative: " + init.Format(style));
+    //        else {
+    //            this.speciesSet.Add(species, init);
+    //            if (recompute) RecomputeSpecies();
+    //        }
+    //    }
+    //    public void InitMolarity(SpeciesValue species, NumberValue molarity, string dimension, Style style) { // ###  renamed as AddDimensionedSpecies
+    //        double mol = molarity.value;
+    //        if (this.HasSpecies(species.symbol, out NumberValue value))
+    //            throw new Error("Repeated amount of '" + species.Format(style) + "' in sample '" + this.symbol.Format(style) + "' with value " + mol.ToString());
+    //        else if (mol < 0)
+    //            throw new Error("Amount of '" + species.Format(style) + "' in sample '" + this.symbol.Format(style) + "' must be non-negative: " + mol.ToString());
+    //        else {
+    //            this.speciesSet.Add(species, new NumberValue(Normalize(species, mol, dimension, style)));
+    //            RecomputeSpecies();
+    //        }
+    //    }
+    //    //public void ChangeMolarity(SpeciesValue species, NumberValue molarity, string dimension, Style style) {
+    //    //    double mol = molarity.value;
+    //    //    if (mol < 0)
+    //    //        throw new Error("Species to change '" + species.Format(style) + "' in sample '" + this.symbol.Format(style) + "' must be non-negative: " + mol.ToString());
+    //    //    else if (this.HasSpecies(species.symbol, out NumberValue value)) {
+    //    //        this.speciesSet[species] = new NumberValue(Normalize(species, mol, dimension, style));
+    //    //    } else throw new Error("Species to change not found '" + species.Format(style) + "' in sample '" + this.symbol.Format(style) + "' with value " + mol.ToString());
+    //    //}
+    //    private double Normalize(SpeciesValue species, double value, string dimension, Style style) {
+    //        double normal;
+    //        normal = Protocol.NormalizeMolarity(value, dimension);
+    //        if (normal >= 0) return normal; // value had dimension M = mol/L
+    //        normal = Protocol.NormalizeMole(value, dimension);
+    //        if (normal >= 0) return normal / this.Volume(); // value had dimension mol, convert it to M = mol/L
+    //        normal = Protocol.NormalizeWeight(value, dimension);
+    //        if (normal >= 0) {
+    //            if (species.HasMolarMass())
+    //                return (normal / species.MolarMass()) / this.Volume();    // value had dimension g, convert it to M = (g/(g/M))/L
+    //            throw new Error("Species '" + species.Format(style)
+    //                + "' was given no molar mass, hence its amount in sample '" + this.symbol.Format(style)
+    //                + "' should have dimension 'M' (concentration) or 'mol' (mole), not '" + dimension + "'");
+    //        }
+    //        throw new Error("Invalid dimension '" + dimension + "'" + " or dimension value " + style.FormatDouble(value));
+    //    }
+    //    public List<ReactionValue> RelevantReactions(Netlist netlist, Style style) { 
+    //        // return the list of reactions in the netlist that can fire in this sample
+    //        // check that those reactions produce only species in this sample, or give error
+    //        List<ReactionValue> reactionList = new List<ReactionValue> { };
+    //        foreach (ReactionValue reaction in netlist.AllReactions()) {
+    //            if (reaction.ReactantsCoveredBy(species, out Symbol notCoveredReactant)) {
+    //                if (reaction.ProductsCoveredBy(species, out Symbol notCoveredProduct)) {
+    //                    reactionList.Add(reaction);
+    //                } // else ignore because it is not relevant
+    //                //} else throw new Error( // N.B.: this would give a spurious error on reactions like # -> a where reactants are always covered
+    //                //    "Reaction '" + reaction.Format(style) + "' produces species '" + notCoveredProduct.Format(style) + 
+    //                //    "' in sample '" + this.symbol.Format(style) + "', but that species is uninitialized in that sample");
+    //            } // else ignore reaction because it cannot fire
+    //        }
+    //        return reactionList;
+    //    }
+    //}
 
     public class SpeciesValue : Value {
         public Symbol symbol;
@@ -1010,7 +1288,7 @@ namespace Kaemika
         }
         public override double Action(SampleValue sample, List<Symbol> reactants, double time, Vector state, double temperature, Style style) {
             double action = this.Rate(temperature);
-            foreach (Symbol rs in reactants) action = action * state[sample.speciesIndex[rs]];
+            foreach (Symbol rs in reactants) action = action * state[sample.stateMap.index[rs]];
             return action;
         }
         public override bool Involves(List<SpeciesValue> species) { return false; }
@@ -1209,8 +1487,7 @@ namespace Kaemika
         public abstract bool HasStochasticMean();
         // = Can appear in LNA charts as means and variance. 
         // Inside var/cov only linear combinations of species are allowed, also because of issues like cov(poisson(X),poisson(X)) =? var(poisson(X))
-        public bool HasStochasticVariance() { return HasStochasticMean(); } // currently defined as HasStochasticMean
-        // public bool HasStochasticVariance() { return LinearCombination(); } // this prevents poisson(3) to appear in LNA report
+        public bool HasStochasticVariance() { return LinearCombination(); } // include poisson and gauss in LinearCombination so they can appear in LNA report
         // = Can appear in LNA charts as means and variance. 
         public abstract bool LinearCombination();
         // = Is a linear combination of species and time/kelvin/celsius flows only
@@ -1301,22 +1578,23 @@ namespace Kaemika
             throw new Error("Flow expression: bool expected instead of species: " + Format(style));
         }
         public override double ObserveMean(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) {
-            return state.Mean(sample.speciesIndex[this.species]);
+            return state.Mean(sample.stateMap.index[this.species]);
         }
         public override double ObserveVariance(SampleValue sample, double time, State state, Style style) {
-            if (!state.Lna()) throw new Error("Variance not supported in current state");
-            int i = sample.speciesIndex[this.species];
+            if (!state.lna) throw new Error("Variance not supported in current state");
+            int i = sample.stateMap.index[this.species];
             return state.Covar(i, i);
         }
         public override double ObserveCovariance(Flow other, SampleValue sample, double time, State state, Style style) {
-            if (!state.Lna()) throw new Error("Covariance not supported in current state");
+            if (!state.lna) throw new Error("Covariance not supported in current state");
             if (other is SpeciesFlow)
-                return state.Covar(sample.speciesIndex[this.species], sample.speciesIndex[((SpeciesFlow)other).species]);
+                return state.Covar(sample.stateMap.index[this.species], sample.stateMap.index[((SpeciesFlow)other).species]);
             else return other.ObserveCovariance(this, sample, time, state, style);
         }
         public override double ObserveDiff(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) {
             if (flux == null) throw new Error("Non differentiable: " + species.Format(style));
-            return flux(time, state.MeanVector())[sample.speciesIndex[this.species]];   //### to optimize this we should memoize flux(time, state.MeanVector()) for the latest time
+            return flux(time, state.ToArray())[sample.stateMap.index[this.species]];   //### to optimize this we should memoize flux(time, state.ToArray()) for the latest time
+            // we pass state.ToArray() instead of state.MeanVector() because we want to observe the Mean component also when the lna is on, otherwise we get an error later
         }
         public override bool HasDeterministicValue() { return true; }
         public override bool HasStochasticMean() { return true; }
@@ -1693,7 +1971,7 @@ namespace Kaemika
             if (arity == 0) {
                 return true; // "time", "kelvin", "celsius", "volume"
             } else if (arity == 1) { 
-                if (op == "∂") return true;
+                if (op == "∂") return true; // so can appear as mean in lna plots
                 else if (op == "var") return args[0].LinearCombination();
                 else return args[0].HasStochasticMean();  // including "poisson"
             } else if (arity == 2) { 
@@ -1709,11 +1987,11 @@ namespace Kaemika
         private bool CacheLinearCombination() {
             if (arity == 0) {
                 return true; // "time", "kelvin", "celsius", "volume"
-            } else if (arity == 1) {                                     // exclude (op == "var" || op == "poisson" || op == "∂" )
-                if (op == "-") return args[0].LinearCombination();
+            } else if (arity == 1) {                                     // exclude (op == "var" || op == "∂" )
+                if (op == "-" || op == "poisson") return args[0].LinearCombination();
                 else return false;
-            } else if (arity == 2) {                                     // exclude (op == "cov" || op == "gauss")
-                if (op == "+" || op == "-") return args[0].LinearCombination() && args[1].LinearCombination();
+            } else if (arity == 2) {                                     // exclude (op == "cov")
+                if (op == "+" || op == "-" || op == "gauss") return args[0].LinearCombination() && args[1].LinearCombination();
                 else if (op == "*") return args[0].LinearCombination() && args[1].LinearCombination() && (args[0].HasNullVariance() || args[1].HasNullVariance());
                 else return false;
             } else if (arity == 3) {
@@ -2600,7 +2878,9 @@ namespace Kaemika
             if (volumeValue <= 0) throw new Error("Sample volume must be positive: " + this.name);
             if (temperatureValue < 0) throw new Error("Sample temperature must be non-negative: " + this.name);
             Symbol symbol = new Symbol(name);
-            SampleValue sample = new SampleValue(symbol, new NumberValue(volumeValue), new NumberValue(temperatureValue), produced: false); 
+            SampleValue sample = new SampleValue(symbol, 
+                new StateMap(symbol, new List<SpeciesValue> { }, new State(0, false)), 
+                new NumberValue(volumeValue), new NumberValue(temperatureValue), produced: false); 
             netlist.Emit(new SampleEntry(sample));
             return new ValueEnv(symbol, null, sample, env);
         }
@@ -2929,7 +3209,7 @@ namespace Kaemika
             foreach (Variable var in this.vars) {
                 Value speciesValue = var.Eval(env, netlist, style);
                 if (!(speciesValue is SpeciesValue)) throw new Error("Amount " + this.FormatVars() + "has a non-species in the list of variables");
-                ((SampleValue)sampleValue).InitMolarity((SpeciesValue)speciesValue, (NumberValue)initialValue, this.dimension, style);
+                ((SampleValue)sampleValue).stateMap.AddDimensionedSpecies((SpeciesValue)speciesValue, ((NumberValue)initialValue).value, this.dimension, ((SampleValue)sampleValue).Volume(), style);
                 netlist.Emit(new AmountEntry((SpeciesValue)speciesValue, (NumberValue)initialValue, this.dimension, (SampleValue)sampleValue));
             }
             return env;

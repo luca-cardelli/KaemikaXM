@@ -56,6 +56,12 @@ namespace KaemikaXM.Droid {
             if (editText == null) return;
             editText.RequestFocus();
         }
+        public void ShowInputMethod() {
+            if (editText == null) return;
+            var imm = (Android.Views.InputMethods.InputMethodManager)(editText.Context.GetSystemService(Context.InputMethodService));
+            editText.RequestFocus(); // needed
+            imm.ShowSoftInput(editText, Android.Views.InputMethods.ShowFlags.Implicit);
+        }
         public void SelectAll() {
             if (editText == null) return;
             editText.SelectAll();

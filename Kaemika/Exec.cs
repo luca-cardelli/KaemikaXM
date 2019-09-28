@@ -147,7 +147,8 @@ namespace Kaemika {
         }
 
         public static SampleValue Vessel() {
-            return new SampleValue(new Symbol("vessel"), new NumberValue(1.0), new NumberValue(293.15), produced: false);
+            Symbol vessel = new Symbol("vessel");
+            return new SampleValue(vessel, new StateMap(vessel, new List<SpeciesValue> { }, new State(0, lna:false)), new NumberValue(1.0), new NumberValue(293.15), produced: false);
         }
 
         public static Dictionary<ExportAs, bool> exporterMutex = new Dictionary<ExportAs, bool>(); // only run one of each kind of export at once
@@ -205,10 +206,10 @@ namespace Kaemika {
 
                 // Windows only
                 } else if (exportAs == ExportAs.MSRC_LBS) { // export only the vessel
-                    Gui.gui.OutputAppendText(Export.MSRC_LBS(execution.netlist.Reports(execution.vessel.species), execution.vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.LBS, traceComputational: false)));
+                    Gui.gui.OutputAppendText(Export.MSRC_LBS(execution.netlist.Reports(execution.vessel.stateMap.species), execution.vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.LBS, traceComputational: false)));
                     try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
                 } else if (exportAs == ExportAs.MSRC_CRN) { // export only the vessel
-                    Gui.gui.OutputAppendText(Export.MSRC_CRN(execution.netlist.Reports(execution.vessel.species), execution.vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.CRN, traceComputational: false)));
+                    Gui.gui.OutputAppendText(Export.MSRC_CRN(execution.netlist.Reports(execution.vessel.stateMap.species), execution.vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.CRN, traceComputational: false)));
                     try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
                 } else if (exportAs == ExportAs.ODE) { // export only the vessel
                     Gui.gui.OutputAppendText(Export.ODE(execution.vessel, new CRN(execution.vessel, execution.vessel.ReactionsAsConsumed(execution.style), precomputeLNA: false),

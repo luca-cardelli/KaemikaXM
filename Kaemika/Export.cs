@@ -109,10 +109,10 @@ namespace Kaemika {
         private static string MSRC_LBSbody(SampleValue sample, Style style) {
             string body = "";
             string tail = "";
-            List<SpeciesValue> speciesList = sample.species;
+            List<SpeciesValue> speciesList = sample.stateMap.species;
             List<ReactionValue> reactionList = sample.ReactionsAsConsumed(style);
             foreach (SpeciesValue species in speciesList) {
-                body = body + tail + "init " + species.Format(style) + " " + sample.Molarity(species.symbol, style).Format(style);
+                body = body + tail + "init " + species.Format(style) + " " + style.FormatDouble(sample.stateMap.Molarity(species.symbol, style));
                 tail = " |" + Environment.NewLine;
             }
             foreach (ReactionValue reaction in reactionList) {
@@ -179,10 +179,10 @@ namespace Kaemika {
         }
         private static string ODE_Initializations(SampleValue sample, Style style) {
             string inits = "";
-            List<SpeciesValue> speciesList = sample.species;
+            List<SpeciesValue> speciesList = sample.stateMap.species;
             foreach (SpeciesValue species in speciesList) {
                 inits = inits + "init " + species.Format(style) + " = " 
-                    + sample.Molarity(species.symbol, style).value.ToString() + Environment.NewLine;
+                    + sample.stateMap.Molarity(species.symbol, style).ToString() + Environment.NewLine;
             }
             return inits;
         }
@@ -555,7 +555,7 @@ namespace Kaemika {
             public string Format(Style style) {
                 string s = "";
                 foreach (SampleValue sample in samples) {
-                    if (sample.species.Count > 0)
+                    if (sample.Count() > 0)
                         s += sample.Format(style) + ", " + Environment.NewLine;
                 }
                 if (s.Length > 0) s = s.Substring(0, s.Length - 3);

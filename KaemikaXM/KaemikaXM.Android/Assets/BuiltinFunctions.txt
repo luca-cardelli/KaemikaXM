@@ -1,4 +1,14 @@
 ﻿//======================================
+// UNDO text changes
+//======================================
+
+"Hacker's Keyboard" (a keyboard alternative 
+from the Play Store that selectably replaces 
+the built-in keyboard) supports undo via 
+Ctrl-Z, as well as Ctrl-X/C/V. There is no 
+other known way to undo text on Android.
+
+//======================================
 // Builtin functions and operators
 //======================================
 

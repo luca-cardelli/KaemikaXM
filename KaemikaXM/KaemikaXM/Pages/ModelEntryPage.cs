@@ -14,9 +14,26 @@ namespace KaemikaXM.Pages {
         public ToolbarItem editItem;
         public ToolbarItem pasteAllItem;
         public ToolbarItem copyAllItem;
+        public Grid topBar;
+        public Grid bottomBar;
         public Picker noisePicker;
         public Picker subPicker;
         public Picker supPicker;
+        public Picker mathPicker;
+        public Button spamSpecies;
+        public Button spamAt;
+        public Button spamNumber;
+        public Button spamEq;
+        public Button spamPlus;
+        public Button spamArrow;
+        public Button spamBiArrow;
+        public Button spamSharp;
+        public Button spamCatal;
+        public Button spamBra;
+        public Button spamKet;
+        //public Button spamComma;
+        public Button spamReport;
+        public Button spamEquil;
         public Noise noisePickerSelection = Noise.None;
         public ImageButton startButton;
 
@@ -24,6 +41,7 @@ namespace KaemikaXM.Pages {
             return
                 new ToolbarItem("Edit", "icons8pencil96", async () => {
                     SetModel(modelInfo.Copy(), editable: true);
+                    (editor as ICustomTextEdit).ShowInputMethod();
                 });
         }
         public ToolbarItem PasteAllItem() {
@@ -142,48 +160,38 @@ namespace KaemikaXM.Pages {
 
         string[] subscripts = new string[] { "_", "₊", "₋", "₌", "₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉", "₍", "₎"};
         string[] superscripts = new string[] { "\'", "⁺", "⁻", "⁼", "⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹", "⁽", "⁾"};
-        public Picker SubPicker() {
-            Picker charPicker = new Picker {
-                Title = "Sub", TitleColor = MainTabbedPage.barColor,
+        string[] math = new string[] { "(", ")", "-", "*", "/", "^", ">", "<", ">=", "<=", "<>", "∂", "μ", "pi", "e", "time", "var", "cov", "poisson", "gauss", "true", "false", "not", "and", "or", "abs", "arccos", "arcsin", "arctan", "arctan2", "ceiling", "cos", "cosh", "exp", "floor", "int", "log", "max", "min", "pos", "sign", "sin", "sinh", "sqrt", "tan", "tanh" };
+        public Picker SymbolPicker(string title, int fontSize, string[] items) {
+            Picker symbolPicker = new Picker {
+                Title = title, TitleColor = MainTabbedPage.barColor,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
                 BackgroundColor = MainTabbedPage.pickerColor,
-                FontSize = 9,
+                FontSize = fontSize,
                 TextColor = Color.Black,
             };
-            foreach (string s in subscripts) charPicker.Items.Add(s);
-            charPicker.Unfocused += async (object sender, FocusEventArgs e) => {
-                if (charPicker.SelectedItem != null)
-                    (editor as ICustomTextEdit).InsertText(charPicker.SelectedItem as string);
-                charPicker.SelectedItem = null;
+            foreach (string s in items) symbolPicker.Items.Add(s);
+            symbolPicker.Unfocused += async (object sender, FocusEventArgs e) => {
+                if (symbolPicker.SelectedItem != null) {
+                    (editor as ICustomTextEdit).InsertText(symbolPicker.SelectedItem as string);
+                    (editor as ICustomTextEdit).SetFocus(); //otherwise focus remains on picker, even if it is now closed, and typing reactivates picker
+                }
+                symbolPicker.SelectedItem = null;
             };
-            return charPicker;
+            return symbolPicker;
         }
-        public Picker SupPicker() {
-            Picker charPicker = new Picker {
-                Title = "Sup", TitleColor = MainTabbedPage.barColor,
+        public Button BtnInsertText(ICustomTextEdit editor, string title, int fontSize, string str) {
+            Button button = new Button() { Margin = 0, BorderWidth = 0, Padding = 0, 
+                Text = title,
+                HeightRequest = MainTabbedPage.buttonHeightRequest,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = MainTabbedPage.pickerColor,
-                FontSize = 9,
-                TextColor = Color.Black,
+                BackgroundColor = MainTabbedPage.secondBarColor,
+                FontSize = fontSize,
             };
-            foreach (string s in superscripts) charPicker.Items.Add(s);
-            charPicker.Unfocused += async (object sender, FocusEventArgs e) => {
-                if (charPicker.SelectedItem != null)
-                    (editor as ICustomTextEdit).InsertText(charPicker.SelectedItem as string);
-                charPicker.SelectedItem = null;
+            button.Clicked += async (object sender, EventArgs e) => {
+                editor.InsertText(str);
+                editor.ShowInputMethod();
             };
-            return charPicker;
-        }
-        public Grid CharPickers(Picker subPicker, Picker supPicker, Picker noisePicker) {
-            Grid charPickers = new Grid { RowSpacing = 0, Margin = 0 };
-            charPickers.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            charPickers.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            charPickers.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });
-            charPickers.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            charPickers.Children.Add(subPicker, 0, 0);
-            charPickers.Children.Add(noisePicker, 1, 0);
-            charPickers.Children.Add(supPicker, 2, 0);
-            return charPickers;
+            return button;
         }
 
         public Grid stepper;
@@ -236,13 +244,68 @@ namespace KaemikaXM.Pages {
                 async (ICustomTextEdit textEdit) => { if (modelInfo.modified) SaveEditor(); });
 
             noisePicker = NoisePicker();
-            subPicker = SubPicker(); subPicker.IsVisible = false;
-            supPicker = SupPicker(); supPicker.IsVisible = false;
+            subPicker = SymbolPicker("Sub", 7, subscripts); 
+            supPicker = SymbolPicker("Sup", 7, superscripts);
+            mathPicker = SymbolPicker(" ∑ ", 12, math);
+            spamSpecies = BtnInsertText((editor as ICustomTextEdit), "species", 8, "species "); 
+            spamAt = BtnInsertText((editor as ICustomTextEdit), "@", 12, " @ "); 
+            spamNumber = BtnInsertText((editor as ICustomTextEdit), "number", 8, "number "); 
+            spamEq = BtnInsertText((editor as ICustomTextEdit), "=", 12, " = "); 
+            spamPlus = BtnInsertText((editor as ICustomTextEdit), "+", 12, " + "); 
+            spamArrow = BtnInsertText((editor as ICustomTextEdit), "->", 12, " -> "); 
+            spamBiArrow = BtnInsertText((editor as ICustomTextEdit), "<->", 12, " <-> "); 
+            spamSharp = BtnInsertText((editor as ICustomTextEdit), "#", 12, "#"); 
+            spamCatal = BtnInsertText((editor as ICustomTextEdit), ">>", 12, " >> "); 
+            spamBra = BtnInsertText((editor as ICustomTextEdit), "{", 12, "{"); 
+            spamKet = BtnInsertText((editor as ICustomTextEdit), "}", 12, "}"); 
+            spamReport = BtnInsertText((editor as ICustomTextEdit), "report", 8, "report ");
+            //spamComma = BtnInsertText((editor as ICustomTextEdit), ",", 12, ", ");
+            spamEquil = BtnInsertText((editor as ICustomTextEdit), "equilib.", 8, "equilibrate for ");
             startButton = StartButton(switchToChart: true, switchToOutput: false);
             stepper = TextSizeStepper(editor as ICustomTextEdit);
 
+            int topBarPadding = 0;
+            topBar = new Grid { RowSpacing = 0, ColumnSpacing = 0,  Padding = topBarPadding };
+            topBar.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            topBar.BackgroundColor = MainTabbedPage.secondBarColor;
+            topBar.IsVisible = false;
+
+            topBar.Children.Add(spamSpecies, 0, 0);
+            topBar.Children.Add(spamAt, 1, 0);
+            topBar.Children.Add(spamNumber, 2, 0);
+            topBar.Children.Add(spamEq, 3, 0);
+            topBar.Children.Add(spamPlus, 4, 0);
+            topBar.Children.Add(spamArrow, 5, 0);
+            topBar.Children.Add(spamBiArrow, 6, 0);
+            topBar.Children.Add(spamSharp, 7, 0);
+            topBar.Children.Add(spamCatal, 8, 0);
+            topBar.Children.Add(spamBra, 9, 0);
+            topBar.Children.Add(spamKet, 10, 0);
+            topBar.Children.Add(spamReport, 11, 0);
+            topBar.Children.Add(spamEquil, 12, 0);
+            topBar.Children.Add(subPicker, 13, 0);
+            topBar.Children.Add(supPicker, 14, 0);
+            topBar.Children.Add(mathPicker, 15, 0);
+            //topBar.Children.Add(spamComma, xx, 0);
+
             int bottomBarPadding = 4;
-            Grid bottomBar = new Grid { RowSpacing = 0, Padding = bottomBarPadding };
+            bottomBar = new Grid { RowSpacing = 0, Padding = bottomBarPadding };
             bottomBar.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -250,17 +313,21 @@ namespace KaemikaXM.Pages {
             bottomBar.BackgroundColor = MainTabbedPage.secondBarColor;
 
             bottomBar.Children.Add(stepper, 0, 0);
-            //bottomBar.Children.Add(noisePicker, 1, 0);
-            bottomBar.Children.Add(CharPickers(subPicker, supPicker, noisePicker), 1, 0);
+            bottomBar.Children.Add(noisePicker, 1, 0);
             bottomBar.Children.Add(startButton, 2, 0);
 
             Grid grid = new Grid { ColumnSpacing = 0 };
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(startButton.HeightRequest+2*bottomBarPadding) });
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(spamSpecies.HeightRequest+2*topBarPadding) });  // top bar
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });                           // editor
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(startButton.HeightRequest+2*bottomBarPadding) });   // bottom bar
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            grid.Children.Add(editor, 0, 0);
-            grid.Children.Add(bottomBar, 0, 1);
+            grid.Children.Add(topBar, 0, 0);
+            grid.Children.Add(editor, 0, 1);
+            grid.Children.Add(bottomBar, 0, 2);
+
+            //grid.Children.Add(editor, 0, 0);
+            //grid.Children.Add(bottomBar, 0, 1);
 
             Content = grid;
         }
@@ -272,8 +339,7 @@ namespace KaemikaXM.Pages {
             (editor as ICustomTextEdit).SetEditable(editable);
             editItem.IsEnabled = !editable;
             pasteAllItem.IsEnabled = editable;
-            subPicker.IsVisible = editable;
-            supPicker.IsVisible = editable;
+            topBar.IsVisible = editable;
         }
 
         public string GetText() {

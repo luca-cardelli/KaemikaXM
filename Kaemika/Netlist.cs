@@ -320,19 +320,19 @@ namespace Kaemika
             this.temperature = sample.Temperature();
             this.reactions = reactions;
             this.trivial = true;
-            this.stoichio = new Matrix(new double[sample.species.Count, this.reactions.Count]);
-            for (int s = 0; s < sample.species.Count; s++) {
+            List<SpeciesValue> species = sample.stateMap.species;
+            this.stoichio = new Matrix(new double[species.Count, this.reactions.Count]);
+            for (int s = 0; s < species.Count; s++) {
                 for (int r = 0; r < reactions.Count; r++) {
-                    stoichio[s, r] = reactions[r].NetStoichiometry(sample.species[s].symbol);
+                    stoichio[s, r] = reactions[r].NetStoichiometry(species[s].symbol);
                     if (stoichio[s, r] != 0) this.trivial = false;
                 }
             }
             this.driftFactor = null;
             if (precomputeLNA) {
-                int speciesCount = sample.species.Count;
-                driftFactor = new double[speciesCount, speciesCount, reactions.Count];
-                for (int i = 0; i < speciesCount; i++)
-                    for (int j = 0; j < speciesCount; j++)
+                driftFactor = new double[species.Count, species.Count, reactions.Count];
+                for (int i = 0; i < species.Count; i++)
+                    for (int j = 0; j < species.Count; j++)
                         for (int r = 0; r < reactions.Count; r++)
                             driftFactor[i, j, r] = stoichio[i, r] * stoichio[j, r];
             }
@@ -341,7 +341,7 @@ namespace Kaemika
         public string Format(Style style) {
             string str = "CRN species = {";
             string s1 = "";
-            foreach (SpeciesValue sp in sample.species) { s1 += sp.Format(style) + ", "; }
+            foreach (SpeciesValue sp in sample.stateMap.species) { s1 += sp.Format(style) + ", "; }
             if (s1.Length > 0) s1 = s1.Substring(0, s1.Length - 2); // remove last comma
             str += s1 + "}, reactions = {";
             string s2 = "";
@@ -354,12 +354,12 @@ namespace Kaemika
         public string FormatStoichiometry(Style style) {
             string str = "CRN species = [";
             string s1 = "";
-            foreach (SpeciesValue sp in sample.species) { s1 += sp.Format(style) + " "; }
+            foreach (SpeciesValue sp in sample.stateMap.species) { s1 += sp.Format(style) + " "; }
 
             str += s1 + "]" + Environment.NewLine + "stoichiometry = [" + Environment.NewLine;
             string s2 = "";
             for (int r = 0; r <= reactions.Count -1; r++) {
-                for (int s = 0; s <= sample.species.Count - 1; s++) {
+                for (int s = 0; s <= sample.Count() - 1; s++) {
                     s2 += stoichio[s, r].ToString() + " ";
                 }
                 s2 += Environment.NewLine;
@@ -427,16 +427,16 @@ namespace Kaemika
             Flow[] flows = FluxFlows();
             string ODEs = "";
             for (int speciesIx = 0; speciesIx < flows.Length; speciesIx++) {
-                SpeciesValue variable = sample.species[speciesIx];
+                SpeciesValue variable = sample.stateMap.species[speciesIx];
                 ODEs = ODEs + prefixDiff + variable.Format(style) + suffixDiff + " = " + flows[speciesIx].TopFormat(style) + Environment.NewLine;
             }
             return ODEs;
         }
 
         public Flow[] FluxFlows() {
-            Flow[] flows = new Flow[sample.species.Count];
+            Flow[] flows = new Flow[sample.Count()];
             for (int speciesIx = 0; speciesIx < flows.Length; speciesIx++) {
-                SpeciesValue variable = sample.species[speciesIx];
+                SpeciesValue variable = sample.stateMap.species[speciesIx];
                 Flow polynomial = NumberFlow.numberFlowZero;
                 foreach (ReactionValue reaction in this.reactions) {
                     Flow monomial = NumberFlow.numberFlowOne;
@@ -445,7 +445,7 @@ namespace Kaemika
                     else {
                         if (reaction.rate is MassActionRateValue) {
                             double rate = ((MassActionRateValue)reaction.rate).Rate(this.temperature);
-                            foreach (SpeciesValue sp in sample.species) {
+                            foreach (SpeciesValue sp in sample.stateMap.species) {
                                 int spStoichio = reaction.Stoichiometry(sp.symbol, reaction.reactants);
                                 monomial = OpFlow.Op("*", monomial, OpFlow.Op("^", new SpeciesFlow(sp.symbol), new NumberFlow(spStoichio)));
                             }
@@ -473,19 +473,19 @@ namespace Kaemika
         }
 
         public double[] LNAFlux(double time, double[] state, Style style) {  
-            State allState = new State(sample.species.Count, true).InitAll(state);
+            State allState = new State(sample.Count(), lna: true).InitAll(state);
             Vector meanState = allState.MeanVector();                                             // first part of state is the means
             Matrix covarState = allState.CovarMatrix();                                           // second part of state is the covariances
             Vector action = Action(time, meanState, style);                                       // the mass action of all reactions in this state
             double[] actionA = action.ToArray();
-            State result = new State(sample.species.Count, true).InitZero();
+            State result = new State(sample.Count(), lna: true).InitZero();
 
             // fill the first part of deriv - the means     
-            result.AddMean(stoichio * action);                                                     // Mass Action equation
+            result.MixMean(stoichio * action);                                                     // Mass Action equation
 
             // fill the second part of deriv - the covariances                                
             Matrix J = NordsieckState.Jacobian((t, x) => Flux(t, x, style), meanState, 0.0);       // The Jacobian of the flux in this state
-            result.AddCovar((J * covarState) + (covarState * J.Transpose()) + Drift(actionA));     // LNA equation
+            result.MixCovar((J * covarState) + (covarState * J.Transpose()) + Drift(actionA));     // LNA equation
 
             return result.ToArray();
         }
@@ -494,7 +494,7 @@ namespace Kaemika
         // Performance critical inner loop
         private static double[][] w = null;                           // if indexed like this, OSLO will not copy it again on new Matrix(w)
         private Matrix Drift(double[] actionA) {                      // pass an array to avoid expensive Vector accesses
-            int speciesCount = sample.species.Count;
+            int speciesCount = sample.Count();
             int reactionsCount = reactions.Count;
             if (w == null || w.GetLength(0) != speciesCount) {
                 w = new double[speciesCount][]; for (int i = 0; i < speciesCount; i++) w[i] = new double[speciesCount];

@@ -1,69 +1,28 @@
 //======================================
-// A chemical realization of a 
-// High-Pass-Filter  
-// (https://arxiv.org/abs/1812.03308)
-// tested on a sine input 
-// at its cutoff frequency
+// Build a reaction network
 //======================================
 
-network HighPassFilter(species vA⁺ vA⁻ vB⁺ vB⁻) {
-	number h = 0.01
-	number p = 1/(1+h)
-	number q = 1/(h+h*h)
-	number r = 1/h
-	number ann = r
-	
-	species i⁺, i⁻ @ 0M
-	vA⁺ -> vA⁺ + i⁺		{p} 
-	i⁻ -> i⁻ + i⁺		{p}
-	vA⁻ -> vA⁻ + i⁻		{p}
-	i⁺ -> i⁺ + i⁻		{p}
-	vA⁺ -> vA⁺ + vB⁺	{q}   
-	i⁻ -> i⁻ + vB⁺		{q}
-	vB⁻ -> vB⁻ + vB⁺	{r}
-	vA⁻ -> vA⁻ + vB⁻	{q}
-	i⁺ -> i⁺ + vB⁻		{q}
-	vB⁺ -> vB⁺ + vB⁻	{r}
-	i⁺ + i⁻ -> #		{ann}
-	vB⁺ + vB⁻ -> #		{ann}
-}
+// Declare some species and
+// their molarity (M, mM, ...)
 
-network Sine(species S⁺ S⁻, number freq ampl phase) {
-    number S₀ = ampl*sin(phase)	
-    amount S⁺ @ pos(S₀) M
-    amount S⁻ @ pos(-S₀) M
-    number C₀ = ampl*cos(phase)	
-    species C⁺ @ pos(C₀) M
-    species C⁻ @ pos(-C₀) M
-    number r = freq*2*pi                      
+species a,b @ 1 M   
 
-    C⁺ -> C⁺ + S⁺    {r}		            
-    C⁻ -> C⁻ + S⁻    {r}
-    S⁺ -> S⁺ + C⁻    {r}
-    S⁻ -> S⁻ + C⁺    {r}
-    C⁺ + C⁻ -> #      {10*r}
-    S⁺ + S⁻ -> #      {10*r}
-}
+// Make some reactions (# is 'nothing')
 
-number R = 1 // resistance
-number L = 1 // inductance
+a + 2b -> a
+a -> #
 
-// frequency at which HPF attenuates input by -3dB
-number cutoffFrequency = R/(2*pi*L)    
-number minus3db = sqrt(2)/2  // 0.7071067811865476
+// Decide what to plot
 
-// test input (vA⁺ - vA⁻)
+report a, b, b-a, sin(time)
 
-species{vA⁺, vA⁻}                                    
-Sine(vA⁺, vA⁻, cutoffFrequency, 1, 0)
+// Run a simulation 
+// (or nothing much will happen)
 
-// output (vB⁺ - vB⁻)
+equilibrate for 2*pi
 
-species vB⁺, vB⁻ @ 0 M                            
-HighPassFilter(vA⁺, vA⁻, vB⁺, vB⁻)
+// Optionally select noise (μ, ±σ, ...)
 
-// compare output amplitude with -3dB
-
-report vA⁺ - vA⁻, vB⁺ - vB⁻, minus3db     
-equilibrate for 12*pi
-
+//----------------------
+// Press the Play button
+//----------------------

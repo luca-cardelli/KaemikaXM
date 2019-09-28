@@ -10,6 +10,7 @@ namespace KaemikaXM.Pages {
         void InsertText(string text);
         void SelectAll();
         void SetFocus();
+        void ShowInputMethod(); // pop up the keyboard
         void SetSelection(int start, int end);
         void SetSelectionLineChar(int line, int chr, int length); // line >=0, ch >=0
         float GetFontSize();
@@ -52,8 +53,8 @@ namespace KaemikaXM.Pages {
             specific.SetToolbarPlacement(ToolbarPlacement.Bottom);
             BarBackgroundColor = barColor;
             BarTextColor = Color.White;
-            specific.SetBarItemColor(Color.White); // Color.FromHex("66FFFFFF")
-            specific.SetBarSelectedItemColor(Color.White);
+            UnselectedTabColor = Color.White; // deprecated: specific.SetBarItemColor(Color.White); // Color.FromHex("66FFFFFF")
+            SelectedTabColor = Color.White; // deprecated: specific.SetBarSelectedItemColor(Color.White);
             //specific.DisableSmoothScroll(); //??
             specific.DisableSwipePaging();  //disables swiping between tabbed pages
             // this.On<Xamarin.Forms.PlatformConfiguration.Android>().SetIsSwipePagingEnabled(false); // disables swiping between tabbed pages
@@ -64,11 +65,11 @@ namespace KaemikaXM.Pages {
             theOutputPage = new OutputPage();
             theChartPage = new ChartPage();
 
-            theDocListPageNavigation = new NavigationPage(theDocListPage) { Title = "Tutorial", Icon = "icons8usermanual100.png", BarBackgroundColor = barColor};
-            theModelListPageNavigation = new NavigationPage(theModelListPage) { Title = "Networks", Icon = "icons8openedfolder96.png", BarBackgroundColor = barColor };
-            theModelEntryPageNavigation = new NavigationPage(theModelEntryPage) { Title = "Network", Icon = "icons8mindmap96.png", BarBackgroundColor = barColor };
-            theOutputPageNavigation = new NavigationPage(theOutputPage) { Title = "Output", Icon = "icons8truefalse100.png", BarBackgroundColor = barColor };
-            theChartPageNavigation = new NavigationPage(theChartPage) { Title = "Chart", Icon = "icons8combochart48.png", BarBackgroundColor = barColor };
+            theDocListPageNavigation = new NavigationPage(theDocListPage) { Title = "Tutorial", IconImageSource = "icons8usermanual100.png", BarBackgroundColor = barColor};  // deprecated: Icon = "icons8usermanual100.png",
+            theModelListPageNavigation = new NavigationPage(theModelListPage) { Title = "Networks", IconImageSource = "icons8openedfolder96.png", BarBackgroundColor = barColor };  // deprecated: Icon = "icons8openedfolder96.png"
+            theModelEntryPageNavigation = new NavigationPage(theModelEntryPage) { Title = "Network", IconImageSource = "icons8mindmap96.png", BarBackgroundColor = barColor };  // deprecated: Icon = "icons8mindmap96.png"
+            theOutputPageNavigation = new NavigationPage(theOutputPage) { Title = "Output", IconImageSource = "icons8truefalse100.png", BarBackgroundColor = barColor };  // deprecated: Icon = "icons8truefalse100.png"
+            theChartPageNavigation = new NavigationPage(theChartPage) { Title = "Chart", IconImageSource = "icons8combochart48.png", BarBackgroundColor = barColor };  // deprecated: Icon = "icons8combochart48.png"
 
             // To change tab order, just shuffle these Add calls around.
             // with more than 5 tabs the app will just crash on load
@@ -89,16 +90,16 @@ namespace KaemikaXM.Pages {
 
         public static void Executing(bool executing) {
             if (executing) {
-                theOutputPageNavigation.Icon = "icons8refresh96.png"; 
-                theChartPageNavigation.Icon = "icons8refresh96.png";
+                theOutputPageNavigation.IconImageSource = "icons8refresh96.png"; 
+                theChartPageNavigation.IconImageSource = "icons8refresh96.png";
                 // we need to use size 40x40 icons or they get stuck at wrong size after changing icon:
                 theModelEntryPage.startButton.Source = "icons8play40disabled.png"; 
                 theChartPage.startButton.Source = "icons8play40disabled.png"; 
                 theChartPage.stopButton.Source = "icons8stop40.png"; 
             }
             else {
-                theOutputPageNavigation.Icon = "icons8truefalse100.png";
-                theChartPageNavigation.Icon = "icons8combochart48.png";
+                theOutputPageNavigation.IconImageSource = "icons8truefalse100.png";
+                theChartPageNavigation.IconImageSource = "icons8combochart48.png";
                 // we need to use size 40x40 icons or they get stuck at wrong size after changing icon:
                 theModelEntryPage.startButton.Source = "icons8play40.png"; 
                 theChartPage.startButton.Source = "icons8play40.png"; 
