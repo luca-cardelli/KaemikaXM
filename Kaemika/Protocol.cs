@@ -73,24 +73,21 @@ namespace Kaemika
         public static (SampleValue, SampleValue) Split(Symbol symbol1, Symbol symbol2, SampleValue sample, double proportion, Netlist netlist, Style style) {
             sample.Consume(null, 0, null, netlist, style);
             double sampleVolume = sample.Volume();
-
             NumberValue volume1 = new NumberValue(sampleVolume * proportion);
             NumberValue temperature1 = new NumberValue(sample.Temperature());
             SampleValue result1 = new SampleValue(symbol1, new StateMap(symbol1, new List<SpeciesValue> { }, new State(0, lna: sample.stateMap.state.lna)), volume1, temperature1, produced: true);
-            result1.stateMap.Mix(sample.stateMap, sampleVolume, sampleVolume, style); // mix without changing the means or covariances
-
+            result1.stateMap.Split(sample.stateMap, style);
             NumberValue volume2 = new NumberValue(sampleVolume * (1 - proportion));
             NumberValue temperature2 = new NumberValue(sample.Temperature());
             SampleValue result2 = new SampleValue(symbol2, new StateMap(symbol2, new List<SpeciesValue> { }, new State(0, lna: sample.stateMap.state.lna)), volume2, temperature2, produced: true);
-            result2.stateMap.Mix(sample.stateMap, sampleVolume, sampleVolume, style); // mix without changing the means or covariances
-
+            result2.stateMap.Split(sample.stateMap, style);
             return (result1, result2);
         }
 
         public static SampleValue Transfer(Symbol symbol, double volume, double temperature, SampleValue inSample, Netlist netlist, Style style) {
             inSample.Consume(null, 0, null, netlist, style);
             SampleValue result = new SampleValue(symbol, new StateMap(symbol, new List<SpeciesValue> { }, new State(0, lna: inSample.stateMap.state.lna)), new NumberValue(volume), new NumberValue(temperature), produced: true);
-            result.stateMap.Mix(inSample.stateMap, volume, inSample.Volume(), style);// mix changing the concentration ### need to adjust covariance matrix by volume/inSample.volume ???
+            result.stateMap.Mix(inSample.stateMap, volume, inSample.Volume(), style); // same as Mix, but in this case we can also have volume < insample.Volume
             return result;
         }
 

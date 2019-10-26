@@ -1,28 +1,151 @@
 //======================================
-// Build a reaction network
+// PID Controller Parameter Optimization
 //======================================
 
-// Declare some species and
-// their molarity (M, mM, ...)
+number precision = 10
 
-species a,b @ 1 M   
+network PBlock (species E⁺ E⁻ P⁺ P⁻,  number Kp, sample S) {
+       E⁺ -> E⁺ + P⁺                    {precision * Kp}
+       E⁻ -> E⁻ + P⁻                    {precision * Kp}
+       P⁺ -> #                          {precision} 
+       P⁻ -> #                          {precision} 
+       P⁻ + P⁺ -> #                     {precision}
+}
 
-// Make some reactions (# is 'nothing')
+network IBlock (species E⁺ E⁻ I⁺ I⁻, number Ki, sample S) {
+       E⁺ -> E⁺ + I⁺            {Ki}
+       E⁻ -> E⁻ + I⁻            {Ki}
+       I⁻ + I⁺ -> #             {precision}
+}
 
-a + 2b -> a
-a -> #
+network DBlock(species E⁺ E⁻ D⁺ D⁻, number Kd, sample S) {
+       species A⁺, A⁻ @ 0M in S  // D block auxiliary species
+       E⁺->E⁺ + A⁺         {precision}
+       A⁺ ->#             {precision}
+       E⁻ ->E⁻ + A⁻        {precision}
+       A⁻ ->#             {precision}
+       E⁺ ->E⁺ + D⁺        {precision*precision*Kd}
+       A⁻ ->A⁻ + D⁺        {precision*precision*Kd}
+       D⁺ -> #            {precision}
+       E⁻ -> E⁻ + D⁻       {precision*precision*Kd}
+       A⁺ -> A⁺ + D⁻       {precision*precision*Kd}
+       D⁻ -> #            {precision}
+       D⁺ + D⁻ -> #       {precision}
+}
 
-// Decide what to plot
+network SumBlock(species P⁺ P⁻ I⁺ I⁻ D⁺ D⁻ U⁺ U⁻, sample S) {
+      P⁺ -> P⁺ + U⁺                       {1}
+      P⁻ -> P⁻  + U⁻                    {1}
+      I⁺ -> I⁺ + U⁺                       {1}
+      I⁻ -> I⁻  + U⁻                    {1}
+      D⁺ -> D⁺ + U⁺                      {1}
+      D⁻ -> D⁻  + U⁻                     {1}
+      U⁺ -> #              {1}
+      U⁻ -> #              {1}
+      U⁺ + U⁻ -> #         {1}
+}
 
-report a, b, b-a, sin(time)
+network SubBlock (species A⁺ A⁻ B⁺ B⁻ E⁺ E⁻, sample S) {
+       A⁺ -> A⁺ + E⁺        {1}
+       A⁻ -> A⁻ + E⁻        {1}
+       B⁻ -> B⁻ + E⁺      {1}
+       B⁺  -> B⁺ + E⁻    {1}
+       E⁺ -> #             {1}
+       E⁻ -> #             {1}
+       E⁺ + E⁻-> #         {1}
+}
 
-// Run a simulation 
-// (or nothing much will happen)
+network DualRail (species A A⁺ A⁻, sample S) {
+       A -> A + A⁺ 
+       A⁺ -> #
+       A⁺ + A⁻ -> #
+}
 
-equilibrate for 2*pi
 
-// Optionally select noise (μ, ±σ, ...)
+network PIDController(
+   species R⁺ R⁻ Y,
+   number Kp Ki Kd,
+   network Plant,
+   sample S){
 
-//----------------------
-// Press the Play button
-//----------------------
+   species E⁺,E⁻,P⁺,P⁻,I⁺,I⁻,D⁺,D⁻,U⁺,U⁻,Y⁺,Y⁻ @ 0M in S
+
+   PBlock(E⁺, E⁻, P⁺, P⁻, Kp, S) 
+   IBlock(E⁺, E⁻, I⁺, I⁻, Ki, S)
+   DBlock(E⁺, E⁻, D⁺, D⁻, Kd, S)
+   SumBlock(P⁺, P⁻, I⁺, I⁻, D⁺, D⁻, U⁺, U⁻, S)
+   Plant(U⁺, U⁻, Y, S)
+   DualRail(Y, Y⁺, Y⁻, S)
+   SubBlock(R⁺, R⁻, Y⁺, Y⁻, E⁺, E⁻, S)
+}
+
+network Plant(species U⁺ U⁻ Y, sample S) {
+   U⁺ -> U⁺ + Y
+   U⁻ + Y -> U⁻
+}
+
+//======================================
+
+// Input waveform
+network DSignal(species X⁺ X⁻, function f) {
+   number precision = 100
+   # ->{{precision*pos(f())}} X⁺;   X⁺ ->{precision} #
+   # ->{{precision*pos(-f())}} X⁻;  X⁻ ->{precision } #
+}
+
+/**/
+// CONSTANT REFERENCE
+number t1 = 25
+number t2 = 5
+function reference = fun(){3}
+list guess = [0.1, 0.02, 0.02]
+// END CONSTANT REFERENCE
+
+/*
+// OSCILLATING REFERENCE
+number t1 = 74
+number t2 = 1
+function reference = fun(){1.5+sin(0.25*time)}
+list guess = [0.8, 0.2, 0.06]
+// END OSCILLATING REFERENCE
+*/
+
+// Perturbation
+function variant(number Kp Ki Kd, number t1 t2) {
+   define
+       sample S
+       species R⁺, R⁻, Y @ 0M in S
+       report R⁺ - R⁻, Y
+       flow objective = ((R⁺ - R⁻) - Y)^2
+       DSignal(R⁺,R⁻, reference)
+       PIDController(R⁺,R⁻, Y, Kp, Ki, Kd, Plant, S)
+       equilibrate S for t1 
+       number cost1 = observe(objective, S)
+       equilibrate S for t2
+       number cost2 = observe(objective, S)
+   yield
+       cost1 + cost2 
+}
+
+// Objective Function 
+function f([number Kp Ki Kd]) {
+   if Kp<0 or Kp = NaN then [1+Kp^2, [Kp^3, 0, 0]] 
+   elseif Ki<0 or Ki  = NaN then [1+Ki^2, [0, Ki^3, 0]] 
+   elseif Kd<0 or Kd = NaN then [1+Kd^2, [0, 0, Kd^3]]
+   else define
+      number h = 0.001
+      number cost = variant(Kp, Ki, Kd, t1, t2)
+      number costKp = variant(Kp+h, Ki, Kd, t1, t2)
+      number costKi = variant(Kp, Ki+h, Kd, t1, t2)
+      number costKd = variant(Kp, Ki, Kd+h, t1, t2)
+   yield // cost and partial derivatives of cost
+      [cost, [(costKp-cost)/h, (costKi-cost)/h, (costKd-cost)/h]]
+   end
+}
+
+// Optimization
+[number Kp' Ki' Kd'] = argmin(f, guess, 1e-2)
+
+// Replot final version
+number finalCost = variant(Kp', Ki', Kd', 0, t1+t2)
+

@@ -481,11 +481,11 @@ namespace Kaemika
             State result = new State(sample.Count(), lna: true).InitZero();
 
             // fill the first part of deriv - the means     
-            result.MixMean(stoichio * action);                                                     // Mass Action equation
+            result.SumMean(stoichio * action);                                                     // Mass Action equation
 
             // fill the second part of deriv - the covariances                                
             Matrix J = NordsieckState.Jacobian((t, x) => Flux(t, x, style), meanState, 0.0);       // The Jacobian of the flux in this state
-            result.MixCovar((J * covarState) + (covarState * J.Transpose()) + Drift(actionA));     // LNA equation
+            result.SumCovar((J * covarState) + (covarState * J.Transpose()) + Drift(actionA));     // LNA equation
 
             return result.ToArray();
         }

@@ -365,17 +365,6 @@ namespace Kaemika
         public double Covar(Symbol species1, Symbol species2) {
             return this.state.Covar(this.index[species1], this.index[species2]);
         }
-        //public void AddSpecies(SpeciesValue species, double molarity, Style style) {
-        //    if (this.HasSpecies(species.symbol, out int index))
-        //        throw new Error("AddSpecies: Repeated amount of '" + species.Format(style) + "' in sample '" + this.sample.Format(style) + "' with value " + style.FormatDouble(molarity));
-        //    else if (molarity < 0)
-        //        throw new Error("AddSpecies: Amount of '" + species.Format(style) + "' in sample '" + this.sample.Format(style) + "' must be non-negative: " + style.FormatDouble(molarity));
-        //    else {
-        //        this.species.Add(species);
-        //        RecomputeIndex();
-        //        this.state = this.state.Add(molarity);
-        //    }
-        //}
         public void AddDimensionedSpecies(SpeciesValue species, double molarity, string dimension, double volume, Style style) {
             if (this.HasSpecies(species.symbol, out int index))
                 throw new Error("Repeated amount of '" + species.Format(style) + "' in sample '" + this.sample.Format(style) + "' with value " + style.FormatDouble(molarity));
@@ -385,26 +374,14 @@ namespace Kaemika
                 this.species.Add(species);
                 RecomputeIndex();
                 this.state = this.state.Extend(1);
-                this.state.MixMean(this.state.size-1, Normalize(species, molarity, dimension, volume, style));
+                this.state.SumMean(this.state.size-1, Normalize(species, molarity, dimension, volume, style));
             }
         }
-        //public void MixSpecies(SampleValue other, double thisVolume, double otherVolume, Style style) { // mix the species of another sample into this one
-        //    foreach (SpeciesValue otherSpecies in other.stateMap.species) { 
-        //        double otherMolarity = (other.stateMap.Molarity(otherSpecies.symbol, style) * otherVolume) / thisVolume;
-        //        if (this.HasSpecies(otherSpecies.symbol, out int index)) {
-        //            this.state.AddMean(index, otherMolarity);
-        //        } else {
-        //            this.species.Add(otherSpecies);
-        //            RecomputeIndex();
-        //            this.state = this.state.Add(otherMolarity);
-        //        }
-        //    }
-        //}
-        public void MixMean(Symbol species, double x) {
-            this.state.MixMean(index[species], x);
+        public void SumMean(Symbol species, double x) {
+            this.state.SumMean(index[species], x);
         }
-        public void MixCovar(Symbol species1, Symbol species2, double x) {
-            this.state.MixCovar(index[species1], index[species2], x);
+        public void SumCovar(Symbol species1, Symbol species2, double x) {
+            this.state.SumCovar(index[species1], index[species2], x);
         }
         public void Mix(StateMap other, double thisVolume, double otherVolume, Style style) { // mix another stateMap into this one
             int n = 0;
@@ -415,17 +392,62 @@ namespace Kaemika
                 }
             RecomputeIndex();
             if (n > 0) this.state = this.state.Extend(n);
-            foreach (SpeciesValue otherSpecies in other.species) {
-                double otherMean = (other.Mean(otherSpecies.symbol) * otherVolume) / thisVolume;  // Mean is scaled w.r.t. new volume
-                MixMean(otherSpecies.symbol, otherMean);
-                if (this.state.lna && other.state.lna) {
-                    foreach (SpeciesValue otherSpecies2 in other.species) {
-                        double otherCovar = (other.Covar(otherSpecies.symbol, otherSpecies2.symbol) * otherVolume) / thisVolume; // Covar is similarly scaled w.r.t. new volume
-                        MixCovar(otherSpecies.symbol, otherSpecies2.symbol, otherCovar);
+            if (thisVolume > 0) {
+                foreach (SpeciesValue otherSpecies in other.species) {
+                    double ratio = otherVolume / thisVolume;
+                    double otherMean = other.Mean(otherSpecies.symbol) * ratio;
+                    SumMean(otherSpecies.symbol, otherMean);
+                    if (this.state.lna && other.state.lna) {
+                        double squareRatio = ratio * ratio; // square of volume ratio law,
+                        foreach (SpeciesValue otherSpecies2 in other.species) {
+                            double otherCovar = other.Covar(otherSpecies.symbol, otherSpecies2.symbol) * squareRatio; 
+                            SumCovar(otherSpecies.symbol, otherSpecies2.symbol, otherCovar);
+                        }
                     }
                 }
             }
         }
+        public void Split(StateMap other, Style style) {
+            int n = 0;
+            foreach (SpeciesValue otherSpecies in other.species) {
+                    this.species.Add(otherSpecies);
+                    n++;
+                }
+            RecomputeIndex();
+            if (n > 0) this.state = this.state.Extend(n);
+            foreach (SpeciesValue otherSpecies in other.species) {
+                SumMean(otherSpecies.symbol, other.Mean(otherSpecies.symbol));
+                if (this.state.lna && other.state.lna) {
+                    foreach (SpeciesValue otherSpecies2 in other.species) {
+                        double otherCovar = other.Covar(otherSpecies.symbol, otherSpecies2.symbol);
+                        SumCovar(otherSpecies.symbol, otherSpecies2.symbol, otherCovar);
+                    }
+                }
+            }
+        }
+        //public void Transfer(StateMap other, double thisVolume, double otherVolume, Style style) {
+        //    // transfer from another stateMap into this (empty) one
+        //    // if new volume is larger, then it is "dilution", and it the same as mixing with an empty sample
+        //    // but if new volume is smaller, then it is "evaporation", which cannot be otherwise expressed
+        //    int n = 0;
+        //    foreach (SpeciesValue otherSpecies in other.species) {
+        //            this.species.Add(otherSpecies);
+        //            n++;
+        //        }
+        //    RecomputeIndex();
+        //    if (n > 0) this.state = this.state.Extend(n);
+        //    // if volumeScaling==0 then volume will be 0 so it does not matter what mean and covar are
+        //    foreach (SpeciesValue otherSpecies in other.species) {
+        //        SumMean(otherSpecies.symbol, (proportion == 0.0) ? 0.0 : other.Mean(otherSpecies.symbol)/proportion);
+        //        double squareProportion = proportion * proportion; // square of volume ratio law,
+        //        if (this.state.lna && other.state.lna) {
+        //            foreach (SpeciesValue otherSpecies2 in other.species) {
+        //                double otherCovar = (proportion == 0.0) ? 0.0 : other.Covar(otherSpecies.symbol, otherSpecies2.symbol) / squareProportion;
+        //                SumCovar(otherSpecies.symbol, otherSpecies2.symbol, otherCovar);
+        //            }
+        //        }
+        //    }
+        //}
         public double Normalize(SpeciesValue species, double value, string dimension, double volume, Style style) {
             double normal;
             normal = Protocol.NormalizeMolarity(value, dimension);
@@ -496,9 +518,9 @@ namespace Kaemika
         //public State Add(double molarity) {
         //    State newState = new State(this.size + 1, lna: this.lna).InitZero();
         //    // copy the old means:
-        //    for (int i = 0; i < this.size; i++) newState.MixMean(i, this.Mean(i));
+        //    for (int i = 0; i < this.size; i++) newState.SumMean(i, this.Mean(i));
         //    // the mean of the new state component is set to molarity:
-        //    newState.MixMean(this.size, molarity);
+        //    newState.SumMean(this.size, molarity);
         //    if (this.lna) {
         //        // copy the old covariances:
         //        for (int i = 0; i < this.size; i++)
@@ -511,13 +533,13 @@ namespace Kaemika
         public State Extend(int n) {
             State newState = new State(this.size + n, lna: this.lna).InitZero();
             // copy the old means:
-            for (int i = 0; i < this.size; i++) newState.MixMean(i, this.Mean(i));
+            for (int i = 0; i < this.size; i++) newState.SumMean(i, this.Mean(i));
             // the mean of the new state components remains zero
             if (this.lna) {
                 // copy the old covariances:
                 for (int i = 0; i < this.size; i++)
                     for (int j = 0; j < this.size; j++)
-                        newState.MixCovar(i, j, this.Covar(i, j));
+                        newState.SumCovar(i, j, this.Covar(i, j));
                 // the covariance of the new state component with all the other components remains zero
             }
             return newState;
@@ -533,11 +555,11 @@ namespace Kaemika
             for (int i = 0; i < size; i++) m[i] = this.state[i];
             return new Vector(m);
         }
-        public void MixMean(int i, double x) {
+        public void SumMean(int i, double x) {
             this.state[i] += x;
         }
-        public void MixMean(Vector x) {
-            if (x.Length != size) throw new Error("AddMean: wrong size");
+        public void SumMean(Vector x) {
+            if (x.Length != size) throw new Error("SumMean: wrong size");
             for (int i = 0; i < size; i++) this.state[i] += x[i];
         }
         public double Covar(int i, int j) {
@@ -551,10 +573,10 @@ namespace Kaemika
                     m[i, j] = this.state[size + (i * size) + j];
             return new Matrix(m);
         }
-        public void MixCovar(int i, int j, double x) {
+        public void SumCovar(int i, int j, double x) {
             this.state[size + (i * size) + j] += x;
         }
-        public void MixCovar(Matrix x) {
+        public void SumCovar(Matrix x) {
             for (int i = 0; i < size; i++)
                 for (int j = 0; j < size; j++)
                     this.state[size + (i * size) + j] += x[i, j];
