@@ -9,7 +9,7 @@ namespace Kaemika {
     public enum ExportAs : int { None,
         ChemicalTrace, ComputationalTrace,
         ReactionGraph, ComplexGraph,
-        MSRC_LBS, MSRC_CRN, ODE,
+        MSRC_LBS, MSRC_CRN, ODE, SteadyState,
         Protocol, ProtocolGraph,
         PDMPreactions, PDMPequations, PDMPstoichiometry, // or PDMP_Parallel,
         PDMPGraph, // or PDMPGraph_Parallel,
@@ -34,12 +34,18 @@ namespace Kaemika {
             this.style = style;
             this.startTime = startTime;
             this.evalTime = evalTime;
-            this.endTime = DateTime.Now;
+            this.endTime = DateTime.MinValue;
             this.graphCache = new Dictionary<string, AdjacencyGraph<Vertex, Edge<Vertex>>>();
             this.layoutCache = new Dictionary<string, object>();
         }
+        public void EndTime() { this.endTime = DateTime.Now; }
         public string ElapsedTime() {
             return "Elapsed Time: " + endTime.Subtract(startTime).TotalSeconds + "s" 
+                //+ "(total), " + endTime.Subtract(evalTime).TotalSeconds + "s (eval)" 
+                + Environment.NewLine;
+        }
+        public string PartialElapsedTime(string msg) {
+            return "Partial Elapsed Time: " + DateTime.Now.Subtract(startTime).TotalSeconds + "s (" + msg + ")" 
                 //+ "(total), " + endTime.Subtract(evalTime).TotalSeconds + "s (eval)" 
                 + Environment.NewLine;
         }
@@ -131,8 +137,9 @@ namespace Kaemika {
                                                         map: Gui.gui.RemapVariants() ? new AlphaMap() : null, numberFormat: "G4", dataFormat: "full",  // we want it full for samples, but maybe only headers for functions/networks?
                                                         exportTarget: ExportTarget.Standard, traceComputational: false);
                                 DateTime evalTime = DateTime.Now;
-                                Env ignoreEnv = statements.Eval(new NullEnv().BuiltIn(vessel), netlist, style);
                                 lastExecution = new ExecutionInstance(vessel, netlist, style, startTime, evalTime);
+                                Env ignoreEnv = statements.Eval(new NullEnv().BuiltIn(vessel), netlist, style);
+                                lastExecution.EndTime();
                                 foreach (DistributionValue parameter in netlist.Parameters())
                                     Gui.gui.AddParameter(parameter.parameter.Format(style), parameter.drawn, parameter.distribution, parameter.arguments);
                                 Gui.gui.ParametersUpdate();
@@ -214,6 +221,10 @@ namespace Kaemika {
                 } else if (exportAs == ExportAs.ODE) { // export only the vessel
                     Gui.gui.OutputAppendText(Export.ODE(execution.vessel, new CRN(execution.vessel, execution.vessel.ReactionsAsConsumed(execution.style), precomputeLNA: false),
                         new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.Standard, traceComputational: false)));
+                    try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
+                } else if (exportAs == ExportAs.SteadyState) { // export only the vessel
+                    Gui.gui.OutputAppendText(Export.SteadyState(new CRN(execution.vessel, execution.vessel.ReactionsAsConsumed(execution.style), precomputeLNA: false),
+                        new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.WolframNotebook, traceComputational: false)));
                     try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
                 } else if (exportAs == ExportAs.Protocol) {
                     Gui.gui.OutputAppendText(Export.Protocol(execution.netlist, new Style(varchar: defaultVarchar, new SwapMap(), map: new AlphaMap(), numberFormat: "G4", dataFormat: "symbol", exportTarget: ExportTarget.Standard, traceComputational: false)));

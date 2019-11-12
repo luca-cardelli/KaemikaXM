@@ -770,6 +770,7 @@ namespace KaemikaWPF
             else if (comboBox_Export.Text == "CRN (LBS silverlight)") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.MSRC_LBS); }
             else if (comboBox_Export.Text == "CRN (LBS html5)") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.MSRC_CRN); }
             else if (comboBox_Export.Text == "ODE (Oscill8)") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ODE); }
+            else if (comboBox_Export.Text == "Equilibrium (Wolfram)") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.SteadyState); }
             else if (comboBox_Export.Text == "Protocol") { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.Protocol); }
 
             //else if (comboBox_Export.Text == "PDMP GraphViz") Exec.Execute_Exporter(false, ExportAs.PDMP_GraphViz);

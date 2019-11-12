@@ -274,7 +274,8 @@ namespace Microsoft.Research.Oslo
 
                     if (opts.MaxStep < Double.MaxValue) dt = Math.Min(dt, opts.MaxStep);
                     //if (opts.MinStep > 0) dt = Math.Max(dt, opts.MinStep);
-                    if (Double.IsNaN(dt)) throw new ArgumentException("Derivatives function returned NaN");
+                    if (Double.IsNaN(dt)) 
+                        throw new ArgumentException("Derivatives function returned NaN");
                     if (dt < 1e-12) throw new ArgumentException("Cannot generate numerical solution");
 
                 } while (e > 1.0d); // Repeat until solving vector euclidean norm doesn't satisfy break condition

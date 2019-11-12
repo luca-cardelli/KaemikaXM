@@ -223,6 +223,10 @@ namespace Kaemika
             int renderedCounter = 0;
             double lastTime = finalTime;
             State lastState = null;
+            if (initialState.NaN()) { //===NaN
+                Gui.Log("Initial state contains NaN.");
+                return (lastTime, lastState, pointsCounter, renderedCounter);
+            }
 
             Gui.gui.ChartClearData();
             Gui.gui.LegendUpdate();

@@ -94,9 +94,20 @@ namespace Kaemika
             this.value = value;
             this.distribution = distribution;
         }
+ 
         public override string Format(Style style) {
             if (style.traceComputational) {
-                return type.Format() + " " + symbol.Format(style) + " = " + value.Format(style);
+                if (value is Flow) {
+                    return type.Format() + " " + symbol.Format(style) + " = "
+                        // DEBUG
+                        //+ Environment.NewLine + "[Raw         ] " + value.Format(style.RestyleAsDataFormat("operator"))
+                        //+ Environment.NewLine + "[Expand      ] " + (value as Flow).Expand(style).Format(style.RestyleAsDataFormat("operator"))
+                        //+ Environment.NewLine + "[E+Regroup   ] " + (value as Flow).Expand(style).ReGroup(style).Format(style.RestyleAsDataFormat("operator"))
+                        //+ Environment.NewLine + "[E+R+Simplify] " + (value as Flow).Expand(style).ReGroup(style).Simplify(style).Format(style.RestyleAsDataFormat("operator"))
+                        //+ Environment.NewLine + " == "
+                        + (value as Flow).Normalize(style).TopFormat(style);
+                }
+                else return type.Format() + " " + symbol.Format(style) + " = " + value.Format(style);
             } else return "";
         }
     }
@@ -335,6 +346,7 @@ namespace Kaemika
                     for (int j = 0; j < species.Count; j++)
                         for (int r = 0; r < reactions.Count; r++)
                             driftFactor[i, j, r] = stoichio[i, r] * stoichio[j, r];
+                // if (Exec.lastExecution != null) Gui.gui.OutputAppendText(Exec.lastExecution.PartialElapsedTime("After precomputeLNA"));
             }
         }
 
@@ -379,87 +391,203 @@ namespace Kaemika
             return trivial;
         }
 
-        //public string FormatAsODE(Style style, string prefixDiff = "∂", string suffixDiff = "") {
-        //    string ODEs = "";
-        //    foreach (SpeciesValue variable in sample.species) {
-        //        string polynomial = "";
-        //        foreach (ReactionValue reaction in this.reactions) {
-        //            string monomial = "";
-        //            int netStoichiometry = reaction.NetStoichiometry(variable.symbol);
-        //            if (netStoichiometry != 0) {
-        //                if (reaction.rate is MassActionRateValue) {
-        //                    foreach (SpeciesValue sp in sample.species) {
-        //                        int spStoichio = reaction.Stoichiometry(sp.symbol, reaction.reactants);
-        //                        if (spStoichio > 0) {
-        //                            string factor = sp.Format(style);
-        //                            if (spStoichio != 1) factor = factor + "^" + spStoichio;
-        //                            monomial = (monomial == "") ? factor : monomial + "*" + factor;
-        //                        }
-        //                    }
-        //                    double rate = ((MassActionRateValue)reaction.rate).Rate(this.temperature);
-        //                    if ((rate != 1) && (monomial != "")) monomial = "*" + monomial;
-        //                    if (rate != 1) monomial = style.FormatDouble(rate) + monomial;
-        //                } else if (reaction.rate is GeneralRateValue) {
-        //                    Flow rate = (reaction.rate as GeneralRateValue).rateFunction;
-        //                    monomial = rate.Format(style);
-        //                } else {
-        //                    throw new Error("FormatAsODE");
-        //                }
-        //                if ((netStoichiometry == -1) && (monomial == "")) monomial = "-1";
-        //                else if ((netStoichiometry == -1) && (monomial != "")) monomial = "-" + monomial;
-        //                else if ((netStoichiometry == 1) && (monomial != "")) { }
-        //                else if (monomial == "") monomial = netStoichiometry.ToString();
-        //                else if (monomial != "") monomial = netStoichiometry.ToString() + "*" + monomial;
-        //            }
-        //            if (monomial != "") {
-        //                if (polynomial == "") polynomial = monomial;
-        //                else if (monomial.Substring(0,1) == "-") polynomial = polynomial + " - " + monomial.Substring(1);
-        //                else polynomial = polynomial + " + " + monomial;
-        //            }
-        //        }
-        //        if (polynomial != "")
-        //            ODEs = ODEs + prefixDiff + variable.Format(style) + suffixDiff + " = " + polynomial + Environment.NewLine;
-        //    }
-        //    return ODEs;
-        //}
-
         public string FormatAsODE(Style style, string prefixDiff = "∂", string suffixDiff = "") {
-            Flow[] flows = FluxFlows();
+            (SpeciesValue[] vars, Flow[] flows) = FluxFlows();
             string ODEs = "";
             for (int speciesIx = 0; speciesIx < flows.Length; speciesIx++) {
-                SpeciesValue variable = sample.stateMap.species[speciesIx];
-                ODEs = ODEs + prefixDiff + variable.Format(style) + suffixDiff + " = " + flows[speciesIx].TopFormat(style) + Environment.NewLine;
+                ODEs = ODEs + prefixDiff + vars[speciesIx].Format(style) + suffixDiff + " = " + flows[speciesIx].Normalize(style).TopFormat(style) + Environment.NewLine;
             }
+
+            //ODEs += Environment.NewLine;
+            //Flow[,] jacobian = Jacobian();
+            //for (int speciesI = 0; speciesI < flows.Length; speciesI++) {
+            //    SpeciesValue variableI = sample.stateMap.species[speciesI];
+            //    for (int speciesK = 0; speciesK < flows.Length; speciesK++) {
+            //        SpeciesValue variableK = sample.stateMap.species[speciesK];
+            //        ODEs = ODEs + "∂(" + prefixDiff + variableI.Format(style) + suffixDiff + ")/" + "∂" + variableK.Format(style) + " = " + jacobian[speciesI, speciesK].Normalize(style).TopFormat(style) + Environment.NewLine;
+            //        if (Exec.lastExecution != null) Gui.gui.OutputAppendText(Exec.lastExecution.PartialElapsedTime("After Normalize ODEs"));
+            //    }
+            //}
+
+            //ODEs += Environment.NewLine;
+            //Flow[,] drift = Drift();
+            //for (int speciesI = 0; speciesI < flows.Length; speciesI++) {
+            //    SpeciesValue variableI = sample.stateMap.species[speciesI];
+            //    for (int speciesJ = 0; speciesJ < flows.Length; speciesJ++) {
+            //        SpeciesValue variableJ = sample.stateMap.species[speciesJ];
+            //        ODEs = ODEs + "W(" + variableI.Format(style) + "," + variableJ.Format(style) + ") = " + drift[speciesI, speciesJ].Normalize(style).TopFormat(style) + Environment.NewLine;
+            //    }
+            //}
+
+            bool includeLNA = Gui.gui.NoiseSeries() != Noise.None;
+            SpeciesFlow[,] covars = null; Flow[,] covarFlows = null;
+            if (includeLNA) (covars, covarFlows) = CovarFlow(style);
+            bool someIgnored = false;
+            if (style.exportTarget == ExportTarget.WolframNotebook) {
+                ODEs += Environment.NewLine + "Steady state equations for online Wolfram Notebook equation solver";
+                ODEs += Environment.NewLine + "(if LNA is activated, then 'x_y' = 'cov(x,y)'):" + Environment.NewLine;
+                ODEs += Environment.NewLine + "Solve[{";
+                for (int speciesIx = 0; speciesIx < flows.Length; speciesIx++) {
+                    ODEs += Environment.NewLine + "0 == " + flows[speciesIx].Normalize(style).TopFormat(style) + ",";
+                }
+                if (includeLNA) {
+                    ODEs += Environment.NewLine;
+                    for (int speciesI = 0; speciesI < covars.GetLength(0); speciesI++) {
+                        for (int speciesJ = 0; speciesJ < covars.GetLength(1); speciesJ++) {
+                            if (IgnoreCovar(speciesI, speciesJ)) someIgnored = true;
+                            else ODEs += Environment.NewLine + "0 == " + covarFlows[speciesI, speciesJ].Normalize(style).TopFormat(style) + ",";
+                        }
+                    }
+                    for (int speciesIx = 0; speciesIx < flows.Length; speciesIx++) {
+                        ODEs += Environment.NewLine + "Fano_" + vars[speciesIx].Format(style) + " == " + covars[speciesIx,speciesIx].Format(style) + "/" + vars[speciesIx].Format(style) + ",";
+                    }
+                }
+                if (ODEs.Length > 0) ODEs = ODEs.Substring(0, ODEs.Length - 1); // remove last comma
+                ODEs += Environment.NewLine + "},{" + Environment.NewLine;
+                for (int speciesIx = 0; speciesIx < flows.Length; speciesIx++) {
+                    if (IgnoreCovar(speciesIx, speciesIx)) someIgnored = true; //i.e. do not ask equation solver to solve for these variables
+                    else ODEs += vars[speciesIx].Format(style) + ",";
+                }
+                if (includeLNA) {
+                    ODEs += Environment.NewLine;
+                    for (int speciesI = 0; speciesI < covars.GetLength(0); speciesI++) {
+                        for (int speciesJ = 0; speciesJ < covars.GetLength(1); speciesJ++) {
+                            if (IgnoreCovar(speciesI, speciesJ)) someIgnored = true;
+                            else ODEs += covars[speciesI, speciesJ].Format(style) + ",";
+                        }
+                    }
+                    for (int speciesIx = 0; speciesIx < flows.Length; speciesIx++) {
+                        ODEs += "Fano_" + vars[speciesIx].Format(style) + ",";
+                    }
+                }
+                if (ODEs.Length > 0) ODEs = ODEs.Substring(0, ODEs.Length - 1); // remove last comma
+                ODEs += Environment.NewLine + "}]" + Environment.NewLine;
+            } else if (includeLNA) {
+                ODEs += Environment.NewLine;
+                for (int speciesI = 0; speciesI < covars.GetLength(0); speciesI++) {
+                    for (int speciesJ = 0; speciesJ < covars.GetLength(1); speciesJ++) {
+                        if (IgnoreCovar(speciesI, speciesJ)) someIgnored = true;
+                        else ODEs += prefixDiff + covars[speciesI, speciesJ].Format(style) + suffixDiff + " = "
+                            + covarFlows[speciesI, speciesJ].Normalize(style).TopFormat(style) 
+                            + Environment.NewLine;
+                    }
+                }
+            }
+            if (someIgnored) ODEs += Environment.NewLine
+                    + "All covariances of species initialized to NaN are removed from this covariance output. Those species can be used as symbolic parameters. "
+                    + "E.g. use 'species k@NaN M; k >> a+b->c' to use k as a formal rate parameter for the reaction a+b->c."
+                    + Environment.NewLine;
             return ODEs;
         }
 
-        public Flow[] FluxFlows() {
+        public Flow RateFunction(ReactionValue reaction) {
+            Flow monomial = NumberFlow.numberFlowOne;
+            if (reaction.rate is MassActionRateValue) {
+                double rate = ((MassActionRateValue)reaction.rate).Rate(this.temperature);
+                foreach (SpeciesValue sp in sample.stateMap.species) {
+                    int spStoichio = reaction.Stoichiometry(sp.symbol, reaction.reactants);
+                    monomial = OpFlow.Op("*", monomial, OpFlow.Op("^", new SpeciesFlow(sp.symbol), new NumberFlow(spStoichio)));
+                }
+                monomial = OpFlow.Op("*", new NumberFlow(rate), monomial);
+            } else if (reaction.rate is GeneralRateValue) {
+                monomial = (reaction.rate as GeneralRateValue).rateFunction;
+            } else throw new Error("RateFunction");
+            return monomial;
+        }
+
+        public (SpeciesValue[] vars, Flow[] flows) FluxFlows() {
+            SpeciesValue[] vars = new SpeciesValue[sample.Count()];
             Flow[] flows = new Flow[sample.Count()];
             for (int speciesIx = 0; speciesIx < flows.Length; speciesIx++) {
-                SpeciesValue variable = sample.stateMap.species[speciesIx];
+                vars[speciesIx] = sample.stateMap.species[speciesIx];
                 Flow polynomial = NumberFlow.numberFlowZero;
                 foreach (ReactionValue reaction in this.reactions) {
-                    Flow monomial = NumberFlow.numberFlowOne;
-                    int netStoichiometry = reaction.NetStoichiometry(variable.symbol);
-                    if (netStoichiometry == 0) monomial = NumberFlow.numberFlowZero;
-                    else {
-                        if (reaction.rate is MassActionRateValue) {
-                            double rate = ((MassActionRateValue)reaction.rate).Rate(this.temperature);
-                            foreach (SpeciesValue sp in sample.stateMap.species) {
-                                int spStoichio = reaction.Stoichiometry(sp.symbol, reaction.reactants);
-                                monomial = OpFlow.Op("*", monomial, OpFlow.Op("^", new SpeciesFlow(sp.symbol), new NumberFlow(spStoichio)));
-                            }
-                            monomial = OpFlow.Op("*", new NumberFlow(rate), monomial);
-                        } else if (reaction.rate is GeneralRateValue) {
-                            monomial = (reaction.rate as GeneralRateValue).rateFunction;
-                        } else throw new Error("FluxFlows");
-                        monomial = OpFlow.Op("*", new NumberFlow(netStoichiometry), monomial);
-                    }
+                    int netStoichiometry = reaction.NetStoichiometry(vars[speciesIx].symbol);
+                    Flow monomial = (netStoichiometry == 0) ? NumberFlow.numberFlowZero : OpFlow.Op("*", new NumberFlow(netStoichiometry), RateFunction(reaction));
                     polynomial = OpFlow.Op("+", polynomial, monomial);
                 }
                 flows[speciesIx] = polynomial;
             }
-            return flows;
+            return (vars, flows);
+        }
+
+        public Flow[,] Jacobian() {
+            int speciesNo = sample.Count();
+            Flow[,] jacobian = new Flow[speciesNo, speciesNo];
+            for (int speciesI = 0; speciesI < speciesNo; speciesI++) {
+                SpeciesValue variableI = sample.stateMap.species[speciesI];
+                for (int speciesK = 0; speciesK < speciesNo; speciesK++) {
+                    SpeciesValue variableK = sample.stateMap.species[speciesK];
+                    Flow polynomial = NumberFlow.numberFlowZero;
+                    foreach (ReactionValue reaction in this.reactions) {
+                        if (!(reaction.rate is MassActionRateValue)) throw new Error("Symbolic Jacobian requires mass action rate functions");
+                        int netStoichiometryI = reaction.NetStoichiometry(variableI.symbol);
+                        int stoichiometryK = reaction.Stoichiometry(variableK.symbol, reaction.reactants);
+                        Flow monomial = (netStoichiometryI == 0 || stoichiometryK == 0) ? NumberFlow.numberFlowZero : 
+                            OpFlow.Op("*", OpFlow.Op("*", new NumberFlow(netStoichiometryI), new NumberFlow(stoichiometryK)), 
+                               OpFlow.Op("/", RateFunction(reaction), new SpeciesFlow(variableK.symbol)));
+                        polynomial = OpFlow.Op("+", polynomial, monomial);
+                    }
+                    jacobian[speciesI, speciesK] = polynomial;
+                }
+            }
+            return jacobian;
+        }
+
+        public Flow[,] Drift() {
+            int speciesNo = sample.Count();
+            int reactionsNo = reactions.Count();
+            Flow[,] drift = new Flow[speciesNo, speciesNo];
+            for (int speciesI = 0; speciesI < speciesNo; speciesI++) { // rows
+                for (int speciesJ = 0; speciesJ < speciesNo; speciesJ++) { // columns
+                    drift[speciesI, speciesJ] = NumberFlow.numberFlowZero;
+                    for (int reactionR = 0; reactionR < reactionsNo; reactionR++) { // reactions
+                        drift[speciesI, speciesJ] = OpFlow.Op("+", drift[speciesI, speciesJ],
+                            OpFlow.Op("*", new NumberFlow(stoichio[speciesI, reactionR] * stoichio[speciesJ, reactionR]),
+                            RateFunction(reactions[reactionR])));
+                    }
+                }
+            }
+            return drift;
+        }
+
+        public (SpeciesFlow[,], Flow[,]) CovarFlow(Style style) {
+            int speciesNo = sample.Count();
+            SpeciesFlow[,] covar = new SpeciesFlow[speciesNo, speciesNo]; // fill it with fresh covariance variables
+            for (int speciesI = 0; speciesI < speciesNo; speciesI++) { // rows
+                SpeciesValue variableI = sample.stateMap.species[speciesI];
+                for (int speciesJ = 0; speciesJ < speciesNo; speciesJ++) { // columns
+                    SpeciesValue variableJ = sample.stateMap.species[speciesJ];
+                    if (style.exportTarget == ExportTarget.WolframNotebook) covar[speciesI, speciesJ] = new SpeciesFlow(new Symbol(variableI.Format(style) + "_" + variableJ.Format(style)));
+                    else covar[speciesI, speciesJ] = (speciesI == speciesJ) ? new SpeciesFlow(new Symbol("var(" + variableI.Format(style) + ")")) : new SpeciesFlow(new Symbol("cov(" + variableI.Format(style) + "," + variableJ.Format(style) + ")"));
+                }
+            }
+            Flow[,] covarFlow = new Flow[speciesNo, speciesNo];
+            Flow[,] jacobian = Jacobian();
+            Flow[,] drift = Drift();
+            for (int speciesI = 0; speciesI < speciesNo; speciesI++) { // rows
+                for (int speciesJ = 0; speciesJ < speciesNo; speciesJ++) { // columns
+                    covarFlow[speciesI, speciesJ] = NumberFlow.numberFlowZero;
+                    for (int speciesK = 0; speciesK < speciesNo; speciesK++) { // dot product index
+                        covarFlow[speciesI, speciesJ] = OpFlow.Op("+", covarFlow[speciesI, speciesJ], OpFlow.Op("*", jacobian[speciesI, speciesK], CovarVar(covar, speciesK, speciesJ)));
+                        covarFlow[speciesI, speciesJ] = OpFlow.Op("+", covarFlow[speciesI, speciesJ], OpFlow.Op("*", jacobian[speciesJ, speciesK], CovarVar(covar, speciesI, speciesK))); // jacobian transposed
+                    }
+                    covarFlow[speciesI, speciesJ] = OpFlow.Op("+", covarFlow[speciesI, speciesJ], drift[speciesI, speciesJ]);
+                    if (IgnoreCovar(speciesI, speciesJ)) covarFlow[speciesI, speciesJ] = NumberFlow.numberFlowZero; // hack to use NaN-initialized species as symbolic parameters
+                }
+            }
+            return (covar, covarFlow);
+        }
+
+        // Species initialized to NaN are removed from the Covar equations. Those species can be used to emulate symbolic parameters instead.
+        // E.g. 'species k@NaN M   k >> a + b -> c'  will produce covar equations with a symbolic rate parameter k for the reaction a + b -> c.
+        private bool IgnoreCovar(int speciesI, int speciesJ) {
+            return (double.IsNaN(sample.stateMap.Molarity(sample.stateMap.species[speciesI].symbol, Style.nil)) ||
+                    double.IsNaN(sample.stateMap.Molarity(sample.stateMap.species[speciesJ].symbol, Style.nil)));
+        }
+        Flow CovarVar(Flow[,]covar, int speciesI, int speciesJ) {
+            // this will nullify the covar terms that we want to ignore
+            if (IgnoreCovar(speciesI, speciesJ)) return NumberFlow.numberFlowZero; else return covar[speciesI, speciesJ];
         }
 
         public Vector Action(double time, Vector state, Style style) {          // the mass action of all reactions in this state
@@ -480,10 +608,10 @@ namespace Kaemika
             double[] actionA = action.ToArray();
             State result = new State(sample.Count(), lna: true).InitZero();
 
-            // fill the first part of deriv - the means     
+            // fill the first part of result - the means     
             result.SumMean(stoichio * action);                                                     // Mass Action equation
 
-            // fill the second part of deriv - the covariances                                
+            // fill the second part of result - the covariances                                
             Matrix J = NordsieckState.Jacobian((t, x) => Flux(t, x, style), meanState, 0.0);       // The Jacobian of the flux in this state
             result.SumCovar((J * covarState) + (covarState * J.Transpose()) + Drift(actionA));     // LNA equation
 
@@ -502,11 +630,19 @@ namespace Kaemika
             for (int i = 0; i < speciesCount; i++) Array.Clear(w[i], 0, speciesCount); // for (int j = 0; j < speciesCount; j++) w[i][j] = 0;
 
             if (driftFactor == null) {  // slower, less memory
+                //for (int i = 0; i < speciesCount; i++)
+                //    for (int j = 0; j < speciesCount; j++)
+                //        for (int r = 0; r < reactionsCount; r++)
+                //            w[i][j] += stoichio[i, r] * stoichio[j, r] * actionA[r];     // this line takes 48% of CPU time on LNA runs
                 for (int i = 0; i < speciesCount; i++)
-                    for (int j = 0; j < speciesCount; j++)
-                        for (int r = 0; r < reactionsCount; r++)
-                            w[i][j] += stoichio[i,r] * stoichio[j,r] * actionA[r];     // this line takes 48% of CPU time on LNA runs
-            } else {  // faster, more memory (driftFactor matrix)
+                    for (int j = 0; j <=i; j++) {
+                        for (int r = 0; r < reactionsCount; r++) {
+                            w[i][j] += stoichio[i, r] * stoichio[j, r] * actionA[r];     // this line was taking 48% of CPU time on LNA runs, but this matrix is symmetrical!
+                        }
+                        w[j][i] = w[i][j];
+                    }
+            }
+            else {  // faster, more memory (driftFactor matrix)
                 for (int i = 0; i < speciesCount; i++)
                     for (int j = 0; j < speciesCount; j++)
                         for (int r = 0; r < reactionsCount; r++)

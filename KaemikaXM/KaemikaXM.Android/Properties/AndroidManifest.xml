@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="1.8" package="com.kaemika.Kaemika" android:installLocation="auto" android:versionCode="9">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="1.9" package="com.kaemika.Kaemika" android:installLocation="auto" android:versionCode="10">
 	<uses-sdk android:minSdkVersion="28" />
 	<application android:label="Kaemika.Android"></application>
 </manifest>

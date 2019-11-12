@@ -158,6 +158,13 @@ namespace Kaemika {
             return protocol;
         }
 
+        // Export ODEs and LNA ODEs for Wolfram Notebook
+
+        public static string SteadyState(CRN crn, Style style) {
+            return crn.FormatAsODE(style)
+                + Environment.NewLine;
+        }
+
         // Export ODEs for OSCILL8
 
         public static string ODE(SampleValue sample, CRN crn, Style style) {

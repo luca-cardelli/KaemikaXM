@@ -573,7 +573,7 @@
             // button_Target_Copy
             // 
             this.button_Target_Copy.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.button_Target_Copy.Location = new System.Drawing.Point(123, 5);
+            this.button_Target_Copy.Location = new System.Drawing.Point(135, 5);
             this.button_Target_Copy.Name = "button_Target_Copy";
             this.button_Target_Copy.Size = new System.Drawing.Size(75, 32);
             this.button_Target_Copy.TabIndex = 16;
@@ -614,12 +614,13 @@
             " ",
             "Protocol",
             "ODE (Oscill8)",
+            "Equilibrium (Wolfram)",
             "CRN (LBS html5)",
             "CRN (LBS silverlight)",
             "Last simulation state"});
-            this.comboBox_Export.Location = new System.Drawing.Point(10, 12);
+            this.comboBox_Export.Location = new System.Drawing.Point(6, 12);
             this.comboBox_Export.Name = "comboBox_Export";
-            this.comboBox_Export.Size = new System.Drawing.Size(107, 21);
+            this.comboBox_Export.Size = new System.Drawing.Size(123, 21);
             this.comboBox_Export.TabIndex = 37;
             this.toolTip1.SetToolTip(this.comboBox_Export, "Export and copy result to clipboard");
             this.comboBox_Export.SelectedIndexChanged += new System.EventHandler(this.comboBox_Export_SelectedIndexChanged);
@@ -653,8 +654,6 @@
             // checkBox_precomputeLNA
             // 
             this.checkBox_precomputeLNA.AutoSize = true;
-            this.checkBox_precomputeLNA.Checked = true;
-            this.checkBox_precomputeLNA.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkBox_precomputeLNA.Location = new System.Drawing.Point(292, 19);
             this.checkBox_precomputeLNA.Name = "checkBox_precomputeLNA";
             this.checkBox_precomputeLNA.Size = new System.Drawing.Size(15, 14);
