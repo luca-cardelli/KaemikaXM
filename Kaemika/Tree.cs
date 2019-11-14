@@ -458,7 +458,7 @@ namespace Kaemika
         //    }
         //}
         public double Normalize(SpeciesValue species, double value, string dimension, double volume, Style style) {
-            if (double.IsNaN(value)) return value; //===NaN
+            if (double.IsNaN(value)) return value;
             double normal;
             normal = Protocol.NormalizeMolarity(value, dimension);
             if (normal >= 0) return normal; // value had dimension M = mol/L
@@ -498,7 +498,7 @@ namespace Kaemika
             }
             return this;
         }
-        public bool NaN() { //===NaN
+        public bool NaN() {
             for (int i = 0; i < size; i++) {
                 if (double.IsNaN(state[i])) return true;
             }
@@ -1226,7 +1226,7 @@ namespace Kaemika
                 if (name == "not" || name == "-" || name == "?") {
                     return OpFlow.Op(name, arg1);
                 } else if (name == "sdiff") { // a Flow will never contain sdiff: it is expanded out here
-                    return arg1.Differentiate(style);
+                    return arg1.Differentiate(null, style); // null means time differentiation
                 } else if (name == "var" || name == "poisson" || name == "abs" || name == "arccos" || name == "arcsin" || name == "arctan" || name == "ceiling"
                         || name == "cos" || name == "cosh" || name == "exp" || name == "floor" || name == "int" || name == "log"
                         || name == "pos" || name == "sign" || name == "sin" || name == "sinh" || name == "sqrt" || name == "tan" || name == "tanh") {
@@ -1289,6 +1289,9 @@ namespace Kaemika
         public abstract bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered);
         public abstract bool IsOp(string op, int arity);
         public abstract bool IsNumber(double n);
+        //public abstract bool IsNumericConstant();
+        //public abstract bool IsNumericSum(); // used just to prevent the distribution of * over + in numeric/constant cases, to avoid looping with the reverse rearrangement 
+
         public abstract Flow Arg(int i);
 
         public abstract bool ObserveBool(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style); // for boolean flow-subexpressions
@@ -1310,7 +1313,7 @@ namespace Kaemika
         public abstract bool HasNullVariance();
         // = Has stochastic variance identically zero, used to detect and rule out non-linear products.
 
-        public abstract Flow Differentiate(Style style); // symbolic differentiation
+        public abstract Flow Differentiate(Symbol var, Style style); // symbolic differentiation; var is the partial differentiation variable, or null for time differentiation
         public static Vector nilFlux = new Vector(new double[0]);
     }
 
@@ -1339,7 +1342,7 @@ namespace Kaemika
         public override bool HasStochasticMean() { return true; }
         public override bool LinearCombination() { return true; } // but if it appears in a cond it will not be a linear combination anyway
         public override bool HasNullVariance() { return true; }
-        public override Flow Differentiate(Style style) { throw new Error("Non differentiable: bool"); }
+        public override Flow Differentiate(Symbol var, Style style) { throw new Error("Non differentiable: bool"); }
     }
 
     public class NumberFlow : Flow {
@@ -1371,7 +1374,7 @@ namespace Kaemika
         public override bool HasStochasticMean() { return true; }
         public override bool LinearCombination() { return true; }
         public override bool HasNullVariance() { return true; }
-        public override Flow Differentiate(Style style) { return NumberFlow.numberFlowZero; }
+        public override Flow Differentiate(Symbol var, Style style) { return NumberFlow.numberFlowZero; }
     }
 
     public class StringFlow : Flow { // this is probably not very useful, but e.g. cond("a"="b",a,b)
@@ -1400,7 +1403,7 @@ namespace Kaemika
         public override bool HasStochasticMean() { return true; }
         public override bool LinearCombination() { return true; }
         public override bool HasNullVariance() { return true; }
-        public override Flow Differentiate(Style style) { throw new Error("Non differentiable: string"); }
+        public override Flow Differentiate(Symbol var, Style style) { throw new Error("Non differentiable: string"); }
     }
 
     public class SpeciesFlow : Flow {
@@ -1456,7 +1459,38 @@ namespace Kaemika
         public override bool HasStochasticMean() { return true; }
         public override bool LinearCombination() { return true; }
         public override bool HasNullVariance() { return false; }
-        public override Flow Differentiate(Style style) { return OpFlow.Op("?", this); } // a species 'a' is differentiated as '?a'
+        public override Flow Differentiate(Symbol var, Style style) {
+            if (var == null) return OpFlow.Op("?", this);  // time differntiation: a species 'a' is differentiated as '?a' meaning da/dt
+            else if (species.SameSymbol(var)) return NumberFlow.numberFlowOne; // dx/dx = 1
+            else return NumberFlow.numberFlowZero; // dx/dy = 0   for y=/=x
+        }
+    }
+
+    public class ConstantFlow : Flow { // cannot be evaluated (nor simulated), but can be used as a symbolic constant within generalized rates, so it can appear in the extracted differential equations
+        public Symbol constant;
+        public ConstantFlow(Symbol constant) { this.type = new Type("flow"); this.constant = constant; }
+        public override bool EqualFlow(Flow other) { return (other is ConstantFlow) && ((other as ConstantFlow).constant.SameSymbol(this.constant)); }
+        public override bool Precedes(Flow other, Style style) { return (other is SpeciesFlow) || ((other is ConstantFlow) && (constant.Precedes((other as ConstantFlow).constant))); }
+        public override Flow Normalize(Style style) { return this; }
+        public override Flow Expand(Style style) { return this; }
+        public override Flow Simplify(Style style) { return this; }
+        public override Flow ReGroup(Style style) { return this; }
+        public override bool Involves(List<SpeciesValue> species) { return false; }
+        public override bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered) { notCovered = null; return true; }
+        public override bool IsOp(string op, int arity) { return false; }
+        public override bool IsNumber(double n) { return false; }
+        public override Flow Arg(int i) { throw new Error("Arg"); }
+        public override string Format(Style style) { return this.constant.Format(style); }
+        public override bool ObserveBool(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new Error("Flow expression: bool expected instead of constant: " + Format(style)); }
+        public override double ObserveMean(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new ConstantEvaluation(constant.Format(style)); }
+        public override double ObserveVariance(SampleValue sample, double time, State state, Style style) { return 0.0; } // Var(number) = 0
+        public override double ObserveCovariance(Flow other, SampleValue sample, double time, State state, Style style) { return 0.0; } // Cov(number,Y) = 0
+        public override double ObserveDiff(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { return 0.0; } // ?n = 0
+        public override bool HasDeterministicValue() { return true; }
+        public override bool HasStochasticMean() { return true; }
+        public override bool LinearCombination() { return true; }
+        public override bool HasNullVariance() { return true; }
+        public override Flow Differentiate(Symbol var, Style style) { return NumberFlow.numberFlowZero; }
     }
 
     public class OpFlow : Flow {
@@ -1547,9 +1581,9 @@ namespace Kaemika
                 if (arg0.IsNumber(1.0)) return arg1; // 1 * a = a
                 if (arg1.IsNumber(1.0)) return arg0; // a * 1 = a
                 if (arg0.EqualFlow(arg1)) { return Op("^", arg0, NumberFlow.numberFlowTwo).Normalize(style); } // a * a = [a^2]
-                if (arg1.IsOp("^",2) && (arg0.EqualFlow(arg1.Arg(0)))) { return Op("^", arg0, Op("+", arg1.Arg(1), NumberFlow.numberFlowOne)).Normalize(style); } // a * a^n = [a^(n+1)]
-                if (arg0.IsOp("^",2) && (arg1.EqualFlow(arg0.Arg(0)))) { return Op("^", arg1, Op("+", arg0.Arg(1), NumberFlow.numberFlowOne)).Normalize(style); } // a^n * a = [a^(n+1)]
-                if (arg0.IsOp("^",2) && arg1.IsOp("^", 2) && (arg0.Arg(0).EqualFlow(arg1.Arg(0)))) { return Op("^", arg0.Arg(0), Op("+", arg0.Arg(1), arg1.Arg(1))).Normalize(style); } // a^n * a^m = [a^(n+m)]
+                if (arg1.IsOp("^", 2) && (arg0.EqualFlow(arg1.Arg(0)))) { return Op("^", arg0, Op("+", arg1.Arg(1), NumberFlow.numberFlowOne)).Normalize(style); } // a * a^n = [a^(n+1)]
+                if (arg0.IsOp("^", 2) && (arg1.EqualFlow(arg0.Arg(0)))) { return Op("^", arg1, Op("+", arg0.Arg(1), NumberFlow.numberFlowOne)).Normalize(style); } // a^n * a = [a^(n+1)]
+                if (arg0.IsOp("^", 2) && arg1.IsOp("^", 2) && (arg0.Arg(0).EqualFlow(arg1.Arg(0)))) { return Op("^", arg0.Arg(0), Op("+", arg0.Arg(1), arg1.Arg(1))).Normalize(style); } // a^n * a^m = [a^(n+m)]
                 if (arg0 == args[0] && arg1 == args[1]) return this; else return Op(op, arg0, arg1);
             } else if (op == "^") {
                 Flow arg0 = args[0].Simplify(style);
@@ -1659,6 +1693,7 @@ namespace Kaemika
                         Flow narg = arg.Normalize(style); // normalize the subexpressions off the spine
                         if (narg is NumberFlow) numbersGroup.Add(narg); // group numbers
                         else if (narg is SpeciesFlow) GroupAddOperand(narg, narg, indexedGroups, style); // group species  a  by  a
+                        else if (narg is ConstantFlow) GroupAddOperand(narg, narg, indexedGroups, style); // group constants  k  by   k
                         else if (narg.IsOp("*", 2) && narg.Arg(0) is NumberFlow) GroupAddOperand(narg.Arg(1), narg, indexedGroups, style); // group  n*a  by  a
                         else if (narg.IsOp("^", 2)) GroupAddOperand(narg, narg, indexedGroups, style); // group  a^b  by  a^b
                         else if (narg.IsOp("*", 2)) GroupAddOperand(narg, narg, indexedGroups, style); // group  a*b  by  a*b
@@ -1674,41 +1709,14 @@ namespace Kaemika
                         Flow narg = arg.Normalize(style); // normalize the subexpressions off the spine
                         if (narg is NumberFlow) numbersGroup.Add(narg); // group numbers
                         else if (narg is SpeciesFlow) GroupAddOperand(narg, narg, indexedGroups, style); // group species  a  by  a
-                        else if (narg.IsOp("^",2) && narg.Arg(0) is SpeciesFlow) GroupAddOperand(narg.Arg(0), narg, indexedGroups, style); // group  a^b  by  a
+                        else if (narg is ConstantFlow) GroupAddOperand(narg, narg, indexedGroups, style); // group constants  k  by   k
+                        else if (narg.IsOp("^", 2) && narg.Arg(0) is SpeciesFlow) GroupAddOperand(narg.Arg(0), narg, indexedGroups, style); // group  a^b  by  a
                         else if (narg.IsOp("*", 2)) (narg as OpFlow).GroupOperands(numbersGroup, indexedGroups, othersGroup, style); // keep grouping subexpressions
                         else othersGroup.Add(narg); // group others
                     }
                 }
             else throw new Error("GroupOperands");
         }
-
-        // (This version invokes Normalize and exponential number of times)
-        //private void GroupOperands(List<Flow> numbersGroup, List<Tuple<Flow, List<Flow>>> indexedGroups, List<Flow> othersGroup, Style style) {
-        //    // numberGroup is to collect all numerical arguments
-        //    // indexedGroups is to collect groups of arguments indexed by related factors or summands
-        //    // othersGroup is to collect all the other arguments
-        //    if (op == "+")
-        //        foreach (Flow arg in args) {
-        //            Flow narg = arg.Normalize(style);
-        //            if (narg is NumberFlow) numbersGroup.Add(narg); // group numbers
-        //            else if (narg is SpeciesFlow) GroupAddOperand(narg, narg, indexedGroups, style); // group species  a  by  a
-        //            else if (narg.IsOp("*", 2) && narg.Arg(0) is NumberFlow) GroupAddOperand(narg.Arg(1), narg, indexedGroups, style); // group  n*a  by  a
-        //            else if (narg.IsOp("^", 2)) GroupAddOperand(narg, narg, indexedGroups, style); // group  a^b  by  a^b
-        //            else if (narg.IsOp("*", 2)) GroupAddOperand(narg, narg, indexedGroups, style); // group  a*b  by  a*b
-        //            else if (narg.IsOp("+", 2)) (narg as OpFlow).GroupOperands(numbersGroup, indexedGroups, othersGroup, style); // keep grouping subexpressions
-        //            else othersGroup.Add(narg); // group others
-        //        }
-        //    else if (op == "*")
-        //        foreach (Flow arg in args) {
-        //            Flow narg = arg.Normalize(style);
-        //            if (narg is NumberFlow) numbersGroup.Add(narg); // group numbers
-        //            else if (narg is SpeciesFlow) GroupAddOperand(narg, narg, indexedGroups, style); // group species  a  by  a
-        //            else if (narg.IsOp("^",2) && narg.Arg(0) is SpeciesFlow) GroupAddOperand(narg.Arg(0), narg, indexedGroups, style); // group  a^b  by  a
-        //            else if (narg.IsOp("*", 2)) (narg as OpFlow).GroupOperands(numbersGroup, indexedGroups, othersGroup, style); // keep grouping subexpressions
-        //            else othersGroup.Add(narg); // group others
-        //        }
-        //    else throw new Error("GroupOperands");
-        //}
 
         private static void GroupAddOperand(Flow index, Flow flow, List<Tuple<Flow, List<Flow>>> indexedGroups, Style style) {
             bool found = false; // insert in existing group
@@ -1825,7 +1833,7 @@ namespace Kaemika
             if (this.arity == 0) return op;
             else if (arity == 1) {
                 if (this.infix) {
-                    string arg1 = SubFormat(this, args[0], style); // use parens depending on precedence of suboperator
+                    string arg1 = SubFormatRight(this, args[0], style); // use parens depending on precedence of suboperator
                     return "(" + op + " " + arg1 + ")";
                 } else return op + "(" + args[0].TopFormat(style) + ")";
             } else if (arity == 2) {
@@ -1834,9 +1842,10 @@ namespace Kaemika
                     if (op == "*" && args[0] is NumberFlow && (args[0] as NumberFlow).value == -1.0) return Op("-", args[1]).Format(style); // -1*a = -a
                     if (op == "+" && args[1].IsOp("*",2) && args[1].Arg(0) is NumberFlow && (args[1].Arg(0) as NumberFlow).value == -1.0) return Op("-", args[0], args[1].Arg(1)).Format(style); // a + -1*b = a - b
                     if (op == "+" && args[1].IsOp("*",2) && args[1].Arg(0) is NumberFlow && (args[1].Arg(0) as NumberFlow).value < 0.0) return Op("-", args[0], Op("*", new NumberFlow(-(args[1].Arg(0) as NumberFlow).value), args[1].Arg(1))).Format(style); // a + -n * b = a - n*b
+                    if (op == "+" && args[0].IsOp("*", 2) && args[0].Arg(0) is NumberFlow && (args[0].Arg(0) as NumberFlow).value < 0.0) return Op("-", args[1], Op("*", new NumberFlow(-(args[0].Arg(0) as NumberFlow).value), args[0].Arg(1))).Format(style); // -n * b + a = a - n*b
                     // end
-                    string arg1 = args[0].TopFormat(style);        // no parens, since association is always to the left
-                    string arg2 = SubFormat(this, args[1], style); // use parens depending on precedence of suboperator
+                    string arg1 = SubFormatLeft(this, args[0], style); // use parens depending on precedence of suboperator
+                    string arg2 = SubFormatRight(this, args[1], style); // use parens depending on precedence of suboperator
                     if (style.exportTarget == ExportTarget.LBS && op == "-") return arg1 + " -- " + arg2; // export exceptions
                     if (style.exportTarget == ExportTarget.LBS) return arg1 + " " + op + " " + arg2;      // export exceptions
                     return "(" + arg1 + " " + op + " " + arg2 + ")";
@@ -1854,7 +1863,17 @@ namespace Kaemika
             } else throw new Error("ReportValueOp.Format");
         }
 
-        private static string SubFormat(Flow supOp, Flow subOp, Style style) {
+        private static string SubFormatLeft(Flow supOp, Flow subOp, Style style) {
+            // in order of precedence strength
+            if (supOp.IsOp("+", 2)   &&   (subOp.IsOp("+", 2) || subOp.IsOp("-", 2) || subOp.IsOp("*", 2) || subOp.IsOp("/", 2) || subOp.IsOp("-", 1) || subOp.IsOp("^", 2))) return subOp.TopFormat(style);
+            if (supOp.IsOp("-", 2)   &&   (subOp.IsOp("+", 2) || subOp.IsOp("-", 2) || subOp.IsOp("*", 2) || subOp.IsOp("/", 2) || subOp.IsOp("-", 1) || subOp.IsOp("^", 2))) return subOp.TopFormat(style);
+            if (supOp.IsOp("*", 2)   &&   (subOp.IsOp("*", 2) || subOp.IsOp("/", 2) || subOp.IsOp("-", 1) || subOp.IsOp("^", 2))) return subOp.TopFormat(style);
+            if (supOp.IsOp("/", 2)   &&   (subOp.IsOp("*", 2) || subOp.IsOp("/", 2) || subOp.IsOp("-", 1) || subOp.IsOp("^", 2))) return subOp.TopFormat(style);
+            if (supOp.IsOp("^", 2)   &&   (subOp.IsOp("-", 1))) return subOp.TopFormat(style);
+            return subOp.Format(style);
+        }
+
+        private static string SubFormatRight(Flow supOp, Flow subOp, Style style) {
             // in order of precedence strength
             if (supOp.IsOp("+", 2)   &&   (subOp.IsOp("+", 2) || subOp.IsOp("-", 2) || subOp.IsOp("*", 2) || subOp.IsOp("/", 2) || subOp.IsOp("-", 1) || subOp.IsOp("^", 2))) return subOp.TopFormat(style);
             if (supOp.IsOp("-", 2)   &&   (subOp.IsOp("*", 2) || subOp.IsOp("/", 2) || subOp.IsOp("-", 1) || subOp.IsOp("^", 2))) return subOp.TopFormat(style);
@@ -2204,76 +2223,76 @@ namespace Kaemika
                 } else throw new Error(BadResult());
             } else throw new Error(BadArgs());
         }
-        public override Flow Differentiate(Style style) { // symbolic differentiation w.r.t. "time". 
+        public override Flow Differentiate(Symbol var, Style style) { // symbolic differentiation w.r.t. "time" (if var = null) or a variable var. 
             const string Bad = "Non differentiable: ";
             if (arity == 0) {
-                if (op == "time") // ?time = 1.0
+                if (var == null && op == "time") // ?time = 1.0
                     return NumberFlow.numberFlowOne;
                 else return NumberFlow.numberFlowZero; // "pi", "e", "kelvin", "celsius", "volume" // ?k = 0.0
             } else if (arity == 1) {
                 if (op == "-") // ?-f(time) = -?f(time)
-                    return Minus(args[0].Differentiate(style));
+                    return Minus(args[0].Differentiate(var, style));
                 else if (op == "exp") // ?(e^f(time)) = e^f(time) * ?f(time)
-                    return Mult(this, args[0].Differentiate(style));
+                    return Mult(this, args[0].Differentiate(var, style));
                 else if (op == "log") // ?ln(f(time)) = 1/time * ?f(time), for time > 0
-                    return Mult(Div(NumberFlow.numberFlowOne, OpFlow.Op("time")), args[0].Differentiate(style));
+                    return Mult(Div(NumberFlow.numberFlowOne, OpFlow.Op("time")), args[0].Differentiate(var, style));
                 else if (op == "sqrt") // ?sqrt(f(time)) = 1/(2*sqrt(f(time))) * ?f(time)
-                    return Mult(Div(NumberFlow.numberFlowOne, Mult(NumberFlow.numberFlowTwo, OpFlow.Op("sqrt", args[0]))), args[0].Differentiate(style));
+                    return Mult(Div(NumberFlow.numberFlowOne, Mult(NumberFlow.numberFlowTwo, OpFlow.Op("sqrt", args[0]))), args[0].Differentiate(var, style));
                 else if (op == "sign") // ?sign(f(time)) = 0
                     return NumberFlow.numberFlowZero;
                 else if (op == "abs") // ?abs(f(time)) = sign(f(time)) * ?f(time)
-                    return Mult(OpFlow.Op("sign", args[0]), args[0].Differentiate(style));
+                    return Mult(OpFlow.Op("sign", args[0]), args[0].Differentiate(var, style));
                 else if (op == "sin") // ?sin(f(time)) = cos(f(time)) * ?f(time);   e.g. ?sin(s) = cos(s)*?s for a species s
-                    return Mult(OpFlow.Op("cos", args[0]), args[0].Differentiate(style));
+                    return Mult(OpFlow.Op("cos", args[0]), args[0].Differentiate(var, style));
                 else if (op == "cos") // ?cos(f(time)) = -sin(f(time)) * ?f(time)
-                    return Mult(Minus(OpFlow.Op("sin", args[0])), args[0].Differentiate(style));
+                    return Mult(Minus(OpFlow.Op("sin", args[0])), args[0].Differentiate(var, style));
                 else if (op == "tan") // ?tan(f(time)) = 1/cos(f(time))^2 * ?f(time)
-                    return Mult(Div(NumberFlow.numberFlowOne, Pow(OpFlow.Op("cos", args[0]), NumberFlow.numberFlowTwo)), args[0].Differentiate(style));
+                    return Mult(Div(NumberFlow.numberFlowOne, Pow(OpFlow.Op("cos", args[0]), NumberFlow.numberFlowTwo)), args[0].Differentiate(var, style));
                 else if (op == "sinh") // ?sinh(f(time)) = cosh(f(time)) * ?f(time)
-                    return Mult(OpFlow.Op("cosh", args[0]), args[0].Differentiate(style));
+                    return Mult(OpFlow.Op("cosh", args[0]), args[0].Differentiate(var, style));
                 else if (op == "cosh") // ?cosh(f(time)) = sinh(f(time)) * ?f(time)
-                    return Mult(OpFlow.Op("sinh", args[0]), args[0].Differentiate(style));
+                    return Mult(OpFlow.Op("sinh", args[0]), args[0].Differentiate(var, style));
                 else if (op == "tanh") // ?tanh(f(time)) = (1-tanh(f(time))^2) * ?f(time)
-                    return Mult(Minus(NumberFlow.numberFlowOne, Pow(OpFlow.Op("tanh", args[0]), NumberFlow.numberFlowTwo)), args[0].Differentiate(style));
+                    return Mult(Minus(NumberFlow.numberFlowOne, Pow(OpFlow.Op("tanh", args[0]), NumberFlow.numberFlowTwo)), args[0].Differentiate(var, style));
                 // ### etc.
                 else throw new Error(Bad + op); // "var", "poisson", "?" cannot support second derivative
             } else if (arity == 2) {
                 if (op == "+") // ?(f(time)+g(time)) = ?f(time)+?g(time)
-                    return Plus(args[0].Differentiate(style), args[1].Differentiate(style));
+                    return Plus(args[0].Differentiate(var, style), args[1].Differentiate(var, style));
                 else if (op == "-") // ?(f(time)-g(time)) = ?f(time)-?g(time)
-                    return Minus(args[0].Differentiate(style), args[1].Differentiate(style));
+                    return Minus(args[0].Differentiate(var, style), args[1].Differentiate(var, style));
                 else if (op == "*") // ?(f(time)*g(time)) = ?f(time)*g(time) + f(time)*?g(time)
                     return Plus(
-                        Mult(args[0].Differentiate(style), args[1]),
-                        Mult(args[0], args[1].Differentiate(style)));
+                        Mult(args[0].Differentiate(var, style), args[1]),
+                        Mult(args[0], args[1].Differentiate(var, style)));
                 else if (op == "/") // ?(f(time)/g(time)) = (?f(time)*g(time) - f(time)*?g(time)) / g(time)^2
                     return
                         Div(
                             Minus(
-                               Mult(args[0].Differentiate(style), args[1]),
-                               Mult(args[0], args[1].Differentiate(style))),
+                               Mult(args[0].Differentiate(var, style), args[1]),
+                               Mult(args[0], args[1].Differentiate(var, style))),
                             Pow(args[1], NumberFlow.numberFlowTwo));              
                 else if (op == "^")  
                     if (args[0] is NumberFlow && (args[0] as NumberFlow).value == Math.E) { // ?(e^f(time)) = e^f(time) * ?f(time)  // special case if base is e
-                        return Mult(this, args[1].Differentiate(style));
+                        return Mult(this, args[1].Differentiate(var, style));
                     } else if (args[1] is NumberFlow) { // ?(f(time)^n) = n*(f(time)^(n-1))*?f(time) // special case if exponent is constant
                         double power = (args[1] as NumberFlow).value;
                         return
                             Mult(
                                 Mult(args[1],
                                     Pow(args[0], new NumberFlow(power-1))),
-                                args[0].Differentiate(style));
+                                args[0].Differentiate(var, style));
                     } else { // ?(f(time)^g(time)) = g(time)*(f(time)^(g(time)-1))*?f(time) + (f(time)^g(time))*ln(f(time))*?g(time)
                              //   = (f(time)^(g(time)-1)) * (g(time)*?f(time) + f(time)*ln(f(time))*?g(time))
                         return
                            Mult(
                               Pow(args[0], Minus(args[1], NumberFlow.numberFlowOne)),
                               Plus(
-                                 Mult(args[1], args[0].Differentiate(style)),
+                                 Mult(args[1], args[0].Differentiate(var, style)),
                                  Mult(args[0],
                                     Mult(
                                        Log(args[0]), 
-                                       args[1].Differentiate(style)
+                                       args[1].Differentiate(var, style)
                                     )
                                  )
                               )
@@ -2282,7 +2301,7 @@ namespace Kaemika
                 else throw new Error(Bad + op);
             } else if (arity == 3) {
                 if (op == "cond")
-                    return Cond(args[0], args[1].Differentiate(style), args[2].Differentiate(style));
+                    return Cond(args[0], args[1].Differentiate(var, style), args[2].Differentiate(var, style));
                 else  throw new Error(Bad + op);
             } else throw new Error(Bad + op);
         }
@@ -2323,9 +2342,19 @@ namespace Kaemika
         public override Flow BuildFlow(Env env, Style style) {
             Value value = env.LookupValue(this.name); // we must convert this Value into a Flow
             Flow flow = value.ToFlow();
-            if (flow == null) new Error("Flow expression: Variable '" + this.Format() + "' should denote a flow");
+            if (flow == null) throw new Error("Flow expression: Variable '" + this.Format() + "' should denote a flow");
             return flow;
         }
+    }
+
+    public class Constant : Expression { // useful only within flows
+        public string name;
+        public Constant(string name) { this.name = name; }
+        public override string Format() { return this.name; }
+        public override void Scope(Scope scope) { }
+        public override Value Eval(Env env, Netlist netlist, Style style) { throw new Error("Constants cannot be evaluated: " + Format()); }
+        public override Value EvalFlow(Env env, Style style) { throw new Error("Constants cannot be evaluated: " + Format()); }
+        public override Flow BuildFlow(Env env, Style style) { return new ConstantFlow(new Symbol(this.name)); }
     }
 
     public class BoolLiteral : Expression {

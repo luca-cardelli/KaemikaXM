@@ -65,7 +65,10 @@ Comment Block @= { Nesting = All }
 
 <Ids>           ::= <Ids> Id
                     | Id
-                                          
+                    
+<IdSeq>         ::= <IdSeq> ',' Id
+                    | Id
+                                                              
 <Allocation>     ::= 'in' <Expression>     ! allocation of species in a sample
                     |                      ! short for 'in' 'vessel'
 <Substances>     ::= <Substances> ',' <Substance>
@@ -86,6 +89,7 @@ Comment Block @= { Nesting = All }
                     | 'string' Id '=' <Expression>            ! binding a string value to a string id
                     | 'list' Id '=' <Expression>              ! binding a list value to a list id
                     | 'flow' Id '=' <Expression>              ! binding a flow value to a flow id
+                    | 'constant' <IdSeq>                      ! binding flow constants to flow ids
                     | 'species' <Species>                     ! binding a species to a species id or species def
                     | 'sample' <Sample>                       ! binding a sample to a sample id or sample def
                     | 'function' <Function>                   ! binding a function to a function id or function def

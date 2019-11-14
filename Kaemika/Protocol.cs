@@ -223,7 +223,7 @@ namespace Kaemika
             int renderedCounter = 0;
             double lastTime = finalTime;
             State lastState = null;
-            if (initialState.NaN()) { //===NaN
+            if (initialState.NaN()) {
                 Gui.Log("Initial state contains NaN.");
                 return (lastTime, lastState, pointsCounter, renderedCounter);
             }
@@ -243,6 +243,10 @@ namespace Kaemika
                     solPoint = enumerator.Current;       // get next step of integration from solver
                     hasSolPoint = true;
                 }
+                catch (ConstantEvaluation e) { // stop simulation but allow execution to proceed
+                    Gui.Log("Simulation stopped and ignored: cannot evaluate constant '" + e.Message + "'");
+                    return (lastTime, lastState, pointsCounter, renderedCounter); 
+                } 
                 catch (Error e) { throw new Error(e.Message); }
                 catch (Exception e) { throw new Error("ODE Solver FAILED: " + e.Message); }
                 pointsCounter++;

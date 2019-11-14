@@ -21,6 +21,15 @@ a few combinators:
 
 - a number literal
 
+- a constant
+declared via 'constant k1,...,kn'
+has no value, cannot be evaluated,
+can be usefully used only inside
+{{...}} general reaction rate brackets;
+will inhibit simulation, but will
+be treated as a formal constant in
+exported ODEs, including LNA
+
 - 'time'
 the current time
 
@@ -73,7 +82,7 @@ sin(time+1)
 
 2*a - 3*b	
 // linear combination of two species, 
-// this could be used for plotting, or even 
+// this could be used for plotting, or 
 // as a non-mass-action rate law
 
 poisson(a)

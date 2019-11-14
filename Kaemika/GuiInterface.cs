@@ -8,6 +8,9 @@ namespace Kaemika
     public class Error : Exception {
         public Error(string message) : base(message) { }
     }
+    public class ConstantEvaluation : Exception {
+        public ConstantEvaluation(string message) : base(message) { }
+    }
 
     public class Gui {
         public static GuiInterface gui; // hold "the" gui here
@@ -24,7 +27,7 @@ namespace Kaemika
         public static string StringOfNoise(Noise noise) { return noiseString[(int)noise]; }
 
         public static string FormatUnit(double value, string spacer, string baseUnit, string numberFormat) {
-            if (double.IsNaN(value)) return "NaN"; //===NaN
+            if (double.IsNaN(value)) return "NaN";
             if (value == 0.0) return value.ToString(numberFormat) + spacer + baseUnit;
             //else if (Math.Round(value * 1e6) < 1) return (value * 1e9).ToString(numberFormat) + spacer + "n" + baseUnit; // this test avoids producing '1000nM'
             //else if (Math.Round(value * 1e3) < 1) return (value * 1e6).ToString(numberFormat) + spacer + "u" + baseUnit; // this test avoids producing '1000uM'

@@ -102,6 +102,11 @@ namespace Kaemika {
                 return new List<Statement> { new ValueDefinition(reduction.Terminal(1), new Type("list"), ParseExpression(reduction.Nonterminal(3))) };
             } else if (reduction.Production() == "<Statement> ::= flow Id '=' <Expression>") {
                 return new List<Statement> { new ValueDefinition(reduction.Terminal(1), new Type("flow"), ParseExpression(reduction.Nonterminal(3))) };
+            } else if (reduction.Production() == "<Statement> ::= constant <IdSeq>") {
+                List<string> ids = ParseIdSeq(reduction.Nonterminal(1));
+                List<Statement> result = new List<Statement> { };
+                foreach (string id in ids) { result.Add(new ValueDefinition(id, new Type("flow"), new Constant(id))); }
+                return result;
             } else if (reduction.Production() == "<Statement> ::= sample <Sample>") {
                 return new List<Statement> { ParseSample(reduction.Nonterminal(1)) };
             } else if (reduction.Production() == "<Statement> ::= species <Species>") {
@@ -325,6 +330,16 @@ namespace Kaemika {
                 ids.Add(reduction.Terminal(1));
                 return ids;
             } else if (reduction.Production()            == "<Ids> ::= Id") {
+                return new List<string> { reduction.Terminal(0) };
+            } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
+        }
+
+        public static List<string> ParseIdSeq(IReduction reduction) {
+            if (reduction.Production()                   == "<IdSeq> ::= <IdSeq> ',' Id") {
+                List<string> ids = ParseIdSeq(reduction.Nonterminal(0));
+                ids.Add(reduction.Terminal(2));
+                return ids;
+            } else if (reduction.Production()            == "<IdSeq> ::= Id") {
                 return new List<string> { reduction.Terminal(0) };
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }

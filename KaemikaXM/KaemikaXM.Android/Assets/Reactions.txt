@@ -1,4 +1,4 @@
-//======================================
+﻿//======================================
 // Basic examples of species and reactions
 //======================================
 
@@ -65,6 +65,8 @@ equilibrate for 1
 // by general kinetic rates '{{ ... }}'. 
 // Warning: concentrations may then go 
 // negative (they are then reset to 0).
+// The LNA can be computed even with
+// these general kinetic rates.
 
 species a, b, c, d @ 1 M
 
@@ -77,6 +79,15 @@ a + b -> #  { 2 }
 // general kinetic rates:
 
 a + b -> #  {{ 2 * a * b }}	
+
+// Species other than a,b can be used, but
+// NOTE: whatever expression is written
+// within {{...}} it is still multiplied
+// by the net stoichiometry of the species
+// in this case -1 for a, and -1 for b
+// when computing their ODEs:
+// ∂a = -2 * a * b
+// ∂b = -2 * a * b
 
 // Arrhenius kinetics (collision 
 // frequency = 2, activation energy = 50)
