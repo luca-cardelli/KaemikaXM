@@ -1289,8 +1289,8 @@ namespace Kaemika
         public abstract bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered);
         public abstract bool IsOp(string op, int arity);
         public abstract bool IsNumber(double n);
-        //public abstract bool IsNumericConstant();
-        //public abstract bool IsNumericSum(); // used just to prevent the distribution of * over + in numeric/constant cases, to avoid looping with the reverse rearrangement 
+        public abstract bool IsNegativeNumber();
+        public abstract bool IsNumericConstantExpression(); // including 'Constant" flows
 
         public abstract Flow Arg(int i);
 
@@ -1330,6 +1330,8 @@ namespace Kaemika
         public override bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered) { notCovered = null; return true; }
         public override bool IsOp(string op, int arity) { return false; }
         public override bool IsNumber(double n) { return false; }
+        public override bool IsNegativeNumber() { return false; }
+        public override bool IsNumericConstantExpression() { return false; }
         public override Flow Arg(int i) { throw new Error("Arg"); }
         public override string Format(Style style) { if (this.value) return "true"; else return "false"; }
 
@@ -1362,6 +1364,8 @@ namespace Kaemika
         public override bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered) { notCovered = null; return true; }
         public override bool IsOp(string op, int arity) { return false; }
         public override bool IsNumber(double n) { return value == n; }
+        public override bool IsNegativeNumber() { return value < 0.0; }
+        public override bool IsNumericConstantExpression() { return true; }
         public override Flow Arg(int i) { throw new Error("Arg"); }
         public override string Format(Style style) { return style.FormatDouble(this.value); }
 
@@ -1390,6 +1394,8 @@ namespace Kaemika
         public override bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered) { notCovered = null; return true; }
         public override bool IsOp(string op, int arity) { return false; }
         public override bool IsNumber(double n) { return false; }
+        public override bool IsNegativeNumber() { return false; }
+        public override bool IsNumericConstantExpression() { return false; }
         public override Flow Arg(int i) { throw new Error("Arg"); }
         public override string Format(Style style) { return Parser.FormatString(this.value); }
 
@@ -1427,6 +1433,8 @@ namespace Kaemika
         }
         public override bool IsOp(string op, int arity) { return false; }
         public override bool IsNumber(double n) { return false; }
+        public override bool IsNegativeNumber() { return false; }
+        public override bool IsNumericConstantExpression() { return false; }
         public override Flow Arg(int i) { throw new Error("Arg"); }
         public override string Format(Style style) {
             string name = this.species.Format(style);
@@ -1479,6 +1487,8 @@ namespace Kaemika
         public override bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered) { notCovered = null; return true; }
         public override bool IsOp(string op, int arity) { return false; }
         public override bool IsNumber(double n) { return false; }
+        public override bool IsNegativeNumber() { return false; }
+        public override bool IsNumericConstantExpression() { return true; }
         public override Flow Arg(int i) { throw new Error("Arg"); }
         public override string Format(Style style) { return this.constant.Format(style); }
         public override bool ObserveBool(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new Error("Flow expression: bool expected instead of constant: " + Format(style)); }
@@ -1526,6 +1536,18 @@ namespace Kaemika
             return this.args[i];
         }
         public override bool IsNumber(double n) { return false; }
+        public override bool IsNegativeNumber() { return false; }
+        public override bool IsNumericConstantExpression() { 
+            if (arity == 0) {
+                return false; // "time", "kelvin", "celsius", "volume"
+            } else if (arity == 1) {
+                return (op == "-") && args[0].IsNumericConstantExpression(); 
+            } else if (arity == 2) {
+                return (op == "+" || op == "-" || op == "*" || op == "/" || op == "^") && args[0].IsNumericConstantExpression() && args[1].IsNumericConstantExpression();
+            } else if (arity == 3) { // including "cond"
+                return false;
+            } else return false;
+        }
 
         public override bool EqualFlow(Flow other) {
             if (!(other is OpFlow)) return false;
@@ -1840,9 +1862,10 @@ namespace Kaemika
                 if (this.infix) {
                     // improve presentation of unary and binary minus
                     if (op == "*" && args[0] is NumberFlow && (args[0] as NumberFlow).value == -1.0) return Op("-", args[1]).Format(style); // -1*a = -a
-                    if (op == "+" && args[1].IsOp("*",2) && args[1].Arg(0) is NumberFlow && (args[1].Arg(0) as NumberFlow).value == -1.0) return Op("-", args[0], args[1].Arg(1)).Format(style); // a + -1*b = a - b
-                    if (op == "+" && args[1].IsOp("*",2) && args[1].Arg(0) is NumberFlow && (args[1].Arg(0) as NumberFlow).value < 0.0) return Op("-", args[0], Op("*", new NumberFlow(-(args[1].Arg(0) as NumberFlow).value), args[1].Arg(1))).Format(style); // a + -n * b = a - n*b
-                    if (op == "+" && args[0].IsOp("*", 2) && args[0].Arg(0) is NumberFlow && (args[0].Arg(0) as NumberFlow).value < 0.0) return Op("-", args[1], Op("*", new NumberFlow(-(args[0].Arg(0) as NumberFlow).value), args[0].Arg(1))).Format(style); // -n * b + a = a - n*b
+                    if (op == "-" && arity == 2 && args[1].IsOp("*", 2) && args[1].Arg(0) is NumberFlow && (args[1].Arg(0) as NumberFlow).value == -1.0) return Op("+", args[0], args[1].Arg(1)).Format(style); // a - -1*b = a + b
+                    if (op == "+" && args[1].IsOp("+", 2) && args[1].Arg(0).IsOp("*",2) && args[1].Arg(0).Arg(0).IsNegativeNumber()) return Op("+", Op("+", args[0], args[1].Arg(0)), args[1].Arg(1)).Format(style); // a + (-n*b + c) = (a + -n*b) + c
+                    if (op == "+" && args[1].IsOp("*",2) && args[1].Arg(0).IsNegativeNumber()) return Op("-", args[0], Op("*", new NumberFlow(-(args[1].Arg(0) as NumberFlow).value), args[1].Arg(1))).Format(style); // a + -n * b = a - n*b
+                    if (op == "+" && args[0].IsOp("*", 2) && args[0].Arg(0).IsNegativeNumber()) return Op("-", args[1], Op("*", new NumberFlow(-(args[0].Arg(0) as NumberFlow).value), args[0].Arg(1))).Format(style); // -n * b + a = a - n*b
                     // end
                     string arg1 = SubFormatLeft(this, args[0], style); // use parens depending on precedence of suboperator
                     string arg2 = SubFormatRight(this, args[1], style); // use parens depending on precedence of suboperator
@@ -2334,10 +2357,14 @@ namespace Kaemika
             if (!scope.Lookup(this.name)) throw new Error("UNDEFINED variable: " + this.name);
         }
         public override Value Eval(Env env, Netlist netlist, Style style) {
-            return env.LookupValue(this.name);
+            Value value = env.LookupValue(this.name);
+            if (value is ConstantFlow) { throw new ConstantEvaluation((value as ConstantFlow).Format(style)); }
+            return value;
         }
         public override Value EvalFlow(Env env, Style style) {
-            return env.LookupValue(this.name);
+            Value value = env.LookupValue(this.name);
+            if (value is ConstantFlow) { throw new ConstantEvaluation((value as ConstantFlow).Format(style)); }
+            return value;
         }
         public override Flow BuildFlow(Env env, Style style) {
             Value value = env.LookupValue(this.name); // we must convert this Value into a Flow
@@ -3232,10 +3259,23 @@ namespace Kaemika
         public override Env Eval(Env env, Netlist netlist, Style style) {
             List<Symbol> reactants = this.reactants.Eval(env, netlist, style);
             List<Symbol> products = this.products.Eval(env, netlist, style);
-            RateValue rate = this.rate.Eval(env, netlist, style);
+            RateValue rate; try { rate = this.rate.Eval(env, netlist, style); }
+            catch (ConstantEvaluation e) { rate = ConvertToGeneralRate(e.Message, reactants, env, netlist, style); }
             ReactionValue reaction = new ReactionValue(reactants, products, rate);
             netlist.Emit(new ReactionEntry(reaction));
             return env;
+        }
+        // in case we attempt to use a constant inside {...} we try to convert it to a flow with mass action kinetics, as if it had appeared inside {{...}}
+        private RateValue ConvertToGeneralRate(string msg, List<Symbol> reactants, Env env, Netlist netlist, Style style) {
+            if (!(rate is MassActionRate)) throw new Error("ConvertToGeneralRate");
+            MassActionRate rateExpr = rate as MassActionRate;
+            string err = "Cannot evaluate a constant '" + msg + "' inside a mass action rate {...}; try using general reaction rates {{...}}";
+            if (!(rateExpr.activationEnergy is NumberLiteral && (rateExpr.activationEnergy as NumberLiteral).value == 0.0)) throw new Error(err);
+            RateValue rateValue = new GeneralRate(rateExpr.collisionFrequency).Eval(env, netlist, style); // try evaluate the rate as a flow
+            Flow rateFunction = (rateValue as GeneralRateValue).rateFunction; // now build up the mass action kinetics
+            if (!rateFunction.IsNumericConstantExpression()) throw new Error(err); // make sure this is only a combination of constants and numbers, not e.g. species
+            foreach (Symbol reactant in reactants) { rateFunction = OpFlow.Op("*", rateFunction, new SpeciesFlow(reactant)); }
+            return new GeneralRateValue(rateFunction);
         }
     }
 
@@ -3264,8 +3304,8 @@ namespace Kaemika
     }
 
     public class MassActionRate : Rate {
-        private Expression collisionFrequency;
-        private Expression activationEnergy;
+        public Expression collisionFrequency;
+        public Expression activationEnergy;
         public MassActionRate(Expression collisionFrequency, Expression activationEnergy) {
             this.collisionFrequency = collisionFrequency;
             this.activationEnergy = activationEnergy;
@@ -3295,10 +3335,10 @@ namespace Kaemika
             if (cfv < 0) throw new Error("Reaction rate collision frequency must be non-negative: " + collisionFrequency.Format() + " = " + style.FormatDouble(cfv));
             if (aev < 0) throw new Error("Reaction rate activation energy must be non-negative: " + activationEnergy.Format() + " = " + style.FormatDouble(aev));
             return new MassActionRateValue(cfv, aev);
+            }
         }
-    }
-        
-    public class Amount : Statement {
+
+        public class Amount : Statement {
         private List<Variable> vars;
         private Expression initial;
         private string dimension; // Mass unit, or concentration unit

@@ -3,12 +3,10 @@ species x@1 M
 species z@0 M
 species xz@0 M
 
-constant k1,k2,k3,k4,k5
-
-u -> u + z   {{k1*u}}
-z -> z + x   {{k2*z}}
-x -> x + xz  {{k3*x}}
-xz + z -> #  {{k4*xz*z}}
-x -> #       {{k5*x}}
+u -> u + z
+z -> z + x
+x -> x + xz
+xz + z -> #
+x -> #
 
 equilibrate for 10

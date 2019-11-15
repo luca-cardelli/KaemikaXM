@@ -25,8 +25,8 @@ a few combinators:
 declared via 'constant k1,...,kn'
 has no value, cannot be evaluated,
 can be usefully used only inside
-{{...}} general reaction rate brackets;
-will inhibit simulation, but will
+rate brackets {...} or {{...}};
+it will inhibit simulation, but will
 be treated as a formal constant in
 exported ODEs, including LNA
 
