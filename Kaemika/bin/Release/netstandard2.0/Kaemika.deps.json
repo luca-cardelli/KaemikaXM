@@ -10,6 +10,7 @@
       "Kaemika/1.0.0": {
         "dependencies": {
           "CalithaGOLD": "1.0.0",
+          "GraphSharpStdSubset": "1.0.0",
           "MathNet.Numerics": "4.8.0",
           "NETStandard.Library": "2.0.3",
           "Oslo": "1.0.0",
@@ -44,6 +45,14 @@
       "CalithaGOLD/1.0.0": {
         "runtime": {
           "CalithaGOLD.dll": {}
+        }
+      },
+      "GraphSharpStdSubset/1.0.0": {
+        "dependencies": {
+          "QuickGraphStd": "1.0.0"
+        },
+        "runtime": {
+          "GraphSharpStdSubset.dll": {}
         }
       },
       "Oslo/1.0.0": {
@@ -96,6 +105,11 @@
       "hashPath": "skiasharp.1.68.0.nupkg.sha512"
     },
     "CalithaGOLD/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "GraphSharpStdSubset/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
