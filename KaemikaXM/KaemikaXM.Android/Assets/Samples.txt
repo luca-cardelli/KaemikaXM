@@ -56,7 +56,7 @@ a + b -> {2, 5} c
 // according to the relevant reactions
 // resulting in a new sample 's1' after time '3'.
 
-equilibrate s1 := s for 3     
+equilibrate s1 = s for 3     
 
 // Sample 's' can no longer be used after this: 
 // it has been consumed. Sample 's1' has the 
@@ -64,13 +64,13 @@ equilibrate s1 := s for 3
 // Sample 's1' contains the same species as 's' 
 // in usually altered amounts.
 
-// 'equilibrate s := s for 10' is also legal, 
+// 'equilibrate s = s for 10' is also legal, 
 // it reuses the old name for the new sample.
 
 // 'equilibrate s for 3' is an abbreviation 
-// for 'equilibrate s := s for 3'.
+// for 'equilibrate s = s for 3'.
 // 'equilibrate for 3' is an abbreviation 
-// for 'equilibrate vessel := vessel for 3'
+// for 'equilibrate vessel = vessel for 3'
 // whenever 'vessel' is so redefined, it 
 // is a different sample with the same name
 // all the abbreviations described above 

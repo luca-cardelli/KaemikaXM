@@ -5,6 +5,257 @@ Version 5.2.0.
 
 
 ========================================
+Grammar
+========================================
+
+"Name"    = Kaemika grammar
+"Author"  = Luca Cardelli
+"Version" = 1
+"About"   = A Language for Modularizing Chemistry
+          
+"Case Sensitive" = True
+"Start Symbol"   = <Top>
+
+Id        = ({Letter}|{Greek and Coptic})({AlphaNumeric}|{Greek and Coptic}|'_'|{Superscripts and Subscripts}|'')*           ! Letter followed by alphanumerics or single-quote, underscore, Unicode sup/sub
+Integer   = {Digit}+
+Float     = {Digit}+ '.' {Digit}+
+Double    = {Digit}+ ('.' {Digit}+)? [Ee] [+-]? {Digit}+
+{StringChar} = {All Printable} - ["\]
+QuotedString = '"' ({StringChar} | '\'{All Printable})* '"'
+          
+Comment Line  = '//'
+Comment Start = '/*'
+Comment End   = '*/'
+Comment Block @= { Nesting = All }
+                
+! PREAMBLE --------------------------------------------
+
+<Top>           ::=  <Statements>
+             
+! ABSTRACTIONS  --------------------------------------------
+                          
+<Function>       ::= Id '=' <Expression>                                     ! binding a function value to a function id
+                    | Id <Fun>                                               ! function id definition
+<Fun>            ::= <Headers> '{' <Expression> '}'                          ! function abstraction
+
+<Network>        ::= Id '=' <Expression>                                     ! binding a network value to a network id
+                    | Id <Net>                                                 ! network id definition
+<Net>            ::= <Header> '{' <Statements> '}'                           ! networks are nothing but functions that do not return values
+
+<EmptySample>    ::= Id '{' <Expression> <Volume> ',' <Expression> <Temperature> '}'
+<Sample>         ::= Id '=' <Expression>                                     ! binding a sample value to a sample id
+                    | <EmptySample>                                          ! empty sample definition, parameterized by volume and temperature
+                    | Id                                                     ! empty sample definition, default volume (1 mL) and temperature (20 Celsius)
+
+<Species>        ::= Id '=' <Expression>                                     ! binding a species value to a species id
+                    | '{' <Substances> '}'                                   ! declaration of multiple species (unallocated)
+                    | <Substances> '@' <Expression> <Quantity> <Allocation>  ! allocation of multiple <Ids> species to a sample, 
+                                                                             !     short for '{'<Substances>'}' ';' 'amount' <Ids> '@' <Expression> <Quantity> <Allocation>
+                  
+<Headers>        ::= <Headers> <Header>
+                    | <Header>
+                                      
+<Header>         ::= '(' <Params> ')'
+
+<Params>           ::= <ParamSeq>
+                    |                                                  
+<ParamSeq>         ::= <ParamSeq> ',' <Param>
+                    | <Param>
+
+<Param>          ::= 'bool' <Ids>                  ! booleans      
+                    | 'number' <Ids>               ! numbers
+                    | 'string' <Ids>               ! strings
+                    | 'list' <Ids>                 ! lists
+                    | 'flow' <Ids>                 ! for functions parameterized by flows in flow-expressions                   
+                    | 'species' <Ids>              ! species are values. n.b. individual reactions are not values, but networks are
+                    | 'sample' <Ids>               ! samples are containers that have volume and temperature, populated with species that have concentrations
+                    | 'function' <Ids>             ! functions can receive and return values, species, functions, and networks  
+                    | 'network' <Ids>              ! networks can receive values, species, functions, and networks, and return nothing        
+                    | '[' <Params> ']'             ! list pattern matching          
+
+<Ids>           ::= <Ids> Id
+                    | Id
+                    
+<IdSeq>         ::= <IdSeq> ',' Id
+                    | Id
+                                                              
+<Allocation>     ::= 'in' <Expression>     ! allocation of species in a sample
+                    |                      ! short for 'in' 'vessel'
+<Substances>     ::= <Substances> ',' <Substance>
+                    | <Substance>
+<Substance>      ::= Id '#' <Expression>
+                    | Id
+                  
+! STATEMENTS --------------------------------------------
+
+<Statements>    ::= <Statements> <Statement>  
+                    |
+
+<Statement>     ::=   <Net Instance>                          ! there are no obligatory delimiter characters between statements. LALR FTW!
+                    | <Reaction>                              ! reactions are the only statements not prefixed by a keyword (other than instances)
+                    | 'bool' Id '=' <Expression>              ! binding a bool value to a bool id
+                    | 'number' Id '=' <Expression>            ! binding a number value to a number id
+                    | 'number' Id '=?' <Distribution>         ! binding a number value drawn from a distribution to a number id
+                    | 'string' Id '=' <Expression>            ! binding a string value to a string id
+                    | 'list' Id '=' <Expression>              ! binding a list value to a list id
+                    | 'flow' Id '=' <Expression>              ! binding a flow value to a flow id
+                    | 'constant' <IdSeq>                      ! binding flow constants to flow ids
+                    | 'species' <Species>                     ! binding a species to a species id or species def
+                    | 'sample' <Sample>                       ! binding a sample to a sample id or sample def
+                    | 'function' <Function>                   ! binding a function to a function id or function def
+                    | 'network' <Network>                     ! binding a network to a network id or network def
+                    | '[' <Params> ']' '=' <Expression>       ! binding list elements to ids; length and types must match                  
+                    | 'amount' <Ids> '@' <Expression> <Quantity> <Allocation>  ! set initial quantity of species in a sample
+                    | 'report' <Reports>                                       ! report species for plotting (can use arithmetic, but restrictions apply)
+                    | 'if' <Expression> 'then' <Statements> <Else>             ! conditional
+                    | ';'                                                      ! rarely used optional syntactic noise for same-line multiple statements
+                    
+                    | 'mix' Id '=' <ExpressionSeq>                                ! mix samples and name the new sample
+                    | 'split' <IdSeq> '=' <Expression> 'by' <ExpressionSeq>       ! split a sample by propotions and name them
+                    | 'dispose' <ExpressionSeq>                                   ! dispose samples (those samples cannot be reused)
+                    | 'regulate' <IdSeq> '=' <ExpressionSeq> 'to' <Expression> <Temperature>  ! change samples temperature to value (heat or cool)
+                    | 'regulate' <IdSeq> 'to' <Expression> <Temperature>                      ! short for 'regulate' Ids '=' Ids 'to' ...
+                    | 'concentrate' <IdSeq> '=' <ExpressionSeq> 'to' <Expression> <Volume>    ! change samples volume to value (evaporate or dilute)
+                    | 'concentrate' <IdSeq> 'to' <Expression> <Volume>                        ! short for 'concentrate' Ids '=' Ids 'to' ...
+                    | 'equilibrate' <IdSeq> '=' <ExpressionSeq> <EndCondition>    ! integrate samples for a time, and name the new samples
+                    | 'equilibrate' <IdSeq> <EndCondition>                        ! short for 'integrate' Ids '=' Ids <EndCondition> (reusing the sample Ids)
+                    | 'equilibrate' <EndCondition>                                ! short for 'integrate' 'vessel' '=' 'vessel' <EndCondition> (default sample)
+                
+<Net Instance>   ::= Id '(' <Expressions> ')'
+
+<Else>           ::=  'elseif' <Expression> 'then' <Statements> <Else>  ! cascading if statements: else is optional
+                    | 'else' <Statements> 'end'
+                    | 'end'
+                                   
+! REACTIONS --------------------------------------------
+
+<Reaction>      ::= <Transition> 
+                    | <Complex> '>>' <Transition>                 ! optional catalysis notation, A >> B -> C == A + B -> A + C, etc.
+               
+<Transition>    ::= <Complex> '->' <Complex>                                              ! default rate (collision frequncy = 1.0, activation energy = 0.0)
+                    | <Complex> '->' '{' <Rate> '}' <Complex>                             ! rate in the middle of reaction
+                    | <Complex> '->' <Complex> '{' <Rate> '}'                             ! or rate after reaction
+                    | <Complex> '<->' <Complex>                                           ! reversible, default rate (= 1.0, 0.0)
+                    | <Complex> '{' <Rate> '}' '<->' '{' <Rate> '}' <Complex>             ! rate in the middle of reaction
+                    | <Complex> '<->' <Complex> '{' <Rate> '}' '{' <Rate> '}'             ! or rate after reaction, {reverse} then {direct}
+
+<Rate>          ::= <Expression>                                                          ! collision frequency (with activation energy = 0.0)
+                    | <Expression> ',' <Expression>                                       ! collision frequency, activation energy (joules per mole)
+                    | '{' <Expression> '}'                                                ! arbitrary kinetic law: any function from a sample to a non-negative number
+
+<Complex>       ::= <Complex> '+' <Simplex>
+                    | <Simplex>
+                
+<Simplex>       ::= Integer Id                                          ! stoichiometry: '2a' is the same as 'a + a'
+                    | Id '*' Id                                         ! stoichiometry: 'n * a' is the same as 'a + ... + a' n times for integer n>=0
+                    | Id                                                ! a species
+                    | '#'                                               ! zero species: for creation and degradation
+
+! EXPRESSIONS --------------------------------------------
+          
+<Expression>    ::=  <Or Exp>                                               ! see below
+                 
+<Base Exp>      ::= <Fun Instance> 
+                    | 'true' | 'false'                                      ! bool literal
+                    | Integer | Float | Double                              ! double floating point literal. use int(n) to round to integers
+                    | QuotedString                                          ! double-quoted string literal. use \" and \\ to represent " and \
+                    | 'if' <Expression> 'then' <Expression> <Else Exp>      ! no statements allowed inside if-expressions: uses if-statements for that
+                    | 'fun' <Fun>                                           ! function abstraction
+                    | 'net' <Net>                                           ! network abstraction
+                    | '(' <Expression> ')'                                  ! parenthesized expression
+                    | '[' <Expressions> ']'                                 ! list
+                    | 'define' <Statements> 'yield' <Expression>            ! numerous but mild shift-reduce conflicts because no 'end' bracket. 
+                                                                            ! E.g. (define number n = 3 yield n) + 3   vs. define number n = 3 return (n + 3)
+                                                                            ! resolved as the latter
+                  
+<Fun Instance>      ::= Id                                                  ! built-in math library operators, and pi and e, follow this syntax too
+                    | <Fun Instance> '(' <Expressions> ')'                  ! function invocations can use currying             
+                     
+<Else Exp>       ::=  'elseif' <Expression> 'then' <Expression> <Else Exp>  ! cascading if expressions: else is compulsory
+                    | 'else' <Expression> 'end'
+                           
+<Expressions>    ::= <ExpressionSeq>
+                    |
+<ExpressionSeq>  ::= <ExpressionSeq> ',' <Expression>
+                    | <Expression>
+                                        
+<Reports>        ::= <Reports> ',' <Report>
+                    | <Report>
+                    
+<Report>         ::= <Expression> 'as' <Expression>
+                    | <Expression> 
+
+<Distribution>   ::= Id '(' <ExpressionSeq> ')'     ! uniform(lo,hi), normal(mean,stdev), exponential(lambda), parabolic(mean,halfwidth), bernoulli(p)
+                  
+<EndCondition>   ::= 'for' <Expression>
+                  
+! OPERATORS  --------------------------------------------                                 
+
+<Or Exp>        ::=  <Or Exp> 'or' <And Exp>                                 ! boring encoding of prefix/infix operator precedence         
+                    | <And Exp> 
+
+<And Exp>       ::=  <And Exp> 'and' <Not Exp>                                          
+                    | <Not Exp>                                          
+
+<Not Exp>       ::= 'not' <Comp Exp>                                          
+                    | <Comp Exp>  
+
+<Comp Exp>      ::= <Sum Exp> '=' <Sum Exp>
+                    | <Sum Exp> '<>' <Sum Exp>
+                    | <Sum Exp> '<=' <Sum Exp>
+                    | <Sum Exp> '>=' <Sum Exp>
+                    | <Sum Exp> '<' <Sum Exp>
+                    | <Sum Exp> '>' <Sum Exp>
+                    | <Sum Exp>
+
+<Sum Exp>       ::= <Sum Exp> '+' <Mult Exp>
+                    | <Sum Exp> '-' <Mult Exp>                                          
+                    | <Mult Exp> 
+
+<Mult Exp>      ::= <Mult Exp> '*' <Neg Exp> 
+                    | <Mult Exp> '/' <Neg Exp>                                           
+                    | <Neg Exp> 
+
+<Neg Exp>       ::= '-' <Powr Exp> 
+                    | '∂' <Powr Exp>
+                    | <Powr Exp>
+                    
+<Powr Exp>      ::= <Powr Exp> '^' <Base Exp>                               ! -2^2 = -4;  -2^-2 is error, use -2^(-2)
+                    | <Base Exp>
+
+! UNITS  --------------------------------------------                                 
+
+<Volume>        ::= Id     ! 'L' | 'mL' | 'uL' | 'μL' | 'nL' | 'ml' | 'ul' | 'μl' | 'nl'
+<Temperature>   ::= Id     ! 'K' | 'Kelvin' | 'C' | 'Celsius'
+<Quantity>      ::= Id     ! 'kg' | 'g' | 'mg' | 'ug' | 'μg' | 'ng' | 'kM' | 'M' | 'mM' | 'uM' | 'μM' | 'nM' | 'kmol' | 'mol' | 'mmol' | 'umol' | 'μmol' | 'nmol'
+
+
+
+========================================
+Grammar Properties
+========================================
+
+Name                Kaemika grammar
+Author              Luca Cardelli
+Version             1
+About               A Language for Modularizing Chemistry
+Case Sensitive      True
+Start Symbol        Top
+Auto Whitespace     True
+Character Mapping   Windows-1252
+Character Set       Unicode
+Generated By        GOLD Parser Builder 5.2.0.
+Generated Date      2019-11-25 16:54
+
+
+========================================
+Defined Sets
+========================================
+
+{StringChar}     &20, &21, &23 .. &5B, &5D .. &80, &82 .. &8C, &8E, &91 .. &9C, &9E .. &200A, &2010 .. &2027, &202F .. &205F, &2065 .. &2069, &2070 .. &D7FF, &E000 .. &FEFE, &FF00 .. &FFEF
+
+
+========================================
 Lexical Groups
 ========================================
 
@@ -33,31 +284,31 @@ Terminals
  12     '*'
  13     ','
  14     '/'
- 15     ':='
- 16     ';'
- 17     '@'
- 18     '['
- 19     ']'
- 20     '^'
- 21     '{'
- 22     '}'
- 23     '+'
- 24     '<'
- 25     '<='
- 26     '<>'
- 27     '<->'
- 28     '='
- 29     '=?'
- 30     '>'
- 31     '->'
- 32     '>='
- 33     '>>'
- 34     '∂'
- 35     amount
- 36     and
- 37     as
- 38     bool
- 39     by
+ 15     ';'
+ 16     '@'
+ 17     '['
+ 18     ']'
+ 19     '^'
+ 20     '{'
+ 21     '}'
+ 22     '+'
+ 23     '<'
+ 24     '<='
+ 25     '<>'
+ 26     '<->'
+ 27     '='
+ 28     '=?'
+ 29     '>'
+ 30     '->'
+ 31     '>='
+ 32     '>>'
+ 33     '∂'
+ 34     amount
+ 35     and
+ 36     as
+ 37     bool
+ 38     by
+ 39     concentrate
  40     constant
  41     define
  42     dispose
@@ -84,15 +335,15 @@ Terminals
  63     number
  64     or
  65     QuotedString
- 66     report
- 67     sample
- 68     species
- 69     split
- 70     string
- 71     then
- 72     transfer
- 73     true
- 74     with
+ 66     regulate
+ 67     report
+ 68     sample
+ 69     species
+ 70     split
+ 71     string
+ 72     then
+ 73     to
+ 74     true
  75     yield
 
 
@@ -215,89 +466,91 @@ Rules
 58      <Statement> ::= report <Reports>
 59      <Statement> ::= if <Expression> then <Statements> <Else>
 60      <Statement> ::= ';'
-61      <Statement> ::= mix Id ':=' <Expression> with <Expression>
-62      <Statement> ::= mix Id with <Expression>
-63      <Statement> ::= split Id ',' Id ':=' <Expression> by <Expression>
-64      <Statement> ::= equilibrate Id ':=' <Expression> <EndCondition>
-65      <Statement> ::= equilibrate Id <EndCondition>
-66      <Statement> ::= equilibrate <EndCondition>
-67      <Statement> ::= transfer <EmptySample> ':=' <Expression>
-68      <Statement> ::= dispose <Expression>
-69      <Net Instance> ::= Id '(' <Expressions> ')'
-70      <Else> ::= elseif <Expression> then <Statements> <Else>
-71      <Else> ::= else <Statements> end
-72      <Else> ::= end
-73      <Reaction> ::= <Transition>
-74      <Reaction> ::= <Complex> '>>' <Transition>
-75      <Transition> ::= <Complex> '->' <Complex>
-76      <Transition> ::= <Complex> '->' '{' <Rate> '}' <Complex>
-77      <Transition> ::= <Complex> '->' <Complex> '{' <Rate> '}'
-78      <Transition> ::= <Complex> '<->' <Complex>
-79      <Transition> ::= <Complex> '{' <Rate> '}' '<->' '{' <Rate> '}' <Complex>
-80      <Transition> ::= <Complex> '<->' <Complex> '{' <Rate> '}' '{' <Rate> '}'
-81      <Rate> ::= <Expression>
-82      <Rate> ::= <Expression> ',' <Expression>
-83      <Rate> ::= '{' <Expression> '}'
-84      <Complex> ::= <Complex> '+' <Simplex>
-85      <Complex> ::= <Simplex>
-86      <Simplex> ::= Integer Id
-87      <Simplex> ::= Id '*' Id
-88      <Simplex> ::= Id
-89      <Simplex> ::= '#'
-90      <Expression> ::= <Or Exp>
-91      <Base Exp> ::= <Fun Instance>
-92      <Base Exp> ::= true
-93      <Base Exp> ::= false
-94      <Base Exp> ::= Integer
-95      <Base Exp> ::= Float
-96      <Base Exp> ::= Double
-97      <Base Exp> ::= QuotedString
-98      <Base Exp> ::= if <Expression> then <Expression> <Else Exp>
-99      <Base Exp> ::= fun <Fun>
-100     <Base Exp> ::= net <Net>
-101     <Base Exp> ::= '(' <Expression> ')'
-102     <Base Exp> ::= '[' <Expressions> ']'
-103     <Base Exp> ::= define <Statements> yield <Expression>
-104     <Fun Instance> ::= Id
-105     <Fun Instance> ::= <Fun Instance> '(' <Expressions> ')'
-106     <Else Exp> ::= elseif <Expression> then <Expression> <Else Exp>
-107     <Else Exp> ::= else <Expression> end
-108     <Expressions> ::= <ExpressionSeq>
-109     <Expressions> ::= 
-110     <ExpressionSeq> ::= <ExpressionSeq> ',' <Expression>
-111     <ExpressionSeq> ::= <Expression>
-112     <Reports> ::= <Reports> ',' <Report>
-113     <Reports> ::= <Report>
-114     <Report> ::= <Expression> as <Expression>
-115     <Report> ::= <Expression>
-116     <Distribution> ::= Id '(' <ExpressionSeq> ')'
-117     <EndCondition> ::= for <Expression>
-118     <Or Exp> ::= <Or Exp> or <And Exp>
-119     <Or Exp> ::= <And Exp>
-120     <And Exp> ::= <And Exp> and <Not Exp>
-121     <And Exp> ::= <Not Exp>
-122     <Not Exp> ::= not <Comp Exp>
-123     <Not Exp> ::= <Comp Exp>
-124     <Comp Exp> ::= <Sum Exp> '=' <Sum Exp>
-125     <Comp Exp> ::= <Sum Exp> '<>' <Sum Exp>
-126     <Comp Exp> ::= <Sum Exp> '<=' <Sum Exp>
-127     <Comp Exp> ::= <Sum Exp> '>=' <Sum Exp>
-128     <Comp Exp> ::= <Sum Exp> '<' <Sum Exp>
-129     <Comp Exp> ::= <Sum Exp> '>' <Sum Exp>
-130     <Comp Exp> ::= <Sum Exp>
-131     <Sum Exp> ::= <Sum Exp> '+' <Mult Exp>
-132     <Sum Exp> ::= <Sum Exp> '-' <Mult Exp>
-133     <Sum Exp> ::= <Mult Exp>
-134     <Mult Exp> ::= <Mult Exp> '*' <Neg Exp>
-135     <Mult Exp> ::= <Mult Exp> '/' <Neg Exp>
-136     <Mult Exp> ::= <Neg Exp>
-137     <Neg Exp> ::= '-' <Powr Exp>
-138     <Neg Exp> ::= '∂' <Powr Exp>
-139     <Neg Exp> ::= <Powr Exp>
-140     <Powr Exp> ::= <Powr Exp> '^' <Base Exp>
-141     <Powr Exp> ::= <Base Exp>
-142     <Volume> ::= Id
-143     <Temperature> ::= Id
-144     <Quantity> ::= Id
+61      <Statement> ::= mix Id '=' <ExpressionSeq>
+62      <Statement> ::= split <IdSeq> '=' <Expression> by <ExpressionSeq>
+63      <Statement> ::= dispose <ExpressionSeq>
+64      <Statement> ::= regulate <IdSeq> '=' <ExpressionSeq> to <Expression> <Temperature>
+65      <Statement> ::= regulate <IdSeq> to <Expression> <Temperature>
+66      <Statement> ::= concentrate <IdSeq> '=' <ExpressionSeq> to <Expression> <Volume>
+67      <Statement> ::= concentrate <IdSeq> to <Expression> <Volume>
+68      <Statement> ::= equilibrate <IdSeq> '=' <ExpressionSeq> <EndCondition>
+69      <Statement> ::= equilibrate <IdSeq> <EndCondition>
+70      <Statement> ::= equilibrate <EndCondition>
+71      <Net Instance> ::= Id '(' <Expressions> ')'
+72      <Else> ::= elseif <Expression> then <Statements> <Else>
+73      <Else> ::= else <Statements> end
+74      <Else> ::= end
+75      <Reaction> ::= <Transition>
+76      <Reaction> ::= <Complex> '>>' <Transition>
+77      <Transition> ::= <Complex> '->' <Complex>
+78      <Transition> ::= <Complex> '->' '{' <Rate> '}' <Complex>
+79      <Transition> ::= <Complex> '->' <Complex> '{' <Rate> '}'
+80      <Transition> ::= <Complex> '<->' <Complex>
+81      <Transition> ::= <Complex> '{' <Rate> '}' '<->' '{' <Rate> '}' <Complex>
+82      <Transition> ::= <Complex> '<->' <Complex> '{' <Rate> '}' '{' <Rate> '}'
+83      <Rate> ::= <Expression>
+84      <Rate> ::= <Expression> ',' <Expression>
+85      <Rate> ::= '{' <Expression> '}'
+86      <Complex> ::= <Complex> '+' <Simplex>
+87      <Complex> ::= <Simplex>
+88      <Simplex> ::= Integer Id
+89      <Simplex> ::= Id '*' Id
+90      <Simplex> ::= Id
+91      <Simplex> ::= '#'
+92      <Expression> ::= <Or Exp>
+93      <Base Exp> ::= <Fun Instance>
+94      <Base Exp> ::= true
+95      <Base Exp> ::= false
+96      <Base Exp> ::= Integer
+97      <Base Exp> ::= Float
+98      <Base Exp> ::= Double
+99      <Base Exp> ::= QuotedString
+100     <Base Exp> ::= if <Expression> then <Expression> <Else Exp>
+101     <Base Exp> ::= fun <Fun>
+102     <Base Exp> ::= net <Net>
+103     <Base Exp> ::= '(' <Expression> ')'
+104     <Base Exp> ::= '[' <Expressions> ']'
+105     <Base Exp> ::= define <Statements> yield <Expression>
+106     <Fun Instance> ::= Id
+107     <Fun Instance> ::= <Fun Instance> '(' <Expressions> ')'
+108     <Else Exp> ::= elseif <Expression> then <Expression> <Else Exp>
+109     <Else Exp> ::= else <Expression> end
+110     <Expressions> ::= <ExpressionSeq>
+111     <Expressions> ::= 
+112     <ExpressionSeq> ::= <ExpressionSeq> ',' <Expression>
+113     <ExpressionSeq> ::= <Expression>
+114     <Reports> ::= <Reports> ',' <Report>
+115     <Reports> ::= <Report>
+116     <Report> ::= <Expression> as <Expression>
+117     <Report> ::= <Expression>
+118     <Distribution> ::= Id '(' <ExpressionSeq> ')'
+119     <EndCondition> ::= for <Expression>
+120     <Or Exp> ::= <Or Exp> or <And Exp>
+121     <Or Exp> ::= <And Exp>
+122     <And Exp> ::= <And Exp> and <Not Exp>
+123     <And Exp> ::= <Not Exp>
+124     <Not Exp> ::= not <Comp Exp>
+125     <Not Exp> ::= <Comp Exp>
+126     <Comp Exp> ::= <Sum Exp> '=' <Sum Exp>
+127     <Comp Exp> ::= <Sum Exp> '<>' <Sum Exp>
+128     <Comp Exp> ::= <Sum Exp> '<=' <Sum Exp>
+129     <Comp Exp> ::= <Sum Exp> '>=' <Sum Exp>
+130     <Comp Exp> ::= <Sum Exp> '<' <Sum Exp>
+131     <Comp Exp> ::= <Sum Exp> '>' <Sum Exp>
+132     <Comp Exp> ::= <Sum Exp>
+133     <Sum Exp> ::= <Sum Exp> '+' <Mult Exp>
+134     <Sum Exp> ::= <Sum Exp> '-' <Mult Exp>
+135     <Sum Exp> ::= <Mult Exp>
+136     <Mult Exp> ::= <Mult Exp> '*' <Neg Exp>
+137     <Mult Exp> ::= <Mult Exp> '/' <Neg Exp>
+138     <Mult Exp> ::= <Neg Exp>
+139     <Neg Exp> ::= '-' <Powr Exp>
+140     <Neg Exp> ::= '∂' <Powr Exp>
+141     <Neg Exp> ::= <Powr Exp>
+142     <Powr Exp> ::= <Powr Exp> '^' <Base Exp>
+143     <Powr Exp> ::= <Base Exp>
+144     <Volume> ::= Id
+145     <Temperature> ::= Id
+146     <Quantity> ::= Id
 
 

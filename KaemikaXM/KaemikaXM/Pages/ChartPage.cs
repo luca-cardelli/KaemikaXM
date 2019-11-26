@@ -45,17 +45,27 @@ namespace KaemikaXM.Pages
     public class ChartPage : KaemikaPage {
 
         private string title = "";
-        private Microcharts.ChartView chartView;
         private ModelInfo currentModelInfo;
-        public Picker noisePicker;
-        public ImageButton stopButton;
-        private CollectionView legendView;
-        private CollectionView parameterView;
         public ImageButton startButton;
+        public ImageButton deviceButton;
+        public ImageButton stopButton;
         private ToolbarItem solverRK547MButton;
         private ToolbarItem solverGearBDFButton;
-        private Grid mainGrid;
-        private StackLayout stackView;
+        private ToolbarItem plotViewButton; // chart plus legend
+        private ToolbarItem deviceViewButton; // device
+        public Picker noisePicker;
+
+        private Grid grid;                           // grid = overlapping AND bottombar
+        private AbsoluteLayout overlappingView;      // overlapping = plot OR device
+        private Grid plotView;                       // plot = chart AND scrollInspection
+        private ScrollView scrollInspectionView;     // scrollInspection = inspection
+        private StackLayout inspectionView;          // inspection = legend AND parameter
+        private Grid bottomBar;                      // bottomBar = stop AND noise AND start
+        private View backdrop;                       // leaf
+        private Microcharts.ChartView chartView;     // chart = leaf
+        private CollectionView legendView;           // legend = leaf
+        private CollectionView parameterView;        // parameter = leaf
+        public DeviceView deviceView;                // device = leaf
 
         private ToolbarItem SolverRK547MButton() {
             return new ToolbarItem("RK547M", "icons8refresh96solver1", () => {
@@ -77,6 +87,34 @@ namespace KaemikaXM.Pages
             });
         }
 
+        public void SwitchToPlotView() {
+            Device.BeginInvokeOnMainThread(async () => { // to allow calling this from work thread
+                if (plotViewButton.IsEnabled) {
+                    plotViewButton.IsEnabled = false;
+                    overlappingView.RaiseChild(backdrop);
+                    overlappingView.RaiseChild(scrollInspectionView);
+                    deviceViewButton.IsEnabled = true;
+                }
+            });
+        }
+        private ToolbarItem PlotViewButton() {
+            return new ToolbarItem("ChartView", "icons8combochart48white.png", () => { SwitchToPlotView(); });
+        }
+
+        public void SwitchToDeviceView() {
+            Device.BeginInvokeOnMainThread(async () => { // to allow calling this from work thread
+                if (deviceViewButton.IsEnabled) {
+                    deviceViewButton.IsEnabled = false;
+                    overlappingView.RaiseChild(backdrop);
+                    overlappingView.RaiseChild(deviceView);
+                    plotViewButton.IsEnabled = true;
+                }
+            });
+        }
+        private ToolbarItem DeviceViewButton() {
+            return new ToolbarItem("DeviceView", "icons8device40white.png", () => { SwitchToDeviceView(); });
+        }
+
         public ImageButton StopButton() {
             ImageButton button = new ImageButton() {
                 Source = "icons8stop40.png",
@@ -94,55 +132,88 @@ namespace KaemikaXM.Pages
             Title = "Chart";
             Icon = "tab_feed.png";
 
-            chartView = new Microcharts.ChartView() {
-                Chart = new Microcharts.Chart("", ""),
-                HeightRequest = 300,
-                BackgroundColor = Color.White,
-            };
-
-            solverRK547MButton = SolverRK547MButton();
+            deviceViewButton = DeviceViewButton();
+            ToolbarItems.Add(deviceViewButton);
+            plotViewButton = PlotViewButton();
+            ToolbarItems.Add(plotViewButton);
+            plotViewButton.IsEnabled = false; solverRK547MButton = SolverRK547MButton();
+            deviceViewButton.IsEnabled = true;
             ToolbarItems.Add(solverRK547MButton);
             solverRK547MButton.IsEnabled = false;
             solverGearBDFButton = SolverGearBDFButton();
             ToolbarItems.Add(solverGearBDFButton);
             solverGearBDFButton.IsEnabled = true;
 
+            // bottom bar
+
             stopButton = StopButton();
             noisePicker = MainTabbedPage.theModelEntryPage.NoisePicker();
+            deviceButton = MainTabbedPage.theModelEntryPage.DeviceButton();
             startButton = MainTabbedPage.theModelEntryPage.StartButton(switchToChart:false, switchToOutput:false);
 
             int bottomBarPadding = 4;
-            Grid bottomBar = new Grid { RowSpacing = 0, Padding = bottomBarPadding };
+            bottomBar = new Grid { RowSpacing = 0, Padding = bottomBarPadding };
             bottomBar.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             bottomBar.BackgroundColor = MainTabbedPage.secondBarColor;
 
             bottomBar.Children.Add(stopButton, 0, 0);
-            bottomBar.Children.Add(noisePicker, 1, 0);
-            bottomBar.Children.Add(startButton, 2, 0);
+            bottomBar.Children.Add(deviceButton, 1, 0);
+            bottomBar.Children.Add(noisePicker, 2, 0);
+            bottomBar.Children.Add(startButton, 3, 0);
 
-            mainGrid = new Grid { ColumnSpacing = 0 };
-            mainGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            mainGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            mainGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(MainTabbedPage.buttonHeightRequest + 2 * bottomBarPadding) });
-            mainGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            // Setup layout structure
 
+            grid = new Grid { ColumnSpacing = 0 };
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });                               // overlappingView
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(startButton.HeightRequest + 2 * bottomBarPadding) });   // bottomBar
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            backdrop = new Label { Text = "", BackgroundColor = Color.White };
+
+            overlappingView = new AbsoluteLayout();
+
+            plotView = new Grid { ColumnSpacing = 0 };
+            plotView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });        // chartView
+            plotView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });        // overlappingView
+            plotView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            scrollInspectionView = new ScrollView();
+
+            inspectionView = new StackLayout();
+
+            chartView = new Microcharts.ChartView() { Chart = new Microcharts.Chart("", ""), HeightRequest = 300, BackgroundColor = Color.White };
             legendView = LegendView();
             parameterView = ParameterView();
+            deviceView = new DeviceView() { }; // Device = device };
 
-            ScrollView inspectionView = new ScrollView();
-            stackView = new StackLayout();
-            inspectionView.Content = stackView;
-            stackView.Children.Add(legendView);
-            stackView.Children.Add(parameterView);
+            // Fill layout structure
 
-            mainGrid.Children.Add(chartView, 0, 0);
-            mainGrid.Children.Add(inspectionView, 0, 1);
-            mainGrid.Children.Add(bottomBar, 0, 2);
+            inspectionView.Children.Add(legendView);
+            inspectionView.Children.Add(parameterView);
 
-            Content = mainGrid;
+            scrollInspectionView.Content = inspectionView;
+
+            AbsoluteLayout.SetLayoutBounds(deviceView, new Rectangle(0, 0, 1, 1));  // deviceView
+            AbsoluteLayout.SetLayoutFlags(deviceView, AbsoluteLayoutFlags.All);
+            AbsoluteLayout.SetLayoutBounds(backdrop, new Rectangle(0, 0, 1, 1));    // backdrop
+            AbsoluteLayout.SetLayoutFlags(backdrop, AbsoluteLayoutFlags.All);
+            AbsoluteLayout.SetLayoutBounds(plotView, new Rectangle(0, 0, 1, 1));    // scrollInspectionView
+            AbsoluteLayout.SetLayoutFlags(plotView, AbsoluteLayoutFlags.All);
+            overlappingView.Children.Add(deviceView);
+            overlappingView.Children.Add(backdrop);
+            overlappingView.Children.Add(scrollInspectionView);
+
+            plotView.Children.Add(chartView, 0, 0);
+            plotView.Children.Add(overlappingView, 0, 1);
+
+            grid.Children.Add(plotView, 0, 0);
+            grid.Children.Add(bottomBar, 0, 1);
+
+            Content = grid;
         }
 
         public void SetChart(Microcharts.Chart chart, ModelInfo modelInfo) {
@@ -173,7 +244,7 @@ namespace KaemikaXM.Pages
                           : LegendItemHeight,                                         // show a full rectangle for Range areas
                     });
                 legendView.ItemsSource = legendList;
-                MainTabbedPage.theChartPage.stackView.Children[0].HeightRequest = 40 + LegendItemHeight * (legend.Length + 1) / 2;
+                MainTabbedPage.theChartPage.inspectionView.Children[0].HeightRequest = 40 + LegendItemHeight * (legend.Length + 1) / 2;
             });
         }
 
@@ -285,7 +356,7 @@ namespace KaemikaXM.Pages
                 lock (parameterLock) {
                     RefreshParameters();
                 }
-                MainTabbedPage.theChartPage.stackView.Children[1].HeightRequest = 20 + ParameterItemHeight * parameterInfoDict.Count;
+                MainTabbedPage.theChartPage.inspectionView.Children[1].HeightRequest = 20 + ParameterItemHeight * parameterInfoDict.Count;
                 
             });
         }

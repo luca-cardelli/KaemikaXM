@@ -77,6 +77,7 @@
             this.comboBox_Sup = new System.Windows.Forms.ComboBox();
             this.label_Sup = new System.Windows.Forms.Label();
             this.panel_Header = new System.Windows.Forms.Panel();
+            this.deviceButton = new System.Windows.Forms.Button();
             this.label_Math = new System.Windows.Forms.Label();
             this.comboBox_Math = new System.Windows.Forms.ComboBox();
             this.panel_Simulate = new System.Windows.Forms.Panel();
@@ -306,6 +307,13 @@
             "   Approximate Majority",
             "   2AM Oscillator",
             "   Transporters",
+            "►Protocols",
+            "   Samples",
+            "   Molar Mass",
+            "   Droplets",
+            "   Mix and Split",
+            "   PBS",
+            "   Serial Dilution",
             "►Arithmetic",
             "   Copy",
             "   Addition",
@@ -337,12 +345,6 @@
             "   PIDController Block",
             "   PIDController",
             "   PIDController Optimization",
-            "►Protocols",
-            "   Samples",
-            "   Molar Mass",
-            "   Mix and Split",
-            "   PBS",
-            "   Serial Dilution",
             "►Documentation",
             "   GOLD Grammar",
             "   Builtin Operators",
@@ -504,7 +506,7 @@
             this.checkedListBox_Series.Margin = new System.Windows.Forms.Padding(2);
             this.checkedListBox_Series.MultiColumn = true;
             this.checkedListBox_Series.Name = "checkedListBox_Series";
-            this.checkedListBox_Series.Size = new System.Drawing.Size(329, 156);
+            this.checkedListBox_Series.Size = new System.Drawing.Size(329, 137);
             this.checkedListBox_Series.TabIndex = 33;
             this.checkedListBox_Series.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.checkedListBox_Series_ItemCheck);
             this.checkedListBox_Series.SelectedIndexChanged += new System.EventHandler(this.checkedListBox_Series_SelectedIndexChanged);
@@ -787,6 +789,7 @@
             // 
             this.panel_Header.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel_Header.Controls.Add(this.deviceButton);
             this.panel_Header.Controls.Add(this.label_Math);
             this.panel_Header.Controls.Add(this.comboBox_Math);
             this.panel_Header.Controls.Add(this.label_Version);
@@ -803,6 +806,17 @@
             this.panel_Header.Name = "panel_Header";
             this.panel_Header.Size = new System.Drawing.Size(636, 49);
             this.panel_Header.TabIndex = 36;
+            // 
+            // deviceButton
+            // 
+            this.deviceButton.BackColor = System.Drawing.Color.Gold;
+            this.deviceButton.Location = new System.Drawing.Point(308, 16);
+            this.deviceButton.Name = "deviceButton";
+            this.deviceButton.Size = new System.Drawing.Size(52, 23);
+            this.deviceButton.TabIndex = 49;
+            this.deviceButton.Text = "Device";
+            this.deviceButton.UseVisualStyleBackColor = false;
+            this.deviceButton.Click += new System.EventHandler(this.deviceButton_Click);
             // 
             // label_Math
             // 
@@ -1119,6 +1133,7 @@
         public System.Windows.Forms.FlowLayoutPanel flowLayoutPanel_Parameters;
         private System.Windows.Forms.CheckBox checkBoxButton_Parameters;
         private System.Windows.Forms.Label label_Parameters;
+        private System.Windows.Forms.Button deviceButton;
     }
 }
 

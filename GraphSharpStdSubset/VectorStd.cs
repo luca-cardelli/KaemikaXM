@@ -31,6 +31,8 @@ namespace GraphSharp
             this.scale = scale;
             this.translate = translate;
         }
+        public static Swipe Id = new Swipe(1, new SKPoint(0, 0));
+        public static bool Same(Swipe swipe1, Swipe swipe2) { return swipe1.scale == swipe2.scale && swipe1.translate.X == swipe2.translate.X && swipe1.translate.Y == swipe2.translate.Y; }
         // Apply a transformation to things
         public static float operator %(Swipe w, float f) { return f * w.scale; }
         public static SKPoint operator %(Swipe w, SKPoint p) { return new SKPoint(p.X * w.scale + w.translate.X, p.Y * w.scale + w.translate.Y); }

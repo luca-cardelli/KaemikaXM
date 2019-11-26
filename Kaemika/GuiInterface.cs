@@ -81,5 +81,8 @@ namespace Kaemika
         public abstract bool PrecomputeLNA();
         public abstract void ChartListboxAddSeries(string name);
         public abstract void ClipboardSetText(string text);
+        public abstract void DeviceUpdate();
+        public abstract void DeviceShow();
+        public abstract void DeviceHide();
     }
 }

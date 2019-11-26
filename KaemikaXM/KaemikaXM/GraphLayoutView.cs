@@ -42,7 +42,7 @@ namespace GraphSharp {
             }
         }
 
-        private Swipe pinchPan = new Swipe(1.0f, new SKPoint(0, 0));    // remember transform at beginning or pinch or pan
+        private Swipe pinchPan = Swipe.Id;    // remember transform at beginning or pinch or pan
         private float pinchAccum = 1.0f;                                // accumulate pinching transform
         private bool panJustStarted = false;    // prevent pan jerk in pinch-pan and pan-pinch-pan sequences when holding one finger down
         private double totalXinit = 0;          // allows smooth pinch-pan and pan-pinch continuation
@@ -51,7 +51,7 @@ namespace GraphSharp {
 
         void OnTapped(object sender, EventArgs e) {
             if (GraphLayout == null) return;
-            GraphLayout.pinchPan = new Swipe(1.0f, new SKPoint(0, 0));
+            GraphLayout.pinchPan = Swipe.Id;
             this.InvalidateSurface();
         }
 

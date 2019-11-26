@@ -100,7 +100,7 @@ observe(∂a,s)     // derivative of a
 observe(a+2b^2,s) // combined observations
 observe(var(a),s) // requires LNA active
 observe(time,s) // nonzero only if s was the
- // *input* sample of equilibrate s':=s for t
+ // *input* sample of equilibrate s'=s for t
 
 // Optimization
 

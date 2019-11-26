@@ -28,6 +28,23 @@ namespace Kaemika {
 
         public static CustomTextEditorDelegate customTextEditor = null;
 
+        // DEVICE
+
+        public override void DeviceUpdate() {
+            if (MainTabbedPage.theChartPage != null && MainTabbedPage.theChartPage.deviceView != null)
+               MainTabbedPage.theChartPage.deviceView.InvalidateSurface();
+        }
+
+        public override void DeviceShow() {
+            if (MainTabbedPage.theChartPage != null && MainTabbedPage.theChartPage.deviceView != null)
+                MainTabbedPage.theChartPage.SwitchToDeviceView();
+        }
+
+        public override void DeviceHide() {
+            if (MainTabbedPage.theChartPage != null && MainTabbedPage.theChartPage.deviceView != null)
+                MainTabbedPage.theChartPage.SwitchToPlotView();
+        }
+
         // INPUT
 
         public override string InputGetText() {

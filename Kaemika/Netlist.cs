@@ -189,7 +189,7 @@ namespace Kaemika
             this.value = value;
         }
         public override string Format(Style style) {
-            if (style.dataFormat == "symbol") return value.symbol.Format(style);
+            if (style.dataFormat == "symbol") return value.FormatSymbol(style);
             else if (style.dataFormat == "header") return "sample " + value.FormatHeader(style);
             else if (style.dataFormat == "full") return (style.traceComputational ? "new " : "") + value.Format(style);
             else return "unknown format: " + style.dataFormat;
@@ -208,7 +208,7 @@ namespace Kaemika
             this.sample = sample;
         }
         public override string Format(Style style) {
-            return "amount " +  species.Format(style) + " @ " + initial.Format(style) + " " + dimension + " in " + sample.symbol.Format(style);
+            return "amount " +  species.Format(style) + " @ " + initial.Format(style) + " " + dimension + " in " + sample.FormatSymbol(style);
         }
     }
 
@@ -217,87 +217,129 @@ namespace Kaemika
 
     public class MixEntry : OperationEntry {
         public SampleValue outSample;
-        public SampleValue inSample1;
-        public SampleValue inSample2;
-        public MixEntry(SampleValue outSample, SampleValue inSample1, SampleValue inSample2) {
+        public List<SampleValue> inSamples;
+        public MixEntry(SampleValue outSample, List<SampleValue> inSamples) {
             this.outSample = outSample;
-            this.inSample1 = inSample1;
-            this.inSample2 = inSample2;
+            this.inSamples = inSamples;
         }
+        //public override string Format(Style style) {
+        //    if (style.dataFormat == "symbol") return "mix " + outSample.FormatSymbol(style);
+        //    else if (style.dataFormat == "header" || style.dataFormat == "full") return "mix " + outSample.FormatSymbol(style) + " = " + inSample1.FormatSymbol(style) + " with " + inSample2.FormatSymbol(style)
+        //             + Environment.NewLine + "   => " + outSample.Format(style);
+        //    else return "unknown format: " + style.dataFormat;
+        //}
         public override string Format(Style style) {
-            if (style.dataFormat == "symbol") return "mix " + outSample.symbol.Format(style);
-            else if (style.dataFormat == "header") return "mix " + outSample.symbol.Format(style) + " := " + inSample1.symbol.Format(style) + " with " + inSample2.symbol.Format(style)
-                     + Environment.NewLine + "   => " + outSample.Format(style);
-            else if (style.dataFormat == "full") return "mix " + outSample.symbol.Format(style) + " := " + inSample1.symbol.Format(style) + " with " + inSample2.symbol.Format(style)
-                     + Environment.NewLine + "   => " + outSample.Format(style);
-            else return "unknown format: " + style.dataFormat;
+            string s = "mix ";
+            if (style.dataFormat == "symbol") 
+                s += outSample.FormatSymbol(style);
+            else if (style.dataFormat == "header" || style.dataFormat == "full") {
+                s += outSample.FormatSymbol(style) + " = " + Style.FormatSequence(inSamples, ", ", x => x.FormatSymbol(style)) + Environment.NewLine + "   => " + outSample.Format(style);
+            } else s += "unknown format: " + style.dataFormat;
+            return s;
         }
     }
 
     public class SplitEntry : OperationEntry {
-        public SampleValue outSample1;
-        public SampleValue outSample2;
+        public List<SampleValue> outSamples;
         public SampleValue inSample;
-        public NumberValue proportion;
-        public SplitEntry(SampleValue outSample1, SampleValue outSample2, SampleValue inSample, NumberValue proportion) {
-            this.outSample1 = outSample1;
-            this.outSample2 = outSample2;
+        public List<NumberValue> proportions;
+        public SplitEntry(List<SampleValue> outSamples, SampleValue inSample, List<NumberValue> proportions) {
+            this.outSamples = outSamples;
             this.inSample = inSample;
-            this.proportion = proportion;
+            this.proportions = proportions;
         }
         public override string Format(Style style) {
-            if (style.dataFormat == "symbol") return "split " + outSample1.symbol.Format(style) + ", " + outSample2.symbol.Format(style);
-            else if (style.dataFormat == "header") return "split " + outSample1.symbol.Format(style) + ", " + outSample2.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " by " + proportion.Format(style)
-                    + Environment.NewLine + "   => " + outSample1.Format(style) + ", " + Environment.NewLine + "   => " + outSample2.Format(style);
-            else if (style.dataFormat == "full") return "split " + outSample1.symbol.Format(style) + ", " + outSample2.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " by " + proportion.Format(style) 
-                    + Environment.NewLine + "   => " + outSample1.Format(style) + ", " + Environment.NewLine + "   => " + outSample2.Format(style);
-            else return "unknown format: " + style.dataFormat;
+            if (style.dataFormat == "symbol") {
+                return "split " + Style.FormatSequence(outSamples, ", ", x => x.FormatSymbol(style));
+            } else if (style.dataFormat == "header" || style.dataFormat == "full") {
+                return "split " + Style.FormatSequence(outSamples, ", ", x => x.FormatSymbol(style)) + " = " + inSample.FormatSymbol(style) + " by " + Style.FormatSequence(proportions, ", ", x => x.Format(style))
+                    + Style.FormatSequence(outSamples, ", ", x => Environment.NewLine + "   => " + x.Format(style));
+            } else return "unknown format: " + style.dataFormat;
         }
     }
 
     public class EquilibrateEntry : OperationEntry {
-        public SampleValue outSample;
-        public SampleValue inSample;
+        public List<SampleValue> outSamples;
+        public List<SampleValue> inSamples;
         public double fortime;
-        public EquilibrateEntry(SampleValue outValue, SampleValue inValue, double fortime) {
-            this.outSample = outValue;
-            this.inSample = inValue;
+        public EquilibrateEntry(List<SampleValue> outSamples, List<SampleValue> inSamples, double fortime) {
+            this.outSamples = outSamples;
+            this.inSamples = inSamples;
             this.fortime = fortime;
         }
         public override string Format(Style style) {
-            if (style.dataFormat == "symbol") return "equilibrate " + outSample.symbol.Format(style);
-            else if (style.dataFormat == "header") return "equilibrate " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " for " + style.FormatDouble(fortime)
-                    + Environment.NewLine + "   => " + outSample.Format(style);
-            else if (style.dataFormat == "full") return "equilibrate " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style) + " for " + style.FormatDouble(fortime)
-                    + Environment.NewLine + "   => " + outSample.Format(style);
-            else return "unknown format: " + style.dataFormat;
+            string s = "";
+            for (int i = 0; i < outSamples.Count; i++) {
+                if (style.dataFormat == "symbol") 
+                    s += "equilibrate " + outSamples[i].FormatSymbol(style);
+                else if (style.dataFormat == "header" || style.dataFormat == "full") 
+                    s += "equilibrate " + outSamples[i].FormatSymbol(style) + " = " + inSamples[i].FormatSymbol(style) + " for " + style.FormatDouble(fortime)
+                        + Environment.NewLine + "   => " + outSamples[i].Format(style);
+                else s += "unknown format: " + style.dataFormat;
+                s += Environment.NewLine;
+            }
+            if (s.Length > 0) s = s.Substring(0, s.Length - 1);
+            return s;
         }
     }
 
-    public class TransferEntry : OperationEntry {
-        public SampleValue outSample;
-        public SampleValue inSample;
-        public TransferEntry(SampleValue outSample, SampleValue inSample) {
-            this.outSample = outSample;
-            this.inSample = inSample;
+    public class RegulateEntry : OperationEntry {
+        public List<SampleValue> outSamples;
+        public List<SampleValue> inSamples;
+        public double temperature;
+        public RegulateEntry(List<SampleValue> outSamples, List<SampleValue> inSamples, double temperature) {
+            this.outSamples = outSamples;
+            this.inSamples = inSamples;
+            this.temperature = temperature;
         }
         public override string Format(Style style) {
-            if (style.dataFormat == "symbol") return "transfer " + outSample.symbol.Format(style);
-            else if (style.dataFormat == "header") return "transfer " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style)
-                    + Environment.NewLine + "   => " + outSample.Format(style);
-            else if (style.dataFormat == "full") return "transfer " + outSample.symbol.Format(style) + " := " + inSample.symbol.Format(style)
-                    + Environment.NewLine + "   => " + outSample.Format(style);
-            else return "unknown format: " + style.dataFormat;
+            string s = "";
+            for (int i = 0; i < outSamples.Count; i++) {
+                if (style.dataFormat == "symbol") 
+                    s += "regulate " + outSamples[i].FormatSymbol(style);
+                else if (style.dataFormat == "header" || style.dataFormat == "full") 
+                    s += "regulate " + outSamples[i].FormatSymbol(style) + " = " + inSamples[i].FormatSymbol(style) + " to " + style.FormatDouble(temperature)
+                        + Environment.NewLine + "   => " + outSamples[i].Format(style);
+                else s += "unknown format: " + style.dataFormat;
+                s += Environment.NewLine;
+            }
+            if (s.Length > 0) s = s.Substring(0, s.Length - 1);
+            return s;
+        }
+    }
+
+    public class ConcentrateEntry : OperationEntry {
+        public List<SampleValue> outSamples;
+        public List<SampleValue> inSamples;
+        public double volume;
+        public ConcentrateEntry(List<SampleValue> outSamples, List<SampleValue> inSamples, double volume) {
+            this.outSamples = outSamples;
+            this.inSamples = inSamples;
+            this.volume = volume;
+        }
+        public override string Format(Style style) {
+            string s = "";
+            for (int i = 0; i < outSamples.Count; i++) {
+                if (style.dataFormat == "symbol") 
+                    s += "concentrate " + outSamples[i].FormatSymbol(style);
+                else if (style.dataFormat == "header" || style.dataFormat == "full") 
+                    s += "concentrate " + outSamples[i].FormatSymbol(style) + " = " + inSamples[i].FormatSymbol(style) + " to " + style.FormatDouble(volume)
+                        + Environment.NewLine + "   => " + outSamples[i].Format(style);
+                else s += "unknown format: " + style.dataFormat;
+                s += Environment.NewLine;
+            }
+            if (s.Length > 0) s = s.Substring(0, s.Length - 1);
+            return s;
         }
     }
 
     public class DisposeEntry : OperationEntry {
-        public SampleValue inSample;
-        public DisposeEntry(SampleValue value) {
-            this.inSample = value;
+        public List<SampleValue> inSamples;
+        public DisposeEntry(List<SampleValue> inSamples) {
+            this.inSamples = inSamples;
         }
         public override string Format(Style style) {
-            return "dispose " + inSample.symbol.Format(style);
+            return "dispose " + Style.FormatSequence(inSamples, ", ", x => x.Format(style));
         }
     }
 
@@ -311,7 +353,7 @@ namespace Kaemika
     //        this.sample = sample;
     //    }
     //    public override string Format(Style style) {
-    //        return "change molarity" + species.symbol.Format(style) + " @ " + number.Format(style) + " in " + sample.symbol.Format(style);
+    //        return "change molarity" + species.FormatSymbol(style) + " @ " + number.Format(style) + " in " + sample.FormatSymbol(style);
     //    }
     //}
 
@@ -353,16 +395,7 @@ namespace Kaemika
         }
 
         public string Format(Style style) {
-            string str = "CRN species = {";
-            string s1 = "";
-            foreach (SpeciesValue sp in sample.stateMap.species) { s1 += sp.Format(style) + ", "; }
-            if (s1.Length > 0) s1 = s1.Substring(0, s1.Length - 2); // remove last comma
-            str += s1 + "}, reactions = {";
-            string s2 = "";
-            foreach (ReactionValue re in this.reactions) { s2 += re.Format(style) + ", "; }
-            if (s2.Length > 0) s2 = s2.Substring(0, s2.Length - 2); // remove last comma
-            str += s2 + "}";
-            return str;
+            return "CRN species = {" + Style.FormatSequence(sample.stateMap.species, ", ", x => x.Format(style)) + "}, reactions = {" + Style.FormatSequence(this.reactions, ", ", x => x.Format(style)) + "}";
         }
 
         public string FormatStoichiometry(Style style) {
@@ -821,9 +854,10 @@ namespace Kaemika
             foreach (Entry entry in this.entries) {
                 if (entry is SampleEntry) sampleList.Add(((SampleEntry)entry).value);
                 else if (entry is MixEntry) sampleList.Add(((MixEntry)entry).outSample);
-                else if (entry is SplitEntry) { sampleList.Add(((SplitEntry)entry).outSample1); sampleList.Add(((SplitEntry)entry).outSample2); }
-                else if (entry is EquilibrateEntry) sampleList.Add(((EquilibrateEntry)entry).outSample);
-                else if (entry is TransferEntry) sampleList.Add(((TransferEntry)entry).outSample);
+                else if (entry is SplitEntry) foreach (SampleValue sampleValue in ((SplitEntry)entry).outSamples) sampleList.Add(sampleValue);
+                else if (entry is EquilibrateEntry) foreach (SampleValue sampleValue in ((EquilibrateEntry)entry).outSamples) sampleList.Add(sampleValue);
+                else if (entry is RegulateEntry) foreach (SampleValue sampleValue in ((RegulateEntry)entry).outSamples) sampleList.Add(sampleValue);
+                else if (entry is ConcentrateEntry) foreach (SampleValue sampleValue in ((ConcentrateEntry)entry).outSamples) sampleList.Add(sampleValue);
                 else if (entry is DisposeEntry) { }
                 else { } // ignore
             }
@@ -836,7 +870,8 @@ namespace Kaemika
                 if (entry is MixEntry) operations.Add((OperationEntry)entry);
                 else if (entry is SplitEntry) operations.Add((OperationEntry)entry);
                 else if (entry is EquilibrateEntry) operations.Add((OperationEntry)entry);
-                else if (entry is TransferEntry) operations.Add((OperationEntry)entry);
+                else if (entry is RegulateEntry) operations.Add((OperationEntry)entry);
+                else if (entry is ConcentrateEntry) operations.Add((OperationEntry)entry);
                 else if (entry is DisposeEntry) operations.Add((OperationEntry)entry);
                 else { } // ignore
             }
@@ -862,7 +897,7 @@ namespace Kaemika
         //                if (!reaction.CoveredBy(species, out Symbol notCovered)) {
         //                    throw new Error(
         //                    // Gui.Log("WARNING " +
-        //                        "Reaction '" + reaction.Format(style) + "' involves species '" + notCovered.Format(style) + "' in sample '" + sample.symbol.Format(style)
+        //                        "Reaction '" + reaction.Format(style) + "' involves species '" + notCovered.Format(style) + "' in sample '" + sample.FormatSymbol(style)
         //                        +"', but that species is uninitialized in that sample"); }
         //                else reactionList.Add(reaction);
         //            }

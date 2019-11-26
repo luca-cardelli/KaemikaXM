@@ -35,6 +35,28 @@ namespace KaemikaWPF
         delegate Series StringColorNoiseArgSeriesReturnDelegate(string legend, Color color, Noise noise);
         delegate string StringColorNoiseArgStringReturnDelegate(string legend, Color color, Noise noise);
 
+        public override void DeviceUpdate() {
+            if (DeviceForm.deviceForm == null) return;
+            if (DeviceForm.deviceForm.deviceControl.InvokeRequired) {
+                VoidArgVoidReturnDelegate d = new VoidArgVoidReturnDelegate(DeviceUpdate);
+                DeviceForm.deviceForm.deviceControl.Invoke(d, new object[] { });
+            } else {
+                // resize the deviceControl
+                DeviceForm form = DeviceForm.deviceForm;
+                Size currentSize = form.deviceControl.Size;
+                (int newWidth, int newHeight) = ProtocolDevice.DesiredSize();
+                Size newSize = new Size(newWidth, newHeight);
+                if (newSize != currentSize) {
+                    form.Size = new Size(newSize.Width, newSize.Height + 40); // window header
+                    DeviceForm.deviceForm.deviceControl.Size = newSize;
+                }
+                DeviceForm.deviceForm.deviceControl.Invalidate();
+                DeviceForm.deviceForm.deviceControl.Update();
+            }
+        }
+        public override void DeviceShow() { }
+        public override void DeviceHide() { }
+
         public override string InputGetText() {
             if (form.txtInput.InvokeRequired) {
                 VoidArgStringReturnDelegate d = new VoidArgStringReturnDelegate(InputGetText);

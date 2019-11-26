@@ -33,6 +33,10 @@ namespace KaemikaXM.Droid {
             foreach (string a in new List<string> { "StartHere", "LotkaVolterra", "RingOscillator", "Reactions", "EnzymeKinetics", "ApproximateMajority", "2AM Oscillator", "Transporters" }) AddAsset(group1, a);
             groups.Add(group1);
 
+            var group3 = new KaemikaXM.Pages.ModelInfoGroup("Protocols");
+            foreach (string a in new List<string> { "Samples", "MolarMass", "Droplets", "MixAndSplit", "PBS", "SerialDilution" }) AddAsset(group3, a);
+            groups.Add(group3);
+
             var group2a = new KaemikaXM.Pages.ModelInfoGroup("Arithmetic");
             foreach (string a in new List<string> { "A01 Copy", "A02 Addition", "A03 CopyAndAdd", "A04 Multiplication", "A05 Division", "B01 DifferentialSignals", "B02 DifferentialAddition", "B03 DifferentialSubtraction", "B04 DifferentialAbstractions" }) AddAsset(group2a, a);
             groups.Add(group2a);
@@ -44,10 +48,6 @@ namespace KaemikaXM.Droid {
             var group5 = new KaemikaXM.Pages.ModelInfoGroup("PID Controller");
             foreach (string a in new List<string> { "PosTestSignal Sine", "PosTestSignal Step", "TestSignal Sine", "TestSignal Step", "Proportional Block", "Integral Block", "Derivative Block", "Addition Block", "Subtraction Block", "DualRailConverter Block", "PIDController Block", "PIDController", "PIDController Optimization" }) AddAsset(group5, a);
             groups.Add(group5);
-
-            var group3 = new KaemikaXM.Pages.ModelInfoGroup("Protocols");
-            foreach (string a in new List<string> { "Samples", "MolarMass", "MixAndSplit", "PBS", "SerialDilution" }) AddAsset(group3, a);
-            groups.Add(group3);
 
             var group4 = new KaemikaXM.Pages.ModelInfoGroup("Documentation");
             foreach (string a in new List<string> { "KaemikaGrammar", "BuiltinFunctions", "Flows", "Functions" }) AddAsset(group4, a, executable: false);

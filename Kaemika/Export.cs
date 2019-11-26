@@ -121,9 +121,9 @@ namespace Kaemika {
                 if (!(reaction.rate is MassActionRateValue)) throw new Error("Export LBS/CNR: only mass action reactions are supported");
                 double rate = ((MassActionRateValue)reaction.rate).Rate(0.0); // ignore activation energy of reaction
                 body = body + tail
-                    + reactants.Aggregate("", (a, b) => (a == "") ? b.Format(style) : a + " + " + b.Format(style))
+                    + Style.FormatSequence(reactants, " + ", x => x.Format(style))
                     + " ->" + "{" + rate.ToString() + "} "
-                    + products.Aggregate("", (a, b) => (a == "") ? b.Format(style) : a + " + " + b.Format(style));
+                    + Style.FormatSequence(products, " + ", x => x.Format(style));
                 tail = " |" + Environment.NewLine;
             }
             return body;
@@ -241,11 +241,7 @@ namespace Kaemika {
                 if (!l.ContainsKey(species)) l[species] = 0;
                 l[species]++;
             }
-            string s = "";
-            //foreach (var kvp in l) for(int i = 0; i < kvp.Value; i++) s += kvp.Key + "+";
-            foreach (var kvp in l) s += ((kvp.Value > 1) ? kvp.Value.ToString() : "") + kvp.Key + "+";
-            if (s != "") s = s.Substring(0, s.Length - 1);
-            return s;
+            return Style.FormatSequence(l, "+", kvp => ((kvp.Value > 1) ? kvp.Value.ToString() : "") + kvp.Key);
         }
        
         public static void GraphAddEdge(AdjacencyGraph<Vertex, Edge<Vertex>> graph, Vertex source, Vertex target, string label = null, Directed directed = Directed.Solid) {
@@ -377,23 +373,46 @@ namespace Kaemika {
         public static void ProtocolEdges(Netlist netlist, AdjacencyGraph<Vertex, Edge<Vertex>> graph, Dictionary<String, Vertex> veticesDict, Style style) {
             foreach (ProtocolEntry entry in netlist.AllOperations())
                 if (entry is MixEntry) {
-                    var node = entry as MixEntry; var inS1 = node.inSample1.FormatSymbol(style); var inS2 = node.inSample2.FormatSymbol(style); var outS = node.outSample.FormatSymbol(style);
-                    GraphAddEdge(graph, veticesDict[inS1], veticesDict[outS], "mix");
-                    GraphAddEdge(graph, veticesDict[inS2], veticesDict[outS], "mix");
+                    var node = entry as MixEntry;
+                    var outS = node.outSample.FormatSymbol(style);
+                    foreach (SampleValue inSample in node.inSamples) {
+                        var inS = inSample.FormatSymbol(style);
+                        GraphAddEdge(graph, veticesDict[inS], veticesDict[outS], "mix");
+                    }
                 } else if (entry is SplitEntry) {
-                    var node = entry as SplitEntry; var inS = node.inSample.FormatSymbol(style); var outS1 = node.outSample1.FormatSymbol(style); var outS2 = node.outSample2.FormatSymbol(style);
-                    GraphAddEdge(graph, veticesDict[inS], veticesDict[outS1], "split " + node.proportion.value.ToString("G3"));
-                    GraphAddEdge(graph, veticesDict[inS], veticesDict[outS2], "split " + (1 - node.proportion.value).ToString("G3"));
+                    var node = entry as SplitEntry; 
+                    var inS = node.inSample.FormatSymbol(style);
+                    for (int i = 0; i < node.outSamples.Count; i++) {
+                        var outS = node.outSamples[i].FormatSymbol(style);
+                        GraphAddEdge(graph, veticesDict[inS], veticesDict[outS], "split " + node.proportions[i].value.ToString("G3"));
+                    }
                 } else if (entry is EquilibrateEntry) {
-                    var node = entry as EquilibrateEntry; var inS = node.inSample.FormatSymbol(style); var outS = node.outSample.FormatSymbol(style);
-                    GraphAddEdge(graph, veticesDict[inS], veticesDict[outS], "equilibrate for " + node.fortime.ToString("G3"));
-                } else if (entry is TransferEntry) {
-                    var node = entry as TransferEntry; var inS = node.inSample.FormatSymbol(style); var outS = node.outSample.FormatSymbol(style);
-                    GraphAddEdge(graph, veticesDict[inS], veticesDict[outS], "transfer");
+                    var node = entry as EquilibrateEntry;
+                    for (int i = 0; i < node.outSamples.Count; i++) {
+                        var inS = node.inSamples[i].FormatSymbol(style);
+                        var outS = node.outSamples[i].FormatSymbol(style);
+                        GraphAddEdge(graph, veticesDict[inS], veticesDict[outS], "equilibrate for " + node.fortime.ToString("G3"));
+                    }
+                } else if (entry is RegulateEntry) {
+                    var node = entry as RegulateEntry; 
+                    for (int i = 0; i < node.outSamples.Count; i++) {
+                        var inS = node.inSamples[i].FormatSymbol(style);
+                        var outS = node.outSamples[i].FormatSymbol(style);
+                        GraphAddEdge(graph, veticesDict[inS], veticesDict[outS], "regulate to " + node.temperature.ToString("G3"));
+                    }
+                } else if (entry is ConcentrateEntry) {
+                    var node = entry as ConcentrateEntry; 
+                    for (int i = 0; i < node.outSamples.Count; i++) {
+                        var inS = node.inSamples[i].FormatSymbol(style);
+                        var outS = node.outSamples[i].FormatSymbol(style);
+                        GraphAddEdge(graph, veticesDict[inS], veticesDict[outS], "concentrate to " + node.volume.ToString("G3"));
+                    }
                 } else if (entry is DisposeEntry) {
                     var node = entry as DisposeEntry;
                     if (!disposeAdded) { veticesDict[disposeLabel] = disposeVertex; graph.AddVertex(disposeVertex); }
-                    GraphAddEdge(graph, veticesDict[node.inSample.symbol.Format(style)], disposeVertex, "dispose");
+                    foreach (SampleValue inSample in node.inSamples) {
+                        GraphAddEdge(graph, veticesDict[inSample.symbol.Format(style)], disposeVertex, "dispose");
+                    }
                 }
         }
 
@@ -441,10 +460,6 @@ namespace Kaemika {
             }
             public string HybridSystem(Presentation rep, Style style) {
                 string s = "";
-                //s += "TRANSITIONS" + Environment.NewLine;
-                //foreach (Transition transition in transitions) {
-                //    s += transition.Format(style) + Environment.NewLine;
-                //}
                 s += Environment.NewLine;
                 foreach (State state in states.states) {
                     s += "STATE_" + state.id.ToString() + Environment.NewLine +
@@ -453,19 +468,20 @@ namespace Kaemika {
                     foreach (Transition transition in state.transitionsOut) {
                         if (transition.entry is EquilibrateEntry) {
                             if (found) throw new Error("More than one equilibrate transitions out of one state.");
-                            SampleValue sample = (transition.entry as EquilibrateEntry).inSample;
-                            List<ReactionValue> reactions = sample.ReactionsAsConsumed(style);
-                            // List<ReactionValue> reactions = sample.RelevantReactions(netlist, style); // this would pick up reactions that were added after the sample was consumed
-                            s += "KINETICS for STATE_" + transition.source.id.ToString() + " (sample " + sample.FormatSymbol(style) + ") for " + style.FormatDouble((transition.entry as EquilibrateEntry).fortime) + " time units:" + Environment.NewLine;
-                            if (rep == Presentation.Reactions) {
-                                foreach (ReactionValue reaction in reactions) s += reaction.Format(style) + Environment.NewLine;
-                            } else if (rep == Presentation.ODEs) {
-                                s += (new CRN(sample, reactions)).FormatAsODE(style);
-                            } else if (rep == Presentation.Stoichiometry) {
-                                s += (new CRN(sample, reactions)).FormatStoichiometry(style);
+                            foreach (SampleValue inSample in (transition.entry as EquilibrateEntry).inSamples) {
+                                List<ReactionValue> reactions = inSample.ReactionsAsConsumed(style);
+                                // List<ReactionValue> reactions = inSample.RelevantReactions(netlist, style); // this would pick up reactions that were added after the sample was consumed
+                                s += "KINETICS for STATE_" + transition.source.id.ToString() + " (sample " + inSample.FormatSymbol(style) + ") for " + style.FormatDouble((transition.entry as EquilibrateEntry).fortime) + " time units:" + Environment.NewLine;
+                                if (rep == Presentation.Reactions) {
+                                    foreach (ReactionValue reaction in reactions) s += reaction.Format(style) + Environment.NewLine;
+                                } else if (rep == Presentation.ODEs) {
+                                    s += (new CRN(inSample, reactions)).FormatAsODE(style);
+                                } else if (rep == Presentation.Stoichiometry) {
+                                    s += (new CRN(inSample, reactions)).FormatStoichiometry(style);
+                                }
+                                s += Environment.NewLine;
+                                found = true;
                             }
-                            s += Environment.NewLine;
-                            found = true;
                         }
                     }
                     foreach (Transition transition in state.transitionsOut) {
@@ -540,6 +556,10 @@ namespace Kaemika {
             public bool Contains(SampleValue sample) {
                 return this.samples.Contains(sample);
             }
+            public bool Contains(List<SampleValue> samples) {
+                foreach (SampleValue sample in samples) if (!Contains(sample)) return false;
+                return true;
+            }
             public void Add(SampleValue sample) {
                 this.samples.Add(sample);
             }
@@ -560,22 +580,26 @@ namespace Kaemika {
                 return this.Membership(style).SetEquals(other.Membership(style));
             }
             public string Format(Style style) {
-                string s = "";
-                foreach (SampleValue sample in samples) {
-                    if (sample.Count() > 0)
-                        s += sample.Format(style) + ", " + Environment.NewLine;
-                }
-                if (s.Length > 0) s = s.Substring(0, s.Length - 3);
-                return s;
+                return Style.FormatSequence(samples, ", " + Environment.NewLine,
+                    x => (x.Count() > 0) ? x.Format(style) : "" ); // returning "" here will skip the separator for that iteration
+                //string s = "";
+                //foreach (SampleValue sample in samples) {
+                //    if (sample.Count() > 0)
+                //        s += sample.Format(style) + ", " + Environment.NewLine;
+                //}
+                //if (s.Length > 0) s = s.Substring(0, s.Length - 3);
+                //return s;
             }
             public string Label(Style style) {
-                string s = "";
-                foreach (SampleValue sample in samples) {
-                    if (sample.IsProduced() || sample.IsConsumed()) // ignore the extraneous samples
-                        s += sample.FormatSymbol(style) + ", ";
-                }
-                if (s.Length > 0) s = s.Substring(0, s.Length - 2);
-                return s;
+                return Style.FormatSequence(samples, ", ",
+                    x => (x.IsProduced() || x.IsConsumed()) ? x.FormatSymbol(style) : ""); // ignore the extraneous samples: returning "" here will skip the separator for that iteration
+                //string s = "";
+                //foreach (SampleValue sample in samples) {
+                //    if (sample.IsProduced() || sample.IsConsumed()) // ignore the extraneous samples
+                //        s += sample.FormatSymbol(style) + ", ";
+                //}
+                //if (s.Length > 0) s = s.Substring(0, s.Length - 2);
+                //return s;
             }
             public string UniqueNodeName() { return "N" + id; }
             public string GraphVizNode(Style style) {
@@ -605,10 +629,7 @@ namespace Kaemika {
                 foreach (State other in otherStates.states) AddUnique(other, style);
             }
             public string Format(Style style) {
-                string s = "";
-                foreach (State state in states) s += state.Format(style) + ", ";
-                if (s.Length > 0) s = s.Substring(0, s.Length - 2);
-                return s;
+                return Style.FormatSequence(states, ", ", x => x.Format(style));
             }
         }
 
@@ -643,69 +664,74 @@ namespace Kaemika {
             StateSet nextStates = new StateSet();
             foreach (OperationEntry entry in closure.netlist.AllOperations()) {
                 if (entry is MixEntry) {
-                    if (state.Contains((entry as MixEntry).inSample1) && state.Contains((entry as MixEntry).inSample2)) {
-                        SampleValue inSample1 = (entry as MixEntry).inSample1;
-                        SampleValue inSample2 = (entry as MixEntry).inSample2;
-                        SampleValue outSample = (entry as MixEntry).outSample;
+                    MixEntry mixEntry = entry as MixEntry;
+                    if (state.Contains(mixEntry.inSamples)) {
                         State newState = state.Copy();
-                        newState.Remove(inSample1);
-                        newState.Remove(inSample2);
-                        newState.Add(outSample);
+                        foreach (SampleValue inSample in mixEntry.inSamples) newState.Remove(inSample);
+                        newState.Add(mixEntry.outSample);
                         newState = closure.AddUniqueState(newState, style); // may replace it with an existing state
                         closure.AddTransition(new Transition(state, newState, entry,
-                            "mix " + outSample.FormatSymbol(style) + " := " + inSample1.FormatSymbol(style) + ", " + inSample2.FormatSymbol(style)));
+                                "mix " + mixEntry.outSample.FormatSymbol(style) + " = " + Style.FormatSequence(mixEntry.inSamples, ", ", x => x.FormatSymbol(style))));
                         nextStates.AddUnique(newState, style);
                         if (sequential) return nextStates; // otherwise keep accumulating
                     }
                 }  else if (entry is SplitEntry)  {
-                    if (state.Contains((entry as SplitEntry).inSample)) {
-                        SampleValue inSample = (entry as SplitEntry).inSample;
-                        SampleValue outSample2 = (entry as SplitEntry).outSample2;
-                        SampleValue outSample1 = (entry as SplitEntry).outSample1;
+                    SplitEntry splitEntry = entry as SplitEntry;
+                    if (state.Contains(splitEntry.inSample)) {
+                        SampleValue inSample = splitEntry.inSample;
                         State newState = state.Copy();
                         newState.Remove(inSample);
-                        newState.Add(outSample1);
-                        newState.Add(outSample2);
+                        foreach (SampleValue outSample in splitEntry.outSamples) newState.Add(outSample);
                         newState = closure.AddUniqueState(newState, style); // may replace it with an existing state
                         closure.AddTransition(new Transition(state, newState, entry,
-                            "split " + outSample1.FormatSymbol(style) + ", " + outSample2.FormatSymbol(style) + " := " + inSample.FormatSymbol(style) + " by " + (entry as SplitEntry).proportion.value.ToString("G3")));
+                            "split " + Style.FormatSequence(splitEntry.outSamples, ", ", x => x.FormatSymbol(style)) + " = " + inSample.FormatSymbol(style) + " by " + Style.FormatSequence(splitEntry.proportions, ", ", x => x.value.ToString("G3"))));
                         nextStates.AddUnique(newState, style);
                         if (sequential) return nextStates; // otherwise keep accumulating
                     }
                 } else if (entry is EquilibrateEntry) {
-                    if (state.Contains((entry as EquilibrateEntry).inSample)) {
-                        SampleValue inSample = (entry as EquilibrateEntry).inSample;
-                        SampleValue outSample = (entry as EquilibrateEntry).outSample;
+                    EquilibrateEntry eqEntry = entry as EquilibrateEntry;
+                    if (state.Contains(eqEntry.inSamples)) {
                         State newState = state.Copy();
-                        newState.Remove(inSample);
-                        newState.Add(outSample);
+                        foreach (SampleValue inSample in eqEntry.inSamples) newState.Remove(inSample);
+                        foreach (SampleValue outSample in eqEntry.outSamples) newState.Add(outSample);
                         newState = closure.AddUniqueState(newState, style); // may replace it with an existing state
                         closure.AddTransition(new Transition(state, newState, entry,
-                            "equilibrate " + outSample.FormatSymbol(style) + " := " + inSample.FormatSymbol(style) + " for " + (entry as EquilibrateEntry).fortime.ToString("G3")));
+                            "equilibrate " + Style.FormatSequence(eqEntry.outSamples, ", ", x => x.FormatSymbol(style)) + " = " + Style.FormatSequence(eqEntry.inSamples, ", ", x => x.FormatSymbol(style)) + " for " + eqEntry.fortime.ToString("G3")));
                         nextStates.AddUnique(newState, style);
                         if (sequential) return nextStates; // otherwise keep accumulating
                     }
-                } else if (entry is TransferEntry) {
-                    if (state.Contains((entry as TransferEntry).inSample)) {
-                        SampleValue inSample = (entry as TransferEntry).inSample;
-                        SampleValue outSample = (entry as TransferEntry).outSample;
+                } else if (entry is RegulateEntry) {
+                    RegulateEntry regulateEntry = entry as RegulateEntry;
+                    if (state.Contains(regulateEntry.inSamples)) {
                         State newState = state.Copy();
-                        newState.Remove(inSample);
-                        newState.Add(outSample);
+                        foreach (SampleValue inSample in regulateEntry.inSamples) newState.Remove(inSample);
+                        foreach (SampleValue outSample in regulateEntry.outSamples) newState.Add(outSample);
                         newState = closure.AddUniqueState(newState, style); // may replace it with an existing state
                         closure.AddTransition(new Transition(state, newState, entry,
-                            "transfer " + outSample.FormatSymbol(style) + " := " + inSample.FormatSymbol(style)));
+                            "regulate " + Style.FormatSequence(regulateEntry.outSamples, ", ", x => x.FormatSymbol(style)) + " = " + Style.FormatSequence(regulateEntry.inSamples, ", ", x => x.FormatSymbol(style)) + " to " + regulateEntry.temperature.ToString("G3")));
+                        nextStates.AddUnique(newState, style);
+                        if (sequential) return nextStates; // otherwise keep accumulating
+                    }
+                } else if (entry is ConcentrateEntry) {
+                    ConcentrateEntry concentrateEntry = entry as ConcentrateEntry;
+                    if (state.Contains(concentrateEntry.inSamples)) {
+                        State newState = state.Copy();
+                        foreach (SampleValue inSample in concentrateEntry.inSamples) newState.Remove(inSample);
+                        foreach (SampleValue outSample in concentrateEntry.outSamples) newState.Add(outSample);
+                        newState = closure.AddUniqueState(newState, style); // may replace it with an existing state
+                        closure.AddTransition(new Transition(state, newState, entry,
+                            "concentrate " + Style.FormatSequence(concentrateEntry.outSamples, ", ", x => x.FormatSymbol(style)) + " = " + Style.FormatSequence(concentrateEntry.inSamples, ", ", x => x.FormatSymbol(style)) + " to " + concentrateEntry.volume.ToString("G3")));
                         nextStates.AddUnique(newState, style);
                         if (sequential) return nextStates; // otherwise keep accumulating
                     }
                 } else if (entry is DisposeEntry) {
-                    if (state.Contains((entry as DisposeEntry).inSample)) {
-                        SampleValue inSample = (entry as DisposeEntry).inSample;
+                    DisposeEntry disEntry = entry as DisposeEntry;
+                    if (state.Contains(disEntry.inSamples)) {
                         State newState = state.Copy();
-                        newState.Remove(inSample);
+                        foreach (SampleValue inSample in disEntry.inSamples) newState.Remove(inSample);
                         newState = closure.AddUniqueState(newState, style); // may replace it with an existing state
                         closure.AddTransition(new Transition(state, newState, entry,
-                            "dispose " + inSample.FormatSymbol(style)));
+                            "dispose " + Style.FormatSequence(disEntry.inSamples, ", ", x => x.FormatSymbol(style))));
                         nextStates.AddUnique(newState, style);
                         if (sequential) return nextStates; // otherwise keep accumulating
                     }

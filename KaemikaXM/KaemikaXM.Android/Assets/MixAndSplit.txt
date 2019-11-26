@@ -8,19 +8,19 @@ sample A
 species a @ 1M in A
 amount c @ 0.1M in A
 a + c -> a + a
-equilibrate A1 := A for 1
+equilibrate A1 = A for 1
 
 sample B
 species b @ 1M in B
 amount c @ 0.1M in B
 b + c -> c + c
-equilibrate B1 := B for 1
+equilibrate B1 = B for 1
 
-split C,D := A1 by 0.5
+split C,D = A1 by 0.5,0.5
 dispose C
 
-mix E := D with B1
+mix E = D, B1
 a + b -> b + b
 
-equilibrate F := E for 20
+equilibrate F = E for 20
 dispose F

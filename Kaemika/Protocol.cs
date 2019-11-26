@@ -57,56 +57,6 @@ namespace Kaemika
             else return -1; // don't give error because we'll try another conversion
         }
 
-        public static SampleValue Mix(Symbol symbol, SampleValue mixFst, SampleValue mixSnd, Netlist netlist, Style style) {
-            mixFst.Consume(null, 0, null, netlist, style);
-            mixSnd.Consume(null, 0, null, netlist, style);
-            double fstVolume = mixFst.Volume();
-            double sndVolume = mixSnd.Volume();
-            NumberValue volume = new NumberValue(fstVolume + sndVolume);
-            NumberValue temperature = new NumberValue((fstVolume * mixFst.Temperature() + sndVolume * mixSnd.Temperature()) / (fstVolume + sndVolume));
-            SampleValue result = new SampleValue(symbol, new StateMap(symbol, new List<SpeciesValue> { }, new State(0, lna: mixFst.stateMap.state.lna || mixSnd.stateMap.state.lna)), volume, temperature, produced: true);
-            result.stateMap.Mix(mixFst.stateMap, volume.value, fstVolume, style); // mix adding the means and covariances, scaled by volume
-            result.stateMap.Mix(mixSnd.stateMap, volume.value, sndVolume, style); // mix adding the means and covariances, scaled by volume
-            return result;
-        }
-
-        public static (SampleValue, SampleValue) Split(Symbol symbol1, Symbol symbol2, SampleValue sample, double proportion, Netlist netlist, Style style) {
-            sample.Consume(null, 0, null, netlist, style);
-            double sampleVolume = sample.Volume();
-            NumberValue volume1 = new NumberValue(sampleVolume * proportion);
-            NumberValue temperature1 = new NumberValue(sample.Temperature());
-            SampleValue result1 = new SampleValue(symbol1, new StateMap(symbol1, new List<SpeciesValue> { }, new State(0, lna: sample.stateMap.state.lna)), volume1, temperature1, produced: true);
-            result1.stateMap.Split(sample.stateMap, style);
-            NumberValue volume2 = new NumberValue(sampleVolume * (1 - proportion));
-            NumberValue temperature2 = new NumberValue(sample.Temperature());
-            SampleValue result2 = new SampleValue(symbol2, new StateMap(symbol2, new List<SpeciesValue> { }, new State(0, lna: sample.stateMap.state.lna)), volume2, temperature2, produced: true);
-            result2.stateMap.Split(sample.stateMap, style);
-            return (result1, result2);
-        }
-
-        public static SampleValue Transfer(Symbol symbol, double volume, double temperature, SampleValue inSample, Netlist netlist, Style style) {
-            inSample.Consume(null, 0, null, netlist, style);
-            SampleValue result = new SampleValue(symbol, new StateMap(symbol, new List<SpeciesValue> { }, new State(0, lna: inSample.stateMap.state.lna)), new NumberValue(volume), new NumberValue(temperature), produced: true);
-            result.stateMap.Mix(inSample.stateMap, volume, inSample.Volume(), style); // same as Mix, but in this case we can also have volume < insample.Volume
-            return result;
-        }
-
-        public static void Dispose(SampleValue sample, Netlist netlist, Style style) {
-            sample.Consume(null, 0, null, netlist, style);
-        }
-
-        public static void PauseEquilibrate(Netlist netlist, Style style) {
-            if (!netlist.autoContinue) {
-                while ((!continueExecution) && Exec.IsExecuting()) {
-                    // if (!Gui.gui.ContinueEnabled()) Gui.gui.OutputAppendText(netlist.Format(style));
-                    Gui.gui.ContinueEnable(true);
-                    Thread.Sleep(100);
-                }
-                Gui.gui.ContinueEnable(false); continueExecution = false;
-                //Gui.gui.OutputSetText(""); // clear last results in preparation for the next, only if not autoContinue
-            }
-        }
-
         public static (string[] series, string[] seriesLNA) GenerateSeries(List<ReportEntry> reports, Noise noise, Style style) {
 
             string[] seriesLNA = new string[reports.Count]; // can contain nulls if series are duplicates
@@ -147,7 +97,98 @@ namespace Kaemika
             return (series, seriesLNA);
         }
 
+        public static SampleValue Sample(Symbol symbol, double volumeValue, double temperatureValue) {
+            return new SampleValue(symbol,
+                new StateMap(symbol, new List<SpeciesValue> { }, new State(0, false)),
+                new NumberValue(volumeValue), new NumberValue(temperatureValue), produced: false);
+        }
+
+        public static void Amount(SampleValue sample, SpeciesValue species, NumberValue initial, string dimension, Style style) {
+            sample.stateMap.AddDimensionedSpecies((SpeciesValue)species, ((NumberValue)initial).value, dimension, sample.Volume(), style);
+        }
+
+        public static SampleValue Mix(Symbol symbol, List<SampleValue> samples, Netlist netlist, Style style) {
+            double sumVolume = 0.0;
+            double sumTemperature = 0.0;
+            bool needLna = false;
+            foreach (SampleValue sample in samples) {
+                sample.Consume(null, 0, null, netlist, style);
+                sumVolume += sample.Volume();
+                sumTemperature += sample.Volume() * sample.Temperature();
+                needLna = needLna || sample.stateMap.state.lna;
+            }
+            NumberValue volume = new NumberValue(sumVolume);
+            NumberValue temperature = new NumberValue(sumTemperature / sumVolume);
+            SampleValue result = new SampleValue(symbol, new StateMap(symbol, new List<SpeciesValue> { }, new State(0, lna: needLna)), volume, temperature, produced: true);
+            foreach (SampleValue sample in samples) {
+                result.stateMap.Mix(sample.stateMap, volume.value, sample.Volume(), style); // mix adding the means and covariances, scaled by volume
+            }
+            return result;
+        }
+
+        public static List<SampleValue> Split(List<Symbol> symbols, SampleValue sample, List<NumberValue> proportions, Netlist netlist, Style style) {
+            sample.Consume(null, 0, null, netlist, style);
+            List<SampleValue> result = new List<SampleValue> { };
+            for (int i = 0; i < symbols.Count; i ++) {
+                NumberValue iVolume = new NumberValue(sample.Volume() * proportions[i].value);
+                NumberValue iTemperature = new NumberValue(sample.Temperature());
+                SampleValue iResult = new SampleValue(symbols[i], new StateMap(symbols[i], new List<SpeciesValue> { }, new State(0, lna: sample.stateMap.state.lna)), iVolume, iTemperature, produced: true);
+                iResult.stateMap.Split(sample.stateMap, style);
+                result.Add(iResult);
+            }
+            return result;
+        }
+
+        public static List<SampleValue> Regulate(List<Symbol> symbols, double temperature, List<SampleValue> inSamples, Netlist netlist, Style style) {
+            List<SampleValue> outSamples = new List<SampleValue> { };
+            for (int i = 0; i < symbols.Count; i++) {
+                inSamples[i].Consume(null, 0, null, netlist, style);
+                double volume = inSamples[i].Volume();
+                SampleValue outSample = new SampleValue(symbols[i], new StateMap(symbols[i], new List<SpeciesValue> { }, new State(0, lna: inSamples[i].stateMap.state.lna)), new NumberValue(volume), new NumberValue(temperature), produced: true);
+                outSample.stateMap.Mix(inSamples[i].stateMap, volume, volume, style);
+                outSamples.Add(outSample);
+            }
+            return outSamples;
+        }
+
+        public static List<SampleValue> Concentrate(List<Symbol> symbols, double volume, List<SampleValue> inSamples, Netlist netlist, Style style) {
+            List<SampleValue> outSamples = new List<SampleValue> { };
+            for (int i = 0; i < symbols.Count; i++) {
+                inSamples[i].Consume(null, 0, null, netlist, style);
+                double temperature = inSamples[i].Temperature();
+                SampleValue outSample = new SampleValue(symbols[i], new StateMap(symbols[i], new List<SpeciesValue> { }, new State(0, lna: inSamples[i].stateMap.state.lna)), new NumberValue(volume), new NumberValue(temperature), produced: true);
+                outSample.stateMap.Mix(inSamples[i].stateMap, volume, inSamples[i].Volume(), style); // same as Mix, but in this case we can also have volume < inSamples[i].Volume()
+                outSamples.Add(outSample);
+            }
+            return outSamples;
+        }
+
+        public static void Dispose(List<SampleValue> samples, Netlist netlist, Style style) {
+            foreach (SampleValue sample in samples)
+                sample.Consume(null, 0, null, netlist, style);
+        }
+
+        public static void PauseEquilibrate(Netlist netlist, Style style) {
+            if (!netlist.autoContinue) {
+                while ((!continueExecution) && Exec.IsExecuting()) {
+                    // if (!Gui.gui.ContinueEnabled()) Gui.gui.OutputAppendText(netlist.Format(style));
+                    Gui.gui.ContinueEnable(true);
+                    Thread.Sleep(100);
+                }
+                Gui.gui.ContinueEnable(false); continueExecution = false;
+                //Gui.gui.OutputSetText(""); // clear last results in preparation for the next, only if not autoContinue
+            }
+        }
+
+        public static List<SampleValue> EquilibrateList(List<Symbol> outSymbols, List<SampleValue> inSamples, Noise noise, double fortime, Netlist netlist, Style style) {
+            List<SampleValue> result = new List<SampleValue> { };
+            for (int i = 0; i < outSymbols.Count; i++)
+                result.Add(Equilibrate(outSymbols[i], inSamples[i], noise, fortime, netlist, style));
+            return result;
+        }
+
         public static SampleValue Equilibrate(Symbol outSymbol, SampleValue inSample, Noise noise, double fortime, Netlist netlist, Style style) {
+            inSample.CheckConsumed(style); // we will consume it later, but we need to check now
             double initialTime = 0.0;
             double finalTime = fortime;
 
@@ -172,7 +213,7 @@ namespace Kaemika
 
             bool nonTrivialSolution =
                 (inSpecies.Count > 0)        // we don't want to run on the empty species list: Oslo crashes
-                && (!crn.Trivial(style))   // we don't want to run trivial ODEs: some Oslo solvers hang on very small stepping
+                && (!crn.Trivial(style))     // we don't want to run trivial ODEs: some Oslo solvers hang on very small stepping
                 && finalTime > 0;            // we don't want to run when fortime==0
 
             (double lastTime, State lastState, int pointsCounter, int renderedCounter) =
@@ -349,7 +390,7 @@ namespace Kaemika
                     Value result = closure.Apply(arguments, netlist, style);
                     netlist.autoContinue = autoContinue;
                     if (!(result is NumberValue)) throw new Error("Objective function must return a number, not: " + result.Format(style));
-                    Gui.gui.OutputAppendText("argmin: parameter=" + Expressions.FormatValues(arguments, style) + " => cost=" + result.Format(style) + Environment.NewLine);
+                    Gui.gui.OutputAppendText("argmin: parameter=" + Style.FormatSequence(arguments, ", ", x => x.Format(style)) + " => cost=" + result.Format(style) + Environment.NewLine);
                     return (result as NumberValue).value;
                 });
 

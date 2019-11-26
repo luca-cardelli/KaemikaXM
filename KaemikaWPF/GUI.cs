@@ -154,12 +154,14 @@ namespace KaemikaWPF
             this.radioButton_LNA_VarRange.Enabled = (!b) && this.checkBox_LNA.Checked;
             this.radioButton_LNA_Fano.Enabled = (!b) && this.checkBox_LNA.Checked;
             this.radioButton_LNA_CV.Enabled = (!b) && this.checkBox_LNA.Checked;
+            this.deviceButton.Enabled = !b;
 
             this.btnStop.Enabled = b;
             if (b) this.btnStop.Focus(); else this.btnEval.Focus();
 
             btnStop.BackColor = (btnStop.Enabled) ? Color.Tomato : Color.Gainsboro;
             btnEval.BackColor = (btnEval.Enabled) ? Color.LightSalmon : Color.Gainsboro;
+            deviceButton.BackColor = (btnEval.Enabled) ? Color.Gold : Color.Gainsboro;
         }
         //public bool StopEnabled() {
         //    return btnStop.Enabled;
@@ -951,6 +953,8 @@ namespace KaemikaWPF
                 InputSetText(Properties.Resources.Samples);
             } else if (comboBox_Examples.Text == "   Molar Mass") {
                 InputSetText(Properties.Resources.MolarMass);
+            } else if (comboBox_Examples.Text == "   Droplets") {
+                InputSetText(Properties.Resources.Droplets);
             } else if (comboBox_Examples.Text == "   Mix and Split") {
                 InputSetText(Properties.Resources.MixAndSplit);
             } else if (comboBox_Examples.Text == "   PBS") {
@@ -1015,6 +1019,15 @@ namespace KaemikaWPF
                 e.Handled = true; // prevents the system from doing another Ctrl-V after this action
             }
             base.OnKeyDown(e);
+        }
+
+        private void deviceButton_Click(object sender, EventArgs e) {
+            if (DeviceForm.deviceForm == null) {
+                DeviceForm.deviceForm = new DeviceForm();
+                DeviceForm.deviceForm.Show();
+            } else {
+                if (!Exec.IsExecuting()) DeviceForm.deviceForm.Close();
+            }
         }
     }
 } 

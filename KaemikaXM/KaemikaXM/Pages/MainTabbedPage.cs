@@ -1,6 +1,7 @@
 ﻿using System;
 using Xamarin.Forms;
 using Xamarin.Forms.PlatformConfiguration.AndroidSpecific;
+using Kaemika;
 
 namespace KaemikaXM.Pages {
 
@@ -93,7 +94,9 @@ namespace KaemikaXM.Pages {
                 theOutputPageNavigation.IconImageSource = "icons8refresh96.png"; 
                 theChartPageNavigation.IconImageSource = "icons8refresh96.png";
                 // we need to use size 40x40 icons or they get stuck at wrong size after changing icon:
-                theModelEntryPage.startButton.Source = "icons8play40disabled.png"; 
+                theModelEntryPage.deviceButton.Source = "icons8device40disabled.png";
+                theChartPage.deviceButton.Source = "icons8device40disabled.png";
+                theModelEntryPage.startButton.Source = "icons8play40disabled.png";
                 theChartPage.startButton.Source = "icons8play40disabled.png"; 
                 theChartPage.stopButton.Source = "icons8stop40.png"; 
             }
@@ -101,7 +104,9 @@ namespace KaemikaXM.Pages {
                 theOutputPageNavigation.IconImageSource = "icons8truefalse100.png";
                 theChartPageNavigation.IconImageSource = "icons8combochart48.png";
                 // we need to use size 40x40 icons or they get stuck at wrong size after changing icon:
-                theModelEntryPage.startButton.Source = "icons8play40.png"; 
+                theModelEntryPage.deviceButton.Source = ProtocolDevice.Exists() ? "icons8device40on.png" : "icons8device40off.png";
+                theChartPage.deviceButton.Source = ProtocolDevice.Exists() ? "icons8device40on.png" : "icons8device40off.png";
+                theModelEntryPage.startButton.Source = "icons8play40.png";
                 theChartPage.startButton.Source = "icons8play40.png"; 
                 theChartPage.stopButton.Source = "icons8stop40disabled.png";
             }

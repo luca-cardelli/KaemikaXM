@@ -35,6 +35,7 @@ namespace KaemikaXM.Pages {
         public Button spamReport;
         public Button spamEquil;
         public Noise noisePickerSelection = Noise.None;
+        public ImageButton deviceButton;
         public ImageButton startButton;
 
         public ToolbarItem EditItem()  {
@@ -122,9 +123,36 @@ namespace KaemikaXM.Pages {
             return button;
         }
 
+        public ImageButton DeviceButton() {
+            ImageButton button = new ImageButton() {
+                Source = "icons8device40off.png",
+                HeightRequest = MainTabbedPage.buttonHeightRequest,
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                BackgroundColor = MainTabbedPage.secondBarColor,
+            };
+            button.Clicked += async (object sender, EventArgs e) => {
+                if (!modelInfo.executable) return;
+                if (Exec.IsExecuting()) return; // pretend button is in disabled state
+                if (ProtocolDevice.Exists()) {
+                    deviceButton.Source = "icons8device40off.png";
+                    MainTabbedPage.theChartPage.deviceButton.Source = "icons8device40off.png";
+                    MainTabbedPage.theChartPage.SwitchToPlotView();
+                    ProtocolDevice.Stop();
+                } else {
+                    ProtocolDevice.Start(35, 200);
+                    MainTabbedPage.theChartPage.SwitchToDeviceView();
+                    deviceButton.Source = "icons8device40on.png";
+                    MainTabbedPage.theChartPage.deviceButton.Source = "icons8device40on.png";
+                }
+            };
+            return button;
+        }
+
         public void SetStartButtonToContinue() {
             Device.BeginInvokeOnMainThread(() => {
                 // we need to use size 40x40 icons or they get stuck at wrong size after changing icon
+                MainTabbedPage.theModelEntryPage.deviceButton.Source = "icons8device40disabled.png";
+                MainTabbedPage.theChartPage.deviceButton.Source = "icons8device40disabled.png";
                 MainTabbedPage.theModelEntryPage.startButton.Source = "icons8pauseplay40.png";
                 MainTabbedPage.theChartPage.startButton.Source = "icons8pauseplay40.png";
             });         
@@ -133,6 +161,8 @@ namespace KaemikaXM.Pages {
         public void SetContinueButtonToStart() {
             Device.BeginInvokeOnMainThread(() => {
                 // we need to use size 40x40 icons or they get stuck at wrong size after changing icon
+                MainTabbedPage.theModelEntryPage.deviceButton.Source = "icons8device40disabled.png";
+                MainTabbedPage.theChartPage.deviceButton.Source = "icons8device40disabled.png";
                 MainTabbedPage.theModelEntryPage.startButton.Source = "icons8play40disabled.png"; // disabled because we are running a continutation
                 MainTabbedPage.theChartPage.startButton.Source = "icons8play40disabled.png"; // disabled because we are running a continutation
             });
@@ -262,6 +292,7 @@ namespace KaemikaXM.Pages {
             //spamComma = BtnInsertText((editor as ICustomTextEdit), ",", 12, ", ");
             spamEquil = BtnInsertText((editor as ICustomTextEdit), "equilib.", 8, "equilibrate for ");
             startButton = StartButton(switchToChart: true, switchToOutput: false);
+            deviceButton = DeviceButton();
             stepper = TextSizeStepper(editor as ICustomTextEdit);
 
             int topBarPadding = 0;
@@ -307,14 +338,16 @@ namespace KaemikaXM.Pages {
             int bottomBarPadding = 4;
             bottomBar = new Grid { RowSpacing = 0, Padding = bottomBarPadding };
             bottomBar.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); // stepper
+            bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); // noisePicker
+            bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); // deviceButton
+            bottomBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); // startButton
             bottomBar.BackgroundColor = MainTabbedPage.secondBarColor;
 
             bottomBar.Children.Add(stepper, 0, 0);
-            bottomBar.Children.Add(noisePicker, 1, 0);
-            bottomBar.Children.Add(startButton, 2, 0);
+            bottomBar.Children.Add(deviceButton, 1, 0);
+            bottomBar.Children.Add(noisePicker, 2, 0);
+            bottomBar.Children.Add(startButton, 3, 0);
 
             Grid grid = new Grid { ColumnSpacing = 0 };
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(spamSpecies.HeightRequest+2*topBarPadding) });  // top bar

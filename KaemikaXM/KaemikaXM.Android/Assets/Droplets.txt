@@ -1,0 +1,14 @@
+//======================================
+// Droplets
+//======================================
+
+// Activate the Device
+
+sample M {3mL, 20C}
+
+split A,B,C,D = M by 0.125,0.125,0.25,0.5
+
+mix N = D,B,A,C
+
+dispose N
+

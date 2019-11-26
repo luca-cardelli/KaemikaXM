@@ -10,8 +10,8 @@
 network SerialDilution(number count, sample s, network f) {
   if count > 0 then
     sample solvent {9*observe(volume,s) L, observe(kelvin,s) K}
-    mix s with solvent
-    split s, dilution := s by 0.1
+    mix s = s, solvent
+    split s, dilution = s by 0.1, 0.9
     f(dilution)
     SerialDilution(count-1, s, f)
   end

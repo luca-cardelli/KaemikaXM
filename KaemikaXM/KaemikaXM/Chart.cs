@@ -352,7 +352,7 @@ namespace Microcharts {
             this.timecourse = timecourse;
         }
 
-        public Swipe pinchPan = new Swipe(1.0f, new SKPoint(0, 0));
+        public Swipe pinchPan = Swipe.Id;
         public bool displayPinchOrigin = false;
         public SKPoint pinchOrigin;
 

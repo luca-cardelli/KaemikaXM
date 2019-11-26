@@ -208,13 +208,15 @@ namespace KaemikaWPF.Properties {
         ///
         ///// U = P + I + D
         ///network SumBlock(species P⁺ P⁻ I⁺ I⁻ D⁺ D⁻ U⁺ U⁻) {
-        ///      P⁺ -&gt; P⁺ + U⁺                       {1}
-        ///      P⁻ -&gt; P⁻  + U⁻                    {1}
-        ///      I⁺ -&gt; I⁺ + U⁺                       {1}
-        ///      I⁻ -&gt; I⁻  + U⁻                    {1}
-        ///      D⁺ -&gt; D⁺ + U⁺                      {1}
-        ///      D⁻ -&gt; D⁻  + U⁻                     {1}
-        ///  [rest of string was truncated]&quot;;.
+        ///      P⁺ -&gt; P⁺ + U⁺        {1}
+        ///      P⁻ -&gt; P⁻  + U⁻       {1}
+        ///      I⁺ -&gt; I⁺ + U⁺        {1}
+        ///      I⁻ -&gt; I⁻  + U⁻       {1}
+        ///      D⁺ -&gt; D⁺ + U⁺        {1}
+        ///      D⁻ -&gt; D⁻  + U⁻       {1}
+        ///      U⁺ -&gt; #              {1}
+        ///      U⁻ -&gt; #              {1}
+        ///      U⁺ + U⁻ -&gt; #    [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Addition_Block {
             get {
@@ -389,30 +391,21 @@ namespace KaemikaWPF.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to //======================================
+        ///// UNDO text changes
+        /////======================================
+        ///
+        ///&quot;Hacker&apos;s Keyboard&quot; (a keyboard alternative 
+        ///from the Play Store that selectably replaces 
+        ///the built-in keyboard) supports undo via 
+        ///Ctrl-Z, as well as Ctrl-X/C/V. There is no 
+        ///other known way to undo text on Android.
+        ///
+        /////======================================
         ///// Builtin functions and operators
         /////======================================
         ///
         ///// All numbers are double precision, 
-        ///// illegal operations may produce NAN
-        ///
-        ///// Literals:
-        ///
-        ///true false (integer) (float) (string) 
-        ///
-        ///// Prefix number and bool operators:
-        ///
-        ///-  not
-        ///
-        ///// Infix number and bool operators, 
-        ///// standard math precedence:
-        ///
-        ///+  -  *  /  ^  and  or  =  &lt;&gt;  &lt;=  &gt;=  &lt;  &gt; 
-        ///
-        ///// Infix string operators:
-        ///
-        ///+  =  &lt;&gt;                                      
-        ///
-        ///// A [rest of string was truncated]&quot;;.
+        ///// illegal operati [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string BuiltinFunctions {
             get {
@@ -496,6 +489,29 @@ namespace KaemikaWPF.Properties {
         internal static string Derivative2 {
             get {
                 return ResourceManager.GetString("Derivative2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //======================================
+        ///// Droplets
+        /////======================================
+        ///
+        ///// Activate the Device
+        ///
+        ///sample M {3mL, 20C}
+        ///
+        ///split A,B,C,D = M by 0.125,0.125,0.25,0.5
+        ///
+        ///mix N = D,B,A,C
+        ///
+        ///dispose N
+        ///
+        ///.
+        /// </summary>
+        internal static string Droplets {
+            get {
+                return ResourceManager.GetString("Droplets", resourceCulture);
             }
         }
         
@@ -665,8 +681,7 @@ namespace KaemikaWPF.Properties {
         ///
         ///// Input waveform
         ///network DSignal(species X⁺ X⁻, function f) {
-        ///   number precision = 100
-        /// [rest of string was truncated]&quot;;.
+        ///   number precision = 100        /// [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Integral_Block {
             get {
@@ -772,21 +787,21 @@ namespace KaemikaWPF.Properties {
         ///species a @ 1M in A
         ///amount c @ 0.1M in A
         ///a + c -&gt; a + a
-        ///equilibrate A1 := A for 1
+        ///equilibrate A1 = A for 1
         ///
         ///sample B
         ///species b @ 1M in B
         ///amount c @ 0.1M in B
         ///b + c -&gt; c + c
-        ///equilibrate B1 := B for 1
+        ///equilibrate B1 = B for 1
         ///
-        ///split C,D := A1 by 0.5
+        ///split C,D = A1 by 0.5,0.5
         ///dispose C
         ///
-        ///mix E := D with B1
+        ///mix E = D, B1
         ///a + b -&gt; b + b
         ///
-        ///equilibrate F := E for 20
+        ///equilibrate F = E for 20
         ///dispose F
         ///.
         /// </summary>
@@ -836,7 +851,7 @@ namespace KaemikaWPF.Properties {
         ///// http://cshprotocols.cshlp.org/content/2006/1/pdb.rec8247
         /////======================================
         ///
-        ///// The&apos;change&apos; instruction is used for 
+        ///// The&apos;transfer&apos; instruction is used for 
         ///// extra-chemical manipulations. It is 
         ///// meant to capture miscellaneous lab 
         ///// procedures that cannot be easily 
@@ -845,7 +860,7 @@ namespace KaemikaWPF.Properties {
         ///
         ///// See also the docs on Molar Mass.
         ///
-        ///species {NaCl#58.44, KCl#74.5 [rest of string was truncated]&quot;;.
+        ///species {NaCl#58.44, KCl#74 [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string PBS {
             get {
@@ -1092,11 +1107,11 @@ namespace KaemikaWPF.Properties {
         ///network SerialDilution(number count, sample s, network f) {
         ///  if count &gt; 0 then
         ///    sample solvent {9*observe(volume,s) L, observe(kelvin,s) K}
-        ///    mix s with solvent
-        ///    split s, dilution := s by 0.1
+        ///    mix s = s, solvent
+        ///    split s, dilution = s by 0.1, 0.9
         ///    f(dilution)
         ///    SerialDilution(count-1, s, f)
-        ///  en [rest of string was truncated]&quot;;.
+        /// [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string SerialDilution {
             get {
@@ -1196,16 +1211,16 @@ namespace KaemikaWPF.Properties {
         ///
         /////  E = A - B
         ///network SubBlock (species A⁺ A⁻ B⁺ B⁻ E⁺ E⁻) {
-        ///       A⁺ -&gt; A⁺ + E⁺        {1}
-        ///       A⁻ -&gt; A⁻ + E⁻        {1}
-        ///       B⁻ -&gt; B⁻ + E⁺      {1}
-        ///       B⁺  -&gt; B⁺ + E⁻    {1}
+        ///       A⁺ -&gt; A⁺ + E⁺       {1}
+        ///       A⁻ -&gt; A⁻ + E⁻       {1}
+        ///       B⁻ -&gt; B⁻ + E⁺       {1}
+        ///       B⁺  -&gt; B⁺ + E⁻      {1}
         ///       E⁺ -&gt; #             {1}
         ///       E⁻ -&gt; #             {1}
         ///       E⁺ + E⁻-&gt; #         {1}
         ///}
         ///
-        /////----------------- Unit testing ----------------- [rest of string was truncated]&quot;;.
+        /////----------------- Unit testing ---------------- [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Subtraction_Block {
             get {

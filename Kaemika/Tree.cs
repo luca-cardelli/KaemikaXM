@@ -50,7 +50,32 @@ namespace Kaemika
         public string Varchar() { return this.varchar; }
         public SwapMap Swap() { return this.swap; }
         public AlphaMap Map() { return this.map; }
-        public string FormatDouble(double n) { if (this.numberFormat != null) return n.ToString(this.numberFormat); else return n.ToString(); }
+
+        public string FormatDouble(double n) { 
+            if (this.numberFormat != null) return n.ToString(this.numberFormat); else return n.ToString(); 
+        }
+
+        // FormatSequence(elements, separator, formatItem, empty)
+        // returns a string of the 'elements' formatted by 'formatElements', separated by 'separator'
+        // if the elements are empty, returns 'empty'
+        // if a 'formatElements' returns "", the separator is skipped for that element
+        public delegate string FormatElementDelegate<T>(T ob);
+        public delegate string FormatKeypairDelegate<T,U>(KeyValuePair<T,U> ob);
+        public static string FormatSequence<T>(List<T> elements, string separator, FormatElementDelegate<T> FormatElement, string empty = "") {
+            return elements.Aggregate(empty, (a, b) => { string bs = FormatElement(b); return (a == empty) ? bs : (bs == "") ? a : a + separator + bs; });
+            //return elements.Aggregate(empty, (a, b) => (a == empty) ? FormatItem(b) : a + separator + FormatItem(b));
+            //return (objects.Count == 0) ? empty : objects.Aggregate("", (a, b) => (a == "") ? FormatItem(b) : a + separator + FormatItem(b));
+        }
+        public static string FormatSequence<T,U>(SortedList<T,U> elements, string separator, FormatKeypairDelegate<T,U> FormatElement, string empty = "") {
+            return elements.Aggregate(empty, (a, b) => { string bs = FormatElement(b); return (a == empty) ? bs : (bs == "") ? a : a + separator + bs; });
+            //return elements.Aggregate(empty, (a, b) => (a == empty) ? FormatElement(b) : a + separator + FormatElement(b));
+        }
+        public static string FormatSequence<T>(T[] elements, string separator, FormatElementDelegate<T> FormatElement, string empty = "") {
+            return elements.Aggregate(empty, (a, b) => { string bs = FormatElement(b); return (a == empty) ? bs : (bs == "") ? a : a + separator + bs; });
+            //return elements.Aggregate(empty, (a, b) => (a == empty) ? FormatElement(b) : a + separator + FormatElement(b));
+            //return (objects.Length == 0) ? empty : objects.Aggregate("", (a, b) => (a == "") ? FormatItem(b) : a + separator + FormatItem(b));
+        }
+
     }
 
     // SCOPES
@@ -210,6 +235,12 @@ namespace Kaemika
             }
             return env;
         }
+        //private static Env ConsRev(int i, List<Symbol> symbols, Type type, List<Value> values, Env env) {
+        //    if (i >= symbols.Count) return env; else return new ValueEnv(symbols[i], type, values[i], ConsRev(i + 1, symbols, type, values, env));
+        //}
+        //public static Env ConsList(List<Symbol> symbols, Type type, List<Value> values, Env env) {
+        //    return ConsRev(0, symbols, type, values, env);
+        //}
     }
 
     public class NullEnv : Env {
@@ -685,8 +716,11 @@ namespace Kaemika
         public int Count() {
             return stateMap.species.Count;
         }
-        public void Consume(List<ReactionValue> reactionsAsConsumed, double timeAsConsumed, State stateAsConsumed, Netlist netlist, Style style) {
+        public void CheckConsumed(Style style) {
             if (this.consumed) throw new Error("Sample already used: '" + this.symbol.Format(style) + "'");
+        }
+        public void Consume(List<ReactionValue> reactionsAsConsumed, double timeAsConsumed, State stateAsConsumed, Netlist netlist, Style style) {
+            CheckConsumed(style);
             this.consumed = true;
             this.timeAsConsumed = timeAsConsumed;
             this.stateAsConsumed = (stateAsConsumed == null) ? stateMap.state.Clone() : stateAsConsumed;
@@ -878,10 +912,7 @@ namespace Kaemika
             this.elements = elements;
         }
         public override string Format(Style style) {
-            string s = "";
-            foreach (T element in elements) s += ((element is Value) ? (element as Value).Format(style) : (element is Flow) ? (element as Flow).Format(style) : "") + ", ";
-            if (s.Length > 0) s = s.Substring(0, s.Length - 2);
-            return "[" + s + "]";
+            return "[" + Style.FormatSequence(elements, ", ", x => (x is Value) ? (x as Value).Format(style) : (x is Flow)? (x as Flow).Format(style) : "") + "]";
         }
         public T Select(Value arg, Style style) {
             if (!(arg is NumberValue)) throw new Error("List index is not a number: " + this.Format(style) + "(" + arg.Format(style) + ")");
@@ -921,10 +952,7 @@ namespace Kaemika
             this.arguments = arguments;
         }
         public override string Format(Style style) {
-            string s = "";
-            foreach (double value in arguments) { s += style.FormatDouble(value) + ", "; }
-            if (s.Length > 0) s = s.Substring(0, s.Length - 2); // remove last comma
-            return parameter.Format(style) + " = " + style.FormatDouble(drawn) + " drawn from " + distribution + "(" + s + ")";
+            return parameter.Format(style) + " = " + style.FormatDouble(drawn) + " drawn from " + distribution + "(" + Style.FormatSequence(arguments, ", ", x => style.FormatDouble(x)) + ")";
         }
     }
 
@@ -974,8 +1002,8 @@ namespace Kaemika
             this.rate = rate;
         }
         public override string Format(Style style) {
-            string reactants = (this.reactants.Count() == 0) ? "#" : this.reactants.Aggregate("", (a, b) => (a == "") ? b.Format(style) : a + " + " + b.Format(style));
-            string products = (this.products.Count() == 0) ? "#" : this.products.Aggregate("", (a, b) => (a == "") ? b.Format(style) : a + " + " + b.Format(style));
+            string reactants = Style.FormatSequence(this.reactants, " + ", x => x.Format(style), empty:"#");
+            string products = Style.FormatSequence(this.products, " + ", x => x.Format(style), empty:"#");
             string rate = this.rate.Format(style);
             return reactants + " -> " + products + " " + rate;
         }
@@ -1141,7 +1169,7 @@ namespace Kaemika
             return name;
         }
         public Value Apply(List<Value> arguments, Netlist netlist, Style style) {
-            string BadArgs() { return "Bad arguments to '" + name + "': " + Expressions.FormatValues(arguments, style); }
+            string BadArgs() { return "Bad arguments to '" + name + "': " + Style.FormatSequence(arguments, ", ", x => x.Format(style)); }
             if (arguments.Count == 0) {
                 throw new Error(BadArgs());
             } else if (arguments.Count == 1) {
@@ -1157,7 +1185,7 @@ namespace Kaemika
             } else throw new Error(BadArgs());
         }
         public Value ApplyFlow(List<Value> arguments, Style style) { // a subset of Apply
-            string BadArgs() { return "Bad arguments to '" + name + "': " + Expressions.FormatValues(arguments, style); }
+            string BadArgs() { return "Bad arguments to '" + name + "': " + Style.FormatSequence(arguments, ", ", x => x.Format(style)); }
             if (arguments.Count == 0) {
                 throw new Error(BadArgs());
             } else if (arguments.Count == 1) {
@@ -1217,7 +1245,7 @@ namespace Kaemika
             } else throw new Error(BadArgs());
         }
         public Flow BuildFlow(List<Flow> arguments, Style style) {
-            string BadArgs() { return "Flow-expression: Bad arguments to '" + name + "': " + Expressions.FormatFlows(arguments, style); }
+            string BadArgs() { return "Flow-expression: Bad arguments to '" + name + "': " + Style.FormatSequence(arguments, ", ", x => x.Format(style)); }
             if (arguments.Count == 0) {
                 // "time", "kelvin", "celsius", "volume" are placed in the initial environment as Operators and converted to OpFlow when fetched as variables
                 throw new Error(BadArgs());
@@ -2540,11 +2568,8 @@ namespace Kaemika
             this.range = this.rangeMax - this.rangeMin;
         }
         public string ParameterLabel(bool twoLines) {
-            string args = "";
-            for (int i = 0; i < arguments.Length; i++) args += arguments[i].ToString("G4") + ", ";
-            if (args != "") args = args.Substring(0, args.Length - 2);
-            args = "(" + args + ")";
-            return parameter + " = " + drawn.ToString("G3") + ((twoLines)? Environment.NewLine : ". Drawn from ") + distribution + args;
+            return parameter + " = " + drawn.ToString("G3") + ((twoLines)? Environment.NewLine : ". Drawn from ") + distribution 
+                + "(" + Style.FormatSequence(arguments, ", ", x => x.ToString("G4")) + ")";
         }
     }
 
@@ -2659,7 +2684,7 @@ namespace Kaemika
                 string invocation = "";
                 if (style.traceComputational) {
                     Style restyle = style.RestyleAsDataFormat("symbol");
-                    invocation = closure.Format(restyle) + "(" + Expressions.FormatValues(arguments, restyle) + ")";
+                    invocation = closure.Format(restyle) + "(" + Style.FormatSequence(arguments, ", ", x => x.Format(restyle)) + ")";
                     netlist.Emit(new CommentEntry("BEGIN " + invocation));
                 }
                 Value result = closure.Apply(arguments, netlist, style);
@@ -2775,13 +2800,14 @@ namespace Kaemika
             return this;
         }
         public override string Format() {
-            string str = "";
-            foreach (Statement stat in this.statements) {
-                string s = (stat == null) ? "<null statement>" : stat.Format();
-                if (str == "") str = s;
-                else str = str + Environment.NewLine + s;
-            }
-            return str;
+            return Style.FormatSequence(this.statements, Environment.NewLine, x => (x == null) ? "<null statement>" : x.Format());
+            //string str = "";
+            //foreach (Statement stat in this.statements) {
+            //    string s = (stat == null) ? "<null statement>" : stat.Format();
+            //    if (str == "") str = s;
+            //    else str = str + Environment.NewLine + s;
+            //}
+            //return str;
             //return this.statements.Aggregate("", (a, b) => (a == "") ? b.Format() : a + Environment.NewLine + b.Format());
         }
         //// For reference, simple version of Scope for non-recursive statements:
@@ -3028,9 +3054,8 @@ namespace Kaemika
             if (volumeValue <= 0) throw new Error("Sample volume must be positive: " + this.name);
             if (temperatureValue < 0) throw new Error("Sample temperature must be non-negative: " + this.name);
             Symbol symbol = new Symbol(name);
-            SampleValue sample = new SampleValue(symbol, 
-                new StateMap(symbol, new List<SpeciesValue> { }, new State(0, false)), 
-                new NumberValue(volumeValue), new NumberValue(temperatureValue), produced: false); 
+            SampleValue sample = Protocol.Sample(symbol, volumeValue, temperatureValue);
+            ProtocolDevice.Sample(sample, style);
             netlist.Emit(new SampleEntry(sample));
             return new ValueEnv(symbol, null, sample, env);
         }
@@ -3044,10 +3069,7 @@ namespace Kaemika
             this.statements = statements;
         }
         public override string Format() {
-            string s = "";
-            foreach (Substance substance in substances) s += substance.Format() + ", ";
-            if (s.Length > 0) s = s.Substring(0, s.Length - 2); // remove last comma
-            s = "new species" + "{" + s + "}";
+            string s = "new species" + "{" + Style.FormatSequence(substances, ", ", x => x.Format()) + "}";
             if (statements.Count() > 0) s += " " + statements.Format();
             return s;
         }
@@ -3226,7 +3248,7 @@ namespace Kaemika
                 string invocation = "";
                 if (style.traceComputational) {
                     Style restyle = style.RestyleAsDataFormat("symbol");
-                    invocation = closure.Format(restyle) + "(" + Expressions.FormatValues(arguments, restyle) + ")";
+                    invocation = closure.Format(restyle) + "(" + Style.FormatSequence(arguments, ", ", x => x.Format(restyle)) + ")";
                     netlist.Emit(new CommentEntry("BEGIN " + invocation));
                 }
                 closure.Apply(arguments, netlist, style);
@@ -3343,9 +3365,9 @@ namespace Kaemika
         private Expression initial;
         private string dimension; // Mass unit, or concentration unit
         private Expression sample;
-        public Amount(List<string> names, Expression initial, string dimension, Expression sample) {
+        public Amount(Ids names, Expression initial, string dimension, Expression sample) {
             this.vars = new List<Variable> { };
-            foreach (string name in names) this.vars.Add(new Variable(name));
+            foreach (string name in names.ids) this.vars.Add(new Variable(name));
             this.initial = initial;
             this.dimension = dimension;
             this.sample = sample;
@@ -3372,7 +3394,8 @@ namespace Kaemika
             foreach (Variable var in this.vars) {
                 Value speciesValue = var.Eval(env, netlist, style);
                 if (!(speciesValue is SpeciesValue)) throw new Error("Amount " + this.FormatVars() + "has a non-species in the list of variables");
-                ((SampleValue)sampleValue).stateMap.AddDimensionedSpecies((SpeciesValue)speciesValue, ((NumberValue)initialValue).value, this.dimension, ((SampleValue)sampleValue).Volume(), style);
+                Protocol.Amount((SampleValue)sampleValue, (SpeciesValue)speciesValue, (NumberValue)initialValue, this.dimension, style);
+                ProtocolDevice.Amount((SampleValue)sampleValue, (SpeciesValue)speciesValue, (NumberValue)initialValue, this.dimension, style);
                 netlist.Emit(new AmountEntry((SpeciesValue)speciesValue, (NumberValue)initialValue, this.dimension, (SampleValue)sampleValue));
             }
             return env;
@@ -3381,129 +3404,163 @@ namespace Kaemika
        
     public class Mix : Statement {
         private string name;
-        private Expression fst;
-        private Expression snd;
-        public Mix(string name, Expression fst, Expression snd) {
+        private Expressions expressions;
+        public Mix(string name, Expressions expressions) {
             this.name = name;
-            this.fst = fst;
-            this.snd = snd;
+            this.expressions = expressions;
         }
         public override string Format() {       
-            return "mix " + name + " := " + fst.Format() + " with " + snd.Format();
+            return "mix " + name + " = " + expressions.Format();
         }
         public override Scope Scope(Scope scope) {
-            Scope extScope = new ConsScope(name, scope);
-            fst.Scope(scope);
-            snd.Scope(scope);
-            return extScope;
+            expressions.Scope(scope);
+            return new ConsScope(name, scope);
         }
         public override Env Eval(Env env, Netlist netlist, Style style) {
-            Value fstValue = this.fst.Eval(env, netlist, style);
-            if (!(fstValue is SampleValue)) throw new Error("Mix '" + name + "' requires a sample as first value");
-            SampleValue fstSample = (SampleValue)fstValue;
-            Value sndValue = this.snd.Eval(env, netlist, style);
-            if (!(sndValue is SampleValue)) throw new Error("Mix '" + name + "' requires a sample as second value");
-            SampleValue sndSample = (SampleValue)sndValue;
+            List<Value> values = expressions.Eval(env, netlist, style); // allow single parameter that is a list of samples to mix:
+            if (values.Count == 1 && values[0] is ListValue<Value>) values = (values[0] as ListValue<Value>).elements;
+            List<SampleValue> samples = new List<SampleValue> { };
+            foreach (Value value in values) {
+                if (!(value is SampleValue)) throw new Error("mix '" + name + "' requires samples to mix");
+                samples.Add((SampleValue)value);
+            }
+            if (samples.Count < 2) throw new Error("mix '" + name + "' requires at least two samples to mix or a list of them");
             Symbol symbol = new Symbol(name);
-            SampleValue sample = Protocol.Mix(symbol, fstSample, sndSample, netlist, style);
-            netlist.Emit(new MixEntry(sample, fstSample, sndSample));
+            SampleValue sample = Protocol.Mix(symbol, samples, netlist, style);
+            ProtocolDevice.Mix(sample, samples, style);
+            netlist.Emit(new MixEntry(sample, samples));
             return new ValueEnv(symbol, null, sample, env);
         }
     }
       
     public class Split : Statement {
-        private string name1;
-        private string name2;
+        private IdSeq names;
         private Expression from;
-        private Expression proportion;
-        public Split(string name1, string name2, Expression from, Expression proportion) {
-            this.name1 = name1;
-            this.name2 = name2;
+        private Expressions proportions;
+        public Split(IdSeq names, Expression from, Expressions proportions) {
+            this.names = names;
             this.from = from;
-            this.proportion = proportion;
+            this.proportions = proportions;
         }
         public override string Format() {       
-            return "split " + name1 + ", " + name2 + " := " + from.Format() + " by " + proportion.Format();
+            return "split " + names.Format() + " = " + from.Format() + " by " + proportions.Format();
         }
         public override Scope Scope(Scope scope) {
-            Scope extScope = new ConsScope(name1, new ConsScope(name2, scope));
             from.Scope(scope);
-            proportion.Scope(scope);
-            return extScope;
+            proportions.Scope(scope);
+            return names.Scope(scope);
         }
         public override Env Eval(Env env, Netlist netlist, Style style) {
             Value fromValue = this.from.Eval(env, netlist, style);
-            if (!(fromValue is SampleValue)) throw new Error("Split '" + name1 + "','" + name2 + "' requires a sample as first value");
+            if (!(fromValue is SampleValue)) throw new Error("split '" + names.Format() + "' requires a sample");
             SampleValue fromSample = (SampleValue)fromValue;
-            Value proportionValue = this.proportion.Eval(env, netlist, style);
-            if (!(proportionValue is NumberValue)) throw new Error("Split '" + name1 + "','" + name2 + "' requires a number as second value");
-            double prop = ((NumberValue)proportionValue).value;
-            if ((prop <= 0) || (prop >= 1)) throw new Error("Split '" + name1 + "','" + name2 + "' requires a number strictly between 0 and 1 as second value");
-            Symbol symbol1 = new Symbol(name1);
-            Symbol symbol2 = new Symbol(name2);
-            (SampleValue sample1, SampleValue sample2) = Protocol.Split(symbol1, symbol2, fromSample, prop, netlist, style);
-            netlist.Emit(new SplitEntry(sample1, sample2, fromSample, (NumberValue)proportionValue));
-            return new ValueEnv(symbol1, null, sample1, new ValueEnv(symbol2, null, sample2, env));
+            List<Value> proportionValues = this.proportions.Eval(env, netlist, style);
+            List<NumberValue> proportionNumbers = new List<NumberValue> { };
+
+            double sum = 0.0;
+            foreach (Value proportionValue in proportionValues) {
+                if (!(proportionValue is NumberValue)) throw new Error("split '" + names.Format() + "' requires numbers as proportions");
+                NumberValue numberValue = (NumberValue)proportionValue;
+                if ((numberValue.value <= 0) || (numberValue.value >= 1)) throw new Error("split '" + names.Format() + "' requires numbers strictly between 0 and 1 as proportions: " + numberValue.Format(style));
+                proportionNumbers.Add(numberValue);
+                sum += numberValue.value;
+            }
+
+            List<Symbol> symbols = new List<Symbol> { };
+            foreach (string name in names.ids) symbols.Add(new Symbol(name));
+            if (symbols.Count < 2) throw new Error("split '" + names.Format() + "' requires to split into at least two samples");
+            if (symbols.Count != proportionNumbers.Count) {
+                if (symbols.Count == 1 + proportionNumbers.Count) {
+                    if (sum >= 1.0) throw new Error("split '" + names.Format() + "' proportions exceed 1");
+                    proportionNumbers.Add(new NumberValue(1.0 - sum));
+                    sum = 1.0;
+                } else throw new Error("Split '" + names.Format() + "' different number of ids and proportions");
+            }
+            if (sum != 1.0) throw new Error("split '" + names.Format() + "' proportions do not sum up to 1: " + sum.ToString());
+
+            List<SampleValue> samples = Protocol.Split(symbols, fromSample, proportionNumbers, netlist, style);
+            ProtocolDevice.Split(samples, fromSample, style);
+            netlist.Emit(new SplitEntry(samples, fromSample, proportionNumbers));
+            Env extEnv = env;
+            for (int i = symbols.Count - 1; i >= 0; i--)
+                extEnv = new ValueEnv(symbols[i], null, samples[i], extEnv);
+            return extEnv;
         }
     }
  
     public class Dispose : Statement {
-        private Expression sample;
-        public Dispose(Expression sample) {
-            this.sample = sample;
+        private Expressions samples;
+        public Dispose(Expressions samples) {
+            this.samples = samples;
         }
         public override string Format() {       
-            return "dispose " + sample.Format();
+            return "dispose " + samples.Format();
         }
         public override Scope Scope(Scope scope) {
-            sample.Scope(scope);
+            samples.Scope(scope);
             return scope;
         }
         public override Env Eval(Env env, Netlist netlist, Style style) {
-            Value fstValue = this.sample.Eval(env, netlist, style);
-            if (!(fstValue is SampleValue)) throw new Error("Dispose requires a sample");
-            SampleValue dispSample = (SampleValue)fstValue;
-            Protocol.Dispose(dispSample, netlist, style);
-            netlist.Emit(new DisposeEntry(dispSample));
+            List<Value> values = this.samples.Eval(env, netlist, style); // allow single parameter that is a list of samples to dispose:
+            if (values.Count == 1 && values[0] is ListValue<Value>) values = (values[0] as ListValue<Value>).elements;
+            List<SampleValue> dispSamples = new List<SampleValue> { };
+            foreach (Value value in values) {
+                if (!(value is SampleValue)) throw new Error("dispose requires sample");
+                dispSamples.Add((SampleValue)value);
+            }
+            Protocol.Dispose(dispSamples, netlist, style);
+            ProtocolDevice.Dispose(dispSamples, style);
+            netlist.Emit(new DisposeEntry(dispSamples));
             return env;
         }
     }
    
     public class Equilibrate : Statement {
-        private string name;
-        private Expression sample;
+        private IdSeq names;
+        private Expressions samples;
         private EndCondition endcondition;
-        public Equilibrate(string name, Expression sample, EndCondition endcondition) {
-            this.name = name;
-            this.sample = sample;
+        public Equilibrate(IdSeq names, Expressions samples, EndCondition endcondition) {
+            this.names = names;
+            this.samples = samples;
             this.endcondition = endcondition;
         }
         public override string Format() {       
-            return "equilibrate" +  " " + name + " := " + sample.Format() + endcondition.Format();
+            return "equilibrate" +  " " + names.Format() + " = " + samples.Format() + endcondition.Format();
         }
         public override Scope Scope(Scope scope) {
-            Scope extScope = new ConsScope(name, scope);
-            sample.Scope(scope);
+            samples.Scope(scope);
             endcondition.Scope(scope);
-            return extScope;
+            return names.Scope(scope);
         }
         public override Env Eval(Env env, Netlist netlist, Style style) {
-            Value inSampleValue = this.sample.Eval(env, netlist, style);
-            if (!(inSampleValue is SampleValue)) throw new Error("equilibrate '" + name + "' requires a sample as first value");
-            SampleValue inSample = (SampleValue)inSampleValue;
+            List<Value> inSampleValues = this.samples.Eval(env, netlist, style); // allow single parameter that is a list of samples to equilibrate:
+            if (inSampleValues.Count == 1 && inSampleValues[0] is ListValue<Value>) inSampleValues = (inSampleValues[0] as ListValue<Value>).elements;
+            List<SampleValue> inSamples = new List<SampleValue> { };
+            foreach (Value inSampleValue in inSampleValues) {
+                if (!(inSampleValue is SampleValue)) throw new Error("equilibrate '" + names.Format() + "' requires samples");
+                inSamples.Add((SampleValue)inSampleValue);
+            }
             Noise noise = Gui.gui.NoiseSeries();
             Value forTimeValue = endcondition.fortime.Eval(env, netlist, style);
-            if (!(forTimeValue is NumberValue)) throw new Error("equilibrate '" + name + "' requires a number as second value");
+            if (!(forTimeValue is NumberValue)) throw new Error("equilibrate '" + names.Format() + "' requires a number for duration");
             double forTime = ((NumberValue)forTimeValue).value;
-            if (forTime < 0) throw new Error("equilibrate '" + name + "' requires a nonnegative number second value");
-            Symbol outSymbol = new Symbol(name);
+            if (forTime < 0) throw new Error("equilibrate '" + names.Format() + "' requires a nonnegative number for duration");
+
+            List<Symbol> outSymbols = new List<Symbol> { };
+            foreach (string name in names.ids) outSymbols.Add(new Symbol(name));
+            if (outSymbols.Count != inSamples.Count) throw new Error("equilibrate '" + names.Format() + "' different number of ids and samples");
+
             if (endcondition is EndConditionSimple) {
                 Protocol.PauseEquilibrate(netlist, style); // Gui pause between successive equilibrate, if enabled
-                SampleValue outSample = Protocol.Equilibrate(outSymbol, inSample, noise, forTime, netlist, style);
-                netlist.Emit(new EquilibrateEntry(outSample, inSample, forTime));
-                return new ValueEnv(outSymbol, null, outSample, env);
-            }
-            throw new Error("Equilibrate");
+                List<ProtocolDevice.Place> goBacks = ProtocolDevice.StartEquilibrate(inSamples, forTime, style); // can be null
+                List<SampleValue> outSamples = Protocol.EquilibrateList(outSymbols, inSamples, noise, forTime, netlist, style);
+                if (goBacks != null) ProtocolDevice.EndEquilibrate(goBacks, outSamples, inSamples, forTime, style);
+                netlist.Emit(new EquilibrateEntry(outSamples, inSamples, forTime));
+                Env extEnv = env;
+                for (int i = outSymbols.Count - 1; i >= 0; i--)
+                    extEnv = new ValueEnv(outSymbols[i], null, outSamples[i], extEnv);
+                return extEnv;
+            } else throw new Error("Equilibrate");
         }
     }
 
@@ -3518,81 +3575,97 @@ namespace Kaemika
         public override void Scope(Scope scope) { fortime.Scope(scope); }
     }
 
-    public class TransferSample : Statement {
-        private string name;
-        private Expression volume;
-        private string volumeUnit;
+    public class Regulate : Statement {
+        private IdSeq names;
+        private Expressions expressions;
         private Expression temperature;
         private string temperatureUnit;
-        private Expression sample;
-        public TransferSample(string name, Expression volume, string volumeUnit, Expression temperature, string temperatureUnit, Expression sample) {
-            this.name = name;
-            this.volume = volume;
-            this.volumeUnit = volumeUnit;
+        public Regulate(IdSeq names, Expressions samples, Expression temperature, string temperatureUnit) {
+            this.names = names;
+            this.expressions = samples;
             this.temperature = temperature;
             this.temperatureUnit = temperatureUnit;
-            this.sample = sample;
         }
         public override string Format() {
-            return "transfer " + name + "{ " + volume.Format() + volumeUnit + ", " + temperature.Format() + temperatureUnit + " } ::= " + sample.Format();
+            return "regulate " + names.Format() + " = " + expressions.Format() + " to " + temperature.Format() + temperatureUnit;
         }
         public override Scope Scope(Scope scope) {
-            Scope extScope = new ConsScope(name, scope);
-            volume.Scope(scope);
+            expressions.Scope(scope);
             temperature.Scope(scope);
-            sample.Scope(scope);
-            return extScope;
+            return names.Scope(scope);
         }
         public override Env Eval(Env env, Netlist netlist, Style style) {
-            Value volume = this.volume.Eval(env, netlist, style);
+            List<Value> values = expressions.Eval(env, netlist, style); // allow single parameter that is a list of samples to regulate:
+            if (values.Count == 1 && values[0] is ListValue<Value>) values = (values[0] as ListValue<Value>).elements;
+            List<SampleValue> inSamples = new List<SampleValue> { };
+            foreach (Value value in values) {
+                if (!(value is SampleValue)) throw new Error("regulate '" + names.Format() + "' requires samples to regulate");
+                inSamples.Add((SampleValue)value);
+            }
             Value temperature = this.temperature.Eval(env, netlist, style);
-            if ((!(volume is NumberValue)) || (!(temperature is NumberValue))) throw new Error("Bad arg types to transfer '" + this.name + "'");
-            double volumeValue = Protocol.NormalizeVolume(((NumberValue)volume).value, this.volumeUnit);
+            if (!(temperature is NumberValue)) throw new Error("Bad temperature to regulate '" + names.Format() + "'");
             double temperatureValue = Protocol.NormalizeTemperature(((NumberValue)temperature).value, this.temperatureUnit);
-            if (volumeValue <= 0) throw new Error("Sample volume must be positive on transfer '" + this.name + "'");
-            if (temperatureValue < 0) throw new Error("Sample temperature must be non-negative on transfer '" + this.name + "'");
-            Value inSampleValue = this.sample.Eval(env, netlist, style);
-            if (!(inSampleValue is SampleValue)) throw new Error("transfer '" + name + "' requires a sample");
-            Symbol symbol = new Symbol(name);
-            SampleValue outSampleValue = Protocol.Transfer(symbol, volumeValue, temperatureValue, (SampleValue)inSampleValue, netlist, style);
-            netlist.Emit(new TransferEntry(outSampleValue, (SampleValue)inSampleValue));
-            return new ValueEnv(symbol, null, outSampleValue, env);
+            if (temperatureValue < 0) throw new Error("temperature for 'regulate " + names.Format() + "' must be non-negative");
+
+            List<Symbol> outSymbols = new List<Symbol> { };
+            foreach (string name in names.ids) outSymbols.Add(new Symbol(name));
+            if (outSymbols.Count != inSamples.Count) throw new Error("regulate '" + names.Format() + "' different number of ids and samples");
+
+            List<SampleValue> outSamples = Protocol.Regulate(outSymbols, temperatureValue, inSamples, netlist, style);
+            ProtocolDevice.Regulate(outSamples, inSamples, style);
+            netlist.Emit(new RegulateEntry(outSamples, inSamples, temperatureValue));
+            Env extEnv = env;
+            for (int i = outSymbols.Count - 1; i >= 0; i--)
+                extEnv = new ValueEnv(outSymbols[i], null, outSamples[i], extEnv);
+            return extEnv;
         }
     }
 
-    ////                     | 'change' <Expression> '@' <Expression> <Quantity> <Allocation>    
-    //public class ChangeSpecies : Statement {
-    //    private Expression species;
-    //    private Expression amount;
-    //    private string dimension;
-    //    private Expression sample;
-    //    public ChangeSpecies(Expression species, Expression amount, string dimension, Expression sample) {
-    //        this.species = species;
-    //        this.amount = amount;
-    //        this.dimension = dimension;
-    //        this.sample = sample;
-    //    }
-    //    public override string Format() {
-    //        return "change" + species.Format() + " @ " + amount.Format() + dimension + " in " + sample.Format();
-    //    }
-    //    public override Scope Scope(Scope scope) {
-    //        species.Scope(scope);
-    //        amount.Scope(scope);
-    //        sample.Scope(scope);
-    //        return scope;
-    //    }
-    //    public override Env Eval(Env env, Netlist netlist, Style style) {
-    //        Value speciesValue = this.species.Eval(env, netlist, style);
-    //        if (!(speciesValue is SpeciesValue)) throw new Error("'change' requires a species as first value");
-    //        Value newValue = this.amount.Eval(env, netlist, style);
-    //        if (!(newValue is NumberValue)) throw new Error("'change' requires a number value for concentration");
-    //        Value sampleValue = this.sample.Eval(env, netlist, style);
-    //        if (!(sampleValue is SampleValue)) throw new Error("'change' requires a sample to change");
-    //        ((SampleValue)sampleValue).ChangeMolarity((SpeciesValue)speciesValue, (NumberValue)newValue, this.dimension, style);
-    //        netlist.Emit(new ChangeSpeciesEntry((SpeciesValue)speciesValue, (NumberValue)newValue, (SampleValue)sampleValue));
-    //        return env;
-    //    }
-    //}
+    public class Concentrate : Statement {
+        private IdSeq names;
+        private Expressions expressions;
+        private Expression volume;
+        private string volumeUnit;
+        public Concentrate(IdSeq names, Expressions samples, Expression volume, string volumeUnit) {
+            this.names = names;
+            this.expressions = samples;
+            this.volume = volume;
+            this.volumeUnit = volumeUnit;
+        }
+        public override string Format() {
+            return "concentrate " + names.Format() + " = " + expressions.Format() + " to " + volume.Format() + volumeUnit;
+        }
+        public override Scope Scope(Scope scope) {
+            expressions.Scope(scope);
+            volume.Scope(scope);
+            return names.Scope(scope);
+        }
+        public override Env Eval(Env env, Netlist netlist, Style style) {
+            List<Value> values = expressions.Eval(env, netlist, style); // allow single parameter that is a list of samples to regulate:
+            if (values.Count == 1 && values[0] is ListValue<Value>) values = (values[0] as ListValue<Value>).elements;
+            List<SampleValue> inSamples = new List<SampleValue> { };
+            foreach (Value value in values) {
+                if (!(value is SampleValue)) throw new Error("concentrate '" + names.Format() + "' requires samples to concentrate");
+                inSamples.Add((SampleValue)value);
+            }
+            Value volume = this.volume.Eval(env, netlist, style);
+            if (!(volume is NumberValue)) throw new Error("Bad volume to concentrate '" + names.Format() + "'");
+            double volumeValue = Protocol.NormalizeVolume(((NumberValue)volume).value, this.volumeUnit);
+            if (volumeValue <= 0) throw new Error("volume for 'concentrate " + names.Format() + "' must be positve");
+
+            List<Symbol> outSymbols = new List<Symbol> { };
+            foreach (string name in names.ids) outSymbols.Add(new Symbol(name));
+            if (outSymbols.Count != inSamples.Count) throw new Error("regulate '" + names.Format() + "' different number of ids and samples");
+
+            List<SampleValue> outSamples = Protocol.Concentrate(outSymbols, volumeValue, inSamples, netlist, style);
+            ProtocolDevice.Concentrate(outSamples, inSamples, style);
+            netlist.Emit(new ConcentrateEntry(outSamples, inSamples, volumeValue));
+            Env extEnv = env;
+            for (int i = outSymbols.Count - 1; i >= 0; i--)
+                extEnv = new ValueEnv(outSymbols[i], null, outSamples[i], extEnv);
+            return extEnv;
+        }
+    }
 
     public class Report : Statement {
         public Expression expression;   // just a subset of numerical arithmetic expressions that can be plotted
@@ -3692,6 +3765,52 @@ namespace Kaemika
 
     // PARAMETERS
 
+    public class Ids : Tree { // list of ids not separated by commas
+        public List<string> ids;
+        public Ids() {
+            this.ids = new List<string> { };
+        }
+        public Ids(List<string> ids) {
+            this.ids = ids;
+        }
+        public Ids Add(string id) {
+            this.ids.Add(id);
+            return this;
+        }
+        public override string Format() {
+            return Style.FormatSequence(this.ids, " ", x => x);
+        }
+        private Scope ScopeRev(int i, List<string> list, Scope scope) {
+            if (i >= list.Count) return scope; else return new ConsScope(list[i], ScopeRev(i + 1, list, scope));
+        }
+        public Scope Scope(Scope scope) {
+            return ScopeRev(0, ids, scope);
+        }
+    }
+
+    public class IdSeq : Tree { // list of ids separated by commas
+        public List<string> ids;
+        public IdSeq() {
+            this.ids = new List<string> { };
+        }
+        public IdSeq(List<string> ids) {
+            this.ids = ids;
+        }
+        public IdSeq Add(string id) {
+            this.ids.Add(id);
+            return this;
+        }
+        public override string Format() {
+            return Style.FormatSequence(this.ids, ", ", x => x);
+        }
+        private Scope ScopeRev(int i, List<string> list, Scope scope) {
+            if (i >= list.Count) return scope; else return new ConsScope(list[i], ScopeRev(i + 1, list, scope));
+        }
+        public Scope Scope(Scope scope) {
+            return ScopeRev(0, ids, scope);
+        }
+    }
+
     public class Parameters : Tree {
         public List<NewParameter> parameters;
         public Parameters() {
@@ -3702,7 +3821,7 @@ namespace Kaemika
             return this;
         }
         public override string Format() {
-            return this.parameters.Aggregate("", (a, b) => (a == "") ? b.Format() : a + ", " + b.Format());
+            return Style.FormatSequence(this.parameters, ", ", x => x.Format());
         }
     }
     public abstract class NewParameter : Tree {
@@ -3742,7 +3861,7 @@ namespace Kaemika
             return this;
         }
         public override string Format() {
-            return this.expressions.Aggregate("", (a, b) => (a == "") ? b.Format() : a + ", " + b.Format());
+            return Style.FormatSequence(this.expressions, ", ", x => x.Format());
         }
         public void Scope(Scope scope) {
             foreach (Expression expression in this.expressions) { expression.Scope(scope); }
@@ -3761,24 +3880,6 @@ namespace Kaemika
             List<Flow> expressions = new List<Flow>();
             foreach (Expression expression in this.expressions) { expressions.Add(expression.BuildFlow(env, style)); }
             return expressions;
-        }
-        public static string FormatValues(List<Value> values, Style style) {
-            string s = "";
-            foreach (Value value in values) { s += value.Format(style) + ", "; }
-            if (s.Length > 0) s = s.Substring(0, s.Length - 2); // remove last comma
-            return s;
-        }
-        public static string FormatFlows(List<Flow> values, Style style) {
-            string s = "";
-            foreach (Flow value in values) { s += value.Format(style) + ", "; }
-            if (s.Length > 0) s = s.Substring(0, s.Length - 2); // remove last comma
-            return s;
-        }
-        public static string FormatValues(Value[] values, Style style) {
-            string s = "";
-            for (int i = 0; i < values.Length; i++) { s += values[i].Format(style) + ", "; }
-            if (s.Length > 0) s = s.Substring(0, s.Length - 2); // remove last comma
-            return s;
         }
     }
 

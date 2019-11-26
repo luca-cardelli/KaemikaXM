@@ -103,9 +103,9 @@ namespace Kaemika {
             } else if (reduction.Production() == "<Statement> ::= flow Id '=' <Expression>") {
                 return new List<Statement> { new ValueDefinition(reduction.Terminal(1), new Type("flow"), ParseExpression(reduction.Nonterminal(3))) };
             } else if (reduction.Production() == "<Statement> ::= constant <IdSeq>") {
-                List<string> ids = ParseIdSeq(reduction.Nonterminal(1));
+                IdSeq ids = ParseIdSeq(reduction.Nonterminal(1));
                 List<Statement> result = new List<Statement> { };
-                foreach (string id in ids) { result.Add(new ValueDefinition(id, new Type("flow"), new Constant(id))); }
+                foreach (string id in ids.ids) { result.Add(new ValueDefinition(id, new Type("flow"), new Constant(id))); }
                 return result;
             } else if (reduction.Production() == "<Statement> ::= sample <Sample>") {
                 return new List<Statement> { ParseSample(reduction.Nonterminal(1)) };
@@ -119,28 +119,35 @@ namespace Kaemika {
                 return new List<Statement> { new ListDefinition(ParseParams(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(4))) };
             } else if ((reduction.Production() == "<Statement> ::= amount <Ids> '@' <Expression> <Quantity> <Allocation>")) {
                 return new List<Statement> { new Amount(ParseIds(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(3)), ParseQuantity(reduction.Nonterminal(4)), ParseAllocation(reduction.Nonterminal(5))) };
-            } else if ((reduction.Production() == "<Statement> ::= mix Id ':=' <Expression> with <Expression>")) {
-                return new List<Statement> { new Mix(reduction.Terminal(1), ParseExpression(reduction.Nonterminal(3)), ParseExpression(reduction.Nonterminal(5))) };
-            } else if ((reduction.Production() == "<Statement> ::= mix Id with <Expression>")) {
-                string id = reduction.Terminal(1);
-                return new List<Statement> { new Mix(id, new Variable(id), ParseExpression(reduction.Nonterminal(3))) };
-            } else if ((reduction.Production()               == "<Statement> ::= split Id ',' Id ':=' <Expression> by <Expression>")) {
-                return new List<Statement> { new Split(reduction.Terminal(1), reduction.Terminal(3), ParseExpression(reduction.Nonterminal(5)), ParseExpression(reduction.Nonterminal(7))) };
-            } else if ((reduction.Production()               == "<Statement> ::= dispose <Expression>")) {
-                return new List<Statement> { new Dispose(ParseExpression(reduction.Nonterminal(1))) };
-            } else if ((reduction.Production()               == "<Statement> ::= equilibrate Id ':=' <Expression> <EndCondition>")) {
-                return new List<Statement> { new Equilibrate(reduction.Terminal(1), ParseExpression(reduction.Nonterminal(3)), ParseEndCondition(reduction.Nonterminal(4))) };
-            } else if ((reduction.Production()               == "<Statement> ::= equilibrate Id <EndCondition>")) {
-                string id = reduction.Terminal(1);
-                return new List<Statement> { new Equilibrate(id, new Variable(id), ParseEndCondition(reduction.Nonterminal(2))) };
+            } else if ((reduction.Production() == "<Statement> ::= mix Id '=' <ExpressionSeq>")) {
+                return new List<Statement> { new Mix(reduction.Terminal(1), ParseExpressionSeq(reduction.Nonterminal(3))) };
+            } else if ((reduction.Production()               == "<Statement> ::= split <IdSeq> '=' <Expression> by <ExpressionSeq>")) {
+                return new List<Statement> { new Split(ParseIdSeq(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(3)), ParseExpressionSeq(reduction.Nonterminal(5))) };
+            } else if ((reduction.Production()               == "<Statement> ::= dispose <ExpressionSeq>")) {
+                return new List<Statement> { new Dispose(ParseExpressionSeq(reduction.Nonterminal(1))) };
+            } else if ((reduction.Production()               == "<Statement> ::= equilibrate <IdSeq> '=' <ExpressionSeq> <EndCondition>")) {
+                return new List<Statement> { new Equilibrate(ParseIdSeq(reduction.Nonterminal(1)), ParseExpressionSeq(reduction.Nonterminal(3)), ParseEndCondition(reduction.Nonterminal(4))) };
+            } else if ((reduction.Production()               == "<Statement> ::= equilibrate <IdSeq> <EndCondition>")) {
+                IdSeq ids = ParseIdSeq(reduction.Nonterminal(1));
+                Expressions vars = new Expressions();
+                foreach (string id in ids.ids) vars.Add(new Variable(id));
+                return new List<Statement> { new Equilibrate(ids, vars, ParseEndCondition(reduction.Nonterminal(2))) };
             } else if ((reduction.Production()               == "<Statement> ::= equilibrate <EndCondition>")) {
-                return new List<Statement> { new Equilibrate("vessel", new Variable("vessel"), ParseEndCondition(reduction.Nonterminal(1))) };
-            } else if ((reduction.Production()               == "<Statement> ::= transfer <EmptySample> ':=' <Expression>")) {
-                ParseEmptySample(reduction.Nonterminal(1), out string name, out Expression volume, out string volumeUnit, out Expression temperature, out string temperatureUnit);
-                Expression sample = ParseExpression(reduction.Nonterminal(3));
-                return new List<Statement> { new TransferSample(name, volume, volumeUnit, temperature, temperatureUnit, sample) };
-            //} else if ((reduction.Production()               == "<Statement> ::= change <Expression> '@' <Expression> <Quantity> <Allocation>")) {
-            //    return new List<Statement> { new ChangeSpecies(ParseExpression(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(3)), ParseQuantity(reduction.Nonterminal(4)), ParseAllocation(reduction.Nonterminal(5))) };
+                return new List<Statement> { new Equilibrate(new IdSeq().Add("vessel"), new Expressions().Add(new Variable("vessel")), ParseEndCondition(reduction.Nonterminal(1))) };
+            } else if ((reduction.Production()               == "<Statement> ::= regulate <IdSeq> '=' <ExpressionSeq> to <Expression> <Temperature>")) {
+                return new List<Statement> { new Regulate(ParseIdSeq(reduction.Nonterminal(1)), ParseExpressionSeq(reduction.Nonterminal(3)), ParseExpression(reduction.Nonterminal(5)), ParseTemperature(reduction.Nonterminal(6))) };
+            } else if ((reduction.Production()               == "<Statement> ::= regulate <IdSeq> to <Expression> <Temperature>")) {
+                IdSeq ids = ParseIdSeq(reduction.Nonterminal(1));
+                Expressions vars = new Expressions();
+                foreach (string id in ids.ids) vars.Add(new Variable(id));
+                return new List<Statement> { new Regulate(ids, vars, ParseExpression(reduction.Nonterminal(3)), ParseTemperature(reduction.Nonterminal(4))) };
+            } else if ((reduction.Production()               == "<Statement> ::= concentrate <IdSeq> '=' <ExpressionSeq> to <Expression> <Volume>")) {
+                return new List<Statement> { new Concentrate(ParseIdSeq(reduction.Nonterminal(1)), ParseExpressionSeq(reduction.Nonterminal(3)), ParseExpression(reduction.Nonterminal(5)), ParseVolume(reduction.Nonterminal(6))) };
+            } else if ((reduction.Production()               == "<Statement> ::= concentrate <IdSeq> to <Expression> <Volume>")) {
+                IdSeq ids = ParseIdSeq(reduction.Nonterminal(1));
+                Expressions vars = new Expressions();
+                foreach (string id in ids.ids) vars.Add(new Variable(id));
+                return new List<Statement> { new Concentrate(ids, vars, ParseExpression(reduction.Nonterminal(3)), ParseVolume(reduction.Nonterminal(4))) };
             } else if ((reduction.Production()               == "<Statement> ::= report <Reports>")) {
                 return ParseReports(reduction.Nonterminal(1));
             } else if ((reduction.Production()               == "<Statement> ::= <Reaction>")) {
@@ -203,7 +210,7 @@ namespace Kaemika {
                 return new SpeciesDefinition(ParseSubstances(reduction.Nonterminal(1)), new Statements());
             } else if (reduction.Production()            == "<Species> ::= <Substances> '@' <Expression> <Quantity> <Allocation>") {
                 List<Substance> substances = ParseSubstances(reduction.Nonterminal(0));
-                List<string> ids = new List<string> { }; foreach (Substance substance in substances) { ids.Add(substance.name); };
+                Ids ids = new Ids(); foreach (Substance substance in substances) { ids.Add(substance.name); };
                 Expression initial = ParseExpression(reduction.Nonterminal(2));
                 string quantity = ParseQuantity(reduction.Nonterminal(3));
                 Expression allocation = ParseAllocation(reduction.Nonterminal(4));
@@ -317,30 +324,30 @@ namespace Kaemika {
                 (reduction.Production() == "<Param> ::= function <Ids>") ||
                 (reduction.Production() == "<Param> ::= network <Ids>")) {
                 string type = reduction.Terminal(0);
-                List<string> ids = ParseIds(reduction.Nonterminal(1));
-                foreach (string id in ids) { parameters.Add(new SingleParameter(new Type(type), id)); }
+                Ids ids = ParseIds(reduction.Nonterminal(1));
+                foreach (string id in ids.ids) { parameters.Add(new SingleParameter(new Type(type), id)); }
             } else if (reduction.Production() == "<Param> ::= '[' <Params> ']'") {
                 parameters.Add(new ListParameter(ParseParams(reduction.Nonterminal(1))));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); }
         }
 
-        public static List<string> ParseIds(IReduction reduction) {
+        public static Ids ParseIds(IReduction reduction) {
             if (reduction.Production()                   == "<Ids> ::= <Ids> Id") {
-                List<string> ids = ParseIds(reduction.Nonterminal(0));
+                Ids ids = ParseIds(reduction.Nonterminal(0));
                 ids.Add(reduction.Terminal(1));
                 return ids;
             } else if (reduction.Production()            == "<Ids> ::= Id") {
-                return new List<string> { reduction.Terminal(0) };
+                return new Ids().Add(reduction.Terminal(0));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }
 
-        public static List<string> ParseIdSeq(IReduction reduction) {
+        public static IdSeq ParseIdSeq(IReduction reduction) {
             if (reduction.Production()                   == "<IdSeq> ::= <IdSeq> ',' Id") {
-                List<string> ids = ParseIdSeq(reduction.Nonterminal(0));
+                IdSeq ids = ParseIdSeq(reduction.Nonterminal(0));
                 ids.Add(reduction.Terminal(2));
                 return ids;
             } else if (reduction.Production()            == "<IdSeq> ::= Id") {
-                return new List<string> { reduction.Terminal(0) };
+                return new IdSeq().Add(reduction.Terminal(0));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }
 

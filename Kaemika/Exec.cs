@@ -119,6 +119,7 @@ namespace Kaemika {
             Gui.gui.OutputClear("");
             Gui.gui.ChartClear("");
             Gui.gui.ParametersClear();
+            ProtocolDevice.Clear();
             lastExecution = null;
             DateTime startTime = DateTime.Now;
             if (TheParser.parser.Parse(Gui.gui.InputGetText(), out IReduction root)) {
@@ -131,11 +132,13 @@ namespace Kaemika {
                             Scope scope = statements.Scope(new NullScope().BuiltIn(vessel));
                             if (doScope) Gui.gui.OutputAppendText(scope.Format());
                             else {
-                                Netlist netlist = new Netlist(autoContinue);
-                                netlist.Emit(new SampleEntry(vessel));
                                 Style style = new Style(varchar: Gui.gui.ScopeVariants() ? defaultVarchar : null, new SwapMap(),
                                                         map: Gui.gui.RemapVariants() ? new AlphaMap() : null, numberFormat: "G4", dataFormat: "full",  // we want it full for samples, but maybe only headers for functions/networks?
                                                         exportTarget: ExportTarget.Standard, traceComputational: false);
+                                Netlist netlist = new Netlist(autoContinue);
+                                ProtocolDevice.SetStyle(style);
+                                ProtocolDevice.Sample(vessel, style);
+                                netlist.Emit(new SampleEntry(vessel));
                                 DateTime evalTime = DateTime.Now;
                                 lastExecution = new ExecutionInstance(vessel, netlist, style, startTime, evalTime);
                                 Env ignoreEnv = statements.Eval(new NullEnv().BuiltIn(vessel), netlist, style);
@@ -156,6 +159,9 @@ namespace Kaemika {
         public static SampleValue Vessel() {
             Symbol vessel = new Symbol("vessel");
             return new SampleValue(vessel, new StateMap(vessel, new List<SpeciesValue> { }, new State(0, lna:false)), new NumberValue(1.0), new NumberValue(293.15), produced: false);
+        }
+        public static bool IsVesselVariant(SampleValue sample) {
+            return sample.symbol.Raw() == "vessel";
         }
 
         public static Dictionary<ExportAs, bool> exporterMutex = new Dictionary<ExportAs, bool>(); // only run one of each kind of export at once

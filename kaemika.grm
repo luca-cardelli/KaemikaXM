@@ -100,14 +100,16 @@ Comment Block @= { Nesting = All }
                     | 'if' <Expression> 'then' <Statements> <Else>             ! conditional
                     | ';'                                                      ! rarely used optional syntactic noise for same-line multiple statements
                     
-                    | 'mix' Id ':=' <Expression> 'with' <Expression>        ! mix two samples, and name the new sample
-                    | 'mix' Id 'with' <Expression>                          ! short for 'mix' Id ':=' Id 'with' <Expression> (reusing the sample name)
-                    | 'split' Id ',' Id ':=' <Expression> 'by' <Expression> ! split a sample in two named samples, the 1st by proportion (0..1), the 2nd by 1-proportion
-                    | 'equilibrate' Id ':=' <Expression> <EndCondition>     ! integrate a sample for a time, and name the new sample
-                    | 'equilibrate' Id <EndCondition>                       ! short for 'integrate' Id ':=' Id <EndCondition>
-                    | 'equilibrate' <EndCondition>                          ! short for 'integrate' 'vessel' ':=' 'vessel' <EndCondition>
-                    | 'transfer' <EmptySample> ':=' <Expression>            ! change sample volume (evaporate/dilute) and temperature
-                    | 'dispose' <Expression>                                ! dispose of a sample (sample cannot be reused)
+                    | 'mix' Id '=' <ExpressionSeq>                                ! mix samples and name the new sample
+                    | 'split' <IdSeq> '=' <Expression> 'by' <ExpressionSeq>       ! split a sample by propotions and name them
+                    | 'dispose' <ExpressionSeq>                                   ! dispose samples (those samples cannot be reused)
+                    | 'regulate' <IdSeq> '=' <ExpressionSeq> 'to' <Expression> <Temperature>  ! change samples temperature to value (heat or cool)
+                    | 'regulate' <IdSeq> 'to' <Expression> <Temperature>                      ! short for 'regulate' Ids '=' Ids 'to' ...
+                    | 'concentrate' <IdSeq> '=' <ExpressionSeq> 'to' <Expression> <Volume>    ! change samples volume to value (evaporate or dilute)
+                    | 'concentrate' <IdSeq> 'to' <Expression> <Volume>                        ! short for 'concentrate' Ids '=' Ids 'to' ...
+                    | 'equilibrate' <IdSeq> '=' <ExpressionSeq> <EndCondition>    ! integrate samples for a time, and name the new samples
+                    | 'equilibrate' <IdSeq> <EndCondition>                        ! short for 'integrate' Ids '=' Ids <EndCondition> (reusing the sample Ids)
+                    | 'equilibrate' <EndCondition>                                ! short for 'integrate' 'vessel' '=' 'vessel' <EndCondition> (default sample)
                 
 <Net Instance>   ::= Id '(' <Expressions> ')'
 

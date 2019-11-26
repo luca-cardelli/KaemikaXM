@@ -19,11 +19,11 @@ report NaCl, KCl, NA2HPO4, KH2PO4
 function Autoclave(sample PBS, number t) {
    define
       // increase temperature, preserve volume:
-      transfer hot { observe(volume,PBS)L, 121C } := PBS
+      transfer hot { observe(volume,PBS)L, 121C } = PBS
       // bake
       equilibrate hot for t	
       // decrease temperature, preserve volume:
-      transfer PBS { observe(volume,hot)L, 20C }	:= hot	
+      transfer PBS { observe(volume,hot)L, 20C } = hot	
    yield PBS
 }
 
@@ -36,7 +36,7 @@ function MakePBS() {
       amount KH2PO4 @ 0.24g in PBS
 
       sample topup {200mL, 20C}  
-      mix PBS with topup
+      mix PBS = PBS,topup
    yield Autoclave(PBS, 20*60)
 }
 

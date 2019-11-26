@@ -33,11 +33,6 @@ namespace GraphSharp {
             this.edgeRoutes = alg.EdgeRoutes;
         }
 
-        public static float PaintMeasureText(SKPaint paint, string s, ref SKRect bounds) {
-            if (string.IsNullOrEmpty(s)) { bounds = new SKRect(0, 0, 0, 0); return 0; } // or MeasureText will crash
-            return paint.MeasureText(s, ref bounds);
-        }
-
         public SKRect GraphBounds() {
             if (this.vertexPositions.Count == 0) return new SKRect(0, 0, 0, 0);
             float minX = float.MaxValue;
@@ -61,7 +56,7 @@ namespace GraphSharp {
                 var bounds = new SKRect();
                 foreach (Vertex v in vertexes) {
                     if (v is Vertex_Label) {
-                        float width = PaintMeasureText(paint, (v as Vertex_Label).Label, ref bounds);
+                        float width = ProtocolDevice.PaintMeasureText(paint, (v as Vertex_Label).Label, ref bounds);
                         fitRect.Left = Math.Min(fitRect.Left, bounds.Left);
                         fitRect.Top = Math.Min(fitRect.Top, bounds.Top);
                         fitRect.Right = Math.Max(fitRect.Right, bounds.Right);
@@ -81,7 +76,7 @@ namespace GraphSharp {
                 var bounds = new SKRect();
                 foreach (Vertex v in vertexes) {
                     if (v is Vertex_Label) {
-                        float width = PaintMeasureText(paint, (v as Vertex_Label).Label, ref bounds);
+                        float width = ProtocolDevice.PaintMeasureText(paint, (v as Vertex_Label).Label, ref bounds);
                         vertexSizes[v] = new SKSize(
                             width + 2 * padding, // use width, not (bounds.Right - bounds.Left)
                             (fitRect.Bottom - fitRect.Top) + 2 * padding);
@@ -150,7 +145,7 @@ namespace GraphSharp {
             return new GraphLayout("Message", graph);
         }
 
-        public Swipe pinchPan = new Swipe(1.0f, new SKPoint(0, 0));
+        public Swipe pinchPan = Swipe.Id;
         public bool displayPinchOrigin = false;
         public SKPoint pinchOrigin;
 
@@ -196,7 +191,7 @@ namespace GraphSharp {
         }
 
         private SKRect DrawLabel(SKCanvas canvas, string text, SKPoint p, float textSize, SKColor color, Swipe swipe) {
-            return CanvasDrawTextCentered(canvas, text, swipe % p, swipe % textSize, color, false);
+            return ProtocolDevice.CanvasDrawTextCentered(canvas, text, swipe % p, swipe % textSize, color, false);
         }
 
         private void DrawNode(SKCanvas canvas, SKPoint p, SKSize s, float padding, SKColor color, Swipe swipe) {
@@ -280,7 +275,7 @@ namespace GraphSharp {
                     var saveTextSize = paint.TextSize;
                     paint.TextSize = swipe % textSize / 3;
                     SKPoint labelTarget = (route.Length == 0) ? arrowHeadBase : firstTarget;
-                    CanvasDrawTextCentered(canvas, edge.Label, swipe % new SKPoint((firstSource.X + labelTarget.X) / 2, (firstSource.Y + labelTarget.Y) / 2), paint, true);
+                    ProtocolDevice.CanvasDrawTextCentered(canvas, edge.Label, swipe % new SKPoint((firstSource.X + labelTarget.X) / 2, (firstSource.Y + labelTarget.Y) / 2), paint, true);
                     paint.TextSize = saveTextSize;
                     //var path = new SKPath(); paint.IsStroke = false; 
                     //path.MoveTo(swipe % firstSource);
@@ -373,7 +368,7 @@ namespace GraphSharp {
                     var saveTextSize = paint.TextSize;
                     paint.TextSize = swipe % textSize / 3;
                     SKPoint labelTarget = (firstTarget == ultimate) ? arrowHeadBase : firstTarget;
-                    CanvasDrawTextCentered(canvas, edge.Label, swipe % new SKPoint((firstSource.X + labelTarget.X) / 2, (firstSource.Y + labelTarget.Y) / 2), paint, true);
+                    ProtocolDevice.CanvasDrawTextCentered(canvas, edge.Label, swipe % new SKPoint((firstSource.X + labelTarget.X) / 2, (firstSource.Y + labelTarget.Y) / 2), paint, true);
                     paint.TextSize = saveTextSize;
                  }
 
@@ -429,45 +424,31 @@ namespace GraphSharp {
                     padding, padding, paint);
             }
         }
+     
+        //public static float PaintMeasureText(SKPaint paint, string s, ref SKRect bounds) {
+        //    if (string.IsNullOrEmpty(s)) { bounds = new SKRect(0, 0, 0, 0); return 0; } // or MeasureText will crash
+        //    return paint.MeasureText(s, ref bounds);
+        //}
 
-        private static SKRect CanvasDrawTextCentered(SKCanvas canvas, string text, SKPoint p, SKPaint paint, bool cleared) {
-            var bounds = new SKRect();
-            float width = ComputeLayout.PaintMeasureText(paint, text, ref bounds);
-            SKColor saveColor = paint.Color; paint.Color = SKColors.White;
-            bool saveIsStroke = paint.IsStroke; paint.IsStroke = false;
-            if (cleared) canvas.DrawRect(p.X - width / 2, p.Y - bounds.Height / 2, width, bounds.Height, paint);
-            paint.Color = saveColor; paint.IsStroke = saveIsStroke;
-            canvas.DrawText(text,
-                p.X - bounds.Width / 2 - bounds.Left,
-                p.Y + bounds.Height / 2 - bounds.Bottom,
-                paint);
-            return bounds;
-        }
+        //private static SKRect CanvasDrawTextCentered(SKCanvas canvas, string text, SKPoint p, SKPaint paint, bool cleared) {
+        //    var bounds = new SKRect();
+        //    float width = ComputeLayout.PaintMeasureText(paint, text, ref bounds);
+        //    SKColor saveColor = paint.Color; paint.Color = SKColors.White;
+        //    bool saveIsStroke = paint.IsStroke; paint.IsStroke = false;
+        //    if (cleared) canvas.DrawRect(p.X - width / 2, p.Y - bounds.Height / 2, width, bounds.Height, paint);
+        //    paint.Color = saveColor; paint.IsStroke = saveIsStroke;
+        //    canvas.DrawText(text,
+        //        p.X - bounds.Width / 2 - bounds.Left,
+        //        p.Y + bounds.Height / 2 - bounds.Bottom,
+        //        paint);
+        //    return bounds;
+        //}
 
-        private static SKRect CanvasDrawTextCentered(SKCanvas canvas, string text, SKPoint p, float textSize, SKColor color, bool cleared) {
-            // CanvasDrawTextMeasures(canvas, text, p, textSize, SKColors.Black); // debug
-            using (var paint = new SKPaint()) {
-                paint.TextSize = textSize; paint.IsAntialias = true; paint.Color = color; paint.IsStroke = false;
-                return CanvasDrawTextCentered(canvas, text, p, paint, cleared);
-            }
-        }
-
-        //MeasureText    https://github.com/mono/SkiaSharp/issues/685
-        //the return value is the width of the character, including the "padding" around the character to stop them overlapping when they are drawn.
-        //the bounds value is the "tight" rectangle that the character wil fit in RELATIVE to the baseline.
-
-        //private static void CanvasDrawTextMeasures(SKCanvas canvas, string text, SKPoint p, float textSize, SKColor color) {
+        //private static SKRect CanvasDrawTextCentered(SKCanvas canvas, string text, SKPoint p, float textSize, SKColor color, bool cleared) {
+        //    // CanvasDrawTextMeasures(canvas, text, p, textSize, SKColors.Black); // debug
         //    using (var paint = new SKPaint()) {
-        //        paint.TextSize = textSize; paint.IsAntialias = true; paint.Color = color; paint.IsStroke = true;
-        //        var bounds = new SKRect();
-        //        float width = ComputeLayout.PaintMeasureText(paint, text, ref bounds);
-        //        // canvas.DrawRect(p.X - bounds.Width / 2, p.Y - bounds.Height / 2, bounds.Width, bounds.Height, paint); // text bouding rect
-        //        canvas.DrawLine(
-        //            new SKPoint(p.X - width / 2, p.Y + bounds.Height / 2 - bounds.Bottom),
-        //            new SKPoint(p.X + width / 2, p.Y + bounds.Height / 2 - bounds.Bottom), paint); // text hor baseline
-        //        canvas.DrawLine(
-        //            new SKPoint(p.X - bounds.Width / 2 - bounds.Left, p.Y - bounds.Height / 2),
-        //            new SKPoint(p.X - bounds.Width / 2 - bounds.Left, p.Y + bounds.Height / 2), paint); // text ver startline
+        //        paint.TextSize = textSize; paint.IsAntialias = true; paint.Color = color; paint.IsStroke = false;
+        //        return CanvasDrawTextCentered(canvas, text, p, paint, cleared);
         //    }
         //}
 

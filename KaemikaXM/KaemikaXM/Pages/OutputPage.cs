@@ -53,7 +53,7 @@ namespace KaemikaXM.Pages {
             };
         }
 
-        public void SwitchAndExecute(OutputKind kind, ExportAs export) { // this may be invoked from work thread
+        public void SwitchAndExecute(OutputKind kind, ExportAs export) { // this may be invoked from work thread, so execute it on main thread
             if (kind == OutputKind.Text) {
                 Device.BeginInvokeOnMainThread(async () => {
                     textOutputButton.IsEnabled = false;
