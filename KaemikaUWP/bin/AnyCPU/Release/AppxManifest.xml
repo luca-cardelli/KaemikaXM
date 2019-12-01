@@ -7,7 +7,7 @@
 
     For more information on package manifest files, see http://go.microsoft.com/fwlink/?LinkID=241727
   -->
-  <Identity Name="39459LucaCardelli.Kaemika" Publisher="CN=48C47D4C-B468-4479-990A-111DBC8FF487" Version="1.0.0.0" ProcessorArchitecture="neutral" />
+  <Identity Name="39459LucaCardelli.Kaemika" Publisher="CN=48C47D4C-B468-4479-990A-111DBC8FF487" Version="1.0.4.0" ProcessorArchitecture="neutral" />
   <Properties>
     <DisplayName>Kaemika</DisplayName>
     <PublisherDisplayName>Luca Cardelli</PublisherDisplayName>
@@ -29,7 +29,6 @@
     </Application>
   </Applications>
   <Capabilities>
-    <Capability Name="internetClient" />
     <rescap:Capability Name="runFullTrust" />
   </Capabilities>
   <build:Metadata>
