@@ -123,6 +123,8 @@ namespace Kaemika {
                 return new List<Statement> { new Mix(reduction.Terminal(1), ParseExpressionSeq(reduction.Nonterminal(3))) };
             } else if ((reduction.Production()               == "<Statement> ::= split <IdSeq> '=' <Expression> by <ExpressionSeq>")) {
                 return new List<Statement> { new Split(ParseIdSeq(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(3)), ParseExpressionSeq(reduction.Nonterminal(5))) };
+            } else if ((reduction.Production()               == "<Statement> ::= split <IdSeq> '=' <Expression>")) {
+                return new List<Statement> { new Split(ParseIdSeq(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(3)), new Expressions()) };
             } else if ((reduction.Production()               == "<Statement> ::= dispose <ExpressionSeq>")) {
                 return new List<Statement> { new Dispose(ParseExpressionSeq(reduction.Nonterminal(1))) };
             } else if ((reduction.Production()               == "<Statement> ::= equilibrate <IdSeq> '=' <ExpressionSeq> <EndCondition>")) {

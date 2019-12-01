@@ -64,7 +64,8 @@ namespace Kaemika
             for (int i = reports.Count - 1; i >= 0; i--) {    // add series backwards so that Red is in front
                 // generate LNA-dependent series
                 ReportEntry entry = reports[i];
-                if ((noise != Noise.None) && entry.flow.HasStochasticVariance() && !entry.flow.HasNullVariance()) {
+                bool noisePlottable = (noise != Noise.None) && entry.flow.HasStochasticVariance() && !entry.flow.HasNullVariance();
+                if (noisePlottable) {
                     string reportName = (entry.asLabel != null) ? entry.asLabel : entry.flow.TopFormat(style.RestyleAsNumberFormat("G4"));
                     string seriesName = reportName + Gui.StringOfNoise(noise);
                     seriesLNA[i] = Gui.gui.ChartAddSeries(seriesName, palette[paletteNo % palette.Length], noise); // could be null
@@ -77,10 +78,12 @@ namespace Kaemika
             for (int i = reports.Count - 1; i >= 0; i--) {    // add series backwards so that Red is in front
                 // generate deterministic series
                 ReportEntry entry = reports[i];
-                if ((noise == Noise.None && entry.flow.HasDeterministicValue()) ||
-                    ((noise != Noise.None) && entry.flow.HasStochasticMean())) {
+                bool meanPlottable = (noise == Noise.None && entry.flow.HasDeterministicValue()) || ((noise != Noise.None) && entry.flow.HasStochasticMean());
+                bool noisePlottable = (noise != Noise.None) && entry.flow.HasStochasticVariance() && !entry.flow.HasNullVariance();
+                if (meanPlottable) {
                     string reportName = (entry.asLabel != null) ? entry.asLabel : entry.flow.TopFormat(style.RestyleAsNumberFormat("G4"));
-                    string seriesName = reportName + ((noise == Noise.None) ? "" : Gui.StringOfNoise(Noise.None));
+                    string seriesName = reportName + (noisePlottable ? Gui.StringOfNoise(Noise.None) : ""); // do postfix mu if there is no sigma plot for it
+                    //string seriesName = reportName + ((noise == Noise.None) ? "" : Gui.StringOfNoise(Noise.None)); // previous version
                     series[i] = Gui.gui.ChartAddSeries(seriesName, palette[paletteNo % palette.Length], Noise.None); // could be null
                 }
                 paletteNo--; if (paletteNo < 0) paletteNo += palette.Length; // decrement out here to keep colors coordinated

@@ -108,6 +108,7 @@
       "Kaemika/1.0.0": {
         "dependencies": {
           "CalithaGOLD": "1.0.0",
+          "GraphSharpStdSubset": "1.0.0",
           "MathNet.Numerics": "4.8.0",
           "Oslo": "1.0.0",
           "QuickGraphStd": "1.0.0"

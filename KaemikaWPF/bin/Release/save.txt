@@ -4,7 +4,7 @@
 
 // Activate the Device
 
-sample M {3mL, 20C}
+sample M {3μL, 20C}
 
 split A,B,C,D = M by 0.125,0.125,0.25,0.5
 

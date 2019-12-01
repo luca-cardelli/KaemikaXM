@@ -255,7 +255,7 @@ namespace Kaemika
             // === DEVICE PROTOCOL OPERATIONS === //
 
             public void Sample(SampleValue sample, Style style) {
-                if (!Exec.IsExecuting()) return;
+                if (!Exec.IsExecuting()) throw new ExecutionEnded("");
                 Gui.Log("Device: NEW DROPLET " + sample.FormatSymbol(style));
                 Place source = ReservePlaceInColumn(zone["staging"]);
                 placement.Appear(sample, source, style);
@@ -263,7 +263,7 @@ namespace Kaemika
                 //Gui.gui.DeviceUpdate();
             }
             public void Mix(SampleValue outSample, List<SampleValue> inSamples, Style style) {
-                if (!Exec.IsExecuting()) return;
+                if (!Exec.IsExecuting()) throw new ExecutionEnded("");
                 Gui.Log("Device: MIX " + outSample.FormatSymbol(style) + " = " + Style.FormatSequence(inSamples, ", ", x => x.FormatSymbol(style)));
                 Place[,] area = FreeAreaInColumn(zone["mixing"], minRow: placement.PlaceOf(inSamples[0], style).Row(), rows: 1, cols: 2*inSamples.Count-1); // find free columns in "mixing" block, on the same row
 
@@ -285,7 +285,7 @@ namespace Kaemika
                 placement.MoveVerFirst(outSample, staging, clearance:1, style);
             }
             public void Split(List<SampleValue> outSamples, SampleValue inSample, Style style) {
-                if (!Exec.IsExecuting()) return;
+                if (!Exec.IsExecuting()) throw new ExecutionEnded("");
                 Gui.Log("Device: SPLIT " + Style.FormatSequence(outSamples, ", ", x => x.FormatSymbol(style)) + " = " + inSample.FormatSymbol(style));
 
                 Place[,] area = FreeAreaInColumn(zone["mixing"], minRow: placement.PlaceOf(inSample, style).Row(), rows: 1, cols: 2 * outSamples.Count - 1); // find free columns in "mixing" block, on the same row
@@ -309,7 +309,7 @@ namespace Kaemika
                 placement.FollowRoutes(routes, clearance: 1, style);
             }
             public void Dispose(List<SampleValue> samples, Style style) {
-                if (!Exec.IsExecuting()) return;
+                if (!Exec.IsExecuting()) throw new ExecutionEnded("");
                 Gui.Log("Device: DISPOSE " + Style.FormatSequence(samples, ", ", x => x.FormatSymbol(style)));
                 Place[,] area = FreeAreaInColumn(zone["mixing"], minRow: 0, rows: 1, cols: 2 * samples.Count - 1); // find free columns in "mixing" block, on the same row
 
@@ -321,7 +321,7 @@ namespace Kaemika
                     placement.Disappear(placement.PlaceOf(samples[i], style), style);
             }
             public void Regulate(List<SampleValue> outSamples, List<SampleValue> inSamples, Style style) {
-                if (!Exec.IsExecuting()) return;
+                if (!Exec.IsExecuting()) throw new ExecutionEnded("");
                 List<Place>[] routes = new List<Place>[inSamples.Count];
                 Gui.Log("Device: REGULATE " + Style.FormatSequence(outSamples, ", ", x =>x.FormatSymbol(style)) + " = " + Style.FormatSequence(inSamples, ", ", x => x.FormatSymbol(style)));
                 for (int i = 0; i < inSamples.Count; i++) {
@@ -339,7 +339,7 @@ namespace Kaemika
                 Gui.gui.DeviceUpdate();
             }
             public void Concentrate(List<SampleValue> outSamples, List<SampleValue> inSamples, Style style) {
-                if (!Exec.IsExecuting()) return;
+                if (!Exec.IsExecuting()) throw new ExecutionEnded("");
                 Gui.Log("Device: CONCENTRATE " + Style.FormatSequence(outSamples, ", ", x =>x.FormatSymbol(style)) + " = " + Style.FormatSequence(inSamples, ", ", x => x.FormatSymbol(style)));
                 for (int i = 0; i < inSamples.Count; i++) {
                     Place place = placement.PlaceOf(inSamples[i], style);
@@ -349,7 +349,7 @@ namespace Kaemika
                 Gui.gui.DeviceUpdate();
             }
             public List<Place> StartEquilibrate(List<SampleValue> inSamples, double fortime, Style style) {
-                if (!Exec.IsExecuting()) return null;
+                if (!Exec.IsExecuting()) throw new ExecutionEnded("");
                 Gui.Log("Device: EQUILIBRATE Start " + Style.FormatSequence(inSamples, ", ", x => x.FormatSymbol(style)) + " for " + style.FormatDouble(fortime));
 
                 List<Place> goBacks = new List<Place> { };
@@ -368,7 +368,7 @@ namespace Kaemika
                 return goBacks;
             }
             public void EndEquilibrate(List<Place> goBacks, List<SampleValue> outSamples, List<SampleValue> inSamples, double fortime, Style style) {
-                if (!Exec.IsExecuting()) return;
+                if (!Exec.IsExecuting()) throw new ExecutionEnded("");
                 Gui.Log("Device: EQUILIBRATE End " + Style.FormatSequence(outSamples, ", ", x => x.FormatSymbol(style)) + " = " + Style.FormatSequence(inSamples, ", ", x => x.FormatSymbol(style)) + " for " + style.FormatDouble(fortime));
                 device.dropletColor = dropletColorRed;
                 device.dropletBiggieColor = dropletColorPurple;
@@ -425,7 +425,7 @@ namespace Kaemika
                                 Place place = places[row, col];
                                 if (place != null && placement.IsOccupied(place)) {
                                     SampleValue sample = placement.SampleOf(place);
-                                    float volumeRadius = padRadius * (float)Math.Sqrt((sample.Volume())*1000.0); // normal radius = 1mL
+                                    float volumeRadius = padRadius * (float)Math.Sqrt((sample.Volume())*1000000.0); // normal radius = 1μL
                                     float diameter = 2 * padRadius;
                                     SKPaint fillPaint = dropletFillPaint;
                                     bool biggie = false;
@@ -534,14 +534,14 @@ namespace Kaemika
                 //SKMatrix scaleMatrix = SKMatrix.MakeScale(coldZoneRect.Width/coldZoneRect.Height, 1.0f);
                 var radialGradient = SKShader.CreateRadialGradient(swipe % new SKPoint(zone.MidX, zone.MidY), swipe % groove, new SKColor[2] { color, backColor }, null, SKShaderTileMode.Mirror); //, scaleMatrix);
                 using (var gradientPaint = new SKPaint { Style = SKPaintStyle.Fill, Shader = radialGradient }) {
-                    canvas.DrawRoundRect(swipe % InflateRect(zone, halo), halo, halo, gradientPaint);
+                    canvas.DrawRoundRect(swipe % InflateRect(zone, halo), swipe % halo, swipe % halo, gradientPaint);
                 }
             }
 
             public void DrawDropletLabel(SKCanvas canvas, string label, SKPoint center, float radiusY, float strokeWidth, bool biggie, Swipe swipe){
                 using (var labelPaint = new SKPaint { Style = SKPaintStyle.Stroke, TextSize = swipe % (0.5f * radiusY), TextAlign = SKTextAlign.Center, Color = new SKColor(255, 255, 255, 191), StrokeWidth = swipe % strokeWidth, IsAntialias = true }) {
                     canvas.DrawText(label, swipe % new SKPoint(center.X, center.Y + 0.1f * radiusY), labelPaint);
-                    if (biggie) canvas.DrawText(">4mL", swipe % new SKPoint(center.X, center.Y + 0.6f * radiusY), labelPaint);
+                    if (biggie) canvas.DrawText(">4μL", swipe % new SKPoint(center.X, center.Y + 0.6f * radiusY), labelPaint);
                 }
             }
 
@@ -795,7 +795,8 @@ namespace Kaemika
                 return "Place(col=" + col.ToString() + ", row=" + row.ToString() + ")";
             }
             public void SetAnimation(Animation animation) {
-                lock (ProtocolDevice.device) {
+                lock (ProtocolDevice.device) { 
+                    if (!Exec.IsExecuting()) throw new ExecutionEnded("");
                     this.animation = animation;
                 }
             }
@@ -845,7 +846,8 @@ namespace Kaemika
             }
 
             public void Place(SampleValue sample, Place place, Style style, bool log = true) {
-                lock (ProtocolDevice.device) {
+                lock (ProtocolDevice.device) { 
+                    if (!Exec.IsExecuting()) throw new ExecutionEnded("");
                     if (IsPlaced(sample)) throw new Error("ERROR Device.Placement.Place");
                     if (IsOccupied(place)) throw new Error("ERROR Device.Placement.Place");
                     if (log) Gui.Log("Device:   Place " + sample.FormatSymbol(style) + " into " + place.Format(style));
@@ -855,7 +857,8 @@ namespace Kaemika
                 }
             }
             public Place Remove(SampleValue sample, Style style, bool log = true) {
-                lock (ProtocolDevice.device) {
+                lock (ProtocolDevice.device) { 
+                    if (!Exec.IsExecuting()) throw new ExecutionEnded("");
                     CheckIsPlaced(sample, style);
                     Place place = sampleToPlace[sample];
                     if (log) Gui.Log("Device:   Remove " + sample.FormatSymbol(style) + " from " + place.Format(style));
@@ -866,7 +869,8 @@ namespace Kaemika
                 }
             }
             public SampleValue Extract(Place place, Style style, bool log = true) {
-                lock (ProtocolDevice.device) {
+                lock (ProtocolDevice.device) { 
+                    if (!Exec.IsExecuting()) throw new ExecutionEnded("");
                     CheckIsOccupied(place);
                     SampleValue sample = placeToSample[place];
                     if (log) Gui.Log("Device:   Extract " + sample.FormatSymbol(style) + " from " + place.Format(style));
@@ -1026,7 +1030,7 @@ namespace Kaemika
             public void FollowRoute(List<Place> route, int clearance, Style style, bool log = true) {
                 Place current = null;
                 foreach (Place next in route) {
-                    if (!Exec.IsExecuting()) return;
+                    if (!Exec.IsExecuting()) throw new ExecutionEnded("");
                     if (current == null) current = next; // starting place
                     else {
                         if (CanStepTo(current, next, clearance)) {
@@ -1043,9 +1047,10 @@ namespace Kaemika
                 for (int i = 0; i < nextStep.Length; i++) nextStep[i] = 1;
                 bool allFinished;
                 do {
-                    if (!Exec.IsExecuting()) return;
+                    if (!Exec.IsExecuting()) throw new ExecutionEnded("");
                     allFinished = true;
                     for (int phase = 0; phase < 4; phase++) {
+// DEBUG BREAK HERE:
                         bool stepped = false;
                         for (int r = 0; r < routes.Length; r++) {
                             if (nextStep[r] < routes[r].Count) {

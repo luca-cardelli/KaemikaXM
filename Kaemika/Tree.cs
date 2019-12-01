@@ -704,7 +704,7 @@ namespace Kaemika
         public SampleValue(Symbol symbol, StateMap stateMap, NumberValue volume, NumberValue temperature, bool produced) {
             this.type = new Type("sample");
             this.symbol = symbol;
-            this.volume = volume;           // mL
+            this.volume = volume;           // L
             this.temperature = temperature; // Kelvin
             this.stateMap = stateMap;
             this.produced = produced;
@@ -806,7 +806,7 @@ namespace Kaemika
         //}
 
         public NumberValue Observe(Flow flow, Netlist netlist, Style style) {
-            if (!flow.CoveredBy(this.stateMap.species, out Symbol notCovered)) throw new Error("observe : species '" + notCovered.Format(style) + "' in flow '" + flow.Format(style) + "' is not one of the species in sample '" + this.FormatSymbol(style));
+            if (!flow.CoveredBy(this.stateMap.species, out Symbol notCovered)) throw new Error("observe : species '" + notCovered.Format(style) + "' in flow '" + flow.Format(style) + "' is not one of the species in sample '" + this.FormatSymbol(style) + "'");
             double observeTime;
             State observeState;
             List<ReactionValue> observeReactions;
@@ -3436,14 +3436,14 @@ namespace Kaemika
     public class Split : Statement {
         private IdSeq names;
         private Expression from;
-        private Expressions proportions;
+        private Expressions proportions; // length zero for splitting in equal parts
         public Split(IdSeq names, Expression from, Expressions proportions) {
             this.names = names;
             this.from = from;
             this.proportions = proportions;
         }
         public override string Format() {       
-            return "split " + names.Format() + " = " + from.Format() + " by " + proportions.Format();
+            return "split " + names.Format() + " = " + from.Format() + ((proportions.expressions.Count == 0) ? "" : " by " + proportions.Format());
         }
         public override Scope Scope(Scope scope) {
             from.Scope(scope);
@@ -3470,7 +3470,11 @@ namespace Kaemika
             foreach (string name in names.ids) symbols.Add(new Symbol(name));
             if (symbols.Count < 2) throw new Error("split '" + names.Format() + "' requires to split into at least two samples");
             if (symbols.Count != proportionNumbers.Count) {
-                if (symbols.Count == 1 + proportionNumbers.Count) {
+                if (proportionNumbers.Count == 0) {
+                    double equalProportion = 1.0 / symbols.Count;
+                    foreach (Symbol symbol in symbols) proportionNumbers.Add(new NumberValue(equalProportion));
+                    sum = 1.0;
+                } else if (symbols.Count == 1 + proportionNumbers.Count) {
                     if (sum >= 1.0) throw new Error("split '" + names.Format() + "' proportions exceed 1");
                     proportionNumbers.Add(new NumberValue(1.0 - sum));
                     sum = 1.0;

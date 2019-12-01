@@ -285,6 +285,7 @@
             series1.Name = "-";
             this.chart1.Series.Add(series1);
             this.chart1.Size = new System.Drawing.Size(624, 286);
+            this.chart1.SuppressExceptions = true;
             this.chart1.TabIndex = 24;
             this.chart1.Text = "chart1";
             this.toolTip1.SetToolTip(this.chart1, "pinch or mouse-wheel to zoom\r\ndrag to scroll when zoomed\r\ndouble-click to cancel " +

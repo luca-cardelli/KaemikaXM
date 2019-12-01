@@ -11,6 +11,9 @@ namespace Kaemika
     public class ConstantEvaluation : Exception {
         public ConstantEvaluation(string message) : base(message) { }
     }
+    public class ExecutionEnded : Exception {
+        public ExecutionEnded(string message) : base(message) { }
+    }
 
     public class Gui {
         public static GuiInterface gui; // hold "the" gui here

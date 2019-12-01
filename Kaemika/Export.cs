@@ -461,6 +461,7 @@ namespace Kaemika {
             public string HybridSystem(Presentation rep, Style style) {
                 string s = "";
                 s += Environment.NewLine;
+                if (states.states.Count == 1) Gui.Log("WARNING: missing equilibrate?");
                 foreach (State state in states.states) {
                     s += "STATE_" + state.id.ToString() + Environment.NewLine +
                         state.Format(style) + Environment.NewLine + Environment.NewLine;

@@ -46,6 +46,7 @@ namespace KaemikaWPF
             this.comboBox_Examples.SelectedIndex = 2;
             this.comboBox_Export.SelectedIndex = 0;
             this.comboBox_Solvers.SelectedIndex = 0;
+            this.chart1.SuppressExceptions = true;
             this.chart1.MouseWheel += chart1_MouseWheel; // for zooming
             this.chart1.ChartAreas[0].AxisX.ScrollBar.Enabled = false; // not really useful when zooming
             this.chart1.ChartAreas[0].AxisY.ScrollBar.Enabled = false; // not really useful when zooming
@@ -251,6 +252,8 @@ namespace KaemikaWPF
         }
 
         public void ChartAddPoint(Series series, double t, double mean, double variance, Noise noise) {
+            if (double.IsNaN(mean) || double.IsNaN(variance)) return;
+            if (double.IsInfinity(mean) || double.IsInfinity(variance)) return;
             if (series != null) {
                 int i = -1;
                 if (noise == Noise.None) i = series.Points.AddXY(t, mean);
@@ -265,6 +268,8 @@ namespace KaemikaWPF
         }
         public string ChartAddPointAsString(Series series, double t, double mean, double variance, Noise noise) {
             // do what ChartAddPoint does, but return it as a string for exporting/printing data
+            if (double.IsNaN(mean) || double.IsNaN(variance)) return "";
+            if (double.IsInfinity(mean) || double.IsInfinity(variance)) return "";
             string s = "";
             if (series != null) {
                 s += series.Name + "=";
@@ -699,12 +704,12 @@ namespace KaemikaWPF
                 //}
 
                 //== Save a .emf file to Application.StartupPath directory
-                //chart1.SaveImage(Application.StartupPath + "\\chart.emf", ChartImageFormat.EmfPlus); // InkScape cannot read EmfPlus
-                chart1.SaveImage(Application.StartupPath + "\\chart.emf", ChartImageFormat.Emf);
+                chart1.SaveImage(Application.StartupPath + "\\chart.emfplus.emf", ChartImageFormat.EmfPlus); // InkScape cannot read EmfPlus at all
+                chart1.SaveImage(Application.StartupPath + "\\chart.emf", ChartImageFormat.Emf);             // Emf (and InkScape) does not deal well with shaded areas
 
                 //== Save a .emf file to the Clipboard
                 using (MemoryStream stream = new MemoryStream()) {
-                    this.chart1.SaveImage(stream, ChartImageFormat.EmfPlus);
+                    this.chart1.SaveImage(stream, ChartImageFormat.EmfPlus); // can paste EmfPlus into Powerpoint
                     // this.chart1.SaveImage(stream, ChartImageFormat.Emf);  // Emf does not deal well with shaded areas
                     stream.Seek(0, SeekOrigin.Begin);
                     Metafile metafile = new Metafile(stream);

@@ -124,14 +124,17 @@ namespace Kaemika {
             DateTime startTime = DateTime.Now;
             if (TheParser.parser.Parse(Gui.gui.InputGetText(), out IReduction root)) {
                 if (doParse) root.DrawReductionTree(Gui.gui);
-                else try {
+                else try
+                    {
                         Statements statements = Parser.ParseTop(root);
                         if (doAST) Gui.gui.OutputAppendText(statements.Format());
-                        else {
+                        else
+                        {
                             SampleValue vessel = Vessel();
                             Scope scope = statements.Scope(new NullScope().BuiltIn(vessel));
                             if (doScope) Gui.gui.OutputAppendText(scope.Format());
-                            else {
+                            else
+                            {
                                 Style style = new Style(varchar: Gui.gui.ScopeVariants() ? defaultVarchar : null, new SwapMap(),
                                                         map: Gui.gui.RemapVariants() ? new AlphaMap() : null, numberFormat: "G4", dataFormat: "full",  // we want it full for samples, but maybe only headers for functions/networks?
                                                         exportTarget: ExportTarget.Standard, traceComputational: false);
@@ -149,7 +152,9 @@ namespace Kaemika {
                                 Gui.gui.ProcessOutput();
                             }
                         }
-                    } catch (Error ex) { Gui.gui.InputSetErrorSelection(-1, -1, 0, ex.Message); }
+                    }
+                    catch (ExecutionEnded ex) { }
+                    catch (Error ex) { Gui.gui.InputSetErrorSelection(-1, -1, 0, ex.Message); }
             } else {
                 Gui.gui.InputSetErrorSelection(TheParser.parser.FailLineNumber(), TheParser.parser.FailColumnNumber(), TheParser.parser.FailLength(), TheParser.parser.FailMessage());
             }

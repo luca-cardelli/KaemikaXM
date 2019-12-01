@@ -19,11 +19,11 @@ report NaCl, KCl, NA2HPO4, KH2PO4
 function Autoclave(sample PBS, number t) {
    define
       // increase temperature, preserve volume:
-      transfer hot { observe(volume,PBS)L, 121C } = PBS
+      regulate hot = PBS to 121C
       // bake
       equilibrate hot for t	
       // decrease temperature, preserve volume:
-      transfer PBS { observe(volume,hot)L, 20C } = hot	
+      regulate PBS = hot to 20C
    yield PBS
 }
 

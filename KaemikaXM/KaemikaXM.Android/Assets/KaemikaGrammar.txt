@@ -102,6 +102,7 @@ Comment Block @= { Nesting = All }
                     
                     | 'mix' Id '=' <ExpressionSeq>                                ! mix samples and name the new sample
                     | 'split' <IdSeq> '=' <Expression> 'by' <ExpressionSeq>       ! split a sample by propotions and name them
+                    | 'split' <IdSeq> '=' <Expression>                            ! split in equal parts
                     | 'dispose' <ExpressionSeq>                                   ! dispose samples (those samples cannot be reused)
                     | 'regulate' <IdSeq> '=' <ExpressionSeq> 'to' <Expression> <Temperature>  ! change samples temperature to value (heat or cool)
                     | 'regulate' <IdSeq> 'to' <Expression> <Temperature>                      ! short for 'regulate' Ids '=' Ids 'to' ...

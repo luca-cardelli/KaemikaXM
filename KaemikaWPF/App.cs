@@ -52,10 +52,7 @@ namespace KaemikaWPF
             // TheParser.parser = new CookV5Parser(CookV5GoldParser());  // Linked dll, official V5 engine, written in Visual Basic (requires VB runtime which may be non-portable)
             TheParser.parser = new CalithaParser(GoldParser());  // Compiled project, pre-V5 engine, written in C#. NOTE!!! Rule.ToString has been modified for compatibility.
 
-            //ProtocolDeviceWindow deviceWindow = new ProtocolDeviceWindow();
-            //deviceWindow.Show();
-
-            Application.Run(gui.form);
+            Application.Run(gui.form); 
         }
 
     }
