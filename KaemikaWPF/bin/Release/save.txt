@@ -1,14 +1,26 @@
 //======================================
-// Droplets
+// Example of Sample Manipulation
 //======================================
 
-// Activate the Device
+species {c}
 
-sample M {3μL, 20C}
+sample A {1μL, 20C}
+species a @ 10mM in A
+amount c @ 1mM in A
+a + c -> a + a
+equilibrate A1 = A for 100
 
-split A,B,C,D = M by 0.125,0.125,0.25,0.5
+sample B {1μL, 20C}
+species b @ 10mM in B
+amount c @ 1mM in B
+b + c -> c + c
+equilibrate B1 = B for 100
 
-mix N = D,B,A,C
+split C,D = A1
+dispose C
 
-dispose N
+mix E = D, B1
+a + b -> b + b
 
+equilibrate F = E for 1000
+dispose F
