@@ -1,3 +1,11 @@
+
+PREFERRED:
+
+Please install Kaemika for Windows from the Microsoft Store
+https://www.microsoft.com/en-us/p/kaemika/9n258rnwv8pr
+
+DEPRECATED:
+
 On https://github.com/luca-cardelli/Kaemika click the green "Clone or Download" button.
 Then click "Download ZIP".
 Unzip the resulting KaemikaXM-master.zip and open it.
