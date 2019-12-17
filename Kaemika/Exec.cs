@@ -7,6 +7,7 @@ using QuickGraph;
 namespace Kaemika {
 
     public enum ExportAs : int { None,
+        ChartSnap, ChartData, OutputCopy,
         ChemicalTrace, ComputationalTrace,
         ReactionGraph, ComplexGraph,
         MSRC_LBS, MSRC_CRN, ODE, SteadyState,
@@ -14,6 +15,17 @@ namespace Kaemika {
         PDMPreactions, PDMPequations, PDMPstoichiometry, // or PDMP_Parallel,
         PDMPGraph, // or PDMPGraph_Parallel,
         PDMP_GraphViz, // or PDMP_Parallel_GraphViz, 
+    }
+
+    public class ExportAction {
+        public string name;
+        public ExportAs export;
+        public System.Action action;  // this may be invoked from work thread
+        public ExportAction(string name, ExportAs export, System.Action action) {
+            this.name = name;
+            this.export = export;
+            this.action = action;
+        }
     }
 
     public class ExecutionInstance { // collect the results of running an Eval
@@ -86,6 +98,42 @@ namespace Kaemika {
 
         public static string lastReport = ""; // the last report of the last simulation, in string form
         public static string lastState = ""; // the last state of the last simulation, in string form, including covariance matrix if LNA
+      
+        public static List<ExportAction> exportActionsList() {
+            return new List<ExportAction>() {
+                new ExportAction("Write chart image to clipboard and disk", ExportAs.ChartSnap, () => { Gui.gui.ChartSnap(); }),
+                new ExportAction("Write visible chart data to disk", ExportAs.ChartData, () => { Gui.gui.ChartData(); }),
+                new ExportAction("Write output text to clipboard", ExportAs.OutputCopy, () => { Gui.gui.OutputCopy(); }),
+
+                new ExportAction("Show chemical trace", ExportAs.ChemicalTrace, () => { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ChemicalTrace); }),
+                new ExportAction("Show computational trace", ExportAs.ComputationalTrace, () => { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ComputationalTrace); }),
+                new ExportAction("Show system reactions", ExportAs.PDMPreactions, () => { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPreactions); }),
+                new ExportAction("Show system equations", ExportAs.PDMPequations, () => { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPequations); }),
+                new ExportAction("Show system stoichiometry", ExportAs.PDMPstoichiometry, () => { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPstoichiometry); }),
+                new ExportAction("Show protocol", ExportAs.Protocol, () => { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.Protocol); }),
+
+                new ExportAction("Export reaction graph", ExportAs.ReactionGraph, () => { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ReactionGraph); }),
+                new ExportAction("Export reaction complex graph", ExportAs.ComplexGraph, () => { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ComplexGraph); }),
+                new ExportAction("Export protocol step graph", ExportAs.ProtocolGraph, () => { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ProtocolGraph); }),
+                new ExportAction("Export protocol state graph", ExportAs.PDMPGraph, () => { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPGraph); }),
+
+                new ExportAction("Export CRN (LBS silverlight)", ExportAs.MSRC_LBS, () => { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.MSRC_LBS); }),
+                new ExportAction("Export CRN (LBS html5)", ExportAs.MSRC_CRN, () => { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.MSRC_CRN); }),
+                new ExportAction("Export ODE (Oscill8)", ExportAs.ODE, () => { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ODE); }),
+                new ExportAction("Export equilibrium (Wolfram)", ExportAs.SteadyState, () => { Gui.gui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.SteadyState); }),
+
+                new ExportAction("Show last simulation state", ExportAs.None, () => { 
+                    Gui.gui.OutputSetText("");
+                    string s = Exec.lastReport + Environment.NewLine + Exec.lastState + Environment.NewLine;
+                    Gui.gui.OutputAppendText(s);
+                    // try { System.Windows.Forms.Clipboard.SetText(s); } catch (ArgumentException) { };
+                }),
+
+                //new ExportAction("PDMP GraphViz", ExportAs.PDMP_GraphViz, () => { Exec.Execute_Exporter(false, ExportAs.PDMP_GraphViz); }),
+                //new ExportAction("PDMP Parallel", ExportAs.PDMP_Parallel, () => { Exec.Execute_Exporter(false, ExportAs.PDMP_Parallel); }),
+                //new ExportAction("PDMP Parallel GraphViz", ExportAs.PDMP_Parallel_GraphViz, () => { Exec.Execute_Exporter(false, ExportAs.PDMP_Parallel_GraphViz); }),
+            }; 
+        }
 
         public static void Execute_Starter(bool forkWorker, bool doParse = false, bool doAST = false, bool doScope = false, bool autoContinue = false) {
             lock (executionMutex) {
@@ -122,7 +170,7 @@ namespace Kaemika {
             ProtocolDevice.Clear();
             lastExecution = null;
             DateTime startTime = DateTime.Now;
-            if (TheParser.parser.Parse(Gui.gui.InputGetText(), out IReduction root)) {
+            if (TheParser.Parser().Parse(Gui.gui.InputGetText(), out IReduction root)) {
                 if (doParse) root.DrawReductionTree(Gui.gui);
                 else try
                     {
@@ -153,10 +201,10 @@ namespace Kaemika {
                             }
                         }
                     }
-                    catch (ExecutionEnded ex) { }
+                    catch (ExecutionEnded) { }
                     catch (Error ex) { Gui.gui.InputSetErrorSelection(-1, -1, 0, ex.Message); }
             } else {
-                Gui.gui.InputSetErrorSelection(TheParser.parser.FailLineNumber(), TheParser.parser.FailColumnNumber(), TheParser.parser.FailLength(), TheParser.parser.FailMessage());
+                Gui.gui.InputSetErrorSelection(TheParser.Parser().FailLineNumber(), TheParser.Parser().FailColumnNumber(), TheParser.Parser().FailLength(), TheParser.Parser().FailMessage());
             }
             EndingExecution();
         }

@@ -1,22 +1,26 @@
 ﻿using System;
 using Xamarin.Forms;
 using Xamarin.Forms.PlatformConfiguration.AndroidSpecific;
+//using Xamarin.Forms.PlatformConfiguration.iOSSpecific;
 using Kaemika;
 
 namespace KaemikaXM.Pages {
 
     public interface ICustomTextEdit {
+        Xamarin.Forms.View AsView();
         string GetText();
         void SetText(string text);
         void InsertText(string text);
         void SelectAll();
         void SetFocus();
         void ShowInputMethod(); // pop up the keyboard
+        void HideInputMethod(); // pop down the keyboard
         void SetSelection(int start, int end);
         void SetSelectionLineChar(int line, int chr, int length); // line >=0, ch >=0
         float GetFontSize();
         void SetFontSize(float size);
         void SetEditable(bool editable);
+        bool IsEditable();
         void OnTextChanged(TextChangedDelegate del);
         void OnFocusChange(FocusChangeDelegate del);
     }
@@ -50,15 +54,12 @@ namespace KaemikaXM.Pages {
         public static NavigationPage theChartPageNavigation;
 
         public MainTabbedPage() {
-            var specific = this.On<Xamarin.Forms.PlatformConfiguration.Android>();
-            specific.SetToolbarPlacement(ToolbarPlacement.Bottom);
+            this.On<Xamarin.Forms.PlatformConfiguration.Android>().SetToolbarPlacement(ToolbarPlacement.Bottom);
             BarBackgroundColor = barColor;
             BarTextColor = Color.White;
-            UnselectedTabColor = Color.White; // deprecated: specific.SetBarItemColor(Color.White); // Color.FromHex("66FFFFFF")
-            SelectedTabColor = Color.White; // deprecated: specific.SetBarSelectedItemColor(Color.White);
-            //specific.DisableSmoothScroll(); //??
-            specific.DisableSwipePaging();  //disables swiping between tabbed pages
-            // this.On<Xamarin.Forms.PlatformConfiguration.Android>().SetIsSwipePagingEnabled(false); // disables swiping between tabbed pages
+            UnselectedTabColor = Color.White;
+            SelectedTabColor = Color.White;
+            this.On<Xamarin.Forms.PlatformConfiguration.Android>().DisableSwipePaging();  //disables swiping between tabbed pages
 
             theDocListPage = new DocListPage();
             theModelListPage = new ModelListPage();
@@ -66,11 +67,11 @@ namespace KaemikaXM.Pages {
             theOutputPage = new OutputPage();
             theChartPage = new ChartPage();
 
-            theDocListPageNavigation = new NavigationPage(theDocListPage) { Title = "Tutorial", IconImageSource = "icons8usermanual100.png", BarBackgroundColor = barColor};  // deprecated: Icon = "icons8usermanual100.png",
-            theModelListPageNavigation = new NavigationPage(theModelListPage) { Title = "Networks", IconImageSource = "icons8openedfolder96.png", BarBackgroundColor = barColor };  // deprecated: Icon = "icons8openedfolder96.png"
-            theModelEntryPageNavigation = new NavigationPage(theModelEntryPage) { Title = "Network", IconImageSource = "icons8mindmap96.png", BarBackgroundColor = barColor };  // deprecated: Icon = "icons8mindmap96.png"
-            theOutputPageNavigation = new NavigationPage(theOutputPage) { Title = "Output", IconImageSource = "icons8truefalse100.png", BarBackgroundColor = barColor };  // deprecated: Icon = "icons8truefalse100.png"
-            theChartPageNavigation = new NavigationPage(theChartPage) { Title = "Chart", IconImageSource = "icons8combochart48.png", BarBackgroundColor = barColor };  // deprecated: Icon = "icons8combochart48.png"
+            theDocListPageNavigation = new NavigationPage(theDocListPage) { Title = "Tutorial", IconImageSource = "icons8usermanual100.png", BarBackgroundColor = barColor, BarTextColor = Color.White }; 
+            theModelListPageNavigation = new NavigationPage(theModelListPage) { Title = "Networks", IconImageSource = "icons8openedfolder96.png", BarBackgroundColor = barColor, BarTextColor = Color.White }; 
+            theModelEntryPageNavigation = new NavigationPage(theModelEntryPage) { Title = "Network", IconImageSource = "icons8mindmap96.png", BarBackgroundColor = barColor, BarTextColor = Color.White }; 
+            theOutputPageNavigation = new NavigationPage(theOutputPage) { Title = "Output", IconImageSource = "icons8truefalse100.png", BarBackgroundColor = barColor, BarTextColor = Color.White }; 
+            theChartPageNavigation = new NavigationPage(theChartPage) { Title = "Chart", IconImageSource = "icons8combochart48.png", BarBackgroundColor = barColor, BarTextColor = Color.White };  // DO NOT use "icons8combochart96.png", it will not scale
 
             // To change tab order, just shuffle these Add calls around.
             // with more than 5 tabs the app will just crash on load
@@ -91,8 +92,8 @@ namespace KaemikaXM.Pages {
 
         public static void Executing(bool executing) {
             if (executing) {
-                theOutputPageNavigation.IconImageSource = "icons8refresh96.png"; 
-                theChartPageNavigation.IconImageSource = "icons8refresh96.png";
+                theOutputPageNavigation.IconImageSource = "icons8refresh96.png"; // this is actually a size 40 icon in iOS resources: otherwise it does not scale
+                theChartPageNavigation.IconImageSource = "icons8refresh96.png"; // this is actually a size 40 icon in iOS resources: otherwise it does not scale
                 // we need to use size 40x40 icons or they get stuck at wrong size after changing icon:
                 theModelEntryPage.deviceButton.Source = "icons8device40disabled.png";
                 theChartPage.deviceButton.Source = "icons8device40disabled.png";
@@ -102,7 +103,7 @@ namespace KaemikaXM.Pages {
             }
             else {
                 theOutputPageNavigation.IconImageSource = "icons8truefalse100.png";
-                theChartPageNavigation.IconImageSource = "icons8combochart48.png";
+                theChartPageNavigation.IconImageSource = "icons8combochart48.png"; // DO NOT use icons8combochart96, it will not scale
                 // we need to use size 40x40 icons or they get stuck at wrong size after changing icon:
                 theModelEntryPage.deviceButton.Source = ProtocolDevice.Exists() ? "icons8device40on.png" : "icons8device40off.png";
                 theChartPage.deviceButton.Source = ProtocolDevice.Exists() ? "icons8device40on.png" : "icons8device40off.png";
@@ -128,7 +129,7 @@ namespace KaemikaXM.Pages {
         public static void OnAnySwitchedTo(KaemikaPage toPage) {
             onAnySwitchedTo = toPage.ToString();
         }
-       
+
         // Device rotation handling
 
         private double width = 0;
@@ -136,11 +137,12 @@ namespace KaemikaXM.Pages {
 
         protected override void OnSizeAllocated(double width, double height) {
             base.OnSizeAllocated(width, height); //must be called
-            if (this.width != width || this.height != height) {
+            if ((width > 0 && this.width != width) || (height > 0 && this.height != height)) {
                 this.width = width;
                 this.height = height;
-                
-                if (this.width > this.height) App.LandscapeOrientation();
+                // // Disabled
+                // if (this.width > this.height) { if (Gui.gui.Platform() != "iOS") App.LandscapeOrientation(); } // iOS does not handle well return from rotation
+                // // else App.theApp.MainPage.ForceLayout(); // does not help, also check that theApp is not null
             }
         }
 

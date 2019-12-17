@@ -33,7 +33,12 @@ namespace GraphSharp {
         }
 
         private static void OnGraphLayoutChanged(BindableObject bindable, object oldValue, object newValue) {
-            ((GraphLayoutView)bindable).InvalidateSurface();
+            // ((GraphLayoutView)bindable).InvalidateSurface();
+            //###iOS required:
+            Xamarin.Forms.Device.BeginInvokeOnMainThread(() => {
+                ((GraphLayoutView)bindable).InvalidateSurface();
+            });
+
         }
 
         private void OnPaintCanvas(object sender, SKPaintSurfaceEventArgs e) {

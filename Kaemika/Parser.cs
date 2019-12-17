@@ -2,11 +2,18 @@
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
+using KaemikaAssets;
 
 namespace Kaemika {
  
     public class TheParser {
-        public static IParser parser; // place "the" parser here
+        // Needed to get rid of GOLD Engine assmembly linking because it seems to interfere with building the Android version, since it requires VisualBasic runtime
+        private static IParser parser; // place "the" parser here
+        public static IParser Parser() {
+            if (parser == null) 
+                parser = new CalithaParser(SharedAssets.GoldParser("kaemikaCGT.cgt"));
+            return parser;
+        }
     }
 
     public abstract class IParser {

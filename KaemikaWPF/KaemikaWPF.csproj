@@ -57,26 +57,50 @@
     <ApplicationIcon>Kaemika 128.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MathNet.Numerics, Version=4.8.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MathNet.Numerics.4.8.0\lib\net461\MathNet.Numerics.dll</HintPath>
+    <Reference Include="MathNet.Numerics, Version=4.9.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\MathNet.Numerics.4.9.0\lib\net461\MathNet.Numerics.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenTK, Version=3.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
+      <HintPath>..\packages\OpenTK.3.1.0\lib\net20\OpenTK.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenTK.GLControl, Version=3.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
+      <HintPath>..\packages\OpenTK.GLControl.3.1.0\lib\net20\OpenTK.GLControl.dll</HintPath>
     </Reference>
     <Reference Include="SkiaSharp, Version=1.68.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
-      <HintPath>..\packages\SkiaSharp.1.68.0\lib\net45\SkiaSharp.dll</HintPath>
+      <HintPath>..\packages\SkiaSharp.1.68.1\lib\net45\SkiaSharp.dll</HintPath>
     </Reference>
     <Reference Include="SkiaSharp.Views.Desktop, Version=1.68.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
-      <HintPath>..\packages\SkiaSharp.Views.1.68.0\lib\net45\SkiaSharp.Views.Desktop.dll</HintPath>
+      <HintPath>..\packages\SkiaSharp.Views.1.68.1\lib\net45\SkiaSharp.Views.Desktop.dll</HintPath>
+    </Reference>
+    <Reference Include="SkiaSharp.Views.Desktop.Common, Version=1.68.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <HintPath>..\packages\SkiaSharp.Views.Desktop.Common.1.68.1\lib\net45\SkiaSharp.Views.Desktop.Common.dll</HintPath>
     </Reference>
     <Reference Include="SkiaSharp.Views.Gtk, Version=1.68.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
-      <HintPath>..\packages\SkiaSharp.Views.1.68.0\lib\net45\SkiaSharp.Views.Gtk.dll</HintPath>
+      <HintPath>..\packages\SkiaSharp.Views.Gtk2.1.68.1\lib\net45\SkiaSharp.Views.Gtk.dll</HintPath>
+    </Reference>
+    <Reference Include="SkiaSharp.Views.WindowsForms, Version=1.68.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <HintPath>..\packages\SkiaSharp.Views.WindowsForms.1.68.1\lib\net45\SkiaSharp.Views.WindowsForms.dll</HintPath>
     </Reference>
     <Reference Include="SkiaSharp.Views.WPF, Version=1.68.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
-      <HintPath>..\packages\SkiaSharp.Views.1.68.0\lib\net45\SkiaSharp.Views.WPF.dll</HintPath>
+      <HintPath>..\packages\SkiaSharp.Views.WPF.1.68.1\lib\net45\SkiaSharp.Views.WPF.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Buffers.4.5.0\lib\netstandard2.0\System.Buffers.dll</HintPath>
+    </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Memory, Version=4.0.1.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Memory.4.5.3\lib\netstandard2.0\System.Memory.dll</HintPath>
+    </Reference>
     <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.6.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.4.7.0\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Windows.Forms.DataVisualization" />
@@ -94,21 +118,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App.cs" />
-    <Compile Include="DeviceForm.cs">
+    <Compile Include="GUI2.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="DeviceForm.Designer.cs">
-      <DependentUpon>DeviceForm.cs</DependentUpon>
+    <Compile Include="GUI2.Designer.cs">
+      <DependentUpon>GUI2.cs</DependentUpon>
     </Compile>
-    <Compile Include="GUI.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="GUI.Designer.cs">
-      <DependentUpon>GUI.cs</DependentUpon>
-    </Compile>
-    <Compile Include="GuiWinForms.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GuiWinForms2.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -122,21 +140,16 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <EmbeddedResource Include="DeviceForm.resx">
-      <DependentUpon>DeviceForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="GUI.resx">
-      <DependentUpon>GUI.cs</DependentUpon>
+    <EmbeddedResource Include="GUI2.resx">
+      <DependentUpon>GUI2.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <None Include="..\KaemikaXM\KaemikaXM.Android\Assets\kaemikaCGT.cgt">
-      <Link>Resources\kaemikaCGT.cgt</Link>
-    </None>
     <None Include="app.config" />
+    <None Include="OpenTK.dll.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -176,239 +189,89 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\2AM Oscillator.txt">
-      <Link>Resources\2AM Oscillator.txt</Link>
-    </Resource>
+    <None Include="Resources\icons8play40.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\BuiltinFunctions.txt">
-      <Link>Resources\BuiltinFunctions.txt</Link>
-    </Resource>
+    <None Include="Resources\icons8text.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\Derivative1.txt">
-      <Link>Resources\Derivative1.txt</Link>
-    </Resource>
+    <None Include="Resources\icons8import96rht.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\Derivative2.txt">
-      <Link>Resources\Derivative2.txt</Link>
-    </Resource>
+    <None Include="Resources\icons8export96rht.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\Flows.txt">
-      <Link>Resources\Flows.txt</Link>
-    </Resource>
+    <None Include="Resources\Noise_None.W.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\Functions.txt">
-      <Link>Resources\Functions.txt</Link>
-    </Resource>
+    <Resource Include="Resources\Noise_SigmaSqRange.W.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\HighPassFilter.txt">
-      <Link>Resources\HighPassFilter.txt</Link>
-    </Resource>
+    <Resource Include="Resources\Noise_SigmaRange.W.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\KaemikaGrammar.txt">
-      <Link>Resources\KaemikaGrammar.txt</Link>
-    </Resource>
+    <Resource Include="Resources\Noise_Sigma.W.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\LorenzAttractor.txt">
-      <Link>Resources\LorenzAttractor.txt</Link>
-    </Resource>
+    <Resource Include="Resources\Noise_SigmaSq.W.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\MolarMass.txt">
-      <Link>Resources\MolarMass.txt</Link>
-    </Resource>
+    <Resource Include="Resources\Noise_Fano.W.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\PBS.txt">
-      <Link>Resources\PBS.txt</Link>
-    </Resource>
+    <Resource Include="Resources\Noise_CV.W.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\Reactions.txt">
-      <Link>Resources\Reactions.txt</Link>
-    </Resource>
+    <Resource Include="Resources\Test.W.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\RingOscillator.txt">
-      <Link>Resources\RingOscillator.txt</Link>
-    </Resource>
+    <Resource Include="Resources\icons8stop40.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\Samples.txt">
-      <Link>Resources\Samples.txt</Link>
-    </Resource>
+    <Resource Include="Resources\icons8pauseplay40.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\SerialDilution.txt">
-      <Link>Resources\SerialDilution.txt</Link>
-    </Resource>
+    <Resource Include="Resources\icons8truefalse100.W.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\SineWave.txt">
-      <Link>Resources\SineWave.txt</Link>
-    </Resource>
+    <Resource Include="Resources\icons8combochart96.W.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\SquareWave.txt">
-      <Link>Resources\SquareWave.txt</Link>
-    </Resource>
+    <Resource Include="Resources\icons8-share-384.W.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\StartHere.txt">
-      <Link>Resources\StartHere.txt</Link>
-    </Resource>
+    <Resource Include="Resources\Parameters.W.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\Transporters.txt">
-      <Link>Resources\Transporters.txt</Link>
-    </Resource>
+    <Resource Include="Resources\icons8-settings-384.W.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\ApproximateMajority.txt">
-      <Link>Resources\ApproximateMajority.txt</Link>
-    </Resource>
+    <Resource Include="Resources\icons8device.OFF.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\MixAndSplit.txt">
-      <Link>Resources\MixAndSplit.txt</Link>
-    </Resource>
+    <Resource Include="Resources\icons8device.ON.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\EnzymeKinetics.txt">
-      <Link>Resources\EnzymeKinetics.txt</Link>
-    </Resource>
+    <Resource Include="Resources\icons8-keyboard-96.W.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\PosTestSignal Sine.txt">
-      <Link>Resources\PosTestSignal Sine.txt</Link>
-    </Resource>
+    <Resource Include="Resources\Splash.589.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\PosTestSignal Step.txt">
-      <Link>Resources\PosTestSignal Step.txt</Link>
-    </Resource>
+    <Resource Include="Resources\FontSizePlus.W.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\TestSignal Sine.txt">
-      <Link>Resources\TestSignal Sine.txt</Link>
-    </Resource>
+    <Resource Include="Resources\FontSizeMinus.W.48x48.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\TestSignal Step.txt">
-      <Link>Resources\TestSignal Step.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\Proportional Block.txt">
-      <Link>Resources\Proportional Block.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\Integral Block.txt">
-      <Link>Resources\Integral Block.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\Derivative Block.txt">
-      <Link>Resources\Derivative Block.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\Addition Block.txt">
-      <Link>Resources\Addition Block.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\Subtraction Block.txt">
-      <Link>Resources\Subtraction Block.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\DualRailConverter Block.txt">
-      <Link>Resources\DualRailConverter Block.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\PIDController Block.txt">
-      <Link>Resources\PIDController Block.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\PIDController.txt">
-      <Link>Resources\PIDController.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\PIDController Optimization.txt">
-      <Link>Resources\PIDController Optimization.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\LotkaVolterra.txt">
-      <Link>Resources\LotkaVolterra.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\A01 Copy.txt">
-      <Link>Resources\A01 Copy.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\A02 Addition.txt">
-      <Link>Resources\A02 Addition.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\A03 CopyAndAdd.txt">
-      <Link>Resources\A03 CopyAndAdd.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\A04 Multiplication.txt">
-      <Link>Resources\A04 Multiplication.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\A05 Division.txt">
-      <Link>Resources\A05 Division.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\B01 DifferentialSignals.txt">
-      <Link>Resources\B01 DifferentialSignals.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\B02 DifferentialAddition.txt">
-      <Link>Resources\B02 DifferentialAddition.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\B03 DifferentialSubtraction.txt">
-      <Link>Resources\B03 DifferentialSubtraction.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\KaemikaXM\KaemikaXM.Android\Assets\B04 DifferentialAbstractions.txt">
-      <Link>Resources\B04 DifferentialAbstractions.txt</Link>
-    </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Droplets.txt" />
+    <Resource Include="Resources\deviceBorder.W.48x48.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="..\packages\SkiaSharp.1.68.0\build\net45\SkiaSharp.targets" Condition="Exists('..\packages\SkiaSharp.1.68.0\build\net45\SkiaSharp.targets')" />
+  <Import Project="..\packages\SkiaSharp.1.68.1\build\net45\SkiaSharp.targets" Condition="Exists('..\packages\SkiaSharp.1.68.1\build\net45\SkiaSharp.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\SkiaSharp.1.68.0\build\net45\SkiaSharp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\SkiaSharp.1.68.0\build\net45\SkiaSharp.targets'))" />
+    <Error Condition="!Exists('..\packages\SkiaSharp.1.68.1\build\net45\SkiaSharp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\SkiaSharp.1.68.1\build\net45\SkiaSharp.targets'))" />
   </Target>
 </Project>

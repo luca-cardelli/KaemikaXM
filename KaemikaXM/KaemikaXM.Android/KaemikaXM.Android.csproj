@@ -39,6 +39,8 @@
     <AotAssemblies>false</AotAssemblies>
     <EnableLLVM>false</EnableLLVM>
     <BundleAssemblies>false</BundleAssemblies>
+    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    <AndroidSigningKeyStore>C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\KaemikaXM\KaemikaXM.Android\Keystore for upload key\upload-keystore.jks</AndroidSigningKeyStore>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -53,6 +55,8 @@
     <EnableLLVM>false</EnableLLVM>
     <BundleAssemblies>false</BundleAssemblies>
     <AndroidSupportedAbis>armeabi-v7a;arm64-v8a</AndroidSupportedAbis>
+    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    <AndroidSigningKeyStore>C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\KaemikaXM\KaemikaXM.Android\Keystore for upload key\upload-keystore.jks</AndroidSigningKeyStore>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Mono.Android" />
@@ -65,21 +69,23 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="SkiaSharp">
-      <Version>1.68.0</Version>
+      <Version>1.68.1</Version>
     </PackageReference>
     <PackageReference Include="SkiaSharp.Views">
-      <Version>1.68.0</Version>
+      <Version>1.68.1</Version>
     </PackageReference>
-    <PackageReference Include="Xamarin.Forms" Version="4.0.0.425677" />
-    <PackageReference Include="Xamarin.Android.Support.ViewPager" Version="28.0.0.1" />
-    <PackageReference Include="Xamarin.Android.Support.Design" Version="28.0.0.1" />
-    <PackageReference Include="Xamarin.Android.Support.v7.AppCompat" Version="28.0.0.1" />
-    <PackageReference Include="Xamarin.Android.Support.v4" Version="28.0.0.1" />
-    <PackageReference Include="Xamarin.Android.Support.v7.CardView" Version="28.0.0.1" />
-    <PackageReference Include="Xamarin.Android.Support.v7.MediaRouter" Version="28.0.0.1" />
-    <PackageReference Include="Xamarin.Android.Support.Core.Utils" Version="28.0.0.1" />
-    <PackageReference Include="Xamarin.Android.Support.CustomTabs" Version="28.0.0.1" />
-    <PackageReference Include="Xamarin.Essentials" Version="1.0.1" />
+    <PackageReference Include="Xamarin.Android.Support.ViewPager" Version="28.0.0.3" />
+    <PackageReference Include="Xamarin.Android.Support.Design" Version="28.0.0.3" />
+    <PackageReference Include="Xamarin.Android.Support.v7.AppCompat" Version="28.0.0.3" />
+    <PackageReference Include="Xamarin.Android.Support.v4" Version="28.0.0.3" />
+    <PackageReference Include="Xamarin.Android.Support.v7.CardView" Version="28.0.0.3" />
+    <PackageReference Include="Xamarin.Android.Support.v7.MediaRouter" Version="28.0.0.3" />
+    <PackageReference Include="Xamarin.Android.Support.Core.Utils" Version="28.0.0.3" />
+    <PackageReference Include="Xamarin.Android.Support.CustomTabs" Version="28.0.0.3" />
+    <PackageReference Include="Xamarin.Essentials" Version="1.3.1" />
+    <PackageReference Include="Xamarin.Forms">
+      <Version>4.4.0.991265</Version>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CustomTextEditRenderer.cs" />
@@ -89,8 +95,6 @@
     <Compile Include="SplashScreen.cs" />
   </ItemGroup>
   <ItemGroup>
-    <AndroidAsset Include="Assets\A01 Copy.txt" />
-    <AndroidAsset Include="Assets\kaemikaCGT.cgt" />
     <AndroidAsset Include="Assets\DroidSansMono.ttf" />
     <None Include="Resources\AboutResources.txt" />
     <None Include="Assets\AboutAssets.txt" />
@@ -140,6 +144,10 @@
     <Folder Include="Resources\drawable-xxxhdpi\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Kaemika\Kaemika.csproj">
+      <Project>{9fa75239-1d60-4aeb-9bdb-2d500558f16f}</Project>
+      <Name>Kaemika</Name>
+    </ProjectReference>
     <ProjectReference Include="..\KaemikaXM\KaemikaXM.csproj">
       <Project>{B40715D2-DFDC-42AF-B779-E319BA385BCD}</Project>
       <Name>KaemikaXM</Name>
@@ -185,63 +193,6 @@
     <AndroidResource Include="Resources\drawable\icons8trash.png" />
   </ItemGroup>
   <ItemGroup>
-    <AndroidAsset Include="Assets\2AM Oscillator.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\ApproximateMajority.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\BuiltinFunctions.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\Derivative1.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\Derivative2.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\Flows.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\Functions.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\HighPassFilter.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\KaemikaGrammar.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\LorenzAttractor.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\MolarMass.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\PBS.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\Reactions.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\RingOscillator.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\Samples.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\SerialDilution.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\SineWave.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\SquareWave.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\Transporters.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <AndroidResource Include="Resources\drawable\icons8mindmap96.png" />
   </ItemGroup>
   <ItemGroup>
@@ -249,12 +200,6 @@
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\icons8play40.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidResource Include="Resources\drawable\kaemikaLogo.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\StartHere.txt" />
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\icons8import96.png" />
@@ -284,16 +229,10 @@
     <AndroidResource Include="Resources\drawable\icons8activedirectoryfilled100.png" />
   </ItemGroup>
   <ItemGroup>
-    <AndroidAsset Include="Assets\MixAndSplit.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <AndroidResource Include="Resources\drawable\splash.png" />
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\splash_screen.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\EnzymeKinetics.txt" />
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\icons8refresh96solver1.png" />
@@ -311,76 +250,16 @@
     <AndroidResource Include="Resources\drawable\icons8play40disabled.png" />
   </ItemGroup>
   <ItemGroup>
-    <AndroidAsset Include="Assets\PosTestSignal Sine.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\PosTestSignal Step.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\TestSignal Sine.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\TestSignal Step.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\Proportional Block.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\Integral Block.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\Derivative Block.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\Addition Block.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\Subtraction Block.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\DualRailConverter Block.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\PIDController Block.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\PIDController.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\PIDController Optimization.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\LotkaVolterra.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\A02 Addition.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\A03 CopyAndAdd.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\A04 Multiplication.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\A05 Division.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\B01 DifferentialSignals.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\B02 DifferentialAddition.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\B03 DifferentialSubtraction.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidAsset Include="Assets\B04 DifferentialAbstractions.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <AndroidResource Include="Resources\drawable\icons8combochart48white.png" />
   </ItemGroup>
   <ItemGroup>
-    <AndroidAsset Include="Assets\Droplets.txt" />
+    <AndroidResource Include="Resources\drawable\kaemikaLogoWhite.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\HideKeyboard.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\ShowKeyboard.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
 </Project>

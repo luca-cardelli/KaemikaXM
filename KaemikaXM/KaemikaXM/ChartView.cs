@@ -34,7 +34,11 @@ namespace Microcharts {
         }
 
         private static void OnChartChanged(BindableObject bindable, object oldValue, object newValue) {
-            ((ChartView)bindable).InvalidateSurface();
+            //((ChartView)bindable).InvalidateSurface();
+            //###iOS required:
+            Xamarin.Forms.Device.BeginInvokeOnMainThread(() => {
+                ((ChartView)bindable).InvalidateSurface();
+            });
         }
 
         private void OnPaintCanvas(object sender, SKPaintSurfaceEventArgs e) {

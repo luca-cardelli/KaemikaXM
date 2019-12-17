@@ -34,10 +34,11 @@ namespace KaemikaXM.Pages
 
         protected override void OnSizeAllocated(double width, double height) {
             base.OnSizeAllocated(width, height); //must be called
-            if (this.width != width || this.height != height) {
+            if ((width > 0 && this.width != width) || (height > 0 && this.height != height)) {
                 this.width = width;
                 this.height = height;
                 if (this.height > this.width) App.PortraitOrientation();
+                // else App.theApp.MainPage.ForceLayout(); // does not help, also check that theApp is not null
             }
         }
     }
@@ -130,16 +131,22 @@ namespace KaemikaXM.Pages
 
         public ChartPage() {
             Title = "Chart";
-            Icon = "tab_feed.png";
+            IconImageSource = "icons8combochart48.png";
+
+            // in iOS>Resource the images of the TitleBar buttons must be size 40, otherwise they will scale but still take the horizontal space of the original
 
             deviceViewButton = DeviceViewButton();
             ToolbarItems.Add(deviceViewButton);
+            deviceViewButton.IsEnabled = true;
+
             plotViewButton = PlotViewButton();
             ToolbarItems.Add(plotViewButton);
-            plotViewButton.IsEnabled = false; solverRK547MButton = SolverRK547MButton();
-            deviceViewButton.IsEnabled = true;
+            plotViewButton.IsEnabled = false; 
+            
+            solverRK547MButton = SolverRK547MButton();
             ToolbarItems.Add(solverRK547MButton);
             solverRK547MButton.IsEnabled = false;
+
             solverGearBDFButton = SolverGearBDFButton();
             ToolbarItems.Add(solverGearBDFButton);
             solverGearBDFButton.IsEnabled = true;
@@ -228,7 +235,8 @@ namespace KaemikaXM.Pages
 
         // ======== LEGEND ========= //
 
-        const int LegendItemHeight = 20;
+        const int LegendFontSize = 12;
+        const int LegendItemHeight = 21; // If this value is too small (for the font size?), Label items will flash a gray box for 2 senconds when updated
 
         public void SetLegend(Microcharts.Series[] legend) {
             Xamarin.Forms.Device.BeginInvokeOnMainThread(() => {
@@ -244,7 +252,7 @@ namespace KaemikaXM.Pages
                           : LegendItemHeight,                                         // show a full rectangle for Range areas
                     });
                 legendView.ItemsSource = legendList;
-                MainTabbedPage.theChartPage.inspectionView.Children[0].HeightRequest = 40 + LegendItemHeight * (legend.Length + 1) / 2;
+                MainTabbedPage.theChartPage.inspectionView.Children[0].HeightRequest = 40 + LegendItemHeight * (legend.Length + 1) / 2;  // seems redundant?
             });
         }
 
@@ -258,7 +266,7 @@ namespace KaemikaXM.Pages
         public CollectionView LegendView () {
             CollectionView collectionView = new CollectionView() {
                 //ItemsLayout = ListItemsLayout.VerticalList,  // can also be set to a vertical grid
-                ItemsLayout = new GridItemsLayout(2, ItemsLayoutOrientation.Vertical), 
+                ItemsLayout = new GridItemsLayout(2, ItemsLayoutOrientation.Vertical),
                 SelectionMode = SelectionMode.Single,          
             };
             // collectionView.SetBinding(ItemsView.ItemsSourceProperty, "Monkeys"); // a binding for the ItemSource, but we give keep regenerating it
@@ -270,17 +278,20 @@ namespace KaemikaXM.Pages
                 grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(LegendItemHeight) });
                 grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
                 grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                // grid.ColumnDefinitions.Add(new ColumnDefinition { Width = 50 }); //it is definitely labels that flash a gray box when updated
 
                 BoxView box = new BoxView { VerticalOptions = LayoutOptions.Center, HorizontalOptions = LayoutOptions.Center }; // needed, otherwise the default .Fill option ignores HeightRequest
                 box.SetBinding(BoxView.ColorProperty, "Color"); // property of LegendItem
                 box.SetBinding(BoxView.HeightRequestProperty, "Height"); // property of LegendItem
                 box.SetBinding(BoxView.WidthRequestProperty, "Width"); // property of LegendItem
 
-                Label nameLabel = new Label { FontSize = 12, FontAttributes = FontAttributes.Bold };
+                Label nameLabel = new Label { FontSize = LegendFontSize, FontAttributes = FontAttributes.Bold };
                 nameLabel.SetBinding(Label.TextProperty, "Name"); // property of LegendItem
 
                 grid.Children.Add(box, 0, 0);
                 grid.Children.Add(nameLabel, 1, 0);
+                // grid.Children.Add(new Label { Text = "xxx" }, 2, 0); //it is definitely labels that flash a gray box when updated
+
 
                 return grid;
             });
@@ -356,8 +367,7 @@ namespace KaemikaXM.Pages
                 lock (parameterLock) {
                     RefreshParameters();
                 }
-                MainTabbedPage.theChartPage.inspectionView.Children[1].HeightRequest = 20 + ParameterItemHeight * parameterInfoDict.Count;
-                
+                MainTabbedPage.theChartPage.inspectionView.Children[1].HeightRequest = 20 + ParameterItemHeight * parameterInfoDict.Count;               
             });
         }
         private void RefreshParameters() {  

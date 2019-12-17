@@ -6,6 +6,7 @@ using GraphSharp;
 
 namespace Kaemika
 {
+
     public abstract class ProtocolDevice {
         // Protocol device; mirrors the Protocol class
 
@@ -26,10 +27,11 @@ namespace Kaemika
 
         public static string coldTemp = "20C"; static double coldTemperature = 293; // 19.85C to account for roundings
         public static string hotTemp = "40C"; static double hotTemperature = 313; // 39.85C to account for roundings
+        public static SKColor deviceBackColor = SKColors.NavajoWhite;
 
         private static Device device = null; // the only device
-        public static int desiredWidth;
-        public static int desiredHeight;
+        //public static int desiredWidth;
+        //public static int desiredHeight;
 
         public static bool Exists() {
             return device != null;
@@ -52,12 +54,12 @@ namespace Kaemika
         }
         public static void SetPinchPan(Swipe pinchPan) {
             if (device == null) return;
-            lock (device) { device.background = null; } // force redrawing of cached background
+            lock (device) { device.deviceImage = null; } // force redrawing of cached background
             device.pinchPan = pinchPan;
         }
         public static void ResetPinchPan() {
             if (device == null) return;
-            lock (device) { device.background = null; } // force redrawing of cached background
+            lock (device) { device.deviceImage = null; } // force redrawing of cached background
             device.pinchPan = (Swipe.Same(device.pinchPan, Swipe.Id)) ? new Swipe(2.0f, new SKPoint(0, 0)) : Swipe.Id;
         }
         public static void SetPinchOrigin(SKPoint pinchOrigin) {
@@ -68,19 +70,13 @@ namespace Kaemika
             if (device == null) return;
             device.displayPinchOrigin = displayPinchOrigin;
         }
-        public static (int width, int height) DesiredSize() {
-            if (device == null) return (10, 10);
-            return device.DesiredSize();
-        }
         public static void SetStyle(Style style) {
             if (device == null) return;
             device.SetStyle(style);
         }
-        public static void Draw(SKCanvas canvas, int canvasX, int canvasY, int newDesiredWidth, int newDesiredHeight) {
-            desiredWidth = newDesiredWidth;
-            desiredHeight = newDesiredHeight;
+        public static void Draw(SKCanvas canvas, int canvasX, int canvasY, int canvasWidth, int canvasHeight) {
             if (device == null) return;
-            device.Draw(canvas, canvasX, canvasY);
+            device.Draw(canvas, canvasX, canvasY, canvasWidth, canvasHeight);
         }
 
         public static void Sample(SampleValue sample, Style style) {
@@ -136,7 +132,7 @@ namespace Kaemika
             private Dictionary<string, int> zone;
             // for rendering:
             public Style style;
-            public SKBitmap background;
+            public SKBitmap deviceImage;
             public SKColor dropletColor;
             public SKColor dropletBiggieColor;
             public int rowsNo; // >= Places.GetLength(0), visible pads
@@ -157,7 +153,7 @@ namespace Kaemika
                 this.zone = new Dictionary<string, int> { { "staging", 0 }, { "mixing", 2 }, { "warm", 12 }, { "hot", 18 } };
                 // for rendering:
                 this.style = new Style();
-                this.background = null;
+                this.deviceImage = null;
                 this.dropletColor = dropletColorRed;
                 this.dropletBiggieColor = dropletColorPurple;
                 this.rowsNo = 11; // pads
@@ -169,14 +165,22 @@ namespace Kaemika
                 this.stepDelay = stepDelay;
             }
 
-            private (float, float) MarginAndPadRadius() {
-                float padRadius = desiredWidth / (2 * (colsNo + 1)); // + 1 for margin = padRadius
+            // makes sure that the device fits both in width and height
+            private (float, float) FittedDimensions(int canvasWidth, int canvasHeight) {
+                float width = canvasWidth; // int to float
+                float padRadius = width / (2 * (colsNo + 1)); // + 1 for margin = padRadius
                 float margin = padRadius;
-                return (margin, padRadius);
-            }
-            public (int width, int height) DesiredSize() {
-                (float margin, float padRadius) = MarginAndPadRadius();
-                return (desiredWidth, (int)(2 * padRadius * rowsNo + 2 * margin));
+                float deviceWidth = canvasWidth;
+                float deviceHeight = 2 * padRadius * rowsNo + 2 * margin;
+
+                float widthRatio = 1.0F; // canvasWidth / deviceWidth
+                float heightRatio =  ((float)canvasHeight) / deviceHeight;
+                float ratio = Math.Min(widthRatio, heightRatio);
+                //int fittedWidth = (int)(ratio * deviceWidth);
+                //int fittedHeight = (int)(ratio * deviceHeight);
+                float fittedMargin = ratio * margin;
+                float fittedPadRadius = ratio * padRadius;
+                return (fittedMargin, fittedPadRadius);
             }
 
             private void GrowToSize(int rows, int columns) {
@@ -192,7 +196,7 @@ namespace Kaemika
                     this.places = newPlaces;
                     this.rowsNo = Math.Max(this.rowsNo, rows);
                     this.colsNo = Math.Max(this.colsNo, columns);
-                    this.background = null;
+                    this.deviceImage = null;
                 }
                 Gui.gui.DeviceUpdate(); // outside of lock, or it will deadlock
             }
@@ -391,20 +395,21 @@ namespace Kaemika
                 this.style = style;
             }
 
-            public void Draw(SKCanvas canvas, int canvasX, int canvasY) { 
+            public void Draw(SKCanvas canvas, int canvasX, int canvasY, int canvasWidth, int canvasHeigth) { 
 
-                (float margin, float padRadius) = MarginAndPadRadius();
+                (float margin, float padRadius) = FittedDimensions(canvasWidth, canvasHeigth);
                 float strokeWidth = padRadius / 10.0f;
                 float accentStrokeWidth = 1.5f * strokeWidth;
                 float textStrokeWidth = accentStrokeWidth / 2.0f;
 
-                if (this.background == null || this.background.Width != desiredWidth || this.background.Height != desiredHeight) {
-                    this.background = new SKBitmap(desiredWidth, desiredHeight);
-                    using (var backgroundCanvas = new SKCanvas(this.background)) {
-                        DrawBackground(backgroundCanvas, canvasX, canvasY, desiredWidth, desiredHeight, padRadius, margin, pinchPan);
+                if (this.deviceImage == null || this.deviceImage.Width != canvasWidth || this.deviceImage.Height != canvasHeigth) {
+                    this.deviceImage = new SKBitmap(canvasWidth, canvasHeigth);
+                    using (var backgroundCanvas = new SKCanvas(this.deviceImage)) {
+                        DrawDevice(backgroundCanvas, canvasX, canvasY, canvasWidth, canvasHeigth, padRadius, margin, pinchPan);
                     }
                 }
-                lock (this) { if (this.background != null) canvas.DrawBitmap(this.background, 0, 0); } // do not apply pinchPan: background bitmap is alread scaled by it
+
+                if (this.deviceImage != null) canvas.DrawBitmap(this.deviceImage, 0, 0); // do not apply pinchPan: background bitmap is alread scaled by it
 
                 if (displayPinchOrigin) {
                     // same as: GraphSharp.GraphLayout.CanvasDrawCircle(canvas, pinchOrigin, 20, false, SKColors.LightGray);
@@ -419,7 +424,6 @@ namespace Kaemika
                 {
                     Place[,] places = this.places;
                     Placement placement = this.placement;
-                    lock (this) {
                         for (int row = 0; row < places.GetLength(0); row++) {
                             for (int col = 0; col < places.GetLength(1); col++) {
                                 Place place = places[row, col];
@@ -484,13 +488,11 @@ namespace Kaemika
                                 }
                             }
                         }
-                    }
                 }
 
                 canvas.Flush();            
             }
 
-            public static SKColor backColor = SKColors.NavajoWhite;
             public static SKColor coldColor = new SKColor(0, 127, 127, 63);
             public static SKColor hotColor = new SKColor(127, 0, 127, 63);
 
@@ -500,21 +502,25 @@ namespace Kaemika
                 return inflated;
             }
 
-            public void DrawBackground(SKCanvas canvas, float canvasX, float canvasY, float canvasWidth, float canvasHeight, float padRadius, float margin, Swipe swipe) {
+            public void DrawBackground(SKCanvas canvas, float canvasX, float canvasY, float canvasWidth, float canvasHeight) {
+                using (var backPaint = new SKPaint { Style = SKPaintStyle.Fill, Color = deviceBackColor }) {
+                    canvas.DrawRect(new SKRect(canvasX, canvasY, canvasX + canvasWidth, canvasY + canvasHeight), backPaint);
+                }
+            }
+
+            public void DrawDevice(SKCanvas canvas, float canvasX, float canvasY, float canvasWidth, float canvasHeight, float padRadius, float margin, Swipe swipe) {
                 float padStrokeWidth = padRadius / 10.0f;
                 float padStrokeWidthAccent = 0.75f * padStrokeWidth;
 
                 SKRect coldZoneRect = new SKRect(canvasX + margin, canvasY + margin, canvasX + margin + coldZoneWidth * 2 * padRadius, canvasY + margin + rowsNo * 2 * padRadius);
                 SKRect hotZoneRect = new SKRect(canvasX + margin + (coldZoneWidth + warmZoneWidth) * 2 * padRadius, canvasY + margin, canvasX + margin + (coldZoneWidth + warmZoneWidth + hotZoneWidth) * 2 * padRadius, canvasY + margin + rowsNo * 2 * padRadius);
 
-                using (var backPaint = new SKPaint { Style = SKPaintStyle.Fill, Color = backColor }) {
-                    canvas.DrawRect(new SKRect(canvasX, canvasY, canvasX + canvasWidth, canvasY + canvasHeight), backPaint);
-                }
+                DrawBackground(canvas, canvasX, canvasY, canvasWidth, canvasHeight); // excluding the area outside the fitted region covered by the deviceImage
 
                 DrawHeatZone(canvas, coldZoneRect, padRadius, coldZoneRect.Width / (2 * coldZoneWidth), coldColor, swipe);
                 DrawHeatZone(canvas, hotZoneRect, padRadius, hotZoneRect.Width / (2 * hotZoneWidth), hotColor, swipe);
-                CanvasDrawTextCentered(canvas, "< " + ProtocolDevice.coldTemp, swipe % new SKPoint(coldZoneRect.MidX, coldZoneRect.Bottom + margin/2), swipe % 24f, SKColors.Blue, false);
-                CanvasDrawTextCentered(canvas, "> " + ProtocolDevice.hotTemp, swipe % new SKPoint(hotZoneRect.MidX, hotZoneRect.Bottom + margin/2), swipe % 24f, SKColors.Blue, false);
+                DrawText(canvas, "< " + ProtocolDevice.coldTemp, new SKPoint(coldZoneRect.MidX, coldZoneRect.Bottom + margin), padRadius, SKColors.Blue, swipe);
+                DrawText(canvas, "> " + ProtocolDevice.hotTemp, new SKPoint(hotZoneRect.MidX, hotZoneRect.Bottom + margin), padRadius, SKColors.Blue, swipe);
 
                 float strokePaintStrokeWidth = padStrokeWidth;
                 float strokeAccentPaintStrokeWidth = padStrokeWidthAccent;
@@ -532,16 +538,22 @@ namespace Kaemika
 
             public void DrawHeatZone(SKCanvas canvas, SKRect zone, float halo, float groove, SKColor color, Swipe swipe) {
                 //SKMatrix scaleMatrix = SKMatrix.MakeScale(coldZoneRect.Width/coldZoneRect.Height, 1.0f);
-                var radialGradient = SKShader.CreateRadialGradient(swipe % new SKPoint(zone.MidX, zone.MidY), swipe % groove, new SKColor[2] { color, backColor }, null, SKShaderTileMode.Mirror); //, scaleMatrix);
+                var radialGradient = SKShader.CreateRadialGradient(swipe % new SKPoint(zone.MidX, zone.MidY), swipe % groove, new SKColor[2] { color, deviceBackColor }, null, SKShaderTileMode.Mirror); //, scaleMatrix);
                 using (var gradientPaint = new SKPaint { Style = SKPaintStyle.Fill, Shader = radialGradient }) {
                     canvas.DrawRoundRect(swipe % InflateRect(zone, halo), swipe % halo, swipe % halo, gradientPaint);
                 }
             }
+         
+            public void DrawText(SKCanvas canvas, string text, SKPoint center, float size, SKColor color, Swipe swipe){
+                using (var labelPaint = new SKPaint { Style = SKPaintStyle.Fill, TextSize = swipe % size, TextAlign = SKTextAlign.Center, Color = color, IsAntialias = true }) {
+                    canvas.DrawText(text, swipe % center, labelPaint);
+                }
+            }
 
-            public void DrawDropletLabel(SKCanvas canvas, string label, SKPoint center, float radiusY, float strokeWidth, bool biggie, Swipe swipe){
-                using (var labelPaint = new SKPaint { Style = SKPaintStyle.Stroke, TextSize = swipe % (0.5f * radiusY), TextAlign = SKTextAlign.Center, Color = new SKColor(255, 255, 255, 191), StrokeWidth = swipe % strokeWidth, IsAntialias = true }) {
-                    canvas.DrawText(label, swipe % new SKPoint(center.X, center.Y + 0.1f * radiusY), labelPaint);
-                    if (biggie) canvas.DrawText(">4μL", swipe % new SKPoint(center.X, center.Y + 0.6f * radiusY), labelPaint);
+            public void DrawDropletLabel(SKCanvas canvas, string label, SKPoint center, float radius, float strokeWidth, bool biggie, Swipe swipe){
+                using (var labelPaint = new SKPaint { Style = SKPaintStyle.Stroke, TextSize = swipe % (0.5f * radius), TextAlign = SKTextAlign.Center, Color = new SKColor(255, 255, 255, 191), StrokeWidth = swipe % strokeWidth, IsAntialias = true }) {
+                    canvas.DrawText(label, swipe % new SKPoint(center.X, center.Y + 0.1f * radius), labelPaint);
+                    if (biggie) canvas.DrawText(">4μL", swipe % new SKPoint(center.X, center.Y + 0.6f * radius), labelPaint);
                 }
             }
 
@@ -633,9 +645,9 @@ namespace Kaemika
                     canvas.DrawPath(path, strokePaint);
                 }
 
-                float rYtext = (r1 == r2) ? ((dir == Direction.Lft) ? r1 : r2) : (r1 > r2) ? r1 : r2;
+                float rText = (r1 == r2) ? ((dir == Direction.Lft) ? r1 : r2) : (r1 > r2) ? r1 : r2;
                 SKPoint cText = (r1 == r2) ? ((dir == Direction.Lft) ? c1 : c2) : (r1 > r2) ? c1 : c2;
-                DrawDropletLabel(canvas, label, cText, rYtext, textStrokeWidth, biggie, swipe);
+                DrawDropletLabel(canvas, label, cText, rText, textStrokeWidth, biggie, swipe);
             }
 
             public void DrawDropletPulledVer(SKCanvas canvas, string label, bool biggie, SKPoint c1, SKPoint c2, Direction dir, float r, float r1, float neckX, float r2, float textStrokeWidth, SKPaint fillPaint, float strokeWidth, float accentStrokeWidth, Swipe swipe) {
@@ -1160,52 +1172,6 @@ namespace Kaemika
             //    return route;
             //}
 
-        }
-
-        //MeasureText    https://github.com/mono/SkiaSharp/issues/685
-        //the return value is the width of the character, including the "padding" around the character to stop them overlapping when they are drawn.
-        //the bounds value is the "tight" rectangle that the character wil fit in RELATIVE to the baseline.
-
-        //private static void CanvasDrawTextMeasures(SKCanvas canvas, string text, SKPoint p, float textSize, SKColor color) {
-        //    using (var paint = new SKPaint()) {
-        //        paint.TextSize = textSize; paint.IsAntialias = true; paint.Color = color; paint.IsStroke = true;
-        //        var bounds = new SKRect();
-        //        float width = ComputeLayout.PaintMeasureText(paint, text, ref bounds);
-        //        // canvas.DrawRect(p.X - bounds.Width / 2, p.Y - bounds.Height / 2, bounds.Width, bounds.Height, paint); // text bouding rect
-        //        canvas.DrawLine(
-        //            new SKPoint(p.X - width / 2, p.Y + bounds.Height / 2 - bounds.Bottom),
-        //            new SKPoint(p.X + width / 2, p.Y + bounds.Height / 2 - bounds.Bottom), paint); // text hor baseline
-        //        canvas.DrawLine(
-        //            new SKPoint(p.X - bounds.Width / 2 - bounds.Left, p.Y - bounds.Height / 2),
-        //            new SKPoint(p.X - bounds.Width / 2 - bounds.Left, p.Y + bounds.Height / 2), paint); // text ver startline
-        //    }
-        //}
-
-        public static float PaintMeasureText(SKPaint paint, string s, ref SKRect bounds) {
-            if (string.IsNullOrEmpty(s)) { bounds = new SKRect(0, 0, 0, 0); return 0; } // or MeasureText will crash
-            return paint.MeasureText(s, ref bounds);
-        }
-
-        public static SKRect CanvasDrawTextCentered(SKCanvas canvas, string text, SKPoint p, SKPaint paint, bool cleared) {
-            var bounds = new SKRect();
-            float width = PaintMeasureText(paint, text, ref bounds);
-            SKColor saveColor = paint.Color; paint.Color = SKColors.White;
-            bool saveIsStroke = paint.IsStroke; paint.IsStroke = false;
-            if (cleared) canvas.DrawRect(p.X - width / 2, p.Y - bounds.Height / 2, width, bounds.Height, paint);
-            paint.Color = saveColor; paint.IsStroke = saveIsStroke;
-            canvas.DrawText(text,
-                p.X - bounds.Width / 2 - bounds.Left,
-                p.Y + bounds.Height / 2 - bounds.Bottom,
-                paint);
-            return bounds;
-        }
-
-        public static SKRect CanvasDrawTextCentered(SKCanvas canvas, string text, SKPoint p, float textSize, SKColor color, bool cleared) {
-            // CanvasDrawTextMeasures(canvas, text, p, textSize, SKColors.Black); // debug
-            using (var paint = new SKPaint()) {
-                paint.TextSize = textSize; paint.IsAntialias = true; paint.Color = color; paint.IsStroke = false;
-                return CanvasDrawTextCentered(canvas, text, p, paint, cleared);
-            }
         }
 
     }

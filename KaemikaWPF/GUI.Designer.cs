@@ -102,6 +102,7 @@
             this.panel_Controls.SuspendLayout();
             this.tableLayoutPanel_LeftColumn.SuspendLayout();
             this.panel_richTextBoxPadding.SuspendLayout();
+            this.flowLayoutPanel_Parameters.SuspendLayout();
             this.tableLayoutPanel_RightColumn.SuspendLayout();
             this.tableLayoutPanel_Columns.SuspendLayout();
             this.SuspendLayout();
@@ -202,7 +203,7 @@
             // 
             this.button_Source_Copy.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button_Source_Copy.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.button_Source_Copy.Location = new System.Drawing.Point(380, 11);
+            this.button_Source_Copy.Location = new System.Drawing.Point(381, 11);
             this.button_Source_Copy.Name = "button_Source_Copy";
             this.button_Source_Copy.Size = new System.Drawing.Size(75, 32);
             this.button_Source_Copy.TabIndex = 14;
@@ -297,60 +298,6 @@
             this.comboBox_Examples.BackColor = System.Drawing.SystemColors.Window;
             this.comboBox_Examples.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboBox_Examples.FormattingEnabled = true;
-            this.comboBox_Examples.Items.AddRange(new object[] {
-            "   Tutorial",
-            "►Basic",
-            "   Start Here",
-            "   Lotka Volterra",
-            "   RingOscillator",
-            "   Reactions",
-            "   Enzyme Kinetics",
-            "   Approximate Majority",
-            "   2AM Oscillator",
-            "   Transporters",
-            "►Protocols",
-            "   Samples",
-            "   Molar Mass",
-            "   Droplets",
-            "   Mix and Split",
-            "   PBS",
-            "   Serial Dilution",
-            "►Arithmetic",
-            "   Copy",
-            "   Addition",
-            "   CopyAndAdd",
-            "   Multiplication",
-            "   Division",
-            "   DifferentialSignals",
-            "   DifferentialAddition",
-            "   DifferentialSubtraction",
-            "   DifferentialAbstractions",
-            "►Differential Signals",
-            "   Sine Wave",
-            "   Square Wave",
-            "   High Pass Filter",
-            "   Lorenz Attractor",
-            "   Derivative1",
-            "   Derivative2",
-            "►PID Controller",
-            "   PosTestSignal Sine",
-            "   PosTestSignal Step",
-            "   TestSignal Sine",
-            "   TestSignal Step",
-            "   Proportional Block",
-            "   Integral Block",
-            "   Derivative Block",
-            "   Addition Block",
-            "   Subtraction Block",
-            "   DualRailConverter Block",
-            "   PIDController Block",
-            "   PIDController",
-            "   PIDController Optimization",
-            "►Documentation",
-            "   GOLD Grammar",
-            "   Builtin Operators",
-            "   Flows",
-            "   Functions"});
             this.comboBox_Examples.Location = new System.Drawing.Point(160, 18);
             this.comboBox_Examples.MaxDropDownItems = 100;
             this.comboBox_Examples.Name = "comboBox_Examples";
@@ -432,7 +379,7 @@
             this.radioButton_LNA_Fano.AutoSize = true;
             this.radioButton_LNA_Fano.Enabled = false;
             this.radioButton_LNA_Fano.Location = new System.Drawing.Point(146, 27);
-            this.radioButton_LNA_Fano.Margin = new System.Windows.Forms.Padding(2);
+            this.radioButton_LNA_Fano.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.radioButton_LNA_Fano.Name = "radioButton_LNA_Fano";
             this.radioButton_LNA_Fano.Size = new System.Drawing.Size(46, 17);
             this.radioButton_LNA_Fano.TabIndex = 35;
@@ -445,7 +392,7 @@
             this.radioButton_LNA_VarRange.AutoSize = true;
             this.radioButton_LNA_VarRange.Enabled = false;
             this.radioButton_LNA_VarRange.Location = new System.Drawing.Point(57, 27);
-            this.radioButton_LNA_VarRange.Margin = new System.Windows.Forms.Padding(2);
+            this.radioButton_LNA_VarRange.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.radioButton_LNA_VarRange.Name = "radioButton_LNA_VarRange";
             this.radioButton_LNA_VarRange.Size = new System.Drawing.Size(44, 17);
             this.radioButton_LNA_VarRange.TabIndex = 34;
@@ -461,7 +408,7 @@
             this.radioButton_LNA_SDRange.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.radioButton_LNA_SDRange.ForeColor = System.Drawing.SystemColors.ControlText;
             this.radioButton_LNA_SDRange.Location = new System.Drawing.Point(57, 10);
-            this.radioButton_LNA_SDRange.Margin = new System.Windows.Forms.Padding(2);
+            this.radioButton_LNA_SDRange.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.radioButton_LNA_SDRange.Name = "radioButton_LNA_SDRange";
             this.radioButton_LNA_SDRange.Size = new System.Drawing.Size(41, 17);
             this.radioButton_LNA_SDRange.TabIndex = 33;
@@ -503,11 +450,11 @@
             this.checkedListBox_Series.CheckOnClick = true;
             this.checkedListBox_Series.Font = new System.Drawing.Font("Lucida Sans Unicode", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkedListBox_Series.FormattingEnabled = true;
-            this.checkedListBox_Series.Location = new System.Drawing.Point(1289, 480);
-            this.checkedListBox_Series.Margin = new System.Windows.Forms.Padding(2);
+            this.checkedListBox_Series.Location = new System.Drawing.Point(2, 2);
+            this.checkedListBox_Series.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.checkedListBox_Series.MultiColumn = true;
             this.checkedListBox_Series.Name = "checkedListBox_Series";
-            this.checkedListBox_Series.Size = new System.Drawing.Size(329, 137);
+            this.checkedListBox_Series.Size = new System.Drawing.Size(329, 99);
             this.checkedListBox_Series.TabIndex = 33;
             this.checkedListBox_Series.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.checkedListBox_Series_ItemCheck);
             this.checkedListBox_Series.SelectedIndexChanged += new System.EventHandler(this.checkedListBox_Series_SelectedIndexChanged);
@@ -529,7 +476,7 @@
             this.radioButton_TraceComputational.AutoSize = true;
             this.radioButton_TraceComputational.ForeColor = System.Drawing.Color.DarkGreen;
             this.radioButton_TraceComputational.Location = new System.Drawing.Point(5, 27);
-            this.radioButton_TraceComputational.Margin = new System.Windows.Forms.Padding(2);
+            this.radioButton_TraceComputational.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.radioButton_TraceComputational.Name = "radioButton_TraceComputational";
             this.radioButton_TraceComputational.Size = new System.Drawing.Size(123, 17);
             this.radioButton_TraceComputational.TabIndex = 1;
@@ -544,7 +491,7 @@
             this.radioButton_TraceChemical.Checked = true;
             this.radioButton_TraceChemical.ForeColor = System.Drawing.Color.DarkGreen;
             this.radioButton_TraceChemical.Location = new System.Drawing.Point(5, 8);
-            this.radioButton_TraceChemical.Margin = new System.Windows.Forms.Padding(2);
+            this.radioButton_TraceChemical.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.radioButton_TraceChemical.Name = "radioButton_TraceChemical";
             this.radioButton_TraceChemical.Size = new System.Drawing.Size(99, 17);
             this.radioButton_TraceChemical.TabIndex = 0;
@@ -699,7 +646,7 @@
             this.groupBox_Trace.Location = new System.Drawing.Point(487, 1);
             this.groupBox_Trace.Margin = new System.Windows.Forms.Padding(0);
             this.groupBox_Trace.Name = "groupBox_Trace";
-            this.groupBox_Trace.Padding = new System.Windows.Forms.Padding(2);
+            this.groupBox_Trace.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.groupBox_Trace.Size = new System.Drawing.Size(133, 45);
             this.groupBox_Trace.TabIndex = 39;
             this.groupBox_Trace.TabStop = false;
@@ -727,7 +674,7 @@
             "₍",
             "₎"});
             this.comboBox_Sub.Location = new System.Drawing.Point(568, 27);
-            this.comboBox_Sub.Margin = new System.Windows.Forms.Padding(2);
+            this.comboBox_Sub.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.comboBox_Sub.Name = "comboBox_Sub";
             this.comboBox_Sub.Size = new System.Drawing.Size(21, 21);
             this.comboBox_Sub.TabIndex = 43;
@@ -738,7 +685,7 @@
             this.label_Sub.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label_Sub.AutoSize = true;
             this.label_Sub.ForeColor = System.Drawing.Color.DarkGreen;
-            this.label_Sub.Location = new System.Drawing.Point(566, 13);
+            this.label_Sub.Location = new System.Drawing.Point(567, 13);
             this.label_Sub.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label_Sub.Name = "label_Sub";
             this.label_Sub.Size = new System.Drawing.Size(26, 13);
@@ -768,7 +715,7 @@
             "⁽",
             "⁾"});
             this.comboBox_Sup.Location = new System.Drawing.Point(594, 16);
-            this.comboBox_Sup.Margin = new System.Windows.Forms.Padding(2);
+            this.comboBox_Sup.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.comboBox_Sup.Name = "comboBox_Sup";
             this.comboBox_Sup.Size = new System.Drawing.Size(21, 21);
             this.comboBox_Sup.TabIndex = 45;
@@ -779,7 +726,7 @@
             this.label_Sup.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label_Sup.AutoSize = true;
             this.label_Sup.ForeColor = System.Drawing.Color.DarkGreen;
-            this.label_Sup.Location = new System.Drawing.Point(590, 0);
+            this.label_Sup.Location = new System.Drawing.Point(591, 0);
             this.label_Sup.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label_Sup.Name = "label_Sup";
             this.label_Sup.Size = new System.Drawing.Size(26, 13);
@@ -845,7 +792,7 @@
             "√",
             "∑",
             "∏"});
-            this.comboBox_Math.Location = new System.Drawing.Point(542, 21);
+            this.comboBox_Math.Location = new System.Drawing.Point(543, 21);
             this.comboBox_Math.Name = "comboBox_Math";
             this.comboBox_Math.Size = new System.Drawing.Size(22, 21);
             this.comboBox_Math.TabIndex = 47;
@@ -951,7 +898,7 @@
             this.tableLayoutPanel_LeftColumn.Controls.Add(this.panel_richTextBoxPadding, 0, 1);
             this.tableLayoutPanel_LeftColumn.Controls.Add(this.panel_Header, 0, 0);
             this.tableLayoutPanel_LeftColumn.Location = new System.Drawing.Point(2, 2);
-            this.tableLayoutPanel_LeftColumn.Margin = new System.Windows.Forms.Padding(2);
+            this.tableLayoutPanel_LeftColumn.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.tableLayoutPanel_LeftColumn.Name = "tableLayoutPanel_LeftColumn";
             this.tableLayoutPanel_LeftColumn.RowCount = 2;
             this.tableLayoutPanel_LeftColumn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 49F));
@@ -979,9 +926,10 @@
             this.flowLayoutPanel_Parameters.AutoScroll = true;
             this.flowLayoutPanel_Parameters.BackColor = System.Drawing.Color.Linen;
             this.flowLayoutPanel_Parameters.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.flowLayoutPanel_Parameters.Controls.Add(this.checkedListBox_Series);
             this.flowLayoutPanel_Parameters.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
             this.flowLayoutPanel_Parameters.Location = new System.Drawing.Point(1020, 480);
-            this.flowLayoutPanel_Parameters.Margin = new System.Windows.Forms.Padding(5);
+            this.flowLayoutPanel_Parameters.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
             this.flowLayoutPanel_Parameters.Name = "flowLayoutPanel_Parameters";
             this.flowLayoutPanel_Parameters.Size = new System.Drawing.Size(290, 213);
             this.flowLayoutPanel_Parameters.TabIndex = 49;
@@ -999,7 +947,7 @@
             this.tableLayoutPanel_RightColumn.Controls.Add(this.chart1, 0, 3);
             this.tableLayoutPanel_RightColumn.Controls.Add(this.txtTarget, 0, 1);
             this.tableLayoutPanel_RightColumn.Location = new System.Drawing.Point(642, 2);
-            this.tableLayoutPanel_RightColumn.Margin = new System.Windows.Forms.Padding(2);
+            this.tableLayoutPanel_RightColumn.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.tableLayoutPanel_RightColumn.Name = "tableLayoutPanel_RightColumn";
             this.tableLayoutPanel_RightColumn.RowCount = 4;
             this.tableLayoutPanel_RightColumn.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 49F));
@@ -1021,7 +969,7 @@
             this.tableLayoutPanel_Columns.Controls.Add(this.tableLayoutPanel_RightColumn, 1, 0);
             this.tableLayoutPanel_Columns.Controls.Add(this.tableLayoutPanel_LeftColumn, 0, 0);
             this.tableLayoutPanel_Columns.Location = new System.Drawing.Point(0, 0);
-            this.tableLayoutPanel_Columns.Margin = new System.Windows.Forms.Padding(2);
+            this.tableLayoutPanel_Columns.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.tableLayoutPanel_Columns.Name = "tableLayoutPanel_Columns";
             this.tableLayoutPanel_Columns.RowCount = 1;
             this.tableLayoutPanel_Columns.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
@@ -1039,7 +987,6 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(1284, 681);
-            this.Controls.Add(this.checkedListBox_Series);
             this.Controls.Add(this.flowLayoutPanel_Parameters);
             this.Controls.Add(this.btnParse);
             this.Controls.Add(this.checkBox_RemapVariants);
@@ -1066,6 +1013,7 @@
             this.panel_Controls.PerformLayout();
             this.tableLayoutPanel_LeftColumn.ResumeLayout(false);
             this.panel_richTextBoxPadding.ResumeLayout(false);
+            this.flowLayoutPanel_Parameters.ResumeLayout(false);
             this.tableLayoutPanel_RightColumn.ResumeLayout(false);
             this.tableLayoutPanel_RightColumn.PerformLayout();
             this.tableLayoutPanel_Columns.ResumeLayout(false);

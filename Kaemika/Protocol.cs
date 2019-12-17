@@ -21,6 +21,7 @@ namespace Kaemika
             else if (unit == "mL" || unit == "ml") { return volume * 1e-3; }
             else if (unit == "uL" || unit == "μL" || unit == "ul" || unit == "μl") { return volume * 1e-6; }
             else if (unit == "nL" || unit == "nl") { return volume * 1e-9; }
+            else if (unit == "pL" || unit == "pl") { return volume * 1e-12; }
             else throw new Error("Invalid volume unit '" + unit + "'");
         }
 
@@ -36,6 +37,7 @@ namespace Kaemika
             else if (dimension == "mg") return weight * 1e-3;
             else if (dimension == "ug" || dimension == "μg") return weight * 1e-6;
             else if (dimension == "ng") return weight * 1e-9;
+            else if (dimension == "pg") return weight * 1e-12;
             else return -1; // don't give error because we'll try another conversion
         }
 
@@ -45,6 +47,7 @@ namespace Kaemika
             else if (dimension == "mmol") return mole * 1e-3;
             else if (dimension == "umol" || dimension == "μmol") return mole * 1e-6;
             else if (dimension == "nmol") return mole * 1e-9;
+            else if (dimension == "pmol") return mole * 1e-12;
             else return -1; // don't give error because we'll try another conversion
         }
 
@@ -54,6 +57,7 @@ namespace Kaemika
             else if (dimension == "mM") return molarity * 1e-3;
             else if (dimension == "uM" || dimension == "μM") return molarity * 1e-6;
             else if (dimension == "nM") return molarity * 1e-9;
+            else if (dimension == "pM") return molarity * 1e-12;
             else return -1; // don't give error because we'll try another conversion
         }
 

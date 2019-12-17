@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microcharts;
 using KaemikaXM.Pages;
+using Xamarin.Forms;
 using QuickGraph;
 
 namespace Kaemika {
@@ -16,23 +17,39 @@ namespace Kaemika {
         }
     }
 
-    public delegate Xamarin.Forms.View CustomTextEditorDelegate();
+    public delegate ICustomTextEdit CustomTextEditorDelegate();
 
     public class GUI_Xamarin : GuiInterface {
 
         // INITIALIZE
 
-        public GUI_Xamarin() {
+        private static CustomTextEditorDelegate customTextEditor = null;
+        private string platform = "";
+
+        public GUI_Xamarin(string platform, CustomTextEditorDelegate customTextEditorDelegate) {
+            this.platform = platform;
+            customTextEditor = customTextEditorDelegate;
             ChartInit();
         }
 
-        public static CustomTextEditorDelegate customTextEditor = null;
+        public static ICustomTextEdit TextEditor() {
+            return customTextEditor();
+        }
+
+        public override string Platform() {
+            return this.platform;
+        }
 
         // DEVICE
 
         public override void DeviceUpdate() {
             if (MainTabbedPage.theChartPage != null && MainTabbedPage.theChartPage.deviceView != null)
-               MainTabbedPage.theChartPage.deviceView.InvalidateSurface();
+                //MainTabbedPage.theChartPage.deviceView.InvalidateSurface();
+                //###iOS required:
+                Xamarin.Forms.Device.BeginInvokeOnMainThread(() => {
+                    MainTabbedPage.theChartPage.deviceView.InvalidateSurface();
+                });
+
         }
 
         public override void DeviceShow() {
@@ -63,8 +80,8 @@ namespace Kaemika {
             Xamarin.Forms.Device.BeginInvokeOnMainThread(async () => {
                 await MainTabbedPage.theModelEntryPage.DisplayAlert("eeek", failMessage, "not ok");
                 MainTabbedPage.SwitchToTab(MainTabbedPage.theModelEntryPageNavigation);
-                (MainTabbedPage.theModelEntryPage.editor as ICustomTextEdit).SetFocus();
-                (MainTabbedPage.theModelEntryPage.editor as ICustomTextEdit).SetSelectionLineChar(lineNumber, columnNumber, length);
+                MainTabbedPage.theModelEntryPage.editor.SetFocus();
+                MainTabbedPage.theModelEntryPage.editor.SetSelectionLineChar(lineNumber, columnNumber, length);
             });
         }
 
@@ -140,19 +157,24 @@ namespace Kaemika {
             this.timecourse.ClearData();
         }
 
+        public override void ChartSnap() { }
+
+        public override void ChartData() { }
+
+        public override void OutputCopy() { }
 
         public override void OutputClear(string title) {
             MainTabbedPage.theOutputPage.OutputClear();
             this.title = title;
         }
         
-        public override string ChartAddSeries(string legend, Color color, Noise noise) {
+        public override string ChartAddSeries(string legend, System.Drawing.Color color, Noise noise) {
             if (noise == Noise.None) {
                 return timecourse.AddSeries(new Series(legend, color, LineMode.Line, LineStyle.Thick));
             } else if (noise == Noise.Sigma || noise == Noise.SigmaSq || noise == Noise.CV || noise == Noise.Fano) {
                 return timecourse.AddSeries(new Series(legend, color, LineMode.Line, LineStyle.Thin));
             } else if (noise == Noise.SigmaRange || noise == Noise.SigmaSqRange) {
-                return timecourse.AddSeries(new Series(legend, Color.FromArgb(Chart.transparency, color), LineMode.Range, LineStyle.Thin));
+                return timecourse.AddSeries(new Series(legend, System.Drawing.Color.FromArgb(Chart.transparency, color), LineMode.Range, LineStyle.Thin));
             } else throw new Error("ChartAddSeries");
         }
 
@@ -258,6 +280,126 @@ namespace Kaemika {
 
         public override void ClipboardSetText(string text) {
             // this was for Export output to the clipboard, but we do not need to do this in Android
+        }
+
+        // PLATFORM NEUTRAL TEXT EDITOR
+
+        public class NeutralTextEditView : View, ICustomTextEdit {
+            private Editor editText; 
+            private string text;       // cache text content between deallocation/reallocation
+            private bool editable;     // cache editable state in case it is set while editText is null
+            public const float defaultFontSize = 12; // Dip
+            private float fontSize = defaultFontSize; // cache fontSize state as well
+
+            public NeutralTextEditView() : base() {
+                this.editText = new Editor();
+            }
+
+            public View AsView(){
+                return editText;
+            }
+
+            public void SetEditText(Editor newEditText) {
+                this.editText = newEditText;
+                SetText(this.text);
+                SetEditable(this.editable);
+                SetFontSize(this.fontSize);
+            }
+            public void ClearEditText() {
+                this.text = editText.Text; // save the last text before deallocation
+                this.editText = null;
+            }
+            public string GetText() {
+                if (editText == null) return "";
+                return editText.Text;
+            }
+            public void SetText(string text) {
+                this.text = text;
+                if (editText == null) return;
+                editText.Text = text;
+            }
+            public void InsertText(string insertion) {
+                if (editText == null) return;
+                GetSelection(out int start, out int end);
+                text = editText.Text;
+                text = text.Substring(0, start) + insertion + text.Substring(end, text.Length - end);
+                editText.Text = text;
+                SetSelection(start + insertion.Length, start + insertion.Length);
+            }
+            public void SetFocus() {
+                if (editText == null) return;
+                editText.Focus();
+            }
+            public void ShowInputMethod() {
+                if (editText == null) return;
+            }
+            public void HideInputMethod() {
+                if (editText == null) return;
+            }
+
+            // ### on iOS, you use UITextView's SelectedRange = new Foundation.NSRange(startIndex, endIndex);
+
+            public void SelectAll() {
+                if (editText == null) return;
+                //### editText.SelectAll();
+            }
+            public void GetSelection(out int start, out int end) {
+                if (editText == null) { start = 0; end = 0; return; }
+                //### start = editText.SelectionStart;
+                //### end = editText.SelectionEnd;
+                start = 0; end = 0;
+            }
+            public void SetSelection(int start, int end) {
+                if (editText == null) return;
+                start = Math.Max(start, 0);
+                end = Math.Min(end, editText.Text.Length - 1);
+                if (end < start) end = start;
+                //### editText.SetSelection(start, end);
+            }
+            public void SetSelectionLineChar(int line, int chr, int tokenlength) {
+                if (editText == null) return;
+                if (line < 0 || chr < 0) return;
+                string text = GetText();
+                int i = 0;
+                while (i < text.Length && line > 0) {
+                    if (text[i] == '\n') line--;
+                    i++;
+                }
+                if (i < text.Length && text[i] == '\r') i++;
+                int linestart = i;
+                while (i < text.Length && chr > 0) {chr--; i++; }
+                int tokenstart = i;
+                //SetSelection(linestart, tokenstart);
+                SetSelection(tokenstart, tokenstart + tokenlength);
+                //SetSelection(tokenstart, text.Length - 1);
+            }
+            public float GetFontSize() {
+                return this.fontSize;
+            }
+            public void SetFontSize(float size) {
+                this.fontSize = size;
+                if (editText == null) return;
+                editText.FontSize = size;
+            }
+            public void SetEditable(bool editable) {
+                this.editable = editable;
+                if (editText == null) return;
+                // ### This works, but makes the editor non-scrollable and the text non-copiable
+                // ### maybe just add a scroll frame on top? Still we need a custom editor for setting selection
+                editText.InputTransparent = !editable;
+            }
+            public bool IsEditable() {
+                return this.editable;
+            }
+
+            public void OnTextChanged(TextChangedDelegate del) {
+                this.editText.TextChanged += (sender, e) => del(this);
+            }
+
+            public void OnFocusChange(FocusChangeDelegate del) {
+                this.editText.Focused += (sender, e) => del(this);
+                this.editText.Unfocused += (sender, e) => del(this);
+            }
         }
 
     }

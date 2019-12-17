@@ -23,13 +23,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="SkiaSharp.Views.Forms" Version="1.68.0" />
-    <PackageReference Include="Xamarin.Forms" Version="4.0.0.425677" />  
-    <PackageReference Include="Xamarin.Essentials" Version="1.0.1" />
+    <PackageReference Include="SkiaSharp.Views.Forms" Version="1.68.1" />
+    <PackageReference Include="Xamarin.Forms" Version="4.3.0.991221" />  
+    <PackageReference Include="Xamarin.Essentials" Version="1.3.1" />
   </ItemGroup>
 
   <ItemGroup>
-     <ProjectReference Include="..\..\CalithaGOLD\CalithaGOLD.csproj" />
      <ProjectReference Include="..\..\GraphSharpStdSubset\GraphSharpStdSubset.csproj" />
      <ProjectReference Include="..\..\Kaemika\Kaemika.csproj" />
     <ProjectReference Include="..\..\Oslo\Oslo.csproj" />

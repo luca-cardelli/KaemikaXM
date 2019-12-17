@@ -13,6 +13,12 @@ using KaemikaXM.Pages;
 [assembly: ExportRenderer(typeof(KaemikaXM.Droid.CustomTextEditView), typeof(KaemikaXM.Droid.CustomTextEditRenderer))]
 namespace KaemikaXM.Droid {
 
+    //// get events on views (like editText) changing size:
+    //Android.Views.ViewTreeObserver vto = editText.ViewTreeObserver;
+    //vto.GlobalLayout += (sender, args) => {
+    //    int viewHeight = editText.Height;
+    //};
+
     public class CustomTextEditView : View, ICustomTextEdit {
         private Android.Widget.ScrollView scrollView; //
         private EditText editText; // set by CustomTextEditRenderer when it creates the EditText control
@@ -20,6 +26,10 @@ namespace KaemikaXM.Droid {
         private bool editable;     // cache editable state in case it is set while editText is null
         public const float defaultFontSize = 12; // Dip
         private float fontSize = defaultFontSize; // cache fontSize state as well
+
+        public View AsView() {
+            return this;
+        }
 
         public void SetEditText(Android.Widget.ScrollView scrollView, EditText newEditText) {
             this.scrollView = scrollView;
@@ -45,7 +55,7 @@ namespace KaemikaXM.Droid {
             scrollView.ScrollTo(0, 0);
         }
         public void InsertText(string insertion) {
-            if (scrollView == null || editText == null) return;
+            if (editText == null) return;
             GetSelection(out int start, out int end);
             text = editText.Text;
             text = text.Substring(0, start) + insertion + text.Substring(end, text.Length - end);
@@ -61,6 +71,14 @@ namespace KaemikaXM.Droid {
             var imm = (Android.Views.InputMethods.InputMethodManager)(editText.Context.GetSystemService(Context.InputMethodService));
             editText.RequestFocus(); // needed
             imm.ShowSoftInput(editText, Android.Views.InputMethods.ShowFlags.Implicit);
+            MainTabbedPage.theModelEntryPage.KeyboardIsUp(); // in the iOS version, this is called automatically by CustomPageRenderer
+        }
+        public void HideInputMethod() {
+            if (editText == null) return;
+            var imm = (Android.Views.InputMethods.InputMethodManager)(editText.Context.GetSystemService(Context.InputMethodService));
+            editText.RequestFocus(); // needed
+            imm.HideSoftInputFromWindow(editText.WindowToken, Android.Views.InputMethods.HideSoftInputFlags.ImplicitOnly);
+            MainTabbedPage.theModelEntryPage.KeyboardIsDown(); // in the iOS version, this is called automatically by by CustomPageRenderer
         }
         public void SelectAll() {
             if (editText == null) return;
@@ -115,6 +133,9 @@ namespace KaemikaXM.Droid {
                 editText.LongClickable = false; // disable longclicks (edit popup menu) as well
             }
         }
+        public bool IsEditable() {
+            return this.editable;
+        }
         public EventHandler<AfterTextChangedEventArgs> textChangedDelegate = null;
         public void OnTextChanged(TextChangedDelegate del) {
             textChangedDelegate = (sender, e) => del(this);
@@ -123,7 +144,62 @@ namespace KaemikaXM.Droid {
         public void OnFocusChange(FocusChangeDelegate del) {
             focusChangeDelegate = (sender, e) => del(this);
         }
+
+
+        //// GLOBAL LAYOUT LISTENER
+        //// not useful for keyboard because it does not change the size of the edit window, but a good pattern for something else:
+        //// https://stackoverflow.com/questions/4745988/how-do-i-detect-if-software-keyboard-is-visible-on-android-device
+
+        //class GlobalLayoutListener : Java.Lang.Object, Android.Views.ViewTreeObserver.IOnGlobalLayoutListener {
+        //    System.Action DoOnGlobalLayout;
+        //    public GlobalLayoutListener(System.Action onGlobalLayout) {
+        //        this.DoOnGlobalLayout = onGlobalLayout;
+        //    }
+        //    public void OnGlobalLayout() {
+        //        DoOnGlobalLayout();
+        //    }
+        //}
+
+        //public void SetupListener() {
+        //    var contentView = editText;
+
+        //    bool isKeyboardShowing = false;
+        //    void onKeyboardVisibilityChanged(bool opened) {
+        //        //print("keyboard " + opened);
+        //    }
+
+        //    contentView.ViewTreeObserver.AddOnGlobalLayoutListener(new GlobalLayoutListener( () => {
+
+        //            Rect r = new Rect();
+        //            contentView.GetWindowVisibleDisplayFrame(r);
+        //            int screenHeight = contentView.RootView.Height;
+
+        //            // r.bottom is the position above soft keypad or device button.
+        //            // if keypad is shown, the r.bottom is smaller than that before.
+        //            int keypadHeight = screenHeight - r.Bottom;
+
+        //            // Log.d(TAG, "keypadHeight = " + keypadHeight);
+
+        //            if (keypadHeight > screenHeight * 0.15) { // 0.15 ratio is perhaps enough to determine keypad height.
+        //                // keyboard is opened
+        //                if (!isKeyboardShowing) {
+        //                    isKeyboardShowing = true;
+        //                    onKeyboardVisibilityChanged(true);
+        //                }
+        //            } else {
+        //                // keyboard is closed
+        //                if (isKeyboardShowing) {
+        //                    isKeyboardShowing = false;
+        //                    onKeyboardVisibilityChanged(false);
+        //                }
+        //            }
+
+        //    }));
+
+        //}
+
     }
+
 
     // Subclass to handle the disposing of EditText e.g. when the app is suspended
     public class DisEditText : EditText {
@@ -158,7 +234,7 @@ namespace KaemikaXM.Droid {
             //Element is the virtual control that's being rendered in the renderer, e.g. Button, Entry, Frame etc.   Element : CustomTextEditView
             //Control is the platform implementation of that control, e.g.UIButton/Button, etc.                      Control : EditText
 
-            if (Control == null) {
+            if (Control == null && Element != null) {
                 CustomTextEditView view = Element as CustomTextEditView;
                 editText = new DisEditText(Context, view);
                 scrollView = new Android.Widget.ScrollView(Context);

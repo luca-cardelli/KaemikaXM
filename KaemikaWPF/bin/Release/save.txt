@@ -1,26 +1,28 @@
 //======================================
-// Example of Sample Manipulation
+// Build a reaction network
 //======================================
 
-species {c}
+// Declare some species and
+// their molarity (M, mM, ...)
 
-sample A {1μL, 20C}
-species a @ 10mM in A
-amount c @ 1mM in A
-a + c -> a + a
-equilibrate A1 = A for 100
+species a,b @ 1 M   
 
-sample B {1μL, 20C}
-species b @ 10mM in B
-amount c @ 1mM in B
-b + c -> c + c
-equilibrate B1 = B for 100
+// Make some reactions (# is 'nothing')
 
-split C,D = A1
-dispose C
+a + 2b -> a
+a -> #
 
-mix E = D, B1
-a + b -> b + b
+// Decide what to plot
 
-equilibrate F = E for 1000
-dispose F
+report a, b, b-a, sin(time)
+
+// Run a simulation 
+// (or nothing much will happen)
+
+equilibrate for 2*pi
+
+// Optionally select noise (μ, ±σ, ...)
+
+//----------------------
+// Press the Play button
+//----------------------

@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CalithaGOLD\CalithaGOLD.csproj" />
     <ProjectReference Include="..\GraphSharpStdSubset\GraphSharpStdSubset.csproj" />
+    <ProjectReference Include="..\KaemikaAssets\KaemikaAssets.csproj" />
     <ProjectReference Include="..\Oslo\Oslo.csproj" />
     <ProjectReference Include="..\QuickGraphStd\QuickGraphStd.csproj" />
   </ItemGroup>

@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Linq;
 using Xamarin.Forms;
+using Kaemika;
 
 namespace KaemikaXM.Pages {
 
@@ -41,41 +42,6 @@ namespace KaemikaXM.Pages {
         }
     }
 
-    public class ModelInfo {
-        public string title { get; set; }        // keep this as a Property for Xamarin Binding
-        public string datestring { get; set; }    // keep this as a Poperty for Xamarin Binding
-
-        public string filename; // this will be a randomly generated filename that is never shown
-        public string text; // make sure to initialize to "", not null
-        public bool modified;
-        public bool executable;
-        public DateTime date;
-        public ModelInfo() {
-            title = "Untitled";
-            text = "";
-            modified = false;
-            executable = true;
-            filename = "";
-            date = DateTime.Now;
-            datestring = DateTime.Now.ToString();
-        }
-        public ModelInfo(string sample) {
-            title = "Untitled";
-            text = sample;
-            modified = false;
-            executable = true;
-            filename = "";
-            date = DateTime.Now;
-            datestring = DateTime.Now.ToString();
-        }
-        public ModelInfo Copy() {
-            ModelInfo copy = new ModelInfo();
-            copy.title = this.title + " (copy)";
-            copy.text = this.text;
-            return copy;
-        }
-    }
-
 public class ModelListPage : KaemikaPage {
 
     public async Task NavigationPushModalAsync(Page page) {
@@ -101,7 +67,9 @@ equilibrate for 10
         private ListView listView;
         public ModelListPage() {
             Title = "My Networks";
-            Icon = "tab_feed.png";
+            IconImageSource = "icons8openedfolder96.png";
+
+            // in iOS>Resource the images of the TitleBar buttons must be size 40, otherwise they will scale but still take the horizontal space of the original
 
             listView = new ListView { Margin = 20, };
             listView.ItemTemplate = new DataTemplate(typeof(MyModelListCell));                   // use MyModelListCell here to activate context menus on (ModelInfo) list items

@@ -25,7 +25,7 @@ namespace KaemikaWPF
             InitializeComponent();
             txtInput = richTextBox;
             kaemikaFont = new Font("Matura MT Script Capitals", 24F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-//            textFont = new Font("Lucida Sans Unicode", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            //  textFont = new Font("Lucida Sans Unicode", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             textFont = new Font("Lucida Sans Typewriter", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             chartFont = new Font("Lucida Sans Unicode", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
         }
@@ -43,6 +43,14 @@ namespace KaemikaWPF
             this.Width = Math.Min(this.Width, Screen.PrimaryScreen.Bounds.Size.Width);
             this.Height = Math.Min(this.Height, Screen.PrimaryScreen.Bounds.Size.Height);
             this.CenterToScreen();
+            this.comboBox_Examples.Items.Add("   Tutorial");
+            List<ModelInfoGroup> groups = Tutorial.Groups();
+            foreach (ModelInfoGroup group in groups) {
+                this.comboBox_Examples.Items.Add("►" + group.GroupHeading);
+                foreach (ModelInfo info in group) {
+                    this.comboBox_Examples.Items.Add("   " + info.title);
+                }
+            }
             this.comboBox_Examples.SelectedIndex = 2;
             this.comboBox_Export.SelectedIndex = 0;
             this.comboBox_Solvers.SelectedIndex = 0;
@@ -869,116 +877,23 @@ namespace KaemikaWPF
             }
         }
 
+        private string SelectTutorial() {
+            List<ModelInfoGroup> groups = Tutorial.Groups();
+            foreach (ModelInfoGroup group in groups) {
+                foreach (ModelInfo info in group) {
+                    if (comboBox_Examples.Text == "   " + info.title)
+                        return info.text;
+                }
+            }
+            return null;
+        }
+
         private void comboBox_Examples_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // https://stackoverflow.com/questions/433171/how-to-embed-a-text-file-in-a-net-assembly
-
-            // Basic group
-            if (comboBox_Examples.Text == "   Start Here") {
-                InputSetText(Properties.Resources.StartHere);
-            } else if (comboBox_Examples.Text == "   Lotka Volterra") {
-                InputSetText(Properties.Resources.LotkaVolterra);
-            } else if (comboBox_Examples.Text == "   RingOscillator") {
-                InputSetText(Properties.Resources.RingOscillator);
-            } else if (comboBox_Examples.Text == "   Reactions") {
-                InputSetText(Properties.Resources.Reactions);
-            } else if (comboBox_Examples.Text == "   Enzyme Kinetics") {
-                InputSetText(Properties.Resources.EnzymeKinetics);
-            } else if (comboBox_Examples.Text == "   Approximate Majority") {
-                InputSetText(Properties.Resources.ApproximateMajority);
-            } else if (comboBox_Examples.Text == "   2AM Oscillator") {
-                InputSetText(Properties.Resources._2AM_Oscillator);
-            } else if (comboBox_Examples.Text == "   Transporters") {
-                InputSetText(Properties.Resources.Transporters);
-
-            // Differential signals group
-            } else if (comboBox_Examples.Text == "   Sine Wave") {
-                InputSetText(Properties.Resources.SineWave);
-            } else if (comboBox_Examples.Text == "   Square Wave") {
-                InputSetText(Properties.Resources.SquareWave);
-            } else if (comboBox_Examples.Text == "   High Pass Filter") {
-                InputSetText(Properties.Resources.HighPassFilter);
-            } else if (comboBox_Examples.Text == "   Lorenz Attractor") {
-                InputSetText(Properties.Resources.LorenzAttractor);
-            } else if (comboBox_Examples.Text == "   Derivative1") {
-                InputSetText(Properties.Resources.Derivative1);
-            } else if (comboBox_Examples.Text == "   Derivative2") {
-                InputSetText(Properties.Resources.Derivative2);
-
-            // Arithmetic group
-            } else if (comboBox_Examples.Text == "   Copy") {
-                InputSetText(Properties.Resources.A01_Copy);
-            } else if (comboBox_Examples.Text == "   Addition") {
-                InputSetText(Properties.Resources.A02_Addition);
-            } else if (comboBox_Examples.Text == "   CopyAndAdd") {
-                InputSetText(Properties.Resources.A03_CopyAndAdd);
-            } else if (comboBox_Examples.Text == "   Multiplication") {
-                InputSetText(Properties.Resources.A04_Multiplication);
-            } else if (comboBox_Examples.Text == "   Division") {
-                InputSetText(Properties.Resources.A05_Division);
-            } else if (comboBox_Examples.Text == "   DifferentialSignals") {
-                InputSetText(Properties.Resources.B01_DifferentialSignals);
-            } else if (comboBox_Examples.Text == "   DifferentialAddition") {
-                InputSetText(Properties.Resources.B02_DifferentialAddition);
-            } else if (comboBox_Examples.Text == "   DifferentialSubtraction") {
-                InputSetText(Properties.Resources.B03_DifferentialSubtraction);
-            } else if (comboBox_Examples.Text == "   DifferentialAbstractions") {
-                InputSetText(Properties.Resources.B04_DifferentialAbstractions);
-
-            // PID Controller group
-            } else if (comboBox_Examples.Text == "   PosTestSignal Sine") {
-                InputSetText(Properties.Resources.PosTestSignal_Sine);
-            } else if (comboBox_Examples.Text == "   PosTestSignal Step") {
-                InputSetText(Properties.Resources.PosTestSignal_Step);
-            } else if (comboBox_Examples.Text == "   TestSignal Sine") {
-                InputSetText(Properties.Resources.TestSignal_Sine);
-            } else if (comboBox_Examples.Text == "   TestSignal Step") {
-                InputSetText(Properties.Resources.TestSignal_Step);
-            } else if (comboBox_Examples.Text == "   Proportional Block") {
-                InputSetText(Properties.Resources.Proportional_Block);
-            } else if (comboBox_Examples.Text == "   Integral Block") {
-                InputSetText(Properties.Resources.Integral_Block);
-            } else if (comboBox_Examples.Text == "   Derivative Block") {
-                InputSetText(Properties.Resources.Derivative_Block);
-            } else if (comboBox_Examples.Text == "   Addition Block") {
-                InputSetText(Properties.Resources.Addition_Block);
-            } else if (comboBox_Examples.Text == "   Subtraction Block") {
-                InputSetText(Properties.Resources.Subtraction_Block);
-            } else if (comboBox_Examples.Text == "   DualRailConverter Block") {
-                InputSetText(Properties.Resources.DualRailConverter_Block);
-            } else if (comboBox_Examples.Text == "   PIDController Block") {
-                InputSetText(Properties.Resources.PIDController_Block);
-            } else if (comboBox_Examples.Text == "   PIDController") {
-                InputSetText(Properties.Resources.PIDController);
-            } else if (comboBox_Examples.Text == "   PIDController Optimization") {
-                InputSetText(Properties.Resources.PIDController_Optimization);
-
-            // Samples group
-            } else if (comboBox_Examples.Text == "   Samples") {
-                InputSetText(Properties.Resources.Samples);
-            } else if (comboBox_Examples.Text == "   Molar Mass") {
-                InputSetText(Properties.Resources.MolarMass);
-            } else if (comboBox_Examples.Text == "   Droplets") {
-                InputSetText(Properties.Resources.Droplets);
-            } else if (comboBox_Examples.Text == "   Mix and Split") {
-                InputSetText(Properties.Resources.MixAndSplit);
-            } else if (comboBox_Examples.Text == "   PBS") {
-                InputSetText(Properties.Resources.PBS);
-            } else if (comboBox_Examples.Text == "   Serial Dilution") {
-                InputSetText(Properties.Resources.SerialDilution);
-
-            // Documentation Group
-            } else if (comboBox_Examples.Text == "   GOLD Grammar") {
-                InputSetText(Properties.Resources.KaemikaGrammar);
-            } else if (comboBox_Examples.Text == "   Builtin Operators") {
-                InputSetText(Properties.Resources.BuiltinFunctions);
-            } else if (comboBox_Examples.Text == "   Flows") {
-                InputSetText(Properties.Resources.Flows);
-            } else if (comboBox_Examples.Text == "   Functions") {
-                InputSetText(Properties.Resources.Functions);
-            } else {
-            }
+            string tutorial = SelectTutorial();
+            if (tutorial != null) InputSetText(tutorial);
             this.comboBox_Examples.SelectedIndex = 0;
+            // OBSOLETE: https://stackoverflow.com/questions/433171/how-to-embed-a-text-file-in-a-net-assembly
         }
 
         private void checkBox_LNA_CheckedChanged(object sender, EventArgs e)

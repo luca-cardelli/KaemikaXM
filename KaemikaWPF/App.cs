@@ -1,7 +1,5 @@
 ﻿using System;
-using System.IO;
 using System.Windows.Forms;
-using CalithaGoldParser;
 using Kaemika;
 
 namespace KaemikaWPF
@@ -13,46 +11,16 @@ namespace KaemikaWPF
         /// </summary>
         /// 
 
-        // // Need to get rid of GOLD Engine assmembly linking because it seems to interfere with building the Android version, since it requires VisualBasic runtime
-        //public static GOLD.Parser CookV5GoldParser() {
-        //    GOLD.Parser parser = new GOLD.Parser();
-        //    try {
-        //        //if (parser.LoadTables(Application.StartupPath + "\\kaemika.egt")) setupDone = true;
-        //        if (parser.LoadTables(new System.IO.BinaryReader(new System.IO.MemoryStream(Properties.Resources.kaemika)))) return parser;
-        //        else throw new Error("Parser EGT failed to load");
-        //    } catch (GOLD.ParserException ex) {
-        //        throw new Error("Parser loading failed: " + ex.Message);
-        //    }
-        //}
-
-       public static LALRParser GoldParser() {
-            try {
-                Stream stream = new MemoryStream(Properties.Resources.kaemikaCGT);
-                //numberFormatInfo = new NumberFormatInfo();
-                //numberFormatInfo.NumberDecimalSeparator = ".";
-                CGTReader reader = new CGTReader(stream);
-                LALRParser parser = reader.CreateNewParser();
-                parser.TrimReductions = false;
-                parser.StoreTokens = LALRParser.StoreTokensMode.NoUserObject;
-                return parser;
-            } catch (Exception ex) {
-                throw new Error("Parser loading failed: " + ex.Message);
-            }
-        }
-
         [STAThread]
         static void Main() {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            GUI_Windows gui = new GUI_Windows(new GUI());
+            //GUI_Windows gui = new GUI_Windows(new GUI());
+            GUI_Windows2 gui = new GUI_Windows2(new GUI2());
             Gui.gui = gui;
 
-            // Choose a Parser, they all implement the IParser interface
-            // TheParser.parser = new CookV5Parser(CookV5GoldParser());  // Linked dll, official V5 engine, written in Visual Basic (requires VB runtime which may be non-portable)
-            TheParser.parser = new CalithaParser(GoldParser());  // Compiled project, pre-V5 engine, written in C#. NOTE!!! Rule.ToString has been modified for compatibility.
-
-            Application.Run(gui.form); 
+            Application.Run(gui.GUI_Form()); 
         }
 
     }

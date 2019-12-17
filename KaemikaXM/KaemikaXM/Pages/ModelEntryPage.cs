@@ -10,7 +10,7 @@ namespace KaemikaXM.Pages {
     public class ModelEntryPage : KaemikaPage {
 
         public ModelInfo modelInfo;
-        public View editor; // is a CustomTextEditView and implements ICustomTextEdit
+        public ICustomTextEdit editor;
         public ToolbarItem editItem;
         public ToolbarItem pasteAllItem;
         public ToolbarItem copyAllItem;
@@ -41,8 +41,15 @@ namespace KaemikaXM.Pages {
         public ToolbarItem EditItem()  {
             return
                 new ToolbarItem("Edit", "icons8pencil96", async () => {
-                    SetModel(modelInfo.Copy(), editable: true);
-                    (editor as ICustomTextEdit).ShowInputMethod();
+                    if (editor.IsEditable()) {
+                        if (isKeyboardUp)
+                            editor.HideInputMethod();
+                        else
+                            editor.ShowInputMethod();
+                    } else {
+                        SetModel(modelInfo.Copy(), editable: true);
+                        editor.ShowInputMethod();
+                    }
                 });
         }
         public ToolbarItem PasteAllItem() {
@@ -202,8 +209,8 @@ namespace KaemikaXM.Pages {
             foreach (string s in items) symbolPicker.Items.Add(s);
             symbolPicker.Unfocused += async (object sender, FocusEventArgs e) => {
                 if (symbolPicker.SelectedItem != null) {
-                    (editor as ICustomTextEdit).InsertText(symbolPicker.SelectedItem as string);
-                    (editor as ICustomTextEdit).SetFocus(); //otherwise focus remains on picker, even if it is now closed, and typing reactivates picker
+                    editor.InsertText(symbolPicker.SelectedItem as string);
+                    editor.SetFocus(); //otherwise focus remains on picker, even if it is now closed, and typing reactivates picker
                 }
                 symbolPicker.SelectedItem = null;
             };
@@ -219,7 +226,7 @@ namespace KaemikaXM.Pages {
             };
             button.Clicked += async (object sender, EventArgs e) => {
                 editor.InsertText(str);
-                editor.ShowInputMethod();
+                if (Gui.gui.Platform() != "iOS") editor.ShowInputMethod();
             };
             return button;
         }
@@ -246,7 +253,9 @@ namespace KaemikaXM.Pages {
 
             modelInfo = new ModelInfo();
             Title = modelInfo.title;
-            Icon = "tab_feed.png";
+            IconImageSource = "icons8mindmap96.png";
+
+            // in iOS>Resource the images of the TitleBar buttons must be size 40, otherwise they will scale but still take the horizontal space of the original
 
             //ToolbarItems.Add(DeleteItem());
 
@@ -260,9 +269,9 @@ namespace KaemikaXM.Pages {
             copyAllItem = CopyAllItem();
             ToolbarItems.Add(copyAllItem);
 
-            editor = Kaemika.GUI_Xamarin.customTextEditor();
+            editor = Kaemika.GUI_Xamarin.TextEditor();
 
-            (editor as ICustomTextEdit).OnTextChanged(
+            editor.OnTextChanged(
                 async(ICustomTextEdit textEdit) => {
                     if (!modelInfo.modified) {
                         modelInfo.modified = true;
@@ -270,30 +279,32 @@ namespace KaemikaXM.Pages {
                     }
                 });
 
-            (editor as ICustomTextEdit).OnFocusChange(
-                async (ICustomTextEdit textEdit) => { if (modelInfo.modified) SaveEditor(); });
+            editor.OnFocusChange(
+                async (ICustomTextEdit textEdit) => { 
+                    if (modelInfo.modified) SaveEditor(); 
+                });
 
             noisePicker = NoisePicker();
             subPicker = SymbolPicker("Sub", 7, subscripts); 
             supPicker = SymbolPicker("Sup", 7, superscripts);
             mathPicker = SymbolPicker(" ∑ ", 12, math);
-            spamSpecies = BtnInsertText((editor as ICustomTextEdit), "species", 8, "species "); 
-            spamAt = BtnInsertText((editor as ICustomTextEdit), "@", 12, " @ "); 
-            spamNumber = BtnInsertText((editor as ICustomTextEdit), "number", 8, "number "); 
-            spamEq = BtnInsertText((editor as ICustomTextEdit), "=", 12, " = "); 
-            spamPlus = BtnInsertText((editor as ICustomTextEdit), "+", 12, " + "); 
-            spamArrow = BtnInsertText((editor as ICustomTextEdit), "->", 12, " -> "); 
-            spamBiArrow = BtnInsertText((editor as ICustomTextEdit), "<->", 12, " <-> "); 
-            spamSharp = BtnInsertText((editor as ICustomTextEdit), "#", 12, "#"); 
-            spamCatal = BtnInsertText((editor as ICustomTextEdit), ">>", 12, " >> "); 
-            spamBra = BtnInsertText((editor as ICustomTextEdit), "{", 12, "{"); 
-            spamKet = BtnInsertText((editor as ICustomTextEdit), "}", 12, "}"); 
-            spamReport = BtnInsertText((editor as ICustomTextEdit), "report", 8, "report ");
-            //spamComma = BtnInsertText((editor as ICustomTextEdit), ",", 12, ", ");
-            spamEquil = BtnInsertText((editor as ICustomTextEdit), "equilib.", 8, "equilibrate for ");
+            spamSpecies = BtnInsertText(editor, "species", 8, "species "); 
+            spamAt = BtnInsertText(editor, "@", 12, " @ "); 
+            spamNumber = BtnInsertText(editor, "number", 8, "number "); 
+            spamEq = BtnInsertText(editor, "=", 12, " = "); 
+            spamPlus = BtnInsertText(editor, "+", 12, " + "); 
+            spamArrow = BtnInsertText(editor, "->", 12, " -> "); 
+            spamBiArrow = BtnInsertText(editor, "<->", 12, " <-> "); 
+            spamSharp = BtnInsertText(editor, "#", 12, "#"); 
+            spamCatal = BtnInsertText(editor, ">>", 12, " >> "); 
+            spamBra = BtnInsertText(editor, "{", 12, "{"); 
+            spamKet = BtnInsertText(editor, "}", 12, "}"); 
+            spamReport = BtnInsertText(editor, "report", 8, "report ");
+            //spamComma = BtnInsertText(editor, ",", 12, ", ");
+            spamEquil = BtnInsertText(editor, "equilib.", 8, "equilibrate for ");
             startButton = StartButton(switchToChart: true, switchToOutput: false);
             deviceButton = DeviceButton();
-            stepper = TextSizeStepper(editor as ICustomTextEdit);
+            stepper = TextSizeStepper(editor);
 
             int topBarPadding = 0;
             topBar = new Grid { RowSpacing = 0, ColumnSpacing = 0,  Padding = topBarPadding };
@@ -356,11 +367,8 @@ namespace KaemikaXM.Pages {
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
             grid.Children.Add(topBar, 0, 0);
-            grid.Children.Add(editor, 0, 1);
+            grid.Children.Add(editor.AsView(), 0, 1);
             grid.Children.Add(bottomBar, 0, 2);
-
-            //grid.Children.Add(editor, 0, 0);
-            //grid.Children.Add(bottomBar, 0, 1);
 
             Content = grid;
         }
@@ -369,18 +377,34 @@ namespace KaemikaXM.Pages {
             modelInfo = info;
             Title = modelInfo.title;
             SetText(modelInfo.text);
-            (editor as ICustomTextEdit).SetEditable(editable);
-            editItem.IsEnabled = !editable;
+            editor.SetEditable(editable);
+            if (editable) editItem.IconImageSource = "HideKeyboard";
+            else editItem.IconImageSource = "icons8pencil96";
+            // editItem.IsEnabled = !editable;
             pasteAllItem.IsEnabled = editable;
             topBar.IsVisible = editable;
         }
 
+        private bool isKeyboardUp = false;
+
+        public void KeyboardIsUp() {
+            isKeyboardUp = true;
+            editItem.IconImageSource = "HideKeyboard";
+        }
+
+        public void KeyboardIsDown() {
+            isKeyboardUp = false;
+            editItem.IconImageSource = "ShowKeyboard";
+        }
+
         public string GetText() {
-            return (editor as ICustomTextEdit).GetText();
+            string text = editor.GetText();
+            if (text == null) text = "";
+            return text;
         }
 
         public void SetText(string text) {
-            (editor as ICustomTextEdit).SetText(text);
+            editor.SetText(text);
             if (!modelInfo.modified) {
                 modelInfo.modified = true;
                 ResetCurrentModels();
@@ -388,7 +412,7 @@ namespace KaemikaXM.Pages {
         }
 
         public void InsertText(string text) {
-            (editor as ICustomTextEdit).InsertText(text);
+            editor.InsertText(text);
         }
 
         public void SaveEditor() {

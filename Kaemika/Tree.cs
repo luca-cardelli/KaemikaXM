@@ -680,6 +680,7 @@ namespace Kaemika
             else if (this is BoolValue) return new BoolFlow(((BoolValue)this).value);
             else if (this is NumberValue) return new NumberFlow(((NumberValue)this).value);
             else if (this is SpeciesValue) return new SpeciesFlow(((SpeciesValue)this).symbol);
+            else if (this is SampleValue) return new SampleFlow((SampleValue)this);
             else if (this is OperatorValue)
             { // handle the nullary operators from the built-in environment
                 if (((OperatorValue)this).name == "time") return OpFlow.Op("time");
@@ -687,7 +688,8 @@ namespace Kaemika
                 else if (((OperatorValue)this).name == "celsius") return OpFlow.Op("celsius");
                 else if (((OperatorValue)this).name == "volume") return OpFlow.Op("volume");
                 else return null;
-            } else return null;
+            }
+            else return null;
         }
     }
 
@@ -1259,6 +1261,8 @@ namespace Kaemika
                         || name == "cos" || name == "cosh" || name == "exp" || name == "floor" || name == "int" || name == "log"
                         || name == "pos" || name == "sign" || name == "sin" || name == "sinh" || name == "sqrt" || name == "tan" || name == "tanh") {
                     return OpFlow.Op(name, arg1);
+                } else if (name == "observe") { // observe(f) = f:  observing the current sample
+                    return arg1;
                 } else throw new Error(BadArgs());
             } else if (arguments.Count == 2) {
                 Flow arg1 = arguments[0];
@@ -1266,7 +1270,7 @@ namespace Kaemika
                 if (name == "or" || name == "and" || name == "+" || name == "-" || name == "*" || name == "/" || name == "^"
                     || name == "=" || name == "<>" || name == "<=" || name == "<" || name == ">=" || name == ">") {
                     return OpFlow.Op(name, arg1, arg2);
-                } else if (name == "cov" || name == "gauss" || name == "arctan2" || name == "min" || name == "max") {
+                } else if (name == "cov" || name == "gauss" || name == "arctan2" || name == "min" || name == "max" || name == "observe") {
                     return OpFlow.Op(name, arg1, arg2);
                 } else throw new Error(BadArgs());
             } else if (arguments.Count == 3) {
@@ -1500,6 +1504,36 @@ namespace Kaemika
             else if (species.SameSymbol(var)) return NumberFlow.numberFlowOne; // dx/dx = 1
             else return NumberFlow.numberFlowZero; // dx/dy = 0   for y=/=x
         }
+    }
+
+    public class SampleFlow : Flow {
+        public SampleValue value;
+        public SampleFlow(SampleValue value) { this.type = new Type("flow"); this.value = value; }
+        public override Flow Normalize(Style style) { return this;  }
+        public override Flow Expand(Style style) { return this; }
+        public override Flow Simplify(Style style) { return this; }
+        public override Flow ReGroup(Style style) { return this; }
+        public override bool EqualFlow(Flow other) { return (other is SampleFlow) && ((other as SampleFlow).value == this.value); }
+        public override bool Precedes(Flow other, Style style) { return (other is SampleFlow) && ((value as SampleValue).symbol.Precedes(((other as SampleFlow).value as SampleValue).symbol)); }
+        public override bool Involves(List<SpeciesValue> species) { return false; }
+        public override bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered) { notCovered = null; return true; }
+        public override bool IsOp(string op, int arity) { return false; }
+        public override bool IsNumber(double n) { return false; }
+        public override bool IsNegativeNumber() { return false; }
+        public override bool IsNumericConstantExpression() { return false; }
+        public override Flow Arg(int i) { throw new Error("Arg"); }
+        public override string Format(Style style) { return value.FormatSymbol(style); }
+
+        public override bool ObserveBool(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new Error("Flow expression: bool expected instead of sample: " + Format(style)); }
+        public override double ObserveMean(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new Error("Flow expression: number expected instead of sample: " + Format(style)); }
+        public override double ObserveVariance(SampleValue sample, double time, State state, Style style) { throw new Error("Flow expression: number expected instead of sample: " + Format(style)); }
+        public override double ObserveCovariance(Flow other, SampleValue sample, double time, State state, Style style) { throw new Error("Flow expression: number expected instead of sample: " + Format(style)); }
+        public override double ObserveDiff(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new Error("Not differentiable, sample: " + Format(style)); }
+        public override bool HasDeterministicValue() { return true; } // can appear in rate-expressions in a cond
+        public override bool HasStochasticMean() { return true; }
+        public override bool LinearCombination() { return true; } // but if it appears in a cond it will not be a linear combination anyway
+        public override bool HasNullVariance() { return true; }
+        public override Flow Differentiate(Symbol var, Style style) { throw new Error("Non differentiable: sample"); }
     }
 
     public class ConstantFlow : Flow { // cannot be evaluated (nor simulated), but can be used as a symbolic constant within generalized rates, so it can appear in the extracted differential equations
@@ -2016,6 +2050,9 @@ namespace Kaemika
                     return args[0].ObserveCovariance(args[1], sample, time, state, style);        // Mean(cov(X,Y)) = cov(X,Y)   since cov(X,Y) is a number
                 } else if (op == "gauss") {
                     return args[0].ObserveMean(sample, time, state, flux, style);                 // Mean(gauss(X,Y)) = X
+                } else if (op == "observe") {
+                    if (!(args[1] is SampleFlow)) throw new Error(BadArgs());
+                    return args[0].ObserveMean((args[1] as SampleFlow).value, time, state, flux, style);  // observe mean in other sample
                 } else {
                     double arg1 = args[0].ObserveMean(sample, time, state, flux, style);
                     double arg2 = args[1].ObserveMean(sample, time, state, flux, style);

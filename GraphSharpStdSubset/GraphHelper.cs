@@ -134,7 +134,6 @@ namespace GraphSharp
             }
 
             var undirected = new UndirectedBidirectionalGraph<Vertex, Edge>( g );
-            //minden élet egy hosszal veszünk figyelembe - unweighted
             var weights = new Dictionary<Edge, double>();
             foreach ( Edge edge in undirected.Edges )
             {

@@ -20,18 +20,18 @@
     <WindowsSdkPath>
     </WindowsSdkPath>
     <LayoutDir>C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\KaemikaUWP\bin\AnyCPU\Release\AppX</LayoutDir>
-    <RegisteredManifestChecksum>61CE46B31B2265CC601B8E71DD0901DFD89F09AED355293A278528F857F8EAD0</RegisteredManifestChecksum>
-    <RegisteredPackageMoniker>39459LucaCardelli.Kaemika_1.0.4.0_neutral__dw550dpfsm8xy</RegisteredPackageMoniker>
+    <RegisteredManifestChecksum>7C25EBE455BF9E313AEF9DBFAC8412E18D0FB37DAED361E7ABF6F6B51323DE27</RegisteredManifestChecksum>
+    <RegisteredPackageMoniker>39459LucaCardelli.Kaemika_1.0.5.0_neutral__dw550dpfsm8xy</RegisteredPackageMoniker>
     <RegisteredUserModeAppID>39459LucaCardelli.Kaemika_dw550dpfsm8xy!App</RegisteredUserModeAppID>
     <RegisteredPackageID>39459LucaCardelli.Kaemika</RegisteredPackageID>
     <RegisteredPackagePublisher>CN=48C47D4C-B468-4479-990A-111DBC8FF487</RegisteredPackagePublisher>
-    <RegisteredVersion>1.0.4.0</RegisteredVersion>
+    <RegisteredVersion>1.0.5.0</RegisteredVersion>
   </PropertyGroup>
   <ItemGroup>
     <AppXManifest Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\KaemikaUWP\bin\AnyCPU\Release\AppxManifest.xml">
       <PackagePath>AppxManifest.xml</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2019-12-01T16:56:13.017</Modified>
+      <Modified>2019-12-11T17:32:29.258</Modified>
     </AppXManifest>
   </ItemGroup>
   <ItemGroup>
@@ -71,67 +71,107 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\KaemikaUWP\bin\AnyCPU\Release\resources.pri">
       <PackagePath>resources.pri</PackagePath>
-      <Modified>2019-12-01T16:56:12.904</Modified>
+      <Modified>2019-12-07T00:43:17.221</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\CalithaGOLD\bin\Release\netstandard2.0\CalithaGOLD.dll">
       <PackagePath>KaemikaWPF\CalithaGOLD.dll</PackagePath>
-      <Modified>2019-12-01T16:56:07.917</Modified>
+      <Modified>2019-12-11T17:31:55.290</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\GraphSharpStdSubset\bin\Release\netstandard2.0\GraphSharpStdSubset.dll">
       <PackagePath>KaemikaWPF\GraphSharpStdSubset.dll</PackagePath>
-      <Modified>2019-12-01T16:56:08.924</Modified>
+      <Modified>2019-12-11T17:31:56.573</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\Kaemika\bin\Release\netstandard2.0\Kaemika.dll">
       <PackagePath>KaemikaWPF\Kaemika.dll</PackagePath>
-      <Modified>2019-12-01T16:56:09.530</Modified>
+      <Modified>2019-12-11T17:31:57.456</Modified>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\MathNet.Numerics.4.8.0\lib\net461\MathNet.Numerics.dll">
+    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\MathNet.Numerics.4.9.0\lib\net461\MathNet.Numerics.dll">
       <PackagePath>KaemikaWPF\MathNet.Numerics.dll</PackagePath>
-      <Modified>2019-06-02T08:32:44.000</Modified>
+      <Modified>2019-10-13T12:44:36.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\OpenTK.3.1.0\lib\net20\OpenTK.dll">
+      <PackagePath>KaemikaWPF\OpenTK.dll</PackagePath>
+      <Modified>2019-08-04T14:08:34.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\OpenTK.GLControl.3.1.0\lib\net20\OpenTK.GLControl.dll">
+      <PackagePath>KaemikaWPF\OpenTK.GLControl.dll</PackagePath>
+      <Modified>2019-08-04T14:08:06.000</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\Oslo\bin\Release\netstandard2.0\Oslo.dll">
       <PackagePath>KaemikaWPF\Oslo.dll</PackagePath>
-      <Modified>2019-12-01T16:56:08.057</Modified>
+      <Modified>2019-12-11T17:31:55.352</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\QuickGraphStd\bin\Release\netstandard2.0\QuickGraphStd.dll">
       <PackagePath>KaemikaWPF\QuickGraphStd.dll</PackagePath>
-      <Modified>2019-12-01T16:56:08.235</Modified>
+      <Modified>2019-12-11T17:31:55.575</Modified>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\SkiaSharp.1.68.0\lib\net45\SkiaSharp.dll">
+    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\SkiaSharp.1.68.1\lib\net45\SkiaSharp.dll">
       <PackagePath>KaemikaWPF\SkiaSharp.dll</PackagePath>
-      <Modified>2018-12-02T22:21:42.000</Modified>
+      <Modified>2019-11-22T03:33:10.000</Modified>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\SkiaSharp.Views.1.68.0\lib\net45\SkiaSharp.Views.Desktop.dll">
+    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\SkiaSharp.Views.Desktop.Common.1.68.1\lib\net45\SkiaSharp.Views.Desktop.Common.dll">
+      <PackagePath>KaemikaWPF\SkiaSharp.Views.Desktop.Common.dll</PackagePath>
+      <Modified>2019-11-22T03:33:48.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\SkiaSharp.Views.1.68.1\lib\net45\SkiaSharp.Views.Desktop.dll">
       <PackagePath>KaemikaWPF\SkiaSharp.Views.Desktop.dll</PackagePath>
-      <Modified>2018-12-02T22:22:12.000</Modified>
+      <Modified>2019-11-22T03:33:42.000</Modified>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\SkiaSharp.Views.1.68.0\lib\net45\SkiaSharp.Views.Gtk.dll">
+    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\SkiaSharp.Views.Gtk2.1.68.1\lib\net45\SkiaSharp.Views.Gtk.dll">
       <PackagePath>KaemikaWPF\SkiaSharp.Views.Gtk.dll</PackagePath>
-      <Modified>2018-12-02T22:22:12.000</Modified>
+      <Modified>2019-11-22T03:34:02.000</Modified>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\SkiaSharp.Views.1.68.0\lib\net45\SkiaSharp.Views.WPF.dll">
+    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\SkiaSharp.Views.WindowsForms.1.68.1\lib\net45\SkiaSharp.Views.WindowsForms.dll">
+      <PackagePath>KaemikaWPF\SkiaSharp.Views.WindowsForms.dll</PackagePath>
+      <Modified>2019-11-22T03:34:10.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\SkiaSharp.Views.WPF.1.68.1\lib\net45\SkiaSharp.Views.WPF.dll">
       <PackagePath>KaemikaWPF\SkiaSharp.Views.WPF.dll</PackagePath>
-      <Modified>2018-12-02T22:22:14.000</Modified>
+      <Modified>2019-11-22T03:34:08.000</Modified>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\SkiaSharp.1.68.0\runtimes\win-x64\native\libSkiaSharp.dll">
+    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\System.Buffers.4.5.0\lib\netstandard2.0\System.Buffers.dll">
+      <PackagePath>KaemikaWPF\System.Buffers.dll</PackagePath>
+      <Modified>2018-05-15T12:29:34.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\System.Memory.4.5.3\lib\netstandard2.0\System.Memory.dll">
+      <PackagePath>KaemikaWPF\System.Memory.dll</PackagePath>
+      <Modified>2019-04-17T15:24:34.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll">
+      <PackagePath>KaemikaWPF\System.Numerics.Vectors.dll</PackagePath>
+      <Modified>2018-05-15T12:29:44.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\System.Runtime.CompilerServices.Unsafe.4.7.0\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll">
+      <PackagePath>KaemikaWPF\System.Runtime.CompilerServices.Unsafe.dll</PackagePath>
+      <Modified>2019-11-15T08:37:58.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\Kaemika\bin\Release\netstandard2.0\KaemikaAssets.dll">
+      <PackagePath>KaemikaWPF\KaemikaAssets.dll</PackagePath>
+      <Modified>2019-12-11T17:31:56.136</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\SkiaSharp.1.68.1\runtimes\win-x64\native\libSkiaSharp.dll">
       <PackagePath>KaemikaWPF\libSkiaSharp.dll</PackagePath>
-      <Modified>2018-12-02T22:21:46.000</Modified>
+      <Modified>2019-11-22T03:33:14.000</Modified>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\SkiaSharp.1.68.0\runtimes\osx\native\libSkiaSharp.dylib">
+    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\SkiaSharp.1.68.1\runtimes\win-x64\native\libSkiaSharp.dll">
+      <PackagePath>KaemikaWPF\x64\libSkiaSharp.dll</PackagePath>
+      <Modified>2019-11-22T03:33:14.000</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\SkiaSharp.1.68.1\runtimes\osx\native\libSkiaSharp.dylib">
       <PackagePath>KaemikaWPF\libSkiaSharp.dylib</PackagePath>
-      <Modified>2018-12-02T22:21:38.000</Modified>
+      <Modified>2019-11-22T03:33:06.000</Modified>
     </AppxPackagedFile>
-    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\SkiaSharp.1.68.0\runtimes\win-x86\native\libSkiaSharp.dll">
+    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\SkiaSharp.1.68.1\runtimes\win-x86\native\libSkiaSharp.dll">
       <PackagePath>KaemikaWPF\x86\libSkiaSharp.dll</PackagePath>
-      <Modified>2018-12-02T22:21:46.000</Modified>
+      <Modified>2019-11-22T03:33:14.000</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\KaemikaWPF\bin\Release\KaemikaWPF.exe">
       <PackagePath>KaemikaWPF\KaemikaWPF.exe</PackagePath>
-      <Modified>2019-12-01T16:56:12.077</Modified>
+      <Modified>2019-12-11T17:32:28.139</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\KaemikaWPF\bin\Release\KaemikaWPF.exe.config">
       <PackagePath>KaemikaWPF\KaemikaWPF.exe.config</PackagePath>
-      <Modified>2019-04-26T12:01:14.000</Modified>
+      <Modified>2019-12-07T03:12:20.528</Modified>
     </AppxPackagedFile>
   </ItemGroup>
   <ItemGroup>

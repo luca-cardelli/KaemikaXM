@@ -26,8 +26,8 @@ namespace KaemikaXM.Pages {
         private ModelInfo currentModelInfo;
         private Grid grid;
         private AbsoluteLayout overlapping;
-        private View editor; // is a CustomTextEditView and implements ICustomTextEdit
-        private View plot;   // is a GraphLayoutView
+        private ICustomTextEdit editor;
+        private View plot;     // is a GraphLayoutView
         private View backdrop; // because the editor stops short of filling the view
         public ToolbarItem textOutputButton;
         public ToolbarItem graphOutputButton;
@@ -58,7 +58,7 @@ namespace KaemikaXM.Pages {
                 Device.BeginInvokeOnMainThread(async () => {
                     textOutputButton.IsEnabled = false;
                     overlapping.RaiseChild(backdrop);
-                    overlapping.RaiseChild(editor);
+                    overlapping.RaiseChild(editor.AsView());
                     graphOutputButton.IsEnabled = true;
                 });
             } else {
@@ -93,7 +93,7 @@ namespace KaemikaXM.Pages {
                 FontSize = 14,
             };
 
-            currentTextOutputAction = outputActions["System Reactions"]; //Chemical Trace
+            currentTextOutputAction = outputActions["Chemical Trace"];
             currentGraphOutputAction = outputActions["Protocol Step Graph"];
             currentOutputAction = currentTextOutputAction;
 
@@ -110,11 +110,14 @@ namespace KaemikaXM.Pages {
         }
 
         public OutputPage() {
-            Icon = "icons8truefalse100.png";
+            Title = "Output";
+            IconImageSource = "icons8truefalse100.png";
 
             outputActions = new Dictionary<string, OutputAction>();
             foreach (OutputAction outputAction in outputActionsList())
                 outputActions[outputAction.name] = outputAction;
+
+            // in iOS>Resource the images of the TitleBar buttons must be size 40, otherwise they will scale but still take the horizontal space of the original
 
             textOutputButton = TextOuputButton();
             graphOutputButton = GraphOutputButton();
@@ -127,7 +130,7 @@ namespace KaemikaXM.Pages {
                 new ToolbarItem("CopyAll", "icons8export96", async () => {
                     string text = "";
                     if (currentOutputAction.kind == OutputKind.Text) {
-                        text = (editor as ICustomTextEdit).GetText();
+                        text = editor.GetText();
                     }
                     if (currentOutputAction.kind == OutputKind.Graph) {
                         var layout = (plot as GraphLayoutView).GraphLayout;
@@ -139,15 +142,15 @@ namespace KaemikaXM.Pages {
                     if (text != "") await Clipboard.SetTextAsync(text);
                 }));
 
-            editor = Kaemika.GUI_Xamarin.customTextEditor();
-            (editor as ICustomTextEdit).SetEditable(false);
+            editor = Kaemika.GUI_Xamarin.TextEditor();
+            editor.SetEditable(false);
 
             plot = new GraphLayoutView() {
                 GraphLayout = null,
                 BackgroundColor = Color.White,
             };
 
-            var stepper = MainTabbedPage.theModelEntryPage.TextSizeStepper(editor as ICustomTextEdit);
+            var stepper = MainTabbedPage.theModelEntryPage.TextSizeStepper(editor);
             var startButton = MainTabbedPage.theModelEntryPage.StartButton(switchToChart: false, switchToOutput: false); // just needed to get its HightRequest
             outputPicker = OutputPicker();
 
@@ -175,11 +178,11 @@ namespace KaemikaXM.Pages {
             AbsoluteLayout.SetLayoutFlags(plot, AbsoluteLayoutFlags.All);
             AbsoluteLayout.SetLayoutBounds(backdrop, new Rectangle(0, 0, 1, 1));
             AbsoluteLayout.SetLayoutFlags(backdrop, AbsoluteLayoutFlags.All);
-            AbsoluteLayout.SetLayoutBounds(editor, new Rectangle(0, 0, 1, 1));
-            AbsoluteLayout.SetLayoutFlags(editor, AbsoluteLayoutFlags.All);
+            AbsoluteLayout.SetLayoutBounds(editor.AsView(), new Rectangle(0, 0, 1, 1));
+            AbsoluteLayout.SetLayoutFlags(editor.AsView(), AbsoluteLayoutFlags.All);
             overlapping.Children.Add(plot);
             overlapping.Children.Add(backdrop);
-            overlapping.Children.Add(editor);
+            overlapping.Children.Add(editor.AsView());
 
             grid.Children.Add(overlapping, 0, 0);
             grid.Children.Add(bottomBar, 0, 1);
@@ -188,11 +191,11 @@ namespace KaemikaXM.Pages {
         }
 
         public string GetText() {
-            return (editor as ICustomTextEdit).GetText();
+            return editor.GetText();
         }
 
         public void SetText(string text) {
-            (editor as ICustomTextEdit).SetText(text);
+            editor.SetText(text);
         }
 
         public void AppendText(string text) {

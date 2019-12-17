@@ -1,6 +1,7 @@
 ﻿using Foundation;
 using UIKit;
 using System.IO;
+using Kaemika;
 
 namespace KaemikaXM.iOS
 {
@@ -20,11 +21,37 @@ namespace KaemikaXM.iOS
         public override bool FinishedLaunching(UIApplication app, NSDictionary options)
         {
 
-            Stream cgtStream = null; // ########### do the equivalent of Android: cgtStream = Assets.Open("kaemikaCGT.cgt");
-
             global::Xamarin.Forms.Forms.SetFlags("Shell_Experimental", "Visual_Experimental", "CollectionView_Experimental", "FastRenderers_Experimental");
             global::Xamarin.Forms.Forms.Init();
-    //        LoadApplication(new App(cgtStream, null)); // ##############
+
+            CustomTextEditorDelegate neutralTextEditor =
+               () => {
+                   GUI_Xamarin.NeutralTextEditView editor = new GUI_Xamarin.NeutralTextEditView();
+                   Xamarin.Forms.View view = editor.AsView();
+                   view.HorizontalOptions = Xamarin.Forms.LayoutOptions.FillAndExpand;
+                   view.VerticalOptions = Xamarin.Forms.LayoutOptions.FillAndExpand;
+                   return editor;
+                   //return new GUI_Xamarin.NeutralTextEditView {
+                   //    HorizontalOptions = Xamarin.Forms.LayoutOptions.FillAndExpand,
+                   //    VerticalOptions = Xamarin.Forms.LayoutOptions.FillAndExpand,
+                   //};
+               };
+
+
+            CustomTextEditorDelegate customTextEditor =
+                () => {
+                    return new CustomTextEditView {
+                        HorizontalOptions = Xamarin.Forms.LayoutOptions.FillAndExpand,
+                        VerticalOptions = Xamarin.Forms.LayoutOptions.FillAndExpand,
+                    };
+            };
+
+            // How to add a LaunchScreen - SplashScreen
+            // https://docs.microsoft.com/en-us/xamarin/ios/app-fundamentals/images-icons/launch-screens?tabs=windows#migrating-to-launch-screen-storyboards
+
+            UINavigationBar.Appearance.TintColor = UIColor.White; // affect the color of the bitmaps in the top toolbar
+
+            LoadApplication(new App("iOS", customTextEditor));  // or neutralTextEditor
 
             return base.FinishedLaunching(app, options);
         }

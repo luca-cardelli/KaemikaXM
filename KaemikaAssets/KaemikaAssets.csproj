@@ -1,0 +1,123 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\2AM Oscillator.txt" />
+    <None Remove="Assets\A01 Copy.txt" />
+    <None Remove="Assets\A02 Addition.txt" />
+    <None Remove="Assets\A03 CopyAndAdd.txt" />
+    <None Remove="Assets\A04 Multiplication.txt" />
+    <None Remove="Assets\A05 Division.txt" />
+    <None Remove="Assets\AboutAssets.txt" />
+    <None Remove="Assets\Addition Block.txt" />
+    <None Remove="Assets\ApproximateMajority.txt" />
+    <None Remove="Assets\B01 DifferentialSignals.txt" />
+    <None Remove="Assets\B02 DifferentialAddition.txt" />
+    <None Remove="Assets\B03 DifferentialSubtraction.txt" />
+    <None Remove="Assets\B04 DifferentialAbstractions.txt" />
+    <None Remove="Assets\BuiltinFunctions.txt" />
+    <None Remove="Assets\CutiveMono-Regular OFL.txt" />
+    <None Remove="Assets\Derivative Block.txt" />
+    <None Remove="Assets\Derivative1.txt" />
+    <None Remove="Assets\Derivative2.txt" />
+    <None Remove="Assets\DroidSansMono LICENSE.txt" />
+    <None Remove="Assets\Droplets.txt" />
+    <None Remove="Assets\DualRailConverter Block.txt" />
+    <None Remove="Assets\EnzymeKinetics.txt" />
+    <None Remove="Assets\Flows.txt" />
+    <None Remove="Assets\Functions.txt" />
+    <None Remove="Assets\HighPassFilter.txt" />
+    <None Remove="Assets\Integral Block.txt" />
+    <None Remove="Assets\kaemikaCGT.cgt" />
+    <None Remove="Assets\KaemikaGrammar.txt" />
+    <None Remove="Assets\LorenzAttractor - ANSI.txt" />
+    <None Remove="Assets\LorenzAttractor.txt" />
+    <None Remove="Assets\LotkaVolterra.txt" />
+    <None Remove="Assets\MixAndSplit.txt" />
+    <None Remove="Assets\MolarMass.txt" />
+    <None Remove="Assets\PBS.txt" />
+    <None Remove="Assets\PIDController Block.txt" />
+    <None Remove="Assets\PIDController Optimization.txt" />
+    <None Remove="Assets\PIDController.txt" />
+    <None Remove="Assets\PosTestSignal Sine.txt" />
+    <None Remove="Assets\PosTestSignal Step.txt" />
+    <None Remove="Assets\productions.txt" />
+    <None Remove="Assets\Proportional Block.txt" />
+    <None Remove="Assets\Reactions.txt" />
+    <None Remove="Assets\RegressionTests.txt" />
+    <None Remove="Assets\RingOscillator.txt" />
+    <None Remove="Assets\Samples.txt" />
+    <None Remove="Assets\SerialDilution.txt" />
+    <None Remove="Assets\SineWave.txt" />
+    <None Remove="Assets\SquareWave.txt" />
+    <None Remove="Assets\StartHere.txt" />
+    <None Remove="Assets\Subtraction Block.txt" />
+    <None Remove="Assets\TestSignal Sine.txt" />
+    <None Remove="Assets\TestSignal Step.txt" />
+    <None Remove="Assets\Transporters.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\2AM Oscillator.txt" />
+    <EmbeddedResource Include="Assets\A01 Copy.txt" />
+    <EmbeddedResource Include="Assets\A02 Addition.txt" />
+    <EmbeddedResource Include="Assets\A03 CopyAndAdd.txt" />
+    <EmbeddedResource Include="Assets\A04 Multiplication.txt" />
+    <EmbeddedResource Include="Assets\A05 Division.txt" />
+    <EmbeddedResource Include="Assets\AboutAssets.txt" />
+    <EmbeddedResource Include="Assets\Addition Block.txt" />
+    <EmbeddedResource Include="Assets\ApproximateMajority.txt" />
+    <EmbeddedResource Include="Assets\B01 DifferentialSignals.txt" />
+    <EmbeddedResource Include="Assets\B02 DifferentialAddition.txt" />
+    <EmbeddedResource Include="Assets\B03 DifferentialSubtraction.txt" />
+    <EmbeddedResource Include="Assets\B04 DifferentialAbstractions.txt" />
+    <EmbeddedResource Include="Assets\BuiltinFunctions.txt" />
+    <EmbeddedResource Include="Assets\CutiveMono-Regular OFL.txt" />
+    <EmbeddedResource Include="Assets\Derivative Block.txt" />
+    <EmbeddedResource Include="Assets\Derivative1.txt" />
+    <EmbeddedResource Include="Assets\Derivative2.txt" />
+    <EmbeddedResource Include="Assets\DroidSansMono LICENSE.txt" />
+    <EmbeddedResource Include="Assets\Droplets.txt" />
+    <EmbeddedResource Include="Assets\DualRailConverter Block.txt" />
+    <EmbeddedResource Include="Assets\EnzymeKinetics.txt" />
+    <EmbeddedResource Include="Assets\Flows.txt" />
+    <EmbeddedResource Include="Assets\Functions.txt" />
+    <EmbeddedResource Include="Assets\HighPassFilter.txt" />
+    <EmbeddedResource Include="Assets\Integral Block.txt" />
+    <EmbeddedResource Include="Assets\kaemikaCGT.cgt" />
+    <EmbeddedResource Include="Assets\KaemikaGrammar.txt" />
+    <EmbeddedResource Include="Assets\LorenzAttractor - ANSI.txt" />
+    <EmbeddedResource Include="Assets\LorenzAttractor.txt" />
+    <EmbeddedResource Include="Assets\LotkaVolterra.txt" />
+    <EmbeddedResource Include="Assets\MixAndSplit.txt" />
+    <EmbeddedResource Include="Assets\MolarMass.txt" />
+    <EmbeddedResource Include="Assets\PBS.txt" />
+    <EmbeddedResource Include="Assets\PIDController Block.txt" />
+    <EmbeddedResource Include="Assets\PIDController Optimization.txt" />
+    <EmbeddedResource Include="Assets\PIDController.txt" />
+    <EmbeddedResource Include="Assets\PosTestSignal Sine.txt" />
+    <EmbeddedResource Include="Assets\PosTestSignal Step.txt" />
+    <EmbeddedResource Include="Assets\productions.txt" />
+    <EmbeddedResource Include="Assets\Proportional Block.txt" />
+    <EmbeddedResource Include="Assets\Reactions.txt" />
+    <EmbeddedResource Include="Assets\RegressionTests.txt" />
+    <EmbeddedResource Include="Assets\RingOscillator.txt" />
+    <EmbeddedResource Include="Assets\Samples.txt" />
+    <EmbeddedResource Include="Assets\SerialDilution.txt" />
+    <EmbeddedResource Include="Assets\SineWave.txt" />
+    <EmbeddedResource Include="Assets\SquareWave.txt" />
+    <EmbeddedResource Include="Assets\StartHere.txt" />
+    <EmbeddedResource Include="Assets\Subtraction Block.txt" />
+    <EmbeddedResource Include="Assets\TestSignal Sine.txt" />
+    <EmbeddedResource Include="Assets\TestSignal Step.txt" />
+    <EmbeddedResource Include="Assets\Transporters.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CalithaGOLD\CalithaGOLD.csproj" />
+  </ItemGroup>
+
+</Project>

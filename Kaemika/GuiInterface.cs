@@ -49,6 +49,7 @@ namespace Kaemika
     }
 
     public abstract class GuiInterface {
+        public abstract string Platform();
         public abstract string InputGetText();
         public abstract void InputSetText(string text);
         public abstract void InputInsertText(string text);
@@ -84,6 +85,9 @@ namespace Kaemika
         public abstract bool PrecomputeLNA();
         public abstract void ChartListboxAddSeries(string name);
         public abstract void ClipboardSetText(string text);
+        public abstract void ChartSnap();
+        public abstract void ChartData();
+        public abstract void OutputCopy();
         public abstract void DeviceUpdate();
         public abstract void DeviceShow();
         public abstract void DeviceHide();

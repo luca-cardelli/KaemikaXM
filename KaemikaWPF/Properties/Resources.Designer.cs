@@ -61,1251 +61,272 @@ namespace KaemikaWPF.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// A limit cycle oscillator built from 
-        ///// 2 Approximate Majority switches
-        /////======================================
-        ///
-        ///// A triplet of species lo&lt;-&gt;md&lt;-&gt;hi 
-        ///// activated from lo to hi by act, 
-        ///// and inhibited from hi to lo by inh
-        ///
-        ///network Triplet(species lo hi act inh, number rate) {
-        ///   species md @ 0M
-        ///   act &gt;&gt; lo -&gt; md    {rate}
-        ///   act &gt;&gt; md -&gt; hi    {rate}
-        ///   inh &gt;&gt; hi -&gt; md    {rate}
-        ///   inh &gt;&gt; md -&gt; lo    {rate}
-        ///}
-        ///
-        ///// Approximate Majority bistable [rest of string was truncated]&quot;;.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string _2AM_Oscillator {
+        internal static System.Drawing.Bitmap deviceBorder_W_48x48 {
             get {
-                return ResourceManager.GetString("_2AM_Oscillator", resourceCulture);
+                object obj = ResourceManager.GetObject("deviceBorder_W_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Copy
-        /////======================================
-        ///
-        ///species a @ 2 M
-        ///species a&apos; @ 0 M
-        ///report a, a&apos;
-        ///
-        ///a -&gt; a + a&apos;
-        ///a&apos; -&gt; #
-        ///
-        ///equilibrate for 5
-        ///.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string A01_Copy {
+        internal static System.Drawing.Bitmap FontSizeMinus_W_48x48 {
             get {
-                return ResourceManager.GetString("A01_Copy", resourceCulture);
+                object obj = ResourceManager.GetObject("FontSizeMinus_W_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Addition
-        /////======================================
-        ///
-        ///species a @ 2 M
-        ///species b @ 3 M
-        ///species c @ 0 M
-        ///report a, b, c
-        ///
-        ///a -&gt; c
-        ///b -&gt; c
-        ///
-        ///equilibrate for 5
-        ///.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string A02_Addition {
+        internal static System.Drawing.Bitmap FontSizePlus_W_48x48 {
             get {
-                return ResourceManager.GetString("A02_Addition", resourceCulture);
+                object obj = ResourceManager.GetObject("FontSizePlus_W_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Non-destructive Addition
-        /////======================================
-        ///
-        ///species a @ 2 M
-        ///species b @ 3 M
-        ///species c @ 0 M
-        ///report a, b, c
-        ///
-        ///a -&gt; a + c
-        ///b -&gt; b + c
-        ///c -&gt; #
-        ///
-        ///equilibrate for 5
-        ///.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string A03_CopyAndAdd {
+        internal static System.Drawing.Bitmap icons8_keyboard_96_W_48x48 {
             get {
-                return ResourceManager.GetString("A03_CopyAndAdd", resourceCulture);
+                object obj = ResourceManager.GetObject("icons8_keyboard_96_W_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Multiplication
-        /////======================================
-        ///
-        ///species a @ 2 M
-        ///species b @ 3 M
-        ///species c @ 0 M
-        ///report a, b, c
-        ///
-        ///a + b -&gt; a + b + c
-        ///c -&gt; #
-        ///
-        ///equilibrate for 5
-        ///
-        ///.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string A04_Multiplication {
+        internal static System.Drawing.Bitmap icons8_settings_384_W_48x48 {
             get {
-                return ResourceManager.GetString("A04_Multiplication", resourceCulture);
+                object obj = ResourceManager.GetObject("icons8_settings_384_W_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Division
-        /////======================================
-        ///
-        ///species a @ 2 M
-        ///species b @ 3 M
-        ///species c @ 0 M
-        ///report a, b, c
-        ///
-        ///a -&gt; a + c
-        ///b + c -&gt; b
-        ///
-        ///equilibrate for 5
-        ///
-        ///
-        ///.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string A05_Division {
+        internal static System.Drawing.Bitmap icons8_share_384_W_48x48 {
             get {
-                return ResourceManager.GetString("A05_Division", resourceCulture);
+                object obj = ResourceManager.GetObject("icons8_share_384_W_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Addition Block
-        /////======================================
-        ///
-        /////------------------ Addition Block -------------------
-        ///
-        ///// U = P + I + D
-        ///network SumBlock(species P⁺ P⁻ I⁺ I⁻ D⁺ D⁻ U⁺ U⁻) {
-        ///      P⁺ -&gt; P⁺ + U⁺        {1}
-        ///      P⁻ -&gt; P⁻  + U⁻       {1}
-        ///      I⁺ -&gt; I⁺ + U⁺        {1}
-        ///      I⁻ -&gt; I⁻  + U⁻       {1}
-        ///      D⁺ -&gt; D⁺ + U⁺        {1}
-        ///      D⁻ -&gt; D⁻  + U⁻       {1}
-        ///      U⁺ -&gt; #              {1}
-        ///      U⁻ -&gt; #              {1}
-        ///      U⁺ + U⁻ -&gt; #    [rest of string was truncated]&quot;;.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string Addition_Block {
+        internal static System.Drawing.Bitmap icons8combochart96_W_48x48 {
             get {
-                return ResourceManager.GetString("Addition_Block", resourceCulture);
+                object obj = ResourceManager.GetObject("icons8combochart96_W_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Approximate Majority bistable system
-        /////======================================
-        ///
-        ///// A triplet of species lo &lt;-&gt; md &lt;-&gt; hi 
-        ///// activated from lo to hi by act, 
-        ///// and inhibited from hi to lo by inh
-        ///
-        ///network Triplet(species lo hi act inh, number rate) {
-        ///   species md @ 0M
-        ///   report hi, lo, md, hi+lo+md as &quot;total&quot;
-        ///   act &gt;&gt; lo -&gt; md    {rate}
-        ///   act &gt;&gt; md -&gt; hi    {rate}
-        ///   inh &gt;&gt; hi -&gt; md    {rate}
-        ///   inh &gt;&gt; md -&gt; lo    {rate}
-        ///}
-        ///
-        ///// Approximate Majori [rest of string was truncated]&quot;;.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string ApproximateMajority {
+        internal static System.Drawing.Bitmap icons8device_OFF_48x48 {
             get {
-                return ResourceManager.GetString("ApproximateMajority", resourceCulture);
+                object obj = ResourceManager.GetObject("icons8device_OFF_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Differential Signals
-        /////======================================
-        ///
-        ///// a = a⁺ - a⁻
-        ///
-        ///species a⁺ @ 1 M
-        ///species a⁻ @ 3 M
-        ///report a⁺, a⁻
-        ///report a⁺ - a⁻ 
-        ///
-        ///# -&gt; a⁺
-        ///# -&gt; a⁻
-        ///
-        ///// normalization:
-        ///// a⁺ + a⁻ -&gt; #
-        ///
-        ///equilibrate for 5
-        ///
-        ///
-        ///
-        ///.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string B01_DifferentialSignals {
+        internal static System.Drawing.Bitmap icons8device_ON_48x48 {
             get {
-                return ResourceManager.GetString("B01_DifferentialSignals", resourceCulture);
+                object obj = ResourceManager.GetObject("icons8device_ON_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Differential Addition
-        /////======================================
-        ///
-        ///// a + b = (a⁺ - a⁻) + (b⁺ - b⁻)
-        /////       = (a⁺ + b⁺) - (a⁻ + b⁻)
-        /////       = c⁺ - c⁻ = c
-        ///
-        ///species a⁺ @ 2 M
-        ///species a⁻ @ 0 M
-        ///
-        ///species b⁺ @ 0 M
-        ///species b⁻ @ 3 M
-        ///
-        ///species c⁺ @ 0 M
-        ///species c⁻ @ 0 M
-        ///
-        ///report a⁺ - a⁻, b⁺ - b⁻, c⁺ - c⁻
-        ///
-        ///a⁺ -&gt; c⁺
-        ///b⁺ -&gt; c⁺
-        ///
-        ///a⁻ -&gt; c⁻
-        ///b⁻ -&gt; c⁻
-        ///
-        ///equilibrate for 5
-        ///
-        ///
-        ///.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string B02_DifferentialAddition {
+        internal static System.Drawing.Bitmap icons8export96rht_48x48 {
             get {
-                return ResourceManager.GetString("B02_DifferentialAddition", resourceCulture);
+                object obj = ResourceManager.GetObject("icons8export96rht_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Differential Subtraction
-        /////======================================
-        ///
-        ///// a - b = (a⁺ - a⁻) - (b⁺ - b⁻)
-        /////       = (a⁺ + b⁻) - (a⁻ + b⁺)
-        /////       = c⁺ - c⁻ = c
-        ///
-        ///species a⁺ @ 2 M
-        ///species a⁻ @ 0 M
-        ///
-        ///species b⁺ @ 0 M
-        ///species b⁻ @ 3 M
-        ///
-        ///species c⁺ @ 0 M
-        ///species c⁻ @ 0 M
-        ///
-        ///report a⁺ - a⁻, b⁺ - b⁻, c⁺ - c⁻
-        ///
-        ///a⁺ -&gt; c⁺
-        ///b⁻ -&gt; c⁺
-        ///
-        ///a⁻ -&gt; c⁻
-        ///b⁺ -&gt; c⁻
-        ///
-        ///equilibrate for 5
-        ///
-        ///
-        ///
-        ///.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string B03_DifferentialSubtraction {
+        internal static System.Drawing.Bitmap icons8import96rht_48x48 {
             get {
-                return ResourceManager.GetString("B03_DifferentialSubtraction", resourceCulture);
+                object obj = ResourceManager.GetObject("icons8import96rht.48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Differential Abstractions
-        /////======================================
-        ///
-        ///// Encoding a positive or negative number
-        ///function signal(number n) {
-        ///  define
-        ///    species n⁺ @ pos(n) M
-        ///    species n⁻ @ pos(-n) M
-        ///    n⁺ + n⁻ -&gt; #
-        ///  yield
-        ///    [n⁺, n⁻]
-        ///}
-        ///
-        ///// Addition
-        ///function add([species a⁺ a⁻], [species b⁺ b⁻]) {
-        ///  define
-        ///    [species c⁺ c⁻] = signal(0)
-        ///    a⁺ -&gt; c⁺; b⁺ -&gt; c⁺
-        ///    a⁻ -&gt; c⁻; b⁻ -&gt; c⁻
-        ///  yield
-        ///    [c⁺, c⁻]
-        ///}
-        ///
-        ///// Subtraction
-        ///function sub([s [rest of string was truncated]&quot;;.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string B04_DifferentialAbstractions {
+        internal static System.Drawing.Bitmap icons8pauseplay40 {
             get {
-                return ResourceManager.GetString("B04_DifferentialAbstractions", resourceCulture);
+                object obj = ResourceManager.GetObject("icons8pauseplay40", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// UNDO text changes
-        /////======================================
-        ///
-        ///&quot;Hacker&apos;s Keyboard&quot; (a keyboard alternative 
-        ///from the Play Store that selectably replaces 
-        ///the built-in keyboard) supports undo via 
-        ///Ctrl-Z, as well as Ctrl-X/C/V. There is no 
-        ///other known way to undo text on Android.
-        ///
-        /////======================================
-        ///// Builtin functions and operators
-        /////======================================
-        ///
-        ///// All numbers are double precision, 
-        ///// illegal operati [rest of string was truncated]&quot;;.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string BuiltinFunctions {
+        internal static System.Drawing.Bitmap icons8play40 {
             get {
-                return ResourceManager.GetString("BuiltinFunctions", resourceCulture);
+                object obj = ResourceManager.GetObject("icons8play40", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Derivative Block
-        /////======================================
-        ///
-        ///number precision = 10
-        ///
-        /////------------------ Derivative Block -------------------
-        ///network DBlock(species E⁺ E⁻ D⁺ D⁻, number Kd) {
-        ///       species A⁺, A⁻ @ 0M  // D block auxiliary species
-        ///       E⁺-&gt;E⁺ + A⁺         {precision}
-        ///       A⁺ -&gt;#             {precision}
-        ///       E⁻ -&gt;E⁻ + A⁻        {precision}
-        ///       A⁻ -&gt;#             {precision}
-        ///       E⁺ -&gt;E⁺ + D⁺        {precision*precision*Kd}
-        ///   [rest of string was truncated]&quot;;.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string Derivative_Block {
+        internal static System.Drawing.Bitmap icons8stop40 {
             get {
-                return ResourceManager.GetString("Derivative_Block", resourceCulture);
+                object obj = ResourceManager.GetObject("icons8stop40", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Single-rail Derivative.
-        ///// This network computes the derivative 
-        ///// on an input signal A as the difference 
-        ///// of two output signals B⁺ B⁻.
-        ///// I.e. the (positive or negative) output 
-        ///// is represented as the difference of 
-        ///// two positive signals.
-        /////======================================
-        ///
-        ///// input A, output B⁺ - B⁻
-        ///
-        ///network deriv1(species A B⁺ B⁻) {         
-        ///	number r = 1000
-        ///	number s = 1000
-        ///	amount B⁺ B⁻ @ 0 M
-        ///	species A&apos; @ observe(A) M
-        ///	
-        ///	// A&apos; [rest of string was truncated]&quot;;.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string Derivative1 {
+        internal static System.Drawing.Bitmap icons8text_48x48 {
             get {
-                return ResourceManager.GetString("Derivative1", resourceCulture);
+                object obj = ResourceManager.GetObject("icons8text.48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Dual-rail Derivative.
-        ///// This network computes the derivative 
-        ///// of a differential input A⁺ - A⁻ as a 
-        ///// differential output B⁺ - B⁻.
-        /////======================================
-        ///
-        ///// input: A⁺ - A⁻, output: B⁺ - B⁻
-        ///
-        ///network deriv(species A⁺ A⁻ B⁺ B⁻) {         
-        ///	number r = 1000
-        ///	number s = 1000
-        ///	amount B⁺ @ 0 M
-        ///	amount B⁻ @ 0 M
-        ///	species A&apos;⁺ @ observe(A⁺)M
-        ///	species A&apos;⁻ @ observe(A⁻)M
-        ///	
-        ///	// A&apos;⁺ tracks A⁺ by r
-        ///	A⁺ -&gt;{r} A⁺ + A&apos;⁺;   A&apos;⁺ -&gt;{r} #
-        ///	
-        ///	// [rest of string was truncated]&quot;;.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string Derivative2 {
+        internal static System.Drawing.Bitmap icons8truefalse100_W_48x48 {
             get {
-                return ResourceManager.GetString("Derivative2", resourceCulture);
+                object obj = ResourceManager.GetObject("icons8truefalse100_W_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Droplets
-        /////======================================
-        ///
-        ///// Activate the Device
-        ///
-        ///sample M {3mL, 20C}
-        ///
-        ///split A,B,C,D = M by 0.125,0.125,0.25,0.5
-        ///
-        ///mix N = D,B,A,C
-        ///
-        ///dispose N
-        ///
-        ///.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string Droplets {
+        internal static System.Drawing.Bitmap icons8truefalse100_W_48x481 {
             get {
-                return ResourceManager.GetString("Droplets", resourceCulture);
+                object obj = ResourceManager.GetObject("icons8truefalse100_W_48x481", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Dual Rail Converter Block
-        /////======================================
-        ///
-        /////------------- Dual Rail Converter Block --------------
-        ///network DualRail (species A A⁺ A⁻) {
-        ///       A -&gt; A + A⁺ 
-        ///       A⁺ -&gt; #
-        ///       A⁺ + A⁻ -&gt; #
-        ///}
-        ///
-        /////----------------- Unit testing ------------------
-        ///
-        ///// Input
-        ///species A @ 1.5 M
-        ///
-        ///// Output
-        ///species A⁺ @ 2.0 M
-        ///species A⁻ @ 0.0 M
-        ///
-        ///DualRail (A, A⁺, A⁻) 
-        ///
-        ///// Plotting
-        ///report A, A⁺ - A⁻
-        ///equilibrate for 4
-        ///
-        ///
-        ///.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string DualRailConverter_Block {
+        internal static System.Drawing.Bitmap Noise_CV_W_48x48 {
             get {
-                return ResourceManager.GetString("DualRailConverter_Block", resourceCulture);
+                object obj = ResourceManager.GetObject("Noise_CV_W_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Enzyme Kinetics
-        /////======================================
-        ///
-        /////======================================
-        ///// Mass Action Kinetics
-        /////======================================
-        ///
-        ///number on = 1      // enzyme-to-substrate binding rate
-        ///number off = 1     // enzyme-to-substrate unbinding rate
-        ///number cat = 1     // product production rate
-        ///number Etot = 1    // initial and total amount of enzyme
-        ///
-        ///// Enzyme, Substrate, Product, 
-        ///// and Enzyme-Substrate complex:
-        ///
-        ///speci [rest of string was truncated]&quot;;.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string EnzymeKinetics {
+        internal static System.Drawing.Bitmap Noise_Fano_W_48x48 {
             get {
-                return ResourceManager.GetString("EnzymeKinetics", resourceCulture);
+                object obj = ResourceManager.GetObject("Noise_Fano_W_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Building and using Flows
-        /////======================================
-        ///
-        ///Flows are a powerful expression language
-        ///for representing time series, used in
-        ///rate expressions and in report
-        ///(plotting) expressions. Flows are also
-        ///exactly the labels that appear in chart 
-        ///legends.
-        ///
-        ///A flow is a term (essentially a data
-        ///structure) representing a value at any
-        ///given time t. A flow can be built out of
-        ///a few combinators:
-        ///
-        ///- not a variable 
-        ///(a flow is a closed expressio [rest of string was truncated]&quot;;.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string Flows {
+        internal static System.Drawing.Bitmap Noise_None_W_48x48 {
             get {
-                return ResourceManager.GetString("Flows", resourceCulture);
+                object obj = ResourceManager.GetObject("Noise_None.W.48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Recursive function definition
-        /////======================================
-        ///
-        ///function factorial(number n) {
-        ///	if n &lt;= 0 then 1 
-        ///	else n * factorial(n-1) 
-        ///	end
-        ///}
-        ///
-        ///// Plot results:
-        ///
-        ///species factorialOf2 @ factorial(2) M
-        ///
-        ///
-        /////======================================
-        ///// Mutually recursive definitions 
-        /////======================================
-        ///
-        ///function f(number n) {
-        ///	if n &lt;= 0 then 0 else 1 + g(n-1) end
-        ///}
-        ///function g(number n){
-        ///	if n &lt;= 0 then 0 else 1 + f [rest of string was truncated]&quot;;.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string Functions {
+        internal static System.Drawing.Bitmap Noise_Sigma_W_48x48 {
             get {
-                return ResourceManager.GetString("Functions", resourceCulture);
+                object obj = ResourceManager.GetObject("Noise_Sigma_W_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// A chemical realization of a 
-        ///// High-Pass-Filter  
-        ///// (https://arxiv.org/abs/1812.03308)
-        ///// tested on a sine input 
-        ///// at its cutoff frequency
-        /////======================================
-        ///
-        ///network HighPassFilter(species vA⁺ vA⁻ vB⁺ vB⁻) {
-        ///	number h = 0.01
-        ///	number p = 1/(1+h)
-        ///	number q = 1/(h+h*h)
-        ///	number r = 1/h
-        ///	number ann = r
-        ///	
-        ///	species i⁺, i⁻ @ 0M
-        ///	vA⁺ -&gt; vA⁺ + i⁺		{p} 
-        ///	i⁻ -&gt; i⁻ + i⁺		{p}
-        ///	vA⁻ -&gt; vA⁻ + i⁻		{p}
-        ///	i⁺ -&gt; i⁺ + i⁻		{p}
-        ///	vA⁺ -&gt; vA⁺ +  [rest of string was truncated]&quot;;.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string HighPassFilter {
+        internal static System.Drawing.Bitmap Noise_SigmaRange_W_48x48 {
             get {
-                return ResourceManager.GetString("HighPassFilter", resourceCulture);
+                object obj = ResourceManager.GetObject("Noise_SigmaRange_W_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Integral Block
-        /////======================================
-        ///
-        ///number precision = 10
-        ///
-        /////------------------- Integral Block --------------------
-        ///network IBlock (species E⁺ E⁻ I⁺ I⁻, number Ki) {
-        ///       E⁺ -&gt; E⁺ + I⁺            {Ki}
-        ///       E⁻ -&gt; E⁻ + I⁻            {Ki}
-        ///       I⁻ + I⁺ -&gt; #             {precision}
-        ///}
-        ///
-        /////----------------- Unit testing ------------------
-        ///
-        ///// Input waveform
-        ///network DSignal(species X⁺ X⁻, function f) {
-        ///   number precision = 100        /// [rest of string was truncated]&quot;;.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string Integral_Block {
+        internal static System.Drawing.Bitmap Noise_SigmaSq_W_48x48 {
             get {
-                return ResourceManager.GetString("Integral_Block", resourceCulture);
+                object obj = ResourceManager.GetObject("Noise_SigmaSq_W_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] kaemikaCGT {
+        internal static System.Drawing.Bitmap Noise_SigmaSqRange_W_48x48 {
             get {
-                object obj = ResourceManager.GetObject("kaemikaCGT", resourceCulture);
-                return ((byte[])(obj));
+                object obj = ResourceManager.GetObject("Noise_SigmaSqRange_W_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &quot;Name&quot;    = Kaemika grammar
-        ///&quot;Author&quot;  = Luca Cardelli
-        ///&quot;Version&quot; = 1
-        ///&quot;About&quot;   = A Language for Modularizing Chemistry
-        ///          
-        ///&quot;Case Sensitive&quot; = True
-        ///&quot;Start Symbol&quot;   = &lt;Top&gt;
-        ///
-        ///Id        = ({Letter}|{Greek and Coptic})({AlphaNumeric}|{Greek and Coptic}|&apos;_&apos;|{Superscripts and Subscripts}|&apos;&apos;)*           ! Letter followed by alphanumerics or single-quote, underscore, Unicode sup/sub
-        ///Integer   = {Digit}+
-        ///Float     = {Digit}+ &apos;.&apos; {Digit}+
-        ///Double    = {Digit}+ (&apos;.&apos; {Digit}+)? [Ee] [+-]? {Digit}+
-        ///{Str [rest of string was truncated]&quot;;.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string KaemikaGrammar {
+        internal static System.Drawing.Bitmap Parameters_W_48x48 {
             get {
-                return ResourceManager.GetString("KaemikaGrammar", resourceCulture);
+                object obj = ResourceManager.GetObject("Parameters_W_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Lorenz chaotic attractor
-        /////
-        ///// dx/dt = s y - s x
-        ///// dy/dt = r x - x z - y
-        ///// dz/dt = x y - b z
-        /////
-        ///// s = 10, b = 8/3, r = 28
-        ///// x₀ = 1, y₀ = 0, z₀ = 28
-        /////======================================
-        ///
-        ////*
-        ///  Its dual rail representation:
-        ///x = x⁺ - x⁻
-        ///y = y⁺ - y⁻
-        ///z = z⁺ - z⁻
-        ///   substitute in the first ODE:
-        ///d(x⁺ - x⁻)/dt = s (y⁺ - y⁻) - s (x⁺ - x⁻)
-        ///   separate the monomials
-        ///dx⁺/dt = s y⁺ + s x⁻
-        ///dx⁻/dt = s y⁻ + s x⁺
-        ///   generate one reaction for each monomi [rest of string was truncated]&quot;;.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string LorenzAttractor {
+        internal static System.Drawing.Bitmap Splash_589 {
             get {
-                return ResourceManager.GetString("LorenzAttractor", resourceCulture);
+                object obj = ResourceManager.GetObject("Splash_589", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Lotka 1920, Volterra 1926
-        ///// (simplified with all rates = 1)
-        /////======================================
-        ///
-        ///number x1₀ =? uniform(0,1) // random x1₀
-        ///number x2₀ =? uniform(0,1) // random x2₀
-        ///
-        ///species x1 @ x1₀ M     // prey
-        ///species x2 @ x2₀ M     // predator
-        ///
-        ///x1 -&gt; x1 + x1       {1}// prey reproduces
-        ///x1 + x2 -&gt; x2 + x2  {1}// predator eats prey
-        ///x2 -&gt; #             {1}// predator dies
-        ///
-        ///equilibrate for 40
-        ///
-        ///.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string LotkaVolterra {
+        internal static System.Drawing.Bitmap Test_W_48x48 {
             get {
-                return ResourceManager.GetString("LotkaVolterra", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Example of Sample Manipulation
-        /////======================================
-        ///
-        ///species {c}
-        ///
-        ///sample A 
-        ///species a @ 1M in A
-        ///amount c @ 0.1M in A
-        ///a + c -&gt; a + a
-        ///equilibrate A1 = A for 1
-        ///
-        ///sample B
-        ///species b @ 1M in B
-        ///amount c @ 0.1M in B
-        ///b + c -&gt; c + c
-        ///equilibrate B1 = B for 1
-        ///
-        ///split C,D = A1 by 0.5,0.5
-        ///dispose C
-        ///
-        ///mix E = D, B1
-        ///a + b -&gt; b + b
-        ///
-        ///equilibrate F = E for 20
-        ///dispose F
-        ///.
-        /// </summary>
-        internal static string MixAndSplit {
-            get {
-                return ResourceManager.GetString("MixAndSplit", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Assigning sample concentration 
-        ///// via Molar Mass
-        /////======================================
-        ///
-        ///// Species initialization can direcly
-        ///// impose a desired concentration 
-        ///// in M = mol/L to a sample:
-        ///
-        ////*
-        ///amount NaCl @ 0.5 M in s
-        ///*/
-        ///
-        ///// then NaCl will have concentration 
-        ///// equal to 0.5 M in s.
-        ///
-        ///// Alternatively we can impose a 
-        ///// concentration by specifying moles 
-        ///// of substance (mol):
-        ///
-        ////*
-        ///amount NaCl @ 0.1 mol in s  
-        ///*/
-        ///
-        ///// then NaCl will have [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string MolarMass {
-            get {
-                return ResourceManager.GetString("MolarMass", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Phosphate-buffered saline (PBS)
-        ///// A basic lab protocol:
-        ///// http://cshprotocols.cshlp.org/content/2006/1/pdb.rec8247
-        /////======================================
-        ///
-        ///// The&apos;transfer&apos; instruction is used for 
-        ///// extra-chemical manipulations. It is 
-        ///// meant to capture miscellaneous lab 
-        ///// procedures that cannot be easily 
-        ///// formalized. Here we illustrate changing 
-        ///// temperature and volume.
-        ///
-        ///// See also the docs on Molar Mass.
-        ///
-        ///species {NaCl#58.44, KCl#74 [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string PBS {
-            get {
-                return ResourceManager.GetString("PBS", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// PID Controller
-        /////======================================
-        ///
-        ///number precision = 10
-        ///
-        ///network PBlock (species E⁺ E⁻ P⁺ P⁻,  number Kp) {
-        ///       E⁺ -&gt; E⁺ + P⁺                    {precision * Kp}
-        ///       E⁻ -&gt; E⁻ + P⁻                    {precision * Kp}
-        ///       P⁺ -&gt; #                          {precision} 
-        ///       P⁻ -&gt; #                          {precision} 
-        ///       P⁻ + P⁺ -&gt; #                     {precision}
-        ///}
-        ///
-        ///network IBlock (species E⁺ E⁻ I⁺ I⁻, number Ki)  [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string PIDController {
-            get {
-                return ResourceManager.GetString("PIDController", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// PID Controller Block
-        /////======================================
-        ///
-        /////------------- PID Controller --------------
-        ///
-        ///network PIDController(
-        ///   species R⁺ R⁻, 
-        ///   number Kp Ki Kd,
-        ///   network Plant){
-        ///
-        ///   species E⁺,E⁻,P⁺,P⁻,I⁺,I⁻,  D⁺,D⁻,U⁺,U⁻,Y,Y⁺,Y⁻ @ 0M
-        ///
-        ///   PBlock(E⁺, E⁻, P⁺, P⁻, Kp) 
-        ///   IBlock(E⁺, E⁻, I⁺, I⁻, Ki)
-        ///   DBlock(E⁺, E⁻, D⁺, D⁻, Kd)
-        ///   SumBloc(P⁺, P⁻, I⁺, I⁻, D⁺, D⁻, U⁺, U⁻)
-        ///   Plant(U⁺, U⁻, Y)
-        ///   DualRail(Y, Y⁺, Y⁻)
-        ///   SubBlock(R⁺, R⁻, Y⁺, [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string PIDController_Block {
-            get {
-                return ResourceManager.GetString("PIDController_Block", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// PID Controller Parameter Optimization
-        /////======================================
-        ///
-        ///number precision = 10
-        ///
-        ///network PBlock (species E⁺ E⁻ P⁺ P⁻,  number Kp, sample S) {
-        ///       E⁺ -&gt; E⁺ + P⁺                    {precision * Kp}
-        ///       E⁻ -&gt; E⁻ + P⁻                    {precision * Kp}
-        ///       P⁺ -&gt; #                          {precision} 
-        ///       P⁻ -&gt; #                          {precision} 
-        ///       P⁻ + P⁺ -&gt; #                     {precision}
-        ///}
-        ///
-        ///network IBlock  [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string PIDController_Optimization {
-            get {
-                return ResourceManager.GetString("PIDController_Optimization", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Positive Test Signal - Sine
-        /////======================================
-        ///
-        ///// Turn a positive function into a waveform
-        ///network Signal(species X, function f) {
-        ///   # -&gt;{{100*f()}} X;   X -&gt;{100} #
-        ///}
-        ///
-        ///species A @ 0 M
-        ///Signal(A, fun(){1+sin(time)})
-        ///
-        ///report A            // plot test signal
-        ///report 1+sin(time)  // compare with true function
-        ///equilibrate for 10
-        ///.
-        /// </summary>
-        internal static string PosTestSignal_Sine {
-            get {
-                return ResourceManager.GetString("PosTestSignal_Sine", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Positive Test Signal - Step
-        /////======================================
-        ///
-        ///// Turn a positive function into a waveform
-        ///network Signal(species X, function f) {
-        ///   # -&gt;{{100*f()}} X;   X -&gt;{100} #
-        ///}
-        ///
-        ///species A @ 0 M
-        ///report A
-        ///
-        ///// Step function
-        ///Signal(A, fun(){cond(time&lt;1, 1, 2)})
-        ///equilibrate for 2
-        ///
-        ///// Hyperbolic Tangent
-        /////Signal(A, fun(){1+tanh(time-pi)})
-        /////equilibrate for 2*pi
-        ///
-        ///// Logistic Function
-        /////Signal(A, fun(){1/(1 + e^(2*pi-time))})
-        /////equilib [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string PosTestSignal_Step {
-            get {
-                return ResourceManager.GetString("PosTestSignal_Step", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Proportional Block
-        /////======================================
-        ///
-        ///number precision = 10
-        ///
-        /////-------------- Proportional Block ---------------
-        ///network PBlock (species E⁺ E⁻ P⁺ P⁻,  number Kp) {
-        ///       E⁺ -&gt; E⁺ + P⁺                    {precision * Kp}
-        ///       E⁻ -&gt; E⁻ + P⁻                    {precision * Kp}
-        ///       P⁺ -&gt; #                              {precision} 
-        ///       P⁻ -&gt; #                              {precision} 
-        ///       P⁻ + P⁺ -&gt; #                     { [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string Proportional_Block {
-            get {
-                return ResourceManager.GetString("Proportional_Block", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Basic examples of species and reactions
-        /////======================================
-        ///
-        ///// Declare some species and initialize 
-        ///// each to 1M (mol/L)
-        ///
-        ///species a, b, c, d @ 1M  
-        ///
-        ///// Prepare to report (plot) combinations 
-        ///// of species:
-        ///
-        ///report a, b-c, c+d
-        ///
-        ///// Various syntax for reactions:
-        ///
-        ///a -&gt; b          // simple reaction, rate = 1
-        ///a -&gt;{2} b       // simple reaction, rate = 2
-        ///a -&gt; b {2}      // simple reaction, rate = 2
-        ///# -&gt; b          // no reactant [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string Reactions {
-            get {
-                return ResourceManager.GetString("Reactions", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Build a chain of reactions from a to b 
-        ///// with n intermediate species c_i
-        ///// a -&gt; c_0 -&gt; c_1 -&gt;  ... -&gt; c_(n-1) -&gt; b
-        /////======================================
-        ///
-        ///network Erlang(species a b, number n) {
-        ///   if n &lt;= 0 then 
-        ///      // just one reaction from a to b
-        ///      a -&gt; b                        
-        ///   else
-        ///      // new intermediate species c, initially 0
-        ///      species c @ 0M
-        ///      // plot (report) at most 3 of those
-        ///      if n &lt;= 3 then report c end
-        ///     [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string RingOscillator {
-            get {
-                return ResourceManager.GetString("RingOscillator", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Samples contain concentrations of 
-        ///// species, acted over by reactions.
-        ///// Each sample has a fixed volume and a 
-        ///// fixed temperature through its evolution.
-        ///// Sample concentrations are in units 
-        ///// of M = mol/L. The default sample is 
-        ///// called the &apos;vessel&apos; {1 mL, 20 C}
-        /////======================================
-        ///
-        ///// Create a new empty sample &apos;s&apos; with 
-        ///// given volume and temperature:
-        ///
-        ///sample s {1mL, 20C}           
-        ///
-        ///// Declare two new species, but do [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string Samples {
-            get {
-                return ResourceManager.GetString("Samples", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Serial Dilution
-        /////
-        ///// Prepare a series of increasingly 
-        ///// diluted solutions and we apply a 
-        ///// network f to each (f can add 
-        ///// species to the solutions)
-        /////======================================
-        ///
-        ///network SerialDilution(number count, sample s, network f) {
-        ///  if count &gt; 0 then
-        ///    sample solvent {9*observe(volume,s) L, observe(kelvin,s) K}
-        ///    mix s = s, solvent
-        ///    split s, dilution = s by 0.1, 0.9
-        ///    f(dilution)
-        ///    SerialDilution(count-1, s, f)
-        /// [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string SerialDilution {
-            get {
-                return ResourceManager.GetString("SerialDilution", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Sine wave between +1 and -1 produced 
-        ///// as the difference of two species S⁺, S⁻
-        /////======================================
-        ///
-        ///network Sine(species S⁺ S⁻, number freq ampl phase) {
-        ///    // initialize parameter species S⁺,S⁻ 
-        ///    // based on desired ampl and phase
-        ///    // pos(n) == if n&gt;=0 then n else 0 end
-        ///    number S₀ = ampl*sin(phase)	
-        ///    amount S⁺ @ pos(S₀) M		
-        ///    amount S⁻ @ pos(-S₀) M
-        ///    // initialize also new local species  
-        ///    // C⁺,C⁻ that trac [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string SineWave {
-            get {
-                return ResourceManager.GetString("SineWave", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Square Wave Fourier Series
-        /////======================================
-        ///
-        ///network SinCos(species S⁺ S⁻ C⁺ C⁻, number freq ampl phase) {
-        ///    number Sinit = ampl*sin(phase)
-        ///    amount S⁺ @ pos(Sinit) M
-        ///    amount S⁻ @ pos(-Sinit) M
-        ///    number Cinit = ampl*cos(phase)
-        ///    amount C⁺ @ pos(Cinit) M
-        ///    amount C⁻ @ pos(-Cinit) M
-        ///    number r = freq*2*pi
-        ///    C⁺ -&gt; C⁺ + S⁺ 	{r}
-        ///    C⁻ -&gt; C⁻ + S⁻ 	{r}
-        ///    S⁺ -&gt; S⁺ + C⁻ 	{r}
-        ///    S⁻ -&gt; S⁻ + C⁺ 	{r}
-        ///    C⁺ + C⁻ -&gt; # [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string SquareWave {
-            get {
-                return ResourceManager.GetString("SquareWave", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Build a reaction network
-        /////======================================
-        ///
-        ///// Declare some species and
-        ///// their molarity (M, mM, ...)
-        ///
-        ///species a,b @ 1 M   
-        ///
-        ///// Make some reactions (# is &apos;nothing&apos;)
-        ///
-        ///a + 2b -&gt; a
-        ///a -&gt; #
-        ///
-        ///// Decide what to plot
-        ///
-        ///report a, b, b-a, sin(time)
-        ///
-        ///// Run a simulation 
-        ///// (or nothing much will happen)
-        ///
-        ///equilibrate for 2*pi
-        ///
-        ///// Optionally select noise (μ, ±σ, ...)
-        ///
-        /////----------------------
-        ///// Press the Play button
-        /////-------- [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string StartHere {
-            get {
-                return ResourceManager.GetString("StartHere", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Substraction Block
-        /////======================================
-        ///
-        /////------------------ Substraction Block ------------------
-        ///
-        /////  E = A - B
-        ///network SubBlock (species A⁺ A⁻ B⁺ B⁻ E⁺ E⁻) {
-        ///       A⁺ -&gt; A⁺ + E⁺       {1}
-        ///       A⁻ -&gt; A⁻ + E⁻       {1}
-        ///       B⁻ -&gt; B⁻ + E⁺       {1}
-        ///       B⁺  -&gt; B⁺ + E⁻      {1}
-        ///       E⁺ -&gt; #             {1}
-        ///       E⁻ -&gt; #             {1}
-        ///       E⁺ + E⁻-&gt; #         {1}
-        ///}
-        ///
-        /////----------------- Unit testing ---------------- [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string Subtraction_Block {
-            get {
-                return ResourceManager.GetString("Subtraction_Block", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Differential Test Signal - Sine
-        /////======================================
-        ///
-        ///// Turn a (positive/negative) function into a waveform
-        ///network DSignal(species X⁺ X⁻, function f) {
-        ///   number precision = 100
-        ///   # -&gt;{{precision*pos(f())}} X⁺;   X⁺ -&gt;{precision} #
-        ///   # -&gt;{{precision*pos(-f())}} X⁻;   X⁻ -&gt;{precision } #
-        ///}
-        ///
-        ///species A⁺, A⁻ @ 0 M
-        ///DSignal(A⁺, A⁻, fun(){sin(time)})
-        ///
-        ///report A⁺ - A⁻ , A⁺, A⁻   // plot test signal A⁺-A⁻
-        ///report sin(time)         // co [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string TestSignal_Sine {
-            get {
-                return ResourceManager.GetString("TestSignal_Sine", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Differential Test Signal - Step
-        /////======================================
-        ///
-        ///// Turn a (positive/negative) function into a waveform
-        ///network DSignal(species X⁺ X⁻, function f) {
-        ///   number precision = 100
-        ///   # -&gt;{{precision*pos(f())}} X⁺;   X⁺ -&gt;{precision} #
-        ///   # -&gt;{{precision*pos(-f())}} X⁻;   X⁻ -&gt;{precision } #
-        ///}
-        ///
-        ///species A⁺, A⁻ @ 0 M
-        ///report A⁺ - A⁻ , A⁺, A⁻ 
-        ///
-        ///// Step function
-        ///DSignal(A⁺, A⁻, fun(){cond(time&lt;1,-1,1)})
-        ///equilibrate for 2
-        ///
-        ///// Hyperbo [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string TestSignal_Step {
-            get {
-                return ResourceManager.GetString("TestSignal_Step", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //======================================
-        ///// Symporters and Antiporters
-        /////======================================
-        ///
-        ///// Noisy signals:
-        ///
-        ///// super-Poission noise on A 
-        ///// if &apos;under&apos; &lt; &apos;over&apos;
-        ///// sub-Poisson noise on A    
-        ///// if &apos;under&apos; &gt; &apos;over&apos;
-        ///
-        ///network UberPoisson(species A, number mean under over) {
-        ///    # -&gt; over * A     {under * mean^under} 
-        ///    under * A -&gt; #    {over}
-        ///}
-        ///
-        ///// Poisson noise on A
-        ///// if &apos;under&apos; = &apos;over&apos;
-        ///
-        ///network Poisson(species A, number mean) {
-        ///   UberPoisson(A, mean, 1, 1)
-        ///} [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string Transporters {
-            get {
-                return ResourceManager.GetString("Transporters", resourceCulture);
+                object obj = ResourceManager.GetObject("Test_W_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
     }

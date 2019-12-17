@@ -1,19 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using Xamarin.Forms;
+using Kaemika;
 
 namespace KaemikaXM.Pages {
-
-    // uses ModelInfo to store data
-    // uses ModelInfoGroup, a list of ModelInfo for grouped lists
-
-    public class ModelInfoGroup : ObservableCollection<ModelInfo> {
-        public string GroupHeading { get; private set; }
-        public ModelInfoGroup(string groupHeading) {
-            GroupHeading = groupHeading;
-        }
-    }
 
     public class MyDocListCell : TextCell {
         public MyDocListCell() {
@@ -36,9 +26,11 @@ namespace KaemikaXM.Pages {
 
         public DocListPage() {
             Title = "Tutorial";
-            Icon = "icons8usermanual100.png";
+            IconImageSource = "icons8usermanual100.png";
 
-            ToolbarItem kaemikaLogo = new ToolbarItem("Logo", "kaemikaLogo.png", async () => { });
+            // in iOS>Resource the images of the TitleBar buttons must be size 40, otherwise they will scale but still take the horizontal space of the original
+
+            ToolbarItem kaemikaLogo = new ToolbarItem("Logo", "kaemikaLogoWhite.png", async () => { });
             kaemikaLogo.IsEnabled = true;
             ToolbarItems.Add(kaemikaLogo);
             ToolbarItem toolbarSpacer = new ToolbarItem("", null, async () => { });

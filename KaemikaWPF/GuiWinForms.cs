@@ -6,9 +6,12 @@ using Kaemika;
 namespace KaemikaWPF
 {
     public class GUI_Windows : GuiInterface {
-        public GUI form;
+        private GUI form;
         public GUI_Windows(GUI form) {
             this.form = form;
+        }
+        public Form GUI_Form() {
+            return this.form;
         }
 
         delegate void VoidArgVoidReturnDelegate();
@@ -116,6 +119,8 @@ namespace KaemikaWPF
             // also clear any graph
         }
 
+        public override void OutputCopy() { }
+
         public override void ProcessGraph(string graphFamily) {
             OutputSetText(Export.ProcessGraph(graphFamily));
         }
@@ -173,6 +178,8 @@ namespace KaemikaWPF
                 form.ChartUpdate();
             }
         }
+
+        public override void ChartSnap() { }
 
         public override void LegendUpdate() {
             // it's part of ChartUpdate
