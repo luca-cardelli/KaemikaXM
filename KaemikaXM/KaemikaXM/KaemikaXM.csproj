@@ -12,6 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Chart.cs" />
     <Compile Remove="Pages\ChartPage %28Surface2017%27s conflicted copy 2019-05-01%29.cs" />
     <Compile Remove="Pages\ChartPage old.cs" />
     <Compile Remove="Pages\DocListPage - Copy.cs" />
@@ -20,6 +21,8 @@
     <Compile Remove="Pages\ModelEntryPage - Copy.cs" />
     <Compile Remove="Pages\ModelListPage - Copy.cs" />
     <Compile Remove="Pages\OutputPage - Copy.cs" />
+    <Compile Remove="SKChartPainter.cs" />
+    <Compile Remove="SKDevicePainter.cs" />
   </ItemGroup>
 
   <ItemGroup>

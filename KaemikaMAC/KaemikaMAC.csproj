@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{DA11F60D-CA67-4CFE-97FB-E74EDD56175E}</ProjectGuid>
+    <ProjectTypeGuids>{A3F8F2AB-B479-4A4A-A458-A89E7DC349F1};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>KaemikaMAC</RootNamespace>
+    <AssemblyName>Kaemika</AssemblyName>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkIdentifier>Xamarin.Mac</TargetFrameworkIdentifier>
+    <MonoMacResourcePrefix>Resources</MonoMacResourcePrefix>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <EnableCodeSigning>true</EnableCodeSigning>
+    <CodeSigningKey>Mac Developer</CodeSigningKey>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>true</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>true</UseSGen>
+    <UseRefCounting>true</UseRefCounting>
+    <PackageSigningKey>Developer ID Installer</PackageSigningKey>
+    <AOTMode>None</AOTMode>
+    <CodeSignProvision>Automatic</CodeSignProvision>
+    <CodeSignEntitlements>Entitlements.plist</CodeSignEntitlements>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <EnableCodeSigning>true</EnableCodeSigning>
+    <CreatePackage>true</CreatePackage>
+    <EnablePackageSigning>true</EnablePackageSigning>
+    <IncludeMonoRuntime>true</IncludeMonoRuntime>
+    <UseSGen>true</UseSGen>
+    <UseRefCounting>true</UseRefCounting>
+    <LinkMode>SdkOnly</LinkMode>
+    <AOTMode>None</AOTMode>
+    <CodeSigningKey>3rd Party Mac Developer Application</CodeSigningKey>
+    <PackageSigningKey>3rd Party Mac Developer Installer</PackageSigningKey>
+    <CodeSignProvision>Automatic</CodeSignProvision>
+    <CodeSignEntitlements>Entitlements.plist</CodeSignEntitlements>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="Xamarin.Mac" />
+    <Reference Include="SkiaSharp">
+      <HintPath>..\packages\SkiaSharp.1.68.1\lib\Xamarin.Mac20\SkiaSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="SkiaSharp.Views.Mac">
+      <HintPath>..\packages\SkiaSharp.Views.1.68.1\lib\Xamarin.Mac20\SkiaSharp.Views.Mac.dll</HintPath>
+    </Reference>
+    <Reference Include="MathNet.Numerics">
+      <HintPath>..\packages\MathNet.Numerics.4.9.0\lib\netstandard2.0\MathNet.Numerics.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ImageAsset Include="Assets.xcassets\AppIcon.appiconset\Contents.json" />
+    <ImageAsset Include="Assets.xcassets\AppIcon.appiconset\AppIcon-128.png" />
+    <ImageAsset Include="Assets.xcassets\AppIcon.appiconset\AppIcon-128%402x.png" />
+    <ImageAsset Include="Assets.xcassets\AppIcon.appiconset\AppIcon-16.png" />
+    <ImageAsset Include="Assets.xcassets\AppIcon.appiconset\AppIcon-16%402x.png" />
+    <ImageAsset Include="Assets.xcassets\AppIcon.appiconset\AppIcon-256.png" />
+    <ImageAsset Include="Assets.xcassets\AppIcon.appiconset\AppIcon-256%402x.png" />
+    <ImageAsset Include="Assets.xcassets\AppIcon.appiconset\AppIcon-32.png" />
+    <ImageAsset Include="Assets.xcassets\AppIcon.appiconset\AppIcon-32%402x.png" />
+    <ImageAsset Include="Assets.xcassets\AppIcon.appiconset\AppIcon-512.png" />
+    <ImageAsset Include="Assets.xcassets\AppIcon.appiconset\AppIcon-512%402x.png" />
+    <ImageAsset Include="Assets.xcassets\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\.DS_Store" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8text.48x48.imageset\icons8text.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8text.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8-keyboard-96.W.48x48.imageset\icons8-keyboard-96.W.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8-keyboard-96.W.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\FontSizeMinus.W.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\FontSizeMinus.W.48x48.imageset\FontSizeMinus.W.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\FileLoad.48x48.imageset\FileLoad.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\FileLoad.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\FontSizePlus.W.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\FontSizePlus.W.48x48.imageset\FontSizePlus.W.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Parameters.W.48x48.imageset\Parameters.W.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Parameters.W.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\FileSave.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\FileSave.48x48.imageset\FileSave.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8-share-384.W.48x48.imageset\icons8-share-384.W.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8-share-384.W.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_SigmaRange.W.48x48.imageset\Noise_SigmaRange.W.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_SigmaRange.W.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Computation.48x48.imageset\Computation.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Computation.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\deviceBorder.W.48x48.imageset\deviceBorder.W.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\deviceBorder.W.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8-settings-384.W.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8-settings-384.W.48x48.imageset\icons8-settings-384.W.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_SigmaSq.W.48x48.imageset\Noise_SigmaSq.W.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_SigmaSq.W.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_CV.W.48x48.imageset\Noise_CV.W.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_CV.W.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_SigmaSqRange.W.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_SigmaSqRange.W.48x48.imageset\Noise_SigmaSqRange.W.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8device.OFF.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8device.OFF.48x48.imageset\icons8device.OFF.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_Fano.W.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_Fano.W.48x48.imageset\Noise_Fano.W.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_None.W.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_None.W.48x48.imageset\Noise_None.W.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8stop40.imageset\icons8stop40.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8stop40.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_Sigma.W.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_Sigma.W.48x48.imageset\Noise_Sigma.W.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8pauseplay40.imageset\icons8pauseplay40.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8pauseplay40.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8play40.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8play40.imageset\icons8play40.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8combochart96.W.48x48.imageset\icons8combochart96.W.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8combochart96.W.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_None.W.48x48.imageset\Noise_None.W.48x48-1.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Test.imageset\Test.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Test.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8device.ON.48x48.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8device.ON.48x48.imageset\icons8device.ON.48x48.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Splash.imageset\Splash.589.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Splash.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Transparent.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Transparent.imageset\Transparent.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Computation.48x48.DM.imageset\Computation.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Computation.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Splash.589.DM.imageset\Splash.589.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Splash.589.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_Fano.W.48x48.DM.imageset\Noise_Fano.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_Fano.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\FileLoad.48x48.DM.imageset\FileLoad.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\FileLoad.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_SigmaSq.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\FontSizeMinus.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\FontSizeMinus.W.48x48.DM.imageset\FontSizeMinus.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_None.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\FontSizePlus.W.48x48.DM.imageset\FontSizePlus.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\FontSizePlus.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\FileSave.48x48.DM.imageset\FileSave.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\FileSave.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8combochart96.W.48x48.DM.imageset\icons8combochart96.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8combochart96.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8-keyboard-96.W.48x48.DM.imageset\icons8-keyboard-96.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8-keyboard-96.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_SigmaRange.W.48x48.DM.imageset\Noise_SigmaRange.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_SigmaRange.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8-share-384.W.48x48.DM.imageset\icons8-share-384.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8-share-384.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_Sigma.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Parameters.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_SigmaSqRange.W.48x48.DM.imageset\Noise_SigmaSqRange.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_SigmaSqRange.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\deviceBorder.W.48x48.DM.imageset\deviceBorder.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\deviceBorder.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_CV.W.48x48.DM.imageset\Noise_CV.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\Noise_CV.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8text.48x48.DM.imageset\icons8text.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8text.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8-settings-384.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\icons8-settings-384.W.48x48.DM.imageset\icons8-settings-384.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMFileLoad.48x48.DM.imageset\FileLoad.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMFileLoad.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMNoise_Fano.W.48x48.DM.imageset\Noise_Fano.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMNoise_Fano.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMicons8combochart96.W.48x48.DM.imageset\icons8combochart96.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMicons8combochart96.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMicons8-keyboard-96.W.48x48.DM.imageset\icons8-keyboard-96.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMicons8-keyboard-96.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMSplash.589.DM.imageset\Splash.589.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMSplash.589.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMNoise_Sigma.W.48x48.DM.imageset\Noise_Sigma.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMNoise_Sigma.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMNoise_None.W.48x48.DM.imageset\Noise_None.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMNoise_None.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMComputation.48x48.DM.imageset\Computation.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMComputation.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMdeviceBorder.W.48x48.DM.imageset\deviceBorder.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMdeviceBorder.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMicons8-settings-384.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMicons8-settings-384.W.48x48.DM.imageset\icons8-settings-384.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMicons8-share-384.W.48x48.DM.imageset\icons8-share-384.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMicons8-share-384.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMNoise_SigmaRange.W.48x48.DM.imageset\Noise_SigmaRange.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMNoise_SigmaRange.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMNoise_CV.W.48x48.DM.imageset\Noise_CV.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMNoise_CV.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMFileSave.48x48.DM.imageset\FileSave.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMFileSave.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMNoise_SigmaSqRange.W.48x48.DM.imageset\Noise_SigmaSqRange.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMNoise_SigmaSqRange.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMicons8text.48x48.DM.imageset\icons8text.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMicons8text.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMNoise_SigmaSq.W.48x48.DM.imageset\Noise_SigmaSq.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMNoise_SigmaSq.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMFontSizeMinus.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMFontSizeMinus.W.48x48.DM.imageset\FontSizeMinus.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMFontSizePlus.W.48x48.DM.imageset\FontSizePlus.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMFontSizePlus.W.48x48.DM.imageset\Contents.json" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMParameters.W.48x48.DM.imageset\Parameters.W.48x48.DM.png" />
+    <ImageAsset Include="Resources\Assets.xcassets\DMParameters.W.48x48.DM.imageset\Contents.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\" />
+    <Folder Include="Assets.xcassets\Noise_None.W.48x48.imageset\" />
+    <Folder Include="Resources\Assets.xcassets\icons8device.ON.48x48.imageset\" />
+    <Folder Include="Resources\Assets.xcassets\Transparent.imageset\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Info.plist" />
+    <None Include="Entitlements.plist" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Main.cs" />
+    <Compile Include="AppDelegate.cs" />
+    <Compile Include="ViewController.cs" />
+    <Compile Include="ViewController.designer.cs">
+      <DependentUpon>ViewController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="GuiMac.cs" />
+    <Compile Include="NSChartView.cs" />
+    <Compile Include="CGChartPainter.cs" />
+    <Compile Include="NSDeviceView.cs" />
+    <Compile Include="CGDevicePainter.cs" />
+    <Compile Include="CGPainter.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterfaceDefinition Include="Main.storyboard" />
+  </ItemGroup>
+  <ItemGroup>
+    <BundleResource Include="Resources\.DS_Store" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Kaemika\Kaemika.csproj">
+      <Project>{9FA75239-1D60-4AEB-9BDB-2D500558F16F}</Project>
+      <Name>Kaemika</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CalithaGOLD\CalithaGOLD.csproj">
+      <Project>{73E41509-C4C9-45CF-B64A-49BC2FE4C1CF}</Project>
+      <Name>CalithaGOLD</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\KaemikaAssets\KaemikaAssets.csproj">
+      <Project>{E2CB8759-F21A-45DF-81F6-4F1BE618FF35}</Project>
+      <Name>KaemikaAssets</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Oslo\Oslo.csproj">
+      <Project>{0C946F38-472D-4878-9BD2-D790674D20A3}</Project>
+      <Name>Oslo</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Xamarin\Mac\Xamarin.Mac.CSharp.targets" />
+</Project>

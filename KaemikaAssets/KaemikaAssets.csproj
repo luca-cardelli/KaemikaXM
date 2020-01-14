@@ -30,6 +30,7 @@
     <None Remove="Assets\Flows.txt" />
     <None Remove="Assets\Functions.txt" />
     <None Remove="Assets\HighPassFilter.txt" />
+    <None Remove="Assets\icons8play40.40.png" />
     <None Remove="Assets\Integral Block.txt" />
     <None Remove="Assets\kaemikaCGT.cgt" />
     <None Remove="Assets\KaemikaGrammar.txt" />

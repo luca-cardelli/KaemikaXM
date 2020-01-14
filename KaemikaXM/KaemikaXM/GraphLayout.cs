@@ -195,7 +195,7 @@ namespace GraphSharp {
         }
 
         private void DrawNode(SKCanvas canvas, SKPoint p, SKSize s, float padding, SKColor color, Swipe swipe) {
-            CanvasDrawRoundRect(canvas, swipe % p, swipe % s, swipe % padding, color);
+            CanvasDrawRoundRectCenteredAt(canvas, swipe % p, swipe % s, swipe % padding, color);
         }
 
         private void DrawEdge(SKCanvas canvas, Kaemika.Edge<Vertex> edge, float nodeHeight, float textSize, SKColor color, Swipe swipe) {
@@ -414,7 +414,7 @@ namespace GraphSharp {
             }
         }
 
-        private static void CanvasDrawRoundRect(SKCanvas canvas, SKPoint p, SKSize s, float padding, SKColor color) {
+        private static void CanvasDrawRoundRectCenteredAt(SKCanvas canvas, SKPoint p, SKSize s, float padding, SKColor color) {
             using (var paint = new SKPaint()) {
                 paint.TextSize = 10; paint.IsAntialias = true; paint.Color = color; paint.IsStroke = true;
                 // canvas.DrawRect( p.X - s.Width / 2, p.Y - s.Height / 2, s.Width, s.Height, paint);  // debug

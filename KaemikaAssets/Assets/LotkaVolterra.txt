@@ -13,5 +13,7 @@ x1 -> x1 + x1       {1}// prey reproduces
 x1 + x2 -> x2 + x2  {1}// predator eats prey
 x2 -> #             {1}// predator dies
 
+report x1, x2, 0
+
 equilibrate for 40
 

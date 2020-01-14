@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Kaemika;
 using Xamarin.Forms;
 using SkiaSharp.Views.Forms;
 using SkiaSharp;
-using GraphSharp;
 
 namespace KaemikaXM
 {
@@ -39,7 +36,7 @@ namespace KaemikaXM
         //}
 
         private void OnPaintCanvas(object sender, SKPaintSurfaceEventArgs e) {
-            ProtocolDevice.Draw(e.Surface.Canvas, 0, 0, e.Info.Width, e.Info.Height);
+            ProtocolDevice.Draw(new SKDevicePainter(e.Surface.Canvas), 0, 0, e.Info.Width, e.Info.Height);
         }
 
         private Swipe pinchPan = Swipe.Id;    // remember transform at beginning of pinch or pan
@@ -79,7 +76,7 @@ namespace KaemikaXM
             if (e.Status == GestureStatus.Started) {
                 pinchPan = ProtocolDevice.PinchPan();
                 pinchAccum = 1.0f;
-                ProtocolDevice.DisplayPinchOrigin(true);
+                ProtocolDevice.DisplayPinchOrigin(true); 
             } else if (e.Status == GestureStatus.Running) {
                 pinchAccum = pinchAccum * (float)e.Scale;
                 pinchAccum = (float)Math.Max(0.1, pinchAccum);

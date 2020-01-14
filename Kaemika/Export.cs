@@ -22,7 +22,7 @@ namespace Kaemika {
             this.Filled = filled;
         }
     }
-    public class Vertex_Routing: Vertex {
+    public class Vertex_Routing: Vertex { // a single step indirection, to route parallel arrows separately, but removed in GraphViz conversion
         public Edge<Vertex> fromEdge;
         public Edge<Vertex> toEdge;
         public Vertex_Routing(Edge<Vertex> fromEdge, Edge<Vertex> toEdge) {
@@ -62,6 +62,13 @@ namespace Kaemika {
                 + Environment.NewLine
                 + "digraph G {" + Environment.NewLine + vertexes + edges + "}" + Environment.NewLine;
         }
+        private string DirectionToGraphViz(Directed direction) {
+            if (direction == Directed.No) return "none";
+            else if (direction == Directed.Pointy) return "vee";
+            else if (direction == Directed.Solid) return "normal";
+            else if (direction == Directed.Ball) return "dot";
+            else throw new Error("DirectionToGraphViz");
+        }
         private string VertexesToGraphviz(Dictionary<Vertex, string> names) {
             string s = "";
             int i = 1;
@@ -73,15 +80,32 @@ namespace Kaemika {
                 else if (vertex is Vertex_Rectangle)
                     s += name + "[shape=square, label=\"\"];" + Environment.NewLine;
                 else if (vertex is Vertex_Routing)
-                    s += name + "[shape=point];" + Environment.NewLine;
+                    { } // shortcircuited in EdgesToGraphviz
             }
             return s;
         }
+        private E RoutingEdge(Vertex midVertex) {
+            foreach (E edge in Edges) if (edge.Source == midVertex) return edge;
+            throw new Error("RoutingEdge");
+        }
         private string EdgesToGraphviz(Dictionary<Vertex, string> names) {
             string s = "";
-            foreach (E edge in Edges)
-                s += names[edge.Source] + " -> " + names[edge.Target]
-                    + ((edge.Label == null ) ? "" : "[label=" + Parser.FormatString(edge.Label) + "]; ") + Environment.NewLine;               
+            foreach (E edge in Edges) {
+                if (edge.Source is Vertex_Routing) { } // shortcircuited below
+                else {
+                    var source = edge.Source;
+                    var label = edge.Label;
+                    var target = edge.Target;
+                    var endEdge = edge;
+                    if (target is Vertex_Routing) endEdge = RoutingEdge(target);
+                    var directed = endEdge.Directed;
+                    target = endEdge.Target;
+                    s += names[source] + " -> " + names[target]
+                        + " [arrowhead=" + DirectionToGraphViz(directed)
+                        + ((label == null) ? "" : ", label=" + Parser.FormatString(label))
+                        + "];" + Environment.NewLine;
+                }
+            }
             return s;
         }
     }
@@ -194,7 +218,7 @@ namespace Kaemika {
             return inits;
         }
 
-        // Export AdjacencyGraph as GraphViz (withot producing layout for AdjacencyGraph)
+        // Export AdjacencyGraph as GraphViz (without producing layout for AdjacencyGraph)
 
         public static string GraphViz(AdjacencyGraph<Vertex, Edge<Vertex>> graph) {
             return new Graph<Vertex, Edge<Vertex>>(graph.Vertices, graph.Edges).ToGraphviz();

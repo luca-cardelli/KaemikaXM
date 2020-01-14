@@ -50,13 +50,16 @@ namespace KaemikaMAC
             base.DrawRect (dirtyRect);
             var context = NSGraphicsContext.CurrentContext.CGContext;
 
-            // flip the coordinate system once for all
-            var flipVertical = new CGAffineTransform(xx: 1, yx: 0, xy: 0, yy: -1, x0: 0, y0: context.GetClipBoundingBox().Height);
-            context.ConcatCTM(flipVertical);
+            CG.FlipCoordinateSystem(context);
 
             ProtocolDevice.Draw(new CGDevicePainter(context), 0, 0, (int)dirtyRect.Width, (int)dirtyRect.Height);
         }
         #endregion
+
+        public override void MouseDown(NSEvent theEvent) {
+            base.MouseDown(theEvent);
+            MainClass.form.clickerHandler.CloseOpenMenu();
+        }
 
     }
 }

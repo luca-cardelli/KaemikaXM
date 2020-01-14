@@ -15,6 +15,10 @@ other known way to undo text on Android.
 // All numbers are double precision, 
 // illegal operations may produce NAN
 
+// The default sample for species:
+
+vessel
+
 // Literals:
 
 true false (integer) (float) (string) 
@@ -28,9 +32,13 @@ true false (integer) (float) (string)
 
 +  -  *  /  ^  and  or  =  <>  <=  >=  <  > 
 
-// Infix string operators:
+// Infix string operators (concat, eq, not eq):
 
-+  =  <>                                      
++  =  <>
+
+// Infix list operators (concat):
+
++
 
 // All of the following are normally-bound 
 // variables in the initial environment
@@ -40,7 +48,7 @@ true false (integer) (float) (string)
 pos(n)    // if n=NaN or n<0 then 0 else n end
 int(n)    // the integer nearest n
 
-// From the C# Math and Double classed:
+// From the C# Math and Double classes:
 
 pi              // 3.14159265358979323846
 e               // 2.7182818284590452354
@@ -70,9 +78,34 @@ sqrt(n)
 tan(n)
 tanh(n)
 
-// The default container for species:
+// List manipulation
 
-vessel
+list v = ..         list definition
+function f(list v, ..){..} list parameter
+[e1,..,en]          fixed length list
+l1 + l2             concatenation
+l()                 length
+l(n)                indexing, from 0
+l(n,m)              sublist (start,length)
+[t1 v1, .., tn vn] = e
+   fixed length pattern matching
+   ti can be "number", "list", etc.
+[..ti vi..] + list v = e
+list v + [..ti vi..] = e
+   variable length pattern matching
+
+//Examples: constructors/destructors
+list l = [0] + [1,2]       // =[0,1,2]
+number first = l(0)        // =0
+list late = l(1, l()-1)    // =[1,2]
+list early = l(0, l()-1)   // =[0,1]
+number last = l(l()-1)     // =2
+//Examples: pattern matching
+[number n0 n1 n2] = l
+[number first] + list late = l
+list early + [number last] = l
+function f([number n]+list l) {l+[n]}
+list r = f([0,1,2])   // = [1,2,0]
 
 // Distributions
 
@@ -80,7 +113,7 @@ vessel
 // samples n from a distribution
 // and adds n as a parameter to the GUI
 // where the values it assumes can be monitored
-// The builtindistributions are:
+// The builtin distributions are:
 
 uniform(lo,hi), 
 normal(mean,stdev)        // Gauss

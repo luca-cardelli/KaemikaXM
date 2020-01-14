@@ -1,29 +1,31 @@
-﻿using Foundation;
-using System;
+﻿using System;
+using System.Collections.Generic;
+using Foundation;
 using AppKit;
+using SkiaSharp;
 using CoreGraphics;
 using Kaemika;
 
 namespace KaemikaMAC
 {
-    [Register("NSKaemikaChart")]
-    public class NSKaemikaChart : NSControl
+    [Register("NSChartView")]
+    public class NSChartView : NSControl
     {
         #region Constructors
-        public NSKaemikaChart()
+        public NSChartView()
         {
             // Init
             Initialize();
         }
 
-        public NSKaemikaChart(IntPtr handle) : base (handle)
+        public NSChartView(IntPtr handle) : base (handle)
         {
             // Init
             Initialize();
         }
 
         [Export ("initWithFrame:")]
-        public NSKaemikaChart(CGRect frameRect) : base(frameRect) {
+        public NSChartView(CGRect frameRect) : base(frameRect) {
             // Init
             Initialize();
         }
@@ -31,18 +33,10 @@ namespace KaemikaMAC
         private void Initialize() {
             this.WantsLayer = true;
             this.LayerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.OnSetNeedsDisplay;
+            Tracking();
         }
         #endregion
 
-        private KChart chart = new KChart("", "");
-
-        public void SetChart(KChart chart) {
-            if (NSThread.IsMain) {
-                this.chart = chart;
-                Invalidate();
-            } else { _ = GUI_Mac.BeginInvokeOnMainThreadAsync(() => { SetChart(chart); return GUI_Mac.ack; }).Result; }
-        }
-       
         #region Draw Methods
 
         public void Invalidate() {
@@ -59,25 +53,85 @@ namespace KaemikaMAC
             base.DrawRect (dirtyRect);
             var context = NSGraphicsContext.CurrentContext.CGContext;
 
-            // flip the coordinate system once for all
-            var flipVertical = new CGAffineTransform(xx: 1, yx: 0, xy: 0, yy: -1, x0: 0, y0: context.GetClipBoundingBox().Height);
-            context.ConcatCTM(flipVertical);
+            CG.FlipCoordinateSystem(context);
 
-            this.chart.Draw(new CGChartPainter(context), (int)dirtyRect.Width, (int)dirtyRect.Height);
-
-            //// https://github.com/NickSpag/Workbooks/blob/master/MacOS%20Custom%20Drawing.workbook
-            //if (false) {
-            //    NSColor.Red.Set();
-            //    NSBezierPath.StrokeLine(new CGPoint(10, 10), new CGPoint(100, 100));
-            //} else {
-            //    var context = NSGraphicsContext.CurrentContext.CGContext;
-            //    context.SetStrokeColor(NSColor.Black.CGColor);
-            //    context.SetLineWidth(1);
-            //    var rectangleCGPath = CGPath.FromRoundedRect(new CGRect(10, 10, 100, 100), 4, 4);
-            //    context.AddPath(rectangleCGPath);
-            //    context.StrokePath();
-            //}
+            KChartHandler.Draw(new CGChartPainter(context), (int)dirtyRect.X, (int)dirtyRect.Y, (int)dirtyRect.Width, (int)dirtyRect.Height);
         }
+        #endregion
+
+
+        #region Interaction
+
+        // https://github.com/xamarin/mac-samples/blob/master/MouseTrackingExample/MouseTrackingExample/MyTrackingView.cs#L26
+
+        public override bool AcceptsFirstResponder () {
+            return true;
+        }
+
+        public override void UpdateTrackingAreas() {
+            Tracking();
+        }
+
+        NSTrackingArea trackingArea = null;
+        bool insideArea = false;
+
+        private void Tracking() {
+            if (trackingArea != null) this.RemoveTrackingArea(trackingArea);
+            trackingArea = new NSTrackingArea(Frame,
+                NSTrackingAreaOptions.ActiveInKeyWindow |
+                NSTrackingAreaOptions.MouseEnteredAndExited |
+                NSTrackingAreaOptions.MouseMoved
+                , this, null);
+            this.AddTrackingArea(trackingArea);
+        }
+
+        // Converts a raw macOS mouse event point into the coordinates of the currently canvas.
+        private (CGPoint native, SKPoint flipped) ConvertToCanvasPoint(NSEvent theEvent) {
+            var location = theEvent.LocationInWindow;
+            var native = ConvertPointFromView(location, null);
+            var flipped = new SKPoint((float)native.X, (float)Frame.Size.Height - (float)native.Y);
+            return (native, flipped);
+        }
+
+		public override void MouseEntered (NSEvent theEvent) {
+			base.MouseEntered (theEvent);
+            insideArea = true;
+            KChartHandler.ShowEndNames(true);
+            Invalidate();
+        }
+
+        public override void MouseExited (NSEvent theEvent) {
+			base.MouseExited (theEvent);
+            MainClass.form.SetChartTooltip("", new CGPoint(0,0), new CGRect(0,0,0,0));
+            insideArea = false;
+            KChartHandler.ShowEndNames(false);
+            Invalidate();
+        }
+
+        public override void MouseDown(NSEvent theEvent) {
+            base.MouseDown(theEvent);
+            MainClass.form.clickerHandler.CloseOpenMenu();
+        }
+
+        private DateTime lastTooltipUpdate = DateTime.MinValue;
+
+		public override void MouseMoved (NSEvent theEvent) {
+			base.MouseMoved (theEvent);
+            if (!insideArea) return;
+            if (DateTime.Now.Subtract(lastTooltipUpdate).TotalSeconds > 0.01) {
+                UpdateTooltip(theEvent);
+                lastTooltipUpdate = DateTime.Now;
+            }
+		}
+
+        private void UpdateTooltip(NSEvent theEvent) {
+            (CGPoint native, SKPoint flipped) = ConvertToCanvasPoint(theEvent);
+            var shiftKeyDown = ((theEvent.ModifierFlags & NSEventModifierMask.ShiftKeyMask) == NSEventModifierMask.ShiftKeyMask);
+            string tip = KChartHandler.HitListTooltip(flipped, 10);
+            if (tip == "") MainClass.form.SetChartTooltip("", new CGPoint(0, 0), new CGRect(0, 0, 0, 0));
+            else MainClass.form.SetChartTooltip(tip, native, Frame);
+        }
+
         #endregion
 
     }

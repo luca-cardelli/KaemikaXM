@@ -61,7 +61,12 @@ Comment Block @= { Nesting = All }
                     | 'sample' <Ids>               ! samples are containers that have volume and temperature, populated with species that have concentrations
                     | 'function' <Ids>             ! functions can receive and return values, species, functions, and networks  
                     | 'network' <Ids>              ! networks can receive values, species, functions, and networks, and return nothing        
-                    | '[' <Params> ']'             ! list pattern matching          
+ !                  | '[' <Params> ']'             ! list pattern matching   
+                    | <Pattern>                    ! list pattern matching 
+
+<Pattern>       ::= '[' <Params> ']'                  ! a fixed length list pattern
+                    | '[' <Params> ']' '+' 'list' Id  ! a variable length list pattern, with tail on the right
+                    | 'list' Id '+' '[' <Params> ']'  ! a variable length list pattern, with tail on the left
 
 <Ids>           ::= <Ids> Id
                     | Id
@@ -94,7 +99,8 @@ Comment Block @= { Nesting = All }
                     | 'sample' <Sample>                       ! binding a sample to a sample id or sample def
                     | 'function' <Function>                   ! binding a function to a function id or function def
                     | 'network' <Network>                     ! binding a network to a network id or network def
-                    | '[' <Params> ']' '=' <Expression>       ! binding list elements to ids; length and types must match                  
+!                    | '[' <Params> ']' '=' <Expression>       ! binding list elements to ids; length and types must match                  
+                    | <Pattern> '=' <Expression>              ! binding list elements to ids; length and types must match                  
                     | 'amount' <Ids> '@' <Expression> <Quantity> <Allocation>  ! set initial quantity of species in a sample
                     | 'report' <Reports>                                       ! report species for plotting (can use arithmetic, but restrictions apply)
                     | 'if' <Expression> 'then' <Statements> <Else>             ! conditional
@@ -109,8 +115,8 @@ Comment Block @= { Nesting = All }
                     | 'concentrate' <IdSeq> '=' <ExpressionSeq> 'to' <Expression> <Volume>    ! change samples volume to value (evaporate or dilute)
                     | 'concentrate' <IdSeq> 'to' <Expression> <Volume>                        ! short for 'concentrate' Ids '=' Ids 'to' ...
                     | 'equilibrate' <IdSeq> '=' <ExpressionSeq> <EndCondition>    ! integrate samples for a time, and name the new samples
-                    | 'equilibrate' <IdSeq> <EndCondition>                        ! short for 'integrate' Ids '=' Ids <EndCondition> (reusing the sample Ids)
-                    | 'equilibrate' <EndCondition>                                ! short for 'integrate' 'vessel' '=' 'vessel' <EndCondition> (default sample)
+                    | 'equilibrate' <IdSeq> <EndCondition>                        ! short for 'equilibrate' Ids '=' Ids <EndCondition> (reusing the sample Ids)
+                    | 'equilibrate' <EndCondition>                                ! short for 'equilibrate' 'vessel' '=' 'vessel' <EndCondition> (default sample)
                 
 <Net Instance>   ::= Id '(' <Expressions> ')'
 

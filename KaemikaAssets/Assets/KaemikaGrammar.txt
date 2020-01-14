@@ -109,8 +109,8 @@ Comment Block @= { Nesting = All }
                     | 'concentrate' <IdSeq> '=' <ExpressionSeq> 'to' <Expression> <Volume>    ! change samples volume to value (evaporate or dilute)
                     | 'concentrate' <IdSeq> 'to' <Expression> <Volume>                        ! short for 'concentrate' Ids '=' Ids 'to' ...
                     | 'equilibrate' <IdSeq> '=' <ExpressionSeq> <EndCondition>    ! integrate samples for a time, and name the new samples
-                    | 'equilibrate' <IdSeq> <EndCondition>                        ! short for 'integrate' Ids '=' Ids <EndCondition> (reusing the sample Ids)
-                    | 'equilibrate' <EndCondition>                                ! short for 'integrate' 'vessel' '=' 'vessel' <EndCondition> (default sample)
+                    | 'equilibrate' <IdSeq> <EndCondition>                        ! short for 'equilibrate' Ids '=' Ids <EndCondition> (reusing the sample Ids)
+                    | 'equilibrate' <EndCondition>                                ! short for 'equilibrate' 'vessel' '=' 'vessel' <EndCondition> (default sample)
                 
 <Net Instance>   ::= Id '(' <Expressions> ')'
 

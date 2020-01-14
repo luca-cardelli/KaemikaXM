@@ -8,23 +8,23 @@ namespace KaemikaXM.Pages
 {
     public class ChartPageLandscape : ContentPage {
 
-        private Microcharts.ChartView chartView;
+        private ChartView chartView;
 
         public ChartPageLandscape() {
-            chartView = new Microcharts.ChartView() {
-                Chart = new Microcharts.Chart("", ""),
+            chartView = new ChartView() {
+                Chart = new KChart(""),
                 BackgroundColor = Color.White,
             };
             Content = chartView;
         }
 
-        public void SetChart(Microcharts.Chart chart) {
+        public void SetChart(KChart chart) {
             chartView.Chart = chart;
         }
  
         protected override void OnAppearing() {
             base.OnAppearing();
-            (Gui.gui as GUI_Xamarin).ChartUpdateLandscape();
+            //(Gui.gui as GUI_Xamarin).ChartUpdateLandscape();
         }
 
        // Device rotation handling
@@ -63,7 +63,7 @@ namespace KaemikaXM.Pages
         private StackLayout inspectionView;          // inspection = legend AND parameter
         private Grid bottomBar;                      // bottomBar = stop AND noise AND start
         private View backdrop;                       // leaf
-        private Microcharts.ChartView chartView;     // chart = leaf
+        private ChartView chartView;                 // chart = leaf
         private CollectionView legendView;           // legend = leaf
         private CollectionView parameterView;        // parameter = leaf
         public DeviceView deviceView;                // device = leaf
@@ -72,7 +72,7 @@ namespace KaemikaXM.Pages
             return new ToolbarItem("RK547M", "icons8refresh96solver1", () => {
                 if (Exec.IsExecuting()) return;
                 solverRK547MButton.IsEnabled = false;
-                GUI_Xamarin.currentSolver = "RK547M";
+                ClickerHandler.solver = "RK547M";
                 MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: false, switchToOutput: false, autoContinue: false);
                 solverGearBDFButton.IsEnabled = true;
             });
@@ -82,7 +82,7 @@ namespace KaemikaXM.Pages
             return new ToolbarItem("GearBDF", "icons8refresh96solver2", () => {
                 if (Exec.IsExecuting()) return;
                 solverGearBDFButton.IsEnabled = false;
-                GUI_Xamarin.currentSolver = "GearBDF";
+                ClickerHandler.solver = "GearBDF";
                 MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: false, switchToOutput: false, autoContinue: false);
                 solverRK547MButton.IsEnabled = true;
             });
@@ -192,7 +192,7 @@ namespace KaemikaXM.Pages
 
             inspectionView = new StackLayout();
 
-            chartView = new Microcharts.ChartView() { Chart = new Microcharts.Chart("", ""), HeightRequest = 300, BackgroundColor = Color.White };
+            chartView = new ChartView() { Chart = new KChart(""), HeightRequest = 300, BackgroundColor = Color.White };
             legendView = LegendView();
             parameterView = ParameterView();
             deviceView = new DeviceView() { }; // Device = device };
@@ -223,8 +223,9 @@ namespace KaemikaXM.Pages
             Content = grid;
         }
 
-        public void SetChart(Microcharts.Chart chart, ModelInfo modelInfo) {
-            chartView.Chart = chart;
+        public void InvalidateChart() {
+            // this is necessary to invalidate the chartView: we must assign a fresh value to chartView.Chart
+            chartView.Chart = KChartHandler.ChartCopy();
         }
 
         public void SetModel(ModelInfo modelInfo) {
@@ -238,7 +239,7 @@ namespace KaemikaXM.Pages
         const int LegendFontSize = 12;
         const int LegendItemHeight = 21; // If this value is too small (for the font size?), Label items will flash a gray box for 2 senconds when updated
 
-        public void SetLegend(Microcharts.Series[] legend) {
+        public void SetLegend(KSeries[] legend) {
             Xamarin.Forms.Device.BeginInvokeOnMainThread(() => {
                 var legendList = new ObservableCollection<LegendItem>();
                 for (int i = legend.Length - 1; i >= 0; i--)
@@ -247,8 +248,8 @@ namespace KaemikaXM.Pages
                         Color = SkiaSharp.Views.Forms.Extensions.ToFormsColor(legend[i].color),
                         Width = (legend[i].visible) ? 50 : 6,
                         Height =
-                            (legend[i].lineStyle == Microcharts.LineStyle.Thick) ? 4  // show a wide bar for thick plot lines
-                          : (legend[i].lineMode == Microcharts.LineMode.Line) ? 1     // show a smaller bar for think plot lines
+                            (legend[i].lineStyle == KLineStyle.Thick) ? 4  // show a wide bar for thick plot lines
+                          : (legend[i].lineMode == KLineMode.Line) ? 1     // show a smaller bar for think plot lines
                           : LegendItemHeight,                                         // show a full rectangle for Range areas
                     });
                 legendView.ItemsSource = legendList;
@@ -299,8 +300,8 @@ namespace KaemikaXM.Pages
             collectionView.SelectionChanged += (object sender, SelectionChangedEventArgs args) => {
                 LegendItem item = collectionView.SelectedItem as LegendItem;
                 if (item != null) {
-                    (Gui.gui as GUI_Xamarin).InvertVisible(item.Name);
-                    (Gui.gui as GUI_Xamarin).VisibilityRemember();
+                    KChartHandler.InvertVisible(item.Name);
+                    KChartHandler.VisibilityRemember();
                     Gui.gui.ChartUpdate();
                     Gui.gui.LegendUpdate();
                     collectionView.SelectedItem = null; // avoid some visible flashing of the selection
@@ -321,7 +322,9 @@ namespace KaemikaXM.Pages
         // clear the parameterStateDict at the beginning of every execution, but we keep the parametersInfoDict forever
 
         public void ParametersClear() {
-            lock (parameterLock) { parameterStateDict = new Dictionary<string, ParameterState>(); }
+        lock (parameterLock) { 
+                parameterStateDict = new Dictionary<string, ParameterState>(); 
+            }
         }
 
         public class ParameterState {
@@ -354,7 +357,7 @@ namespace KaemikaXM.Pages
         public double ParameterOracle(string parameter) { // returns NAN if oracle not available
             lock (parameterLock) {
                 if (parameterInfoDict.ContainsKey(parameter) && parameterInfoDict[parameter].locked)
-                    // parameter does not exist yet in parameterExistsDict but will exist at the end of the run, and it will be locked
+                    // parameter does not exist yet in parameterStateDict but will exist at the end of the run, and it will be locked
                     return parameterInfoDict[parameter].drawn;
                 return double.NaN;
             }

@@ -17,10 +17,10 @@ namespace KaemikaXM
             string GetString(string key);
         }
 
-        public App(string platform, CustomTextEditorDelegate customTextEditorDelegate) {
+        public App(CustomTextEditorDelegate customTextEditorDelegate) {
 //          FolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
             FolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
-            Gui.gui = new GUI_Xamarin(platform, customTextEditorDelegate);
+            Gui.gui = new GUI_Xamarin(customTextEditorDelegate);
             DocListPage.docs = Tutorial.Groups();
             MainTabbedPage.theMainTabbedPage = new MainTabbedPage();
             MainTabbedPage.theMainTabbedPage.CurrentPageChanged += MainTabbedPage.currentPageChangedDelegate;

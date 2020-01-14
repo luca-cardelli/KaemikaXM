@@ -22,22 +22,22 @@ namespace KaemikaMAC {
             canvas.FillRect(canvas.GetClipBoundingBox());
         }
 
-        //public /*interface Painter*/ void DrawRect(SKRect rect, SKColor color) {
-        //    using (var paint = FillPaint(color)) { DrawRect(rect, paint); }
-        //}
-
         public /*interface Painter*/ void DrawRect(SKRect rect, SKPaint paint) {
             CG.DrawRect(canvas, CG.Rect(rect), CG.Color(paint.Color));
         }
         public /*interface Painter*/ void DrawRoundRect(SKRect rect, float padding, SKPaint paint) {
-            CG.DrawRoundRect(canvas, rect, padding, paint);
+            CG.DrawRoundRect(canvas, rect, padding, CG.Color(paint.Color));
         }
         public /*interface Painter*/ void DrawCircle(SKPoint p, float radius, SKPaint paint) {
-            CG.DrawCircle(canvas, p, radius, paint);
+            CG.DrawCircle(canvas, p, radius, CG.Color(paint.Color));
         }
 
         public /*interface Painter*/ void DrawText(string text, SKPoint point, SKPaint paint) {
             CG.DrawText(canvas, text, point, paint);
+        }
+
+        public /*interface Painter*/ object GetCanvas() { // platform dependent
+            return this.canvas;
         }
     }
 
@@ -68,14 +68,33 @@ namespace KaemikaMAC {
             canvas.FillPath();
         }
 
-        public static void DrawRoundRect(CGContext canvas, SKRect rect, float padding, SKPaint paint) {
-            //###
-        }
-        public static void DrawCircle(CGContext canvas, SKPoint p, float radius, SKPaint paint) {
-            //###
+        public static void DrawRoundRect(CGContext canvas, SKRect rect, float padding, CGColor color) {
+            var path = new CGPath();
+            path.MoveToPoint(rect.Left + padding, rect.Top);
+            path.AddLineToPoint(rect.Right - padding, rect.Top);
+            path.AddQuadCurveToPoint(rect.Right, rect.Top, rect.Right, rect.Top + padding);
+            path.AddLineToPoint(rect.Right, rect.Bottom - padding);
+            path.AddQuadCurveToPoint(rect.Right, rect.Bottom, rect.Right - padding, rect.Bottom);
+            path.AddLineToPoint(rect.Left + padding, rect.Bottom);
+            path.AddQuadCurveToPoint(rect.Left, rect.Bottom, rect.Left, rect.Bottom - padding);
+            path.AddLineToPoint(rect.Left, rect.Top + padding);
+            path.AddQuadCurveToPoint(rect.Left, rect.Top, rect.Left + padding, rect.Top);
+            path.CloseSubpath();
+            canvas.SetFillColor(color);
+            canvas.AddPath(path);
+            canvas.FillPath();
         }
 
-       //https://csharp.hotexamples.com/examples/-/CGBitmapContext/-/php-cgbitmapcontext-class-examples.html
+        public static void DrawCircle(CGContext canvas, SKPoint p, float radius, CGColor color) {
+            var path = new CGPath();
+            CGRect rect = new CGRect(p.X - radius, p.Y - radius, 2*radius, 2*radius);
+            path.AddEllipseInRect(rect);
+            canvas.SetFillColor(color);
+            canvas.AddPath(path);
+            canvas.FillPath();
+        }
+
+      //https://csharp.hotexamples.com/examples/-/CGBitmapContext/-/php-cgbitmapcontext-class-examples.html
         public static CGBitmapContext Bitmap(int width, int height) {
             try {
                 return new CGBitmapContext(null, width, height, 8, 4*width, CGColorSpace.CreateDeviceRGB(), CGBitmapFlags.PremultipliedFirst);

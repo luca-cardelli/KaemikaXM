@@ -50,8 +50,8 @@ namespace KaemikaXM.iOS
             // https://docs.microsoft.com/en-us/xamarin/ios/app-fundamentals/images-icons/launch-screens?tabs=windows#migrating-to-launch-screen-storyboards
 
             UINavigationBar.Appearance.TintColor = UIColor.White; // affect the color of the bitmaps in the top toolbar
-
-            LoadApplication(new App("iOS", customTextEditor));  // or neutralTextEditor
+            Gui.platform = Kaemika.Platform.iOS;
+            LoadApplication(new App(customTextEditor));  // or neutralTextEditor
 
             return base.FinishedLaunching(app, options);
         }

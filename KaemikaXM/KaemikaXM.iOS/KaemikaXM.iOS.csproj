@@ -172,6 +172,10 @@
       <Project>{73e41509-c4c9-45cf-b64a-49bc2fe4c1cf}</Project>
       <Name>CalithaGOLD</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\Kaemika\Kaemika.csproj">
+      <Project>{9fa75239-1d60-4aeb-9bdb-2d500558f16f}</Project>
+      <Name>Kaemika</Name>
+    </ProjectReference>
     <ProjectReference Include="..\KaemikaXM\KaemikaXM.csproj">
       <Project>{B40715D2-DFDC-42AF-B779-E319BA385BCD}</Project>
       <Name>KaemikaXM</Name>

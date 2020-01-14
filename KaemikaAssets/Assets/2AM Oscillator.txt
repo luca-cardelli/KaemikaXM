@@ -21,7 +21,7 @@ network Triplet(species lo hi act inh, number rate) {
 
 network AM(species lo hi, number rate) {
    Triplet(lo, hi, hi, lo, rate)
-}
+}
 
 // Again, a triplet of species lo<->md<->hi 
 // activated independently by act1 and act2, 
@@ -37,7 +37,7 @@ network Triplet2(species lo hi act1 inh1 act2 inh2, number rate1 rate2) {
    act2 >> md -> hi    {rate2}
    inh2 >> hi -> md    {rate2}
    inh2 >> md -> lo    {rate2}
-}
+}
 
 // Approximate Majority bistable switch:
 // like the above AM circuit, but with addition 
@@ -64,4 +64,3 @@ network AMOscillator() {
 AMOscillator()
 
 equilibrate for 10
-

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Microsoft.Research.Oslo;
+using SkiaSharp;
 
 namespace Kaemika
 {
@@ -177,6 +177,13 @@ namespace Kaemika
                 if (asLabel != null) { s += " as '" + asLabel + "'"; }
                 return s;
             } else return "";
+        }
+    }
+
+    public class ReportEntryWithCRNFlows : ReportEntry {
+        public Dictionary<SpeciesValue, Flow> dictionary;
+        public ReportEntryWithCRNFlows(Flow flow, string asLabel, Dictionary<SpeciesValue, Flow> dictionary) : base(flow, asLabel) {
+            this.dictionary = dictionary;
         }
     }
 
@@ -361,14 +368,9 @@ namespace Kaemika
         private SampleValue sample;
         private List<ReactionValue> reactions;
         private double temperature;
-        private Matrix stoichio;   // for each species s and reaction r the net stoichiometry of s in r
-
-        //private Matrix[] stoichioR; // for each reaction r, an rx1 matrix (vector) that for each species s ...
-        //private Matrix[] stoichio_stoichioT;
-        //private double[,,] precomp;
-
+        private Matrix stoichio;        // for each species s and reaction r the net stoichiometry of s in r
         private double[,,] driftFactor; // LNA precomputation
-        private bool trivial;       // try to identify trivial stoichiometry (no change to any species), but not guaranteed
+        private bool trivial;           // try to identify trivial stoichiometry (no change to any species), but not guaranteed
 
         public CRN(SampleValue sample, List<ReactionValue> reactions, bool precomputeLNA = false) {
             this.sample = sample;
@@ -390,12 +392,52 @@ namespace Kaemika
                     for (int j = 0; j < species.Count; j++)
                         for (int r = 0; r < reactions.Count; r++)
                             driftFactor[i, j, r] = stoichio[i, r] * stoichio[j, r];
-                // if (Exec.lastExecution != null) Gui.gui.OutputAppendText(Exec.lastExecution.PartialElapsedTime("After precomputeLNA"));
+                if (Exec.lastExecution != null) Gui.gui.OutputAppendText(Exec.lastExecution.PartialElapsedTime("After precomputeLNA"));
             }
         }
 
         public string Format(Style style) {
             return "CRN species = {" + Style.FormatSequence(sample.stateMap.species, ", ", x => x.Format(style)) + "}, reactions = {" + Style.FormatSequence(this.reactions, ", ", x => x.Format(style)) + "}";
+        }
+
+        public string FormatNice(Style style) {
+            return
+                (sample.symbol.IsVesselVariant() ? "" : Environment.NewLine + "Sample " + sample.FormatSymbol(style) + Environment.NewLine)
+                + sample.FormatContent(style, true, false, false) + Environment.NewLine + Environment.NewLine
+                + Style.FormatSequence(this.reactions, Environment.NewLine, x => x.Format(style)) + Environment.NewLine + Environment.NewLine;
+        }
+
+        public SKSize Measure(Colorer colorer, float pointSize, Style style) {
+            var sizeX = 0.0f;
+            var sizeY = 0.0f;
+            using (var paint = colorer.TextPaint(colorer.font, pointSize, SKColors.Black)) {
+                foreach (SpeciesValue sp in sample.stateMap.species) {
+                    var r = colorer.MeasureText(sp.Format(style) + " = " + Gui.FormatUnit(sample.stateMap.Mean(sp.symbol), " ", "M", style.numberFormat), paint);
+                    sizeX = Math.Max(sizeX, r.Width);
+                    sizeY += pointSize;
+                }
+                sizeY += pointSize;
+                foreach (var reaction in this.reactions) {
+                    var r = colorer.MeasureText(reaction.TopFormat(style), paint);
+                    sizeX = Math.Max(sizeX, r.Width);
+                    sizeY += pointSize;
+                }
+            }
+            return new SKSize(sizeX, sizeY);
+        }
+        public void Draw(Painter painter, SKPoint origin, SKSize size, float pointSize, Style style) {
+            using (var paint = painter.TextPaint(painter.font, pointSize, SKColors.Black)) {
+                var Y = origin.Y + pointSize;
+                foreach (SpeciesValue sp in sample.stateMap.species) {
+                    painter.DrawText(sp.Format(style) + " = " + Gui.FormatUnit(sample.stateMap.Mean(sp.symbol), " ", "M", style.numberFormat), new SKPoint(origin.X, Y), paint);
+                    Y += pointSize;
+                }
+                Y += pointSize;
+                foreach (var reaction in this.reactions) {
+                    painter.DrawText(reaction.TopFormat(style), new SKPoint(origin.X, Y), paint);
+                    Y += pointSize;
+                }
+            }
         }
 
         public string FormatStoichiometry(Style style) {
@@ -427,10 +469,10 @@ namespace Kaemika
         }
 
         public string FormatAsODE(Style style, string prefixDiff = "∂", string suffixDiff = "") {
-            (SpeciesValue[] vars, Flow[] flows) = FluxFlows();
+            (SpeciesValue[] vars, Flow[] flows) = MeanFlow();
             string ODEs = "";
             for (int speciesIx = 0; speciesIx < flows.Length; speciesIx++) {
-                ODEs = ODEs + prefixDiff + vars[speciesIx].Format(style) + suffixDiff + " = " + flows[speciesIx].Normalize(style).TopFormat(style) + Environment.NewLine;
+                ODEs = ODEs + flows[speciesIx].FormatAsODE(vars[speciesIx], style, prefixDiff, suffixDiff) + Environment.NewLine;
             }
 
             //ODEs += Environment.NewLine;
@@ -455,7 +497,7 @@ namespace Kaemika
             //    }
             //}
 
-            bool includeLNA = Gui.gui.NoiseSeries() != Noise.None;
+            bool includeLNA = ClickerHandler.SelectNoiseSelectedItem != Noise.None;
             SpeciesFlow[,] covars = null; Flow[,] covarFlows = null;
             if (includeLNA) (covars, covarFlows) = CovarFlow(style);
             if (style.exportTarget == ExportTarget.WolframNotebook) {
@@ -524,7 +566,7 @@ namespace Kaemika
             return monomial;
         }
 
-        public (SpeciesValue[] vars, Flow[] flows) FluxFlows() {
+        public (SpeciesValue[] vars, Flow[] flows) MeanFlow() {
             SpeciesValue[] vars = new SpeciesValue[sample.Count()];
             Flow[] flows = new Flow[sample.Count()];
             for (int speciesIx = 0; speciesIx < flows.Length; speciesIx++) {
@@ -538,6 +580,13 @@ namespace Kaemika
                 flows[speciesIx] = polynomial;
             }
             return (vars, flows);
+        }
+
+        public Dictionary<SpeciesValue, Flow> MeanFlowDictionary() {
+            var dictionary = new Dictionary<SpeciesValue, Flow>();
+            (SpeciesValue[] vars, Flow[] flows) = MeanFlow();
+            for (int i = 0; i < vars.Count(); i++) dictionary[vars[i]] = flows[i];
+            return dictionary;
         }
 
         public Flow[,] Jacobian(Style style) {

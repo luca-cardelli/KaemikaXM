@@ -31,7 +31,7 @@ namespace Kaemika {
         public abstract bool IsTerminal(int i); // whether the i-th rhs child is a terminal 
         public abstract string Terminal(int i); // the i-th rhs child, assuming it is a terminal
         public abstract IReduction Nonterminal(int i); // the i-th rhs child, assuming it is a nonterminal
-        public void DrawReductionTree(GuiInterface gui) {
+        public void DrawReductionTree(ToGui gui) {
             StringBuilder tree = new StringBuilder();
             tree.AppendLine("+-" + this.Head());
             this.DrawReduction(tree, 1);
@@ -122,8 +122,8 @@ namespace Kaemika {
                 return new List<Statement> { ParseFunction(reduction.Nonterminal(1)) };
             } else if ((reduction.Production() == "<Statement> ::= network <Network>")) {
                 return new List<Statement> { ParseNetwork(reduction.Nonterminal(1)) };
-            } else if ((reduction.Production() == "<Statement> ::= '[' <Params> ']' '=' <Expression>")) {
-                return new List<Statement> { new ListDefinition(ParseParams(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(4))) };
+            } else if ((reduction.Production() == "<Statement> ::= <Pattern> '=' <Expression>")) {
+                return new List<Statement> { new PatternDefinition(ParsePattern(reduction.Nonterminal(0)), ParseExpression(reduction.Nonterminal(2))) };            
             } else if ((reduction.Production() == "<Statement> ::= amount <Ids> '@' <Expression> <Quantity> <Allocation>")) {
                 return new List<Statement> { new Amount(ParseIds(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(3)), ParseQuantity(reduction.Nonterminal(4)), ParseAllocation(reduction.Nonterminal(5))) };
             } else if ((reduction.Production() == "<Statement> ::= mix Id '=' <ExpressionSeq>")) {
@@ -334,10 +334,21 @@ namespace Kaemika {
                 (reduction.Production() == "<Param> ::= network <Ids>")) {
                 string type = reduction.Terminal(0);
                 Ids ids = ParseIds(reduction.Nonterminal(1));
-                foreach (string id in ids.ids) { parameters.Add(new SingleParameter(new Type(type), id)); }
-            } else if (reduction.Production() == "<Param> ::= '[' <Params> ']'") {
-                parameters.Add(new ListParameter(ParseParams(reduction.Nonterminal(1))));
+                foreach (string id in ids.ids) { parameters.Add(new SinglePattern(new Type(type), id)); }
+            //} else if (reduction.Production() == "<Param> ::= '[' <Params> ']'") {
+            //    parameters.Add(new ListParameter(ParseParams(reduction.Nonterminal(1))));
+            } else if (reduction.Production() == "<Param> ::= <Pattern>") {
+                parameters.Add(ParsePattern(reduction.Nonterminal(0)));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); }
+        }
+        public static Pattern ParsePattern(IReduction reduction) {
+            if (reduction.Production() == "<Pattern> ::= '[' <Params> ']'") {
+                return new ListPattern(ParseParams(reduction.Nonterminal(1)));
+            } else if (reduction.Production() == "<Pattern> ::= '[' <Params> ']' '+' list Id") {
+                return new HeadConsPattern(ParseParams(reduction.Nonterminal(1)), new SinglePattern(new Type("list"), reduction.Terminal(5)));
+            } else if (reduction.Production() == "<Pattern> ::= list Id '+' '[' <Params> ']'") {
+                return new TailConsPattern(new SinglePattern(new Type("list"), reduction.Terminal(1)), ParseParams(reduction.Nonterminal(4)));
+            } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }
 
         public static Ids ParseIds(IReduction reduction) {

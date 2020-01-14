@@ -1,13 +1,13 @@
 ﻿//======================================
-// Build a reaction network
+// Start Here
 //======================================
 
 // Declare some species and
-// their molarity (M, mM, ...)
+// their molarity (M, mM, μM, ...)
 
 species a,b @ 1 M   
 
-// Make some reactions (# is 'nothing')
+// Define some reactions (# is 'no species')
 
 a + 2b -> a
 a -> #
@@ -16,7 +16,7 @@ a -> #
 
 report a, b, b-a, sin(time)
 
-// Run a simulation 
+// Prepare a simulation 
 // (or nothing much will happen)
 
 equilibrate for 2*pi

@@ -88,6 +88,7 @@ namespace Kaemika
             this.variant = Exec.NewUID();
         }
         public string Raw() { return name; }
+        public bool IsVesselVariant() { return name == "vessel"; }
         public bool SameSymbol(Symbol otherSymbol) {
             return this.variant == otherSymbol.variant;
         }
@@ -135,14 +136,25 @@ namespace Kaemika
     public abstract class Scope {
         public abstract bool Lookup(string var); // return true if var is defined
         public abstract string Format();
-        public Scope Extend(List<NewParameter> parameters) {
+        public Scope Extend(Pattern pattern) {
             Scope scope = this;
-            foreach (NewParameter parameter in parameters) { //  (a,b,c)+this = c,b,a,this
-                if (parameter is SingleParameter)
-                    scope = new ConsScope((parameter as SingleParameter).name, scope);
-                else if (parameter is ListParameter)
-                    scope = scope.Extend((parameter as ListParameter).list.parameters);
-                else throw new Error("Parameter");
+            if (pattern is SinglePattern) { 
+                scope = new ConsScope((pattern as SinglePattern).name, scope);
+            } else if (pattern is ListPattern) {
+                scope = scope.Extend((pattern as ListPattern).list.parameters);
+            } else if (pattern is HeadConsPattern) {
+                scope = scope.Extend((pattern as HeadConsPattern).list.parameters);
+                scope = new ConsScope((pattern as HeadConsPattern).single.name, scope);
+            } else if (pattern is TailConsPattern) {
+                scope = new ConsScope((pattern as TailConsPattern).single.name, scope);
+                scope = scope.Extend((pattern as TailConsPattern).list.parameters);
+            } else throw new Error("Pattern");
+            return scope;
+        }
+        public Scope Extend(List<Pattern> patterns) {
+            Scope scope = this;
+            foreach (Pattern pattern in patterns) { //  (a,b,c)+this = c,b,a,this
+                scope = scope.Extend(pattern);
             }
             return scope;
         }
@@ -218,21 +230,68 @@ namespace Kaemika
         public abstract Value LookupValue(string name);
         public abstract void AssignValue(Symbol symbol, Value value);
         public abstract string Format(Style style);
-        public Env ExtendValues<T>(List<NewParameter> parameters, List<T> arguments, Netlist netlist, string source, Style style) where T : Value {  // bounded polymorphism :)
-            if (parameters.Count != arguments.Count) throw new Error("Different number of parameters and arguments for '" + source + "'");
+        //public Env ExtendValues<T>(List<Pattern> parameters, List<T> arguments, Netlist netlist, string source, Style style) where T : Value {  // bounded polymorphism :)
+        //    if (parameters.Count != arguments.Count) throw new Error("Different number of parameters and arguments for '" + source + "'");
+        //    Env env = this;
+        //    for (int i = 0; i < parameters.Count; i++) {
+        //        if (parameters[i] is SinglePattern) {
+        //            SinglePattern parameter = parameters[i] as SinglePattern;
+        //            env = new ValueEnv(parameter.name, parameter.type, arguments[i], netlist, env);
+        //        } else if (parameters[i] is ListPattern) {
+        //            List<Pattern> subParameters = (parameters[i] as ListPattern).list.parameters;
+        //            if (!(arguments[i] is ListValue<T>)) throw new Error("ListPattern");
+        //            List<T> subArguments = (arguments[i] as ListValue<T>).elements;
+        //            if (subParameters.Count != subArguments.Count) throw new Error("Different number of list pattern parameters and arguments for '" + source + "'");
+        //            env = env.ExtendValues(subParameters, subArguments, netlist, source, style);
+        //        //} else if (parameters[i] is HeadConsPattern) {
+        //        //    List<Pattern> subParameters = (parameters[i] as ListPattern).list.parameters;
+        //        //    if (!(arguments[i] is ListValue<T>)) throw new Error("HeadConsPattern");
+        //        //    List<T> subArguments = (arguments[i] as ListValue<T>).elements;
+        //        //    if (subParameters.Count != subArguments.Count) throw new Error("Different number of list pattern parameters and arguments for '" + source + "'");
+        //        //    env = env.ExtendValues(subParameters, subArguments, netlist, source, style);
+        //        } else throw new Error("Parameter");
+        //    }
+        //    return env;
+        //}
+        public Env ExtendValues<T>(List<Pattern> parameters, List<T> arguments, Netlist netlist, string source, Style style) where T : Value {  // bounded polymorphism :)
+            if (parameters.Count != arguments.Count) throw new Error("Different number of variables and values for '" + source + "'");
             Env env = this;
             for (int i = 0; i < parameters.Count; i++) {
-                if (parameters[i] is SingleParameter) {
-                    SingleParameter parameter = parameters[i] as SingleParameter;
-                    env = new ValueEnv(parameter.name, parameter.type, arguments[i], netlist, env);
-                } else if (parameters[i] is ListParameter) {
-                    List<NewParameter> subParameters = (parameters[i] as ListParameter).list.parameters;
-                    if (!(arguments[i] is ListValue<T>)) throw new Error("xxxx");
-                    List<T> subArguments = (arguments[i] as ListValue<T>).elements;
-                    if (subParameters.Count != subArguments.Count) throw new Error("Different number of list pattern parameters and arguments for '" + source + "'");
-                    env = env.ExtendValues(subParameters, subArguments, netlist, source, style);
-                } else throw new Error("Parameter");
+                env = env.ExtendValues<T>(parameters[i], arguments[i], netlist, source, style);
             }
+            return env;
+        }
+        public Env ExtendValues<T>(Pattern pattern, T argument, Netlist netlist, string source, Style style) where T : Value {  // bounded polymorphism :)
+            Env env = this;
+            if (pattern is SinglePattern) {
+                SinglePattern parameter = pattern as SinglePattern;
+                env = new ValueEnv(parameter.name, parameter.type, argument, netlist, env);
+            } else if (pattern is ListPattern) {
+                List<Pattern> subPatterns = (pattern as ListPattern).list.parameters;
+                if (!(argument is ListValue<T>)) throw new Error("A list pattern is bound to a non-list value: '" + source + "'");
+                List<T> subArguments = (argument as ListValue<T>).elements;
+                env = env.ExtendValues(subPatterns, subArguments, netlist, source, style);
+            } else if (pattern is HeadConsPattern) {
+                List<Pattern> headPatterns = (pattern as HeadConsPattern).list.parameters;
+                Pattern singlePattern = (pattern as HeadConsPattern).single;
+                if (!(argument is ListValue<T>)) throw new Error("A list pattern is bound to a non-list value: '" + source + "'");
+                List<T> subArguments = (argument as ListValue<T>).elements;
+                if (headPatterns.Count > subArguments.Count) throw new Error("In a list pattern variables exceed values: '" + source + "'");
+                List<T> headArguments = subArguments.Take(headPatterns.Count).ToList();
+                List<T> tailArguments = subArguments.Skip(headPatterns.Count).ToList();
+                env = env.ExtendValues(headPatterns, headArguments, netlist, source, style);
+                env = env.ExtendValues(singlePattern, new ListValue<T>(tailArguments), netlist, source, style);
+            } else if (pattern is TailConsPattern) {
+                Pattern singlePattern = (pattern as TailConsPattern).single;
+                List<Pattern> tailPatterns = (pattern as TailConsPattern).list.parameters;
+                if (!(argument is ListValue<T>)) throw new Error("A list pattern is bound to a non-list value: '" + source + "'");
+                List<T> subArguments = (argument as ListValue<T>).elements;
+                if (tailPatterns.Count > subArguments.Count) throw new Error("In a list pattern variables exceed values: '" + source + "'");
+                List<T> headArguments = subArguments.Take(subArguments.Count - tailPatterns.Count).ToList();
+                List<T> tailArguments = subArguments.Skip(subArguments.Count - tailPatterns.Count).ToList();
+                env = env.ExtendValues(singlePattern, new ListValue<T>(headArguments), netlist, source, style);
+                env = env.ExtendValues(tailPatterns, tailArguments, netlist, source, style);
+            } else throw new Error("Pattern");
             return env;
         }
         //private static Env ConsRev(int i, List<Symbol> symbols, Type type, List<Value> values, Env env) {
@@ -650,13 +709,13 @@ namespace Kaemika
                     if ((noise == Noise.None && reports[i].flow.HasDeterministicValue()) ||
                         (noise != Noise.None && reports[i].flow.HasStochasticMean())) {
                         double mean = reports[i].flow.ObserveMean(sample, time, this, flux, style);
-                        s += Gui.gui.ChartAddPointAsString(series[i], time, mean, 0.0, Noise.None) + ", ";
+                        s += KChartHandler.ChartAddPointAsString(series[i], time, mean, 0.0, Noise.None) + ", ";
                     }
                     // generate LNA-dependent series
                     if (noise != Noise.None && reports[i].flow.HasStochasticVariance() && !reports[i].flow.HasNullVariance()) {
                         double mean = reports[i].flow.ObserveMean(sample, time, this, flux, style);
                         double variance = reports[i].flow.ObserveVariance(sample, time, this, style);
-                        s += Gui.gui.ChartAddPointAsString(seriesLNA[i], time, mean, variance, noise) + ", ";
+                        s += KChartHandler.ChartAddPointAsString(seriesLNA[i], time, mean, variance, noise) + ", ";
                     }
                 }
             }
@@ -741,11 +800,12 @@ namespace Kaemika
         public string FormatHeader(Style style) {
             return symbol.Format(style) + " {" + Gui.FormatUnit(this.Volume(), "", "L", style.numberFormat) + ", " + temperature.Format(style) + "K}";
         }
-        public string FormatContent(Style style, bool breaks = false) {
+        public string FormatContent(Style style, bool breaks = false, bool padding = true, bool lna = true) {
+            string pad = padding ? "   " : "";
             string s = "";
             foreach (SpeciesValue sp in this.stateMap.species)
-                s += (breaks ? (Environment.NewLine + "   ") : "") + sp.Format(style) + " = " + Gui.FormatUnit(stateMap.Mean(sp.symbol), "", "M", style.numberFormat);
-            if (this.stateMap.state.lna) {
+                s += (breaks ? (Environment.NewLine + pad) : "") + sp.Format(style) + " = " + Gui.FormatUnit(stateMap.Mean(sp.symbol), " ", "M", style.numberFormat);
+            if (lna && this.stateMap.state.lna) { // this may not be assigned until after the simulation
                 for (int i = 0; i < stateMap.state.size; i++) {
                     Symbol sp1 = stateMap.species[i].symbol;
                     double mean = stateMap.Mean(sp1);
@@ -930,6 +990,10 @@ namespace Kaemika
             List<T> result = new List<T>();
             for (int i = 0; i < m; i++) result.Add(elements[n + i]);
             return new ListValue<T>(result);
+        }
+        public ListValue<T> Append(Value arg1, Style style) {
+            if (!(arg1 is ListValue<T>)) throw new Error("List append with a non-list: " + this.Format(style) + "+" + arg1.Format(style));
+            return new ListValue<T>(elements.Concat<T>((arg1 as ListValue<T>).elements).ToList());
         }
         public double[] ToDoubleArray(string error) {
             double[] result = new double[elements.Count];
@@ -1221,6 +1285,7 @@ namespace Kaemika
                 else if (name == "+")
                     if (arg1 is NumberValue && arg2 is NumberValue) return new NumberValue(((NumberValue)arg1).value + ((NumberValue)arg2).value);
                     else if (arg1 is StringValue && arg2 is StringValue) return new StringValue(((StringValue)arg1).value + ((StringValue)arg2).value);
+                    else if (arg1 is ListValue<Value> && arg2 is ListValue<Value>) return (((ListValue<Value>)arg1).Append((ListValue<Value>)arg2, style));
                     else throw new Error(BadArgs());
                 else if (name == "-") if (arg1 is NumberValue && arg2 is NumberValue) return new NumberValue(((NumberValue)arg1).value - ((NumberValue)arg2).value); else throw new Error(BadArgs());
                 else if (name == "*") if (arg1 is NumberValue && arg2 is NumberValue) return new NumberValue(((NumberValue)arg1).value * ((NumberValue)arg2).value); else throw new Error(BadArgs());
@@ -1347,6 +1412,10 @@ namespace Kaemika
 
         public abstract Flow Differentiate(Symbol var, Style style); // symbolic differentiation; var is the partial differentiation variable, or null for time differentiation
         public static Vector nilFlux = new Vector(new double[0]);
+
+        public string FormatAsODE(SpeciesValue headSpecies, Style style, string prefixDiff = "∂", string suffixDiff = "") {
+            return prefixDiff + headSpecies.Format(style) + suffixDiff + " = " + this.Normalize(style).TopFormat(style);
+        }
     }
 
     public class BoolFlow : Flow {
@@ -2751,7 +2820,8 @@ namespace Kaemika
             } else if (value is ListValue<Value>) {
                 ListValue<Value> list = (ListValue<Value>)value;
                 List<Value> arguments = this.arguments.Eval(env, netlist, style);
-                if (arguments.Count == 1) return list.Select(arguments[0], style);
+                if (arguments.Count == 0) return new NumberValue(list.elements.Count);
+                else if (arguments.Count == 1) return list.Select(arguments[0], style);
                 else if (arguments.Count == 2) return list.Sublist(arguments[0], arguments[1], style);
                 else throw new Error("Wrong number of parameters to list selection: " + Format());
             }
@@ -3001,32 +3071,26 @@ namespace Kaemika
         }
     }
 
-    public class ListDefinition : Statement {
-        private Parameters ids;
+    public class PatternDefinition : Statement {
+        private Pattern pattern;
         private Expression definee;
-        public ListDefinition(Parameters ids, Expression definee) {
-            this.ids = ids;
+        public PatternDefinition(Pattern pattern, Expression definee) {
+            this.pattern = pattern;
             this.definee = definee;
         }
         public override string Format() {
-            return "[" + ids.Format() + "]" + " = " + definee.Format();
+            return pattern.Format() + " = " + definee.Format();
         }
         public override Scope Scope(Scope scope) {
             definee.Scope(scope);
-            return scope.Extend(ids.parameters);
+            return scope.Extend(pattern);
         }
         public override Env Eval(Env env, Netlist netlist, Style style) {
             Value value = definee.Eval(env, netlist, style); 
-            if (!(value is ListValue<Value>)) throw new Error("Binding a list definition to a non-list: " + this.Format());
-            List<Value> arguments = (value as ListValue<Value>).elements;
-            return env.ExtendValues<Value>(ids.parameters, arguments, netlist, ids.Format(), style);
+            return env.ExtendValues<Value>(pattern, value, netlist, pattern.Format(), style);
         }
         public Env BuildFlow(Env env, Style style) {   // special case: only value definitions among all statements support BuildFlow
             throw new Error("Flow expression: a list definition is not a flow definition: " + this.Format()); // would have to support ListFlow first
-            //Flow flow = definee.BuildFlow(env, style);
-            //if (!(flow is ListFlow)) throw new Error("Binding a list of flows definition to a non list of flows: " + this.Format()");
-            //List<Flow> arguments = (flow as ListFlow).elements;
-            //return env.ExtendValues<Flow>(ids.ids, arguments, null, ids.Format(), style);
         }
     }
 
@@ -3581,7 +3645,7 @@ namespace Kaemika
                 if (!(inSampleValue is SampleValue)) throw new Error("equilibrate '" + names.Format() + "' requires samples");
                 inSamples.Add((SampleValue)inSampleValue);
             }
-            Noise noise = Gui.gui.NoiseSeries();
+            Noise noise = ClickerHandler.SelectNoiseSelectedItem;
             Value forTimeValue = endcondition.fortime.Eval(env, netlist, style);
             if (!(forTimeValue is NumberValue)) throw new Error("equilibrate '" + names.Format() + "' requires a number for duration");
             double forTime = ((NumberValue)forTimeValue).value;
@@ -3853,11 +3917,11 @@ namespace Kaemika
     }
 
     public class Parameters : Tree {
-        public List<NewParameter> parameters;
+        public List<Pattern> parameters;
         public Parameters() {
-            this.parameters = new List<NewParameter> { };
+            this.parameters = new List<Pattern> { };
         }
-        public Parameters Add(NewParameter param) {
+        public Parameters Add(Pattern param) {
             this.parameters.Add(param);
             return this;
         }
@@ -3865,12 +3929,12 @@ namespace Kaemika
             return Style.FormatSequence(this.parameters, ", ", x => x.Format());
         }
     }
-    public abstract class NewParameter : Tree {
+    public abstract class Pattern : Tree {
     }
-    public class SingleParameter : NewParameter {
+    public class SinglePattern : Pattern {
         public Type type;
         public string name;
-        public SingleParameter(Type type, string id) {
+        public SinglePattern(Type type, string id) {
             this.type = type;
             this.name = id;
         }
@@ -3878,15 +3942,36 @@ namespace Kaemika
             return this.type.Format() + " " + this.name;
         }
     }
-    public class ListParameter : NewParameter {
+    public class ListPattern : Pattern {
         public Parameters list;
-        public ListParameter(Parameters list) {
+        public ListPattern(Parameters list) {
             this.list = list;
         }
         public override string Format() {
             return "[" + this.list.Format() + "]";
         }
-
+    }
+    public class HeadConsPattern : Pattern {
+        public Parameters list;          // binding the fixed size part of the list
+        public SinglePattern single;   // binding the rest of the list, of type list
+        public HeadConsPattern(Parameters list, SinglePattern single) {
+            this.list = list;
+            this.single = single;
+        }
+        public override string Format() {
+            return "[" + this.list.Format() + "] + " + this.single.Format();
+        }
+    }
+    public class TailConsPattern : Pattern {
+        public SinglePattern single;   // binding the rest of the list, of type list
+        public Parameters list;          // binding the fixed size part of the list
+        public TailConsPattern(SinglePattern single, Parameters list) {
+            this.single = single;
+            this.list = list;
+        }
+        public override string Format() {
+            return this.single.Format() + " + [" + this.list.Format() + "]";
+        }
     }
 
 

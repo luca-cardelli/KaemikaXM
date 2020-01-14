@@ -72,7 +72,7 @@ namespace Kaemika
                 if (noisePlottable) {
                     string reportName = (entry.asLabel != null) ? entry.asLabel : entry.flow.TopFormat(style.RestyleAsNumberFormat("G4"));
                     string seriesName = reportName + Gui.StringOfNoise(noise);
-                    seriesLNA[i] = Gui.gui.ChartAddSeries(seriesName, palette[paletteNo % palette.Length], noise); // could be null
+                    seriesLNA[i] = KChartHandler.ChartAddSeries(seriesName, entry.flow, palette[paletteNo % palette.Length], noise); // could be null
                 }
                 paletteNo--; if (paletteNo < 0) paletteNo += palette.Length; // decrement out here to keep colors coordinated
             }
@@ -88,18 +88,18 @@ namespace Kaemika
                     string reportName = (entry.asLabel != null) ? entry.asLabel : entry.flow.TopFormat(style.RestyleAsNumberFormat("G4"));
                     string seriesName = reportName + (noisePlottable ? Gui.StringOfNoise(Noise.None) : ""); // do postfix mu if there is no sigma plot for it
                     //string seriesName = reportName + ((noise == Noise.None) ? "" : Gui.StringOfNoise(Noise.None)); // previous version
-                    series[i] = Gui.gui.ChartAddSeries(seriesName, palette[paletteNo % palette.Length], Noise.None); // could be null
+                    series[i] = KChartHandler.ChartAddSeries(seriesName, entry.flow, palette[paletteNo % palette.Length], Noise.None); // could be null
                 }
                 paletteNo--; if (paletteNo < 0) paletteNo += palette.Length; // decrement out here to keep colors coordinated
             }
 
-            for (int i = 0; i < reports.Count; i++) {
-                if (series[i] != null) { // if a series was actually generated from this report
-                    ReportEntry entry = reports[i];
-                    string name = (entry.asLabel != null) ? entry.asLabel : entry.flow.TopFormat(style.RestyleAsNumberFormat("G4"));
-                    Gui.gui.ChartListboxAddSeries(name);
-                }
-            }
+            //for (int i = 0; i < reports.Count; i++) {
+            //    if (series[i] != null) { // if a series was actually generated from this report
+            //        ReportEntry entry = reports[i];
+            //        string name = (entry.asLabel != null) ? entry.asLabel : entry.flow.TopFormat(style.RestyleAsNumberFormat("G4"));
+            //        Gui.gui.ChartListboxAddSeries(name);
+            //    }
+            //}
 
             return (series, seriesLNA);
         }
@@ -199,18 +199,21 @@ namespace Kaemika
             double initialTime = 0.0;
             double finalTime = fortime;
 
-            Gui.gui.ChartClear((outSymbol.Raw() == "vessel") ? "" : "Sample " + inSample.FormatSymbol(style));
+            string sampleName = (outSymbol.Raw() == "vessel") ? "" : "Sample " + inSample.FormatSymbol(style);
+            KChartHandler.ChartClear(sampleName);
 
             List<SpeciesValue> inSpecies = inSample.stateMap.species;
             State initialState = inSample.stateMap.state;
             if ((noise == Noise.None) && initialState.lna) initialState = new State(initialState.size, lna: false).InitMeans(initialState.MeanVector());
             if ((noise != Noise.None) && !initialState.lna) initialState = new State(initialState.size, lna: true).InitMeans(initialState.MeanVector());
             List<ReactionValue> reactions = inSample.RelevantReactions(netlist, style);
-            CRN crn = new CRN(inSample, reactions, precomputeLNA: (noise != Noise.None) && Gui.gui.PrecomputeLNA());
+            CRN crn = new CRN(inSample, reactions, precomputeLNA: (noise != Noise.None) && ClickerHandler.precomputeLNA);
+            KChartHandler.SetMeanFlowDictionary(crn.MeanFlowDictionary());
             List<ReportEntry> reports = netlist.Reports(inSpecies);
+            Exec.lastExecution.lastCRN = crn; Gui.gui.OutputSetText(crn.FormatNice(style));
 
             Func<double, double, Vector, Func<double, Vector, Vector>, IEnumerable<SolPoint>> Solver;
-            if (Gui.gui.Solver() == "GearBDF") Solver = Ode.GearBDF; else if (Gui.gui.Solver() == "RK547M") Solver = Ode.RK547M; else throw new Error("No solver");
+            if (ClickerHandler.solver == "GearBDF") Solver = Ode.GearBDF; else if (ClickerHandler.solver == "RK547M") Solver = Ode.RK547M; else throw new Error("No solver");
 
             Func<double, Vector, Vector> Flux;
             if (noise != Noise.None) Flux = (t, x) => crn.LNAFlux(t, x, style);
@@ -276,7 +279,7 @@ namespace Kaemika
                 return (lastTime, lastState, pointsCounter, renderedCounter);
             }
 
-            Gui.gui.ChartClearData();
+            KChartHandler.ChartClearData();
             Gui.gui.LegendUpdate();
 
             IEnumerable<SolPoint> solution = SolutionGererator(Solver, initialState, initialTime, finalTime, Flux, nonTrivialSolution);
@@ -309,13 +312,13 @@ namespace Kaemika
                             if ((noise == Noise.None && reports[i].flow.HasDeterministicValue()) ||
                                 (noise != Noise.None && reports[i].flow.HasStochasticMean())) {
                                 double mean = reports[i].flow.ObserveMean(sample, solPoint.T, state, Flux, style);
-                                Gui.gui.ChartAddPoint(series[i], solPoint.T, mean, 0.0, Noise.None);
+                                KChartHandler.ChartAddPoint(series[i], solPoint.T, mean, 0.0, Noise.None);
                             }
                             // generate LNA-dependent series
                             if (noise != Noise.None && reports[i].flow.HasStochasticVariance() && !reports[i].flow.HasNullVariance()) {
                                 double mean = reports[i].flow.ObserveMean(sample, solPoint.T, state, Flux, style);
                                 double variance = reports[i].flow.ObserveVariance(sample, solPoint.T, state, style);
-                                Gui.gui.ChartAddPoint(seriesLNA[i], solPoint.T, mean, variance, noise);
+                                KChartHandler.ChartAddPoint(seriesLNA[i], solPoint.T, mean, variance, noise);
                             }
                         }
                     }

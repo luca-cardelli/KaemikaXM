@@ -63,9 +63,49 @@ namespace KaemikaWPF.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Computation_48x48 {
+            get {
+                object obj = ResourceManager.GetObject("Computation_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Computation_G_48x48 {
+            get {
+                object obj = ResourceManager.GetObject("Computation_G_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap deviceBorder_W_48x48 {
             get {
                 object obj = ResourceManager.GetObject("deviceBorder_W_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap FileLoad_48x48 {
+            get {
+                object obj = ResourceManager.GetObject("FileLoad_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap FileSave_48x48 {
+            get {
+                object obj = ResourceManager.GetObject("FileSave_48x48", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -93,6 +133,16 @@ namespace KaemikaWPF.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap icons8_keyboard_96_G_48x48 {
+            get {
+                object obj = ResourceManager.GetObject("icons8_keyboard_96_G_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap icons8_keyboard_96_W_48x48 {
             get {
                 object obj = ResourceManager.GetObject("icons8_keyboard_96_W_48x48", resourceCulture);
@@ -113,6 +163,16 @@ namespace KaemikaWPF.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap icons8_share_384_G_48x48 {
+            get {
+                object obj = ResourceManager.GetObject("icons8_share_384_G_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap icons8_share_384_W_48x48 {
             get {
                 object obj = ResourceManager.GetObject("icons8_share_384_W_48x48", resourceCulture);
@@ -123,9 +183,29 @@ namespace KaemikaWPF.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap icons8combochart96_G_48x48 {
+            get {
+                object obj = ResourceManager.GetObject("icons8combochart96_G_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap icons8combochart96_W_48x48 {
             get {
                 object obj = ResourceManager.GetObject("icons8combochart96_W_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8device_G_48x48 {
+            get {
+                object obj = ResourceManager.GetObject("icons8device_G_48x48", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -193,6 +273,16 @@ namespace KaemikaWPF.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap icons8play40_G {
+            get {
+                object obj = ResourceManager.GetObject("icons8play40_G", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap icons8stop40 {
             get {
                 object obj = ResourceManager.GetObject("icons8stop40", resourceCulture);
@@ -206,6 +296,16 @@ namespace KaemikaWPF.Properties {
         internal static System.Drawing.Bitmap icons8text_48x48 {
             get {
                 object obj = ResourceManager.GetObject("icons8text.48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8text_G_48x48 {
+            get {
+                object obj = ResourceManager.GetObject("icons8text_G_48x48", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -246,6 +346,16 @@ namespace KaemikaWPF.Properties {
         internal static System.Drawing.Bitmap Noise_Fano_W_48x48 {
             get {
                 object obj = ResourceManager.GetObject("Noise_Fano_W_48x48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Noise_None_G_48x48 {
+            get {
+                object obj = ResourceManager.GetObject("Noise_None_G_48x48", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

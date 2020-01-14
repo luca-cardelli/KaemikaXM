@@ -74,7 +74,7 @@ namespace Kaemika
         //    return sr.ReadToEnd();
         //}
 
-        private static new List<ModelInfoGroup> Setup() {
+        private static List<ModelInfoGroup> Setup() {
             var groups = new List<ModelInfoGroup>();
 
             var group1 = new ModelInfoGroup("Basic Models");

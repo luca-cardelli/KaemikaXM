@@ -38,7 +38,8 @@ namespace KaemikaXM.Droid {
                     };
             };
 
-            LoadApplication(new App("Android", customTextEditor));
+            Gui.platform = Kaemika.Platform.Android;
+            LoadApplication(new App(customTextEditor));
         }
 
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)  {

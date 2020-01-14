@@ -4,6 +4,7 @@ using System;
 using Xamarin.Forms;
 using SkiaSharp.Views.Forms;
 using SkiaSharp;
+using Kaemika;
 
 namespace GraphSharp {
 

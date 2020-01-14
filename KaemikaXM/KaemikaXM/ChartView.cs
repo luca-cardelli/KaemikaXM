@@ -4,9 +4,9 @@ using System;
 using Xamarin.Forms;
 using SkiaSharp.Views.Forms;
 using SkiaSharp;
-using GraphSharp;
+using Kaemika;
 
-namespace Microcharts {
+namespace KaemikaXM {
 
     public class ChartView : SKCanvasView {
 
@@ -26,10 +26,10 @@ namespace Microcharts {
             this.GestureRecognizers.Add(tapGesture);
         }
 
-        public static readonly BindableProperty ChartProperty = BindableProperty.Create(nameof(Chart), typeof(Chart), typeof(ChartView), null, propertyChanged: OnChartChanged);
+        public static readonly BindableProperty ChartProperty = BindableProperty.Create(nameof(Chart), typeof(KChart), typeof(ChartView), null, propertyChanged: OnChartChanged);
 
-        public Chart Chart {
-            get { return (Chart)GetValue(ChartProperty); }
+        public KChart Chart {
+            get { return (KChart)GetValue(ChartProperty); }
             set { SetValue(ChartProperty, value); }
         }
 
@@ -43,7 +43,7 @@ namespace Microcharts {
 
         private void OnPaintCanvas(object sender, SKPaintSurfaceEventArgs e) {
             if (this.Chart != null) {
-                this.Chart.Draw(e.Surface.Canvas, e.Info.Width, e.Info.Height);
+                this.Chart.Draw(new SKChartPainter(e.Surface.Canvas), 0, 0, e.Info.Width, e.Info.Height);
             }
         }
 

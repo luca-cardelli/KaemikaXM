@@ -34,7 +34,7 @@ namespace KaemikaXM.Pages {
         //public Button spamComma;
         public Button spamReport;
         public Button spamEquil;
-        public Noise noisePickerSelection = Noise.None;
+        //public Noise noisePickerSelection = Noise.None;
         public ImageButton deviceButton;
         public ImageButton startButton;
 
@@ -185,10 +185,14 @@ namespace KaemikaXM.Pages {
             };
             foreach (Noise s in Gui.noise) noisePicker.Items.Add(Gui.StringOfNoise(s));
             noisePicker.Unfocused += async (object sender, FocusEventArgs e) => {
-                Noise oldSelection = noisePickerSelection;
-                noisePickerSelection = Gui.NoiseOfString(noisePicker.SelectedItem as string);
-                if (noisePickerSelection != oldSelection)
+                Noise oldSelection = ClickerHandler.SelectNoiseSelectedItem;
+                ClickerHandler.SelectNoiseSelectedItem = Gui.NoiseOfString(noisePicker.SelectedItem as string);
+                if (ClickerHandler.SelectNoiseSelectedItem != oldSelection)
                     MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: true, switchToOutput: false, autoContinue: true);
+                //Noise oldSelection = noisePickerSelection;
+                //noisePickerSelection = Gui.NoiseOfString(noisePicker.SelectedItem as string);
+                //if (noisePickerSelection != oldSelection)
+                //    MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: true, switchToOutput: false, autoContinue: true);
             };
             return noisePicker;
         }
@@ -226,7 +230,7 @@ namespace KaemikaXM.Pages {
             };
             button.Clicked += async (object sender, EventArgs e) => {
                 editor.InsertText(str);
-                if (Gui.gui.Platform() != "iOS") editor.ShowInputMethod();
+                if (Gui.platform != Kaemika.Platform.iOS) editor.ShowInputMethod();
             };
             return button;
         }
@@ -246,7 +250,8 @@ namespace KaemikaXM.Pages {
         }
 
         public void SyncNoisePicker(Picker noisePicker) {
-            noisePicker.SelectedItem = Gui.StringOfNoise(noisePickerSelection);
+//            noisePicker.SelectedItem = Gui.StringOfNoise(noisePickerSelection);
+            noisePicker.SelectedItem = Gui.StringOfNoise(ClickerHandler.SelectNoiseSelectedItem);
         }
 
         public ModelEntryPage() {
@@ -431,14 +436,14 @@ namespace KaemikaXM.Pages {
             File.WriteAllText(modelInfo.filename, modelInfo.title + Environment.NewLine + modelInfo.text);
         }
       
-        private static Dictionary<string, Dictionary<string, bool>> visibilityCache =
-            new Dictionary<string, Dictionary<string, bool>>();
+        //private static Dictionary<string, Dictionary<string, bool>> visibilityCache =
+        //    new Dictionary<string, Dictionary<string, bool>>();
 
-        public Dictionary<string,bool> Visibility() {
-            string theModel = modelInfo.title;
-            if (!visibilityCache.ContainsKey(theModel)) visibilityCache[theModel] = new Dictionary<string, bool>();
-            return visibilityCache[theModel];
-        }
+        //public Dictionary<string,bool> Visibility() {
+        //    string theModel = modelInfo.title;
+        //    lock (visibilityCache) { if (!visibilityCache.ContainsKey(theModel)) visibilityCache[theModel] = new Dictionary<string, bool>(); }
+        //    return visibilityCache[theModel];
+        //}
 
         public override void OnSwitchedTo() {
             MainTabbedPage.OnAnySwitchedTo(this);

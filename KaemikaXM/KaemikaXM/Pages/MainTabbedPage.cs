@@ -141,7 +141,7 @@ namespace KaemikaXM.Pages {
                 this.width = width;
                 this.height = height;
                 // // Disabled
-                // if (this.width > this.height) { if (Gui.gui.Platform() != "iOS") App.LandscapeOrientation(); } // iOS does not handle well return from rotation
+                // if (this.width > this.height) { if (Gui.platform != "iOS") App.LandscapeOrientation(); } // iOS does not handle well return from rotation
                 // // else App.theApp.MainPage.ForceLayout(); // does not help, also check that theApp is not null
             }
         }

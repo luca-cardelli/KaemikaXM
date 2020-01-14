@@ -18,6 +18,7 @@
     <Compile Remove="Algorithms\Layout\Simple\Hierarchical\SugiyamaLayoutAlgorithm.VertexLayer.cs" />
     <Compile Remove="Algorithms\Layout\Simple\Hierarchical\SugiyamaLayoutAlgorithm.VertexLayerCollection.cs" />
     <Compile Remove="Algorithms\Layout\Simple\Hierarchical\SugiyamaLayoutParameters.cs" />
+    <Compile Remove="VectorStd.cs" />
   </ItemGroup>
 
   <ItemGroup>
