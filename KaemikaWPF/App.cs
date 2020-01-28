@@ -11,8 +11,8 @@ namespace KaemikaWPF
         /// </summary>
         /// 
 
-        public static GuiToWin fromGui;      // implementing FromGui, including the raw application form; refer as: App.fromGui
-        public static WinToGui toGui;        // implementing ToGui; refer as: App.toGui
+        public static GuiToWin guiToWin;      // implementing GuiToWin : Form,   including winControls : WinControls : GuiControls
+        public static WinToGui winToGui;      // implementing ToGui
 
         [STAThread]
         static void Main() {
@@ -20,11 +20,12 @@ namespace KaemikaWPF
             Application.SetCompatibleTextRenderingDefault(false);
 
             Gui.platform = Kaemika.Platform.Windows;
-            App.fromGui = new GuiToWin();    // of type GuiToWin : Form, will contain a clicker: FromGui
-            App.toGui = new WinToGui();      // of type WinToGui : ToGui
-            Gui.gui = App.toGui;             // of type ToGui
+            App.guiToWin = new GuiToWin();               // of type GuiToWin : Form, contains a winControls: WinControls
+            App.winToGui = new WinToGui();               // of type WinToGui : ToGui
+            Gui.toGui = App.winToGui;                    // of type ToGui, so that higher levels can call the platform Gui
+            //Gui.guiControls = App.guiToWin.winControls;       // of type GuiControls
 
-            Application.Run(App.fromGui); 
+            Application.Run(App.guiToWin); 
         }
 
     }

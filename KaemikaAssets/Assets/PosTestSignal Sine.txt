@@ -4,7 +4,7 @@
 
 // Turn a positive function into a waveform
 network Signal(species X, function f) {
-   # ->{{100*f()}} X;   X ->{100} #
+   Ø ->{{100*f()}} X;   X ->{100} Ø
 }
 
 species A @ 0 M

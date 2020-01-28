@@ -10,8 +10,8 @@
 // if 'under' > 'over'
 
 network UberPoisson(species A, number mean under over) {
-    # -> over * A     {under * mean^under} 
-    under * A -> #    {over}
+    Ø -> over * A     {under * mean^under} 
+    under * A -> Ø    {over}
 }
 
 // Poisson noise on A

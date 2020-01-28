@@ -23,7 +23,7 @@ sample init {1mL, 25C}
 species A @ 1M in init
 species B @ 1M in init
 A + B ->{20} A
-A -> #
+A -> Ø
 
 // apply this network to each dilution;
 // note that this invokes a simulation

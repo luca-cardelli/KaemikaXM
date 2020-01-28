@@ -17,8 +17,8 @@ report a, b-c, c+d
 a -> b          // simple reaction, rate = 1
 a ->{2} b       // simple reaction, rate = 2
 a -> b {2}      // simple reaction, rate = 2
-# -> b          // no reactants
-a -> #          // no products
+Ø -> b          // no reactants (can use # for Ø)
+a -> Ø          // no products (can use # for Ø)
 
 a <-> b         // reversible: a -> b; b -> a
 a {1}<->{2} b   // direct (2) and reverse (1) rate
@@ -77,12 +77,12 @@ species a, b, c, d @ 1 M
 // Default mass action kinetic rate,
 // 2 * molarity(a) * molarity(b):
 
-a + b -> #  { 2 }
+a + b -> Ø  { 2 }
 
 // Equivalent representation, using
 // general kinetic rates:
 
-a + b -> #  {{ 2 * a * b }}	
+a + b -> Ø  {{ 2 * a * b }}	
 
 // Species other than a,b can be used, but
 // NOTE: whatever expression is written
@@ -97,13 +97,13 @@ a + b -> #  {{ 2 * a * b }}
 // frequency = 2, activation energy = 50)
 // in mass action:
 
-c + d -> #  { 2, 50 }
+c + d -> Ø  { 2, 50 }
 
 // Equivalent representation, using
 // general kinetic rates; here 'kelvin'
 // picks up the current sample temperature:
 
-c + d -> #  {{ 2*exp(-50/(8.3144598*kelvin)) * c * d }}	
+c + d -> Ø  {{ 2*exp(-50/(8.3144598*kelvin)) * c * d }}	
 
 
 //======================================
@@ -125,7 +125,7 @@ function Arrhenius(flow cf ae) {
 
 // Using the Arrhenius function in a rate:
 
-p + q -> #  {{ Arrhenius(2,50)*p*q }}
+p + q -> Ø  {{ Arrhenius(2,50)*p*q }}
 
 //equilibrate for 10 // uncomment as needed
 
@@ -161,7 +161,7 @@ number n = 3
 // plot the instantaneous Hill rate as well:
 
 species x1, y1 @ 0 M
-# ->{0.1} y1
+Ø ->{0.1} y1
 y1 -> y1 + x1  {{ Hill(y1,n,true) }}       
 report x1,y1,Hill(y1,n,true)    
 
@@ -169,7 +169,7 @@ report x1,y1,Hill(y1,n,true)
 // plot the instantaneous Hill rate as well:
 
 species x2, y2 @ 0 M
-# ->{0.1} y2
+Ø ->{0.1} y2
 y2 -> y2 + x2  {{ Hill(y2,n,false) }}      
 report x2,y2,Hill(y2,n,false)    
 

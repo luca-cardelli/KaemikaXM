@@ -179,10 +179,10 @@ namespace Kaemika
             if (!netlist.autoContinue) {
                 while ((!continueExecution) && Exec.IsExecuting()) {
                     // if (!Gui.gui.ContinueEnabled()) Gui.gui.OutputAppendText(netlist.Format(style));
-                    Gui.gui.ContinueEnable(true);
+                    Gui.toGui.ContinueEnable(true);
                     Thread.Sleep(100);
                 }
-                Gui.gui.ContinueEnable(false); continueExecution = false;
+                Gui.toGui.ContinueEnable(false); continueExecution = false;
                 //Gui.gui.OutputSetText(""); // clear last results in preparation for the next, only if not autoContinue
             }
         }
@@ -200,20 +200,20 @@ namespace Kaemika
             double finalTime = fortime;
 
             string sampleName = (outSymbol.Raw() == "vessel") ? "" : "Sample " + inSample.FormatSymbol(style);
-            KChartHandler.ChartClear(sampleName);
+            KChartHandler.ChartClear(sampleName, "s", "M");
 
             List<SpeciesValue> inSpecies = inSample.stateMap.species;
             State initialState = inSample.stateMap.state;
             if ((noise == Noise.None) && initialState.lna) initialState = new State(initialState.size, lna: false).InitMeans(initialState.MeanVector());
             if ((noise != Noise.None) && !initialState.lna) initialState = new State(initialState.size, lna: true).InitMeans(initialState.MeanVector());
             List<ReactionValue> reactions = inSample.RelevantReactions(netlist, style);
-            CRN crn = new CRN(inSample, reactions, precomputeLNA: (noise != Noise.None) && ClickerHandler.precomputeLNA);
+            CRN crn = new CRN(inSample, reactions, precomputeLNA: (noise != Noise.None) && KControls.precomputeLNA);
             KChartHandler.SetMeanFlowDictionary(crn.MeanFlowDictionary());
             List<ReportEntry> reports = netlist.Reports(inSpecies);
-            Exec.lastExecution.lastCRN = crn; Gui.gui.OutputSetText(crn.FormatNice(style));
+            Exec.lastExecution.lastCRN = crn; Gui.toGui.OutputSetText(crn.FormatNice(style));
 
             Func<double, double, Vector, Func<double, Vector, Vector>, IEnumerable<SolPoint>> Solver;
-            if (ClickerHandler.solver == "GearBDF") Solver = Ode.GearBDF; else if (ClickerHandler.solver == "RK547M") Solver = Ode.RK547M; else throw new Error("No solver");
+            if (KControls.solver == "GearBDF") Solver = Ode.GearBDF; else if (KControls.solver == "RK547M") Solver = Ode.RK547M; else throw new Error("No solver");
 
             Func<double, Vector, Vector> Flux;
             if (noise != Noise.None) Flux = (t, x) => crn.LNAFlux(t, x, style);
@@ -280,7 +280,7 @@ namespace Kaemika
             }
 
             KChartHandler.ChartClearData();
-            Gui.gui.LegendUpdate();
+            KChartHandler.LegendUpdate();
 
             IEnumerable<SolPoint> solution = SolutionGererator(Solver, initialState, initialTime, finalTime, Flux, nonTrivialSolution);
 
@@ -326,7 +326,7 @@ namespace Kaemika
                     densityTick += densityStep;
                 }
                 if (solPoint.T >= redrawTick) { // avoid redrawing the plot too often
-                    Gui.gui.ChartUpdate();
+                    KChartHandler.ChartUpdate(incremental: true);
                     redrawTick += redrawStep;
                 }
                 lastTime = solPoint.T;
@@ -335,13 +335,13 @@ namespace Kaemika
             } while (true);
 
             if (hasSolPoint) lastState = new State(sample.Count(), lna: noise != Noise.None).InitAll(solPoint.X);
-            Gui.gui.ChartUpdate();
+            KChartHandler.ChartUpdate(incremental: false);
 
             return (lastTime, lastState, pointsCounter, renderedCounter);
         }
 
         // BFGF Minimizer
-        public static Value Argmin(Value function, Value initial, Value tolerance, Netlist netlist, Style style) {
+        public static Value Argmin(Value function, Value initial, Value tolerance, Netlist netlist, Style style, int s) {
             if (!(initial is ListValue<Value>)) throw new Error("argmin: expecting a list for second argument");
             Vector<double> initialGuess = CreateVector.Dense((initial as ListValue<Value>).ToDoubleArray("argmin: expecting a list of numbers for second argument"));
             if (!(tolerance is NumberValue)) throw new Error("argmin: expecting a number for third argument");
@@ -357,14 +357,15 @@ namespace Kaemika
                 ListValue<Value> arg1 = new ListValue<Value>(parameters);
                 List<Value> arguments = new List<Value>(); arguments.Add(arg1);
                 bool autoContinue = netlist.autoContinue; netlist.autoContinue = true;
-                Value result = closure.Apply(arguments, netlist, style);
+                Value result = closure.ApplyReject(arguments, netlist, style, s);
+                if (result == null) throw new Error(badResult);
                 netlist.autoContinue = autoContinue;
                 if (!(result is ListValue<Value>)) throw new Error(badResult);
                 List<Value> results = (result as ListValue<Value>).elements;
                 if (results.Count != 2 || !(results[0] is NumberValue) || !(results[1] is ListValue<Value>)) throw new Error(badResult);
                 double cost = (results[0] as NumberValue).value;
                 ListValue<Value> gradients = results[1] as ListValue<Value>;
-                Gui.gui.OutputAppendText("argmin: parameters=" + arg1.Format(style) + " => cost=" + style.FormatDouble(cost) + ", gradients=" + results[1].Format(style) + Environment.NewLine);
+                Gui.toGui.OutputAppendText("argmin: parameters=" + arg1.Format(style) + " => cost=" + style.FormatDouble(cost) + ", gradients=" + results[1].Format(style) + Environment.NewLine);
                 return new Tuple<double, Vector<double>>(cost, CreateVector.Dense(gradients.ToDoubleArray(badResult)));
             });
 
@@ -375,7 +376,7 @@ namespace Kaemika
                     List<Value> elements = new List<Value>();
                     for (int i = 0; i < result.MinimizingPoint.Count; i++) elements.Add(new NumberValue(result.MinimizingPoint[i]));
                     ListValue<Value> list = new ListValue<Value>(elements);
-                    Gui.gui.OutputAppendText("argmin: converged with parameters " + list.Format(style) + " and reason '" + result.ReasonForExit + "'" + Environment.NewLine);
+                    Gui.toGui.OutputAppendText("argmin: converged with parameters " + list.Format(style) + " and reason '" + result.ReasonForExit + "'" + Environment.NewLine);
                     return list;
                  } else throw new Error("reason '" + result.ReasonForExit.ToString() + "'");
             } catch (Exception e) { throw new Error("argmin ended: " + ((e.InnerException == null) ? e.Message : e.InnerException.Message)); } // somehow we need to recatch the inner exception coming from CostAndGradient
@@ -384,7 +385,7 @@ namespace Kaemika
         // try this for multiparameter optimization: https://numerics.mathdotnet.com/api/MathNet.Numerics.Optimization.TrustRegion/index.htm
 
         // Golden Section Minimizer
-        public static Value Argmin(Value function, Value lowerBound, Value upperBound, Value tolerance, Netlist netlist, Style style) {
+        public static Value Argmin(Value function, Value lowerBound, Value upperBound, Value tolerance, Netlist netlist, Style style, int s) {
             if (!(lowerBound is NumberValue) || !(upperBound is NumberValue)) throw new Error("argmin: expecting numbers for lower and upper bounds");
             double lower = (lowerBound as NumberValue).value;
             double upper = (upperBound as NumberValue).value;
@@ -397,17 +398,18 @@ namespace Kaemika
                 (double parameter) => {
                     List<Value> arguments = new List<Value>(); arguments.Add(new NumberValue(parameter));
                     bool autoContinue = netlist.autoContinue; netlist.autoContinue = true;
-                    Value result = closure.Apply(arguments, netlist, style);
+                    Value result = closure.ApplyReject(arguments, netlist, style, s);
+                    if (result == null) throw new Error("Objective function returned null");
                     netlist.autoContinue = autoContinue;
                     if (!(result is NumberValue)) throw new Error("Objective function must return a number, not: " + result.Format(style));
-                    Gui.gui.OutputAppendText("argmin: parameter=" + Style.FormatSequence(arguments, ", ", x => x.Format(style)) + " => cost=" + result.Format(style) + Environment.NewLine);
+                    Gui.toGui.OutputAppendText("argmin: parameter=" + Style.FormatSequence(arguments, ", ", x => x.Format(style)) + " => cost=" + result.Format(style) + Environment.NewLine);
                     return (result as NumberValue).value;
                 });
 
             try {
                 ScalarMinimizationResult result = GoldenSectionMinimizer.Minimum(objectiveFunction, lower, upper);
                 if (result.ReasonForExit == ExitCondition.Converged || result.ReasonForExit == ExitCondition.BoundTolerance) {
-                    Gui.gui.OutputAppendText("argmin: converged with parameter=" + result.MinimizingPoint + " and reason '" + result.ReasonForExit + "'" + Environment.NewLine);
+                    Gui.toGui.OutputAppendText("argmin: converged with parameter=" + result.MinimizingPoint + " and reason '" + result.ReasonForExit + "'" + Environment.NewLine);
                     return new NumberValue(result.MinimizingPoint);
                  } else throw new Error("reason '" + result.ReasonForExit.ToString() + "'");
             } catch (Exception e) { throw new Error("argmin ended: " + ((e.InnerException == null) ? e.Message : e.InnerException.Message)); } // somehow we need to recatch the inner exception coming from CostAndGradient

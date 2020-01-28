@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -52,15 +52,15 @@
     <CodeSignEntitlements>Entitlements.plist</CodeSignEntitlements>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="SkiaSharp, Version=1.68.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <HintPath>..\packages\SkiaSharp.1.68.1.1\lib\Xamarin.Mac20\SkiaSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="SkiaSharp.Views.Mac, Version=1.68.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <HintPath>..\packages\SkiaSharp.Views.1.68.1.1\lib\Xamarin.Mac20\SkiaSharp.Views.Mac.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Xamarin.Mac" />
-    <Reference Include="SkiaSharp">
-      <HintPath>..\packages\SkiaSharp.1.68.1\lib\Xamarin.Mac20\SkiaSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="SkiaSharp.Views.Mac">
-      <HintPath>..\packages\SkiaSharp.Views.1.68.1\lib\Xamarin.Mac20\SkiaSharp.Views.Mac.dll</HintPath>
-    </Reference>
     <Reference Include="MathNet.Numerics">
       <HintPath>..\packages\MathNet.Numerics.4.9.0\lib\netstandard2.0\MathNet.Numerics.dll</HintPath>
     </Reference>
@@ -212,10 +212,7 @@
     <ImageAsset Include="Resources\Assets.xcassets\DMParameters.W.48x48.DM.imageset\Contents.json" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Resources\" />
     <Folder Include="Assets.xcassets\Noise_None.W.48x48.imageset\" />
-    <Folder Include="Resources\Assets.xcassets\icons8device.ON.48x48.imageset\" />
-    <Folder Include="Resources\Assets.xcassets\Transparent.imageset\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
@@ -225,16 +222,17 @@
   <ItemGroup>
     <Compile Include="Main.cs" />
     <Compile Include="AppDelegate.cs" />
-    <Compile Include="ViewController.cs" />
-    <Compile Include="ViewController.designer.cs">
-      <DependentUpon>ViewController.cs</DependentUpon>
+    <Compile Include="GuiToMac.cs" />
+    <Compile Include="GuiToMac.designer.cs">
+      <DependentUpon>GuiToMac.cs</DependentUpon>
     </Compile>
-    <Compile Include="GuiMac.cs" />
+    <Compile Include="MacToGui.cs" />
     <Compile Include="NSChartView.cs" />
     <Compile Include="CGChartPainter.cs" />
     <Compile Include="NSDeviceView.cs" />
     <Compile Include="CGDevicePainter.cs" />
     <Compile Include="CGPainter.cs" />
+    <Compile Include="MacControls.cs" />
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="Main.storyboard" />

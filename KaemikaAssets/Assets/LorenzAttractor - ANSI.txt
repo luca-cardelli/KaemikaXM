@@ -25,7 +25,7 @@
 	y'm ->{s} y'm + x'm
 	x'p ->{s} x'p + x'm
 	   add some dampening (does not change the original ODE solution)
-	2 x'p + 2 x'm -> #
+	2 x'p + 2 x'm -> Ø
 	   initialize x'p(0)-x'm(0) = x(0)
 	   plot x'p(t) - x'm(t)
 	   similarly for the other two ODEs
@@ -66,9 +66,9 @@ x'p + y'm -> x'p + y'm + z'm
 x'm + y'p -> x'm + y'p + z'm
 z'p ->{b} z'p + z'm
 
-2 x'p + 2 x'm -> #
-2 y'p + 2 y'm -> #
-2 z'p + 2 z'm -> #
+2 x'p + 2 x'm -> Ø
+2 y'p + 2 y'm -> Ø
+2 z'p + 2 z'm -> Ø
 
 report y'p - y'm //; x'p - x'm; z'p - z'm
 

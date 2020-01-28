@@ -8,6 +8,14 @@ namespace Kaemika {
     public interface ChartPainter : Painter { // interface for platform-dependent chart rendering
         void DrawLine(List<KChartEntry> list, int seriesIndex, float pointSize, SKColor color, Swipe pinchPan);
         void DrawLineRange(List<KChartEntry> list, int seriesIndex, SKColor color, Swipe pinchPan);
+        void DrawLineFill(List<KChartEntry> list, int seriesIndex, float bottom, SKColor color, Swipe pinchPan);
+    }
+
+    public static class Palette {
+        private static Color[] palette = { Color.Red, Color.Green, Color.Blue, Color.Gold, Color.Cyan, Color.GreenYellow, Color.Violet, Color.Purple };
+        public static Color GetColor(int no) {
+            return palette[no % palette.Length];
+        }
     }
 
     // "The" current KChart is stored inside the XXChartView of each platform, is viewed inside the GUI by the XXChartView, and is painted by XXChartPainter
@@ -37,6 +45,7 @@ namespace Kaemika {
         //public static void Stop() {
         //    chart = null;
         //}
+
         public static string SampleName() {
             if (chart == null) return "";
             return chart.SampleName(); 
@@ -49,18 +58,36 @@ namespace Kaemika {
             if (chart == null) return;
             executionStyle = style;
         }
-        public static void ChartClear(string sampleName) {
+
+        private static DateTime lastUpdate = DateTime.MinValue;
+        // make sure to do a final non-incremental update after incremental updates
+        public static void ChartUpdate(bool incremental = false) {
+            if (!incremental) {
+                lastUpdate = DateTime.MinValue;
+                Gui.toGui.ChartUpdate();
+            } else if (TimeLib.Precedes(lastUpdate, DateTime.Now.AddSeconds(-0.03))) { 
+                Gui.toGui.ChartUpdate(); 
+                lastUpdate = DateTime.Now; 
+            }
+        }
+        public static void LegendUpdate() {
+            Gui.toGui.LegendUpdate();
+        }
+        public static void ChartClear(string sampleName, string baseUnitX, string baseUnitY) {
             //// do not test for char==null: we must create the first chart!
-            chart = new KChart(sampleName);
+            lastUpdate = DateTime.MinValue;
+            chart = new KChart(sampleName, baseUnitX, baseUnitY);
+            ChartUpdate();
         }
         public static KChart ChartCopy() {
             // for Xamarin (Android/iOS) we must assign a fresh value to the chart view to cause it to invalidate and redraw;
             // this produces a fresh value for the same chart: it is essentially an Invalidate command
-            if (chart == null) chart = new KChart("");
+            if (chart == null) chart = new KChart("", "s", "M");
             else chart = new KChart(chart.SampleName(), chart.timecourse);
             return chart;
         }
         public static void ChartClearData() {
+            lastUpdate = DateTime.MinValue;
             if (chart == null) return;
             chart.timecourse.ClearData();
         }
@@ -73,6 +100,9 @@ namespace Kaemika {
             if (chart == null) return null;
             return chart.timecourse.SeriesNamed(name);
         }
+        public static string ChartAddSeries(string legend, Flow asFlow, Color color, KLineMode lineMode, KLineStyle lineStyle) {
+            return chart.timecourse.AddSeries(new KSeries(legend, asFlow, color, lineMode, lineStyle));
+        }
         public static string ChartAddSeries(string legend, Flow asFlow, Color color, Noise noise) {
             if (chart == null) return null;
             if (noise == Noise.None) {
@@ -80,7 +110,7 @@ namespace Kaemika {
             } else if (noise == Noise.Sigma || noise == Noise.SigmaSq || noise == Noise.CV || noise == Noise.Fano) {
                 return chart.timecourse.AddSeries(new KSeries(legend, asFlow, color, KLineMode.Line, KLineStyle.Thin));
             } else if (noise == Noise.SigmaRange || noise == Noise.SigmaSqRange) {
-                return chart.timecourse.AddSeries(new KSeries(legend, asFlow, System.Drawing.Color.FromArgb(KChart.transparency, color), KLineMode.Range, KLineStyle.Thin));
+                return chart.timecourse.AddSeries(new KSeries(legend, asFlow, Color.FromArgb(KChart.transparency, color), KLineMode.Range, KLineStyle.Thin));
             } else throw new Error("ChartAddSeries");
         }
         public static void ChartAddPoint(string seriesName, double t, double mean, double variance, Noise noise) {
@@ -128,6 +158,10 @@ namespace Kaemika {
         public static void InvertVisible(string seriesName) {
             if (chart == null) return;
             chart.timecourse.InvertVisible(seriesName);
+        }
+        public static void ShiftInvertVisible(string seriesName) {
+            if (chart == null) return;
+            chart.timecourse.ShiftInvertVisible(seriesName);
         }
         public static void ShowEndNames(bool show) {
             if (chart == null) return;
@@ -179,9 +213,23 @@ namespace Kaemika {
                 if (crn != null) crn.Draw(chartPainter, new SKPoint(chartSize.Width + legendSize.Width + spacer, header), reactionsSize, pointSize, Exec.lastExecution.style);
             } catch { }
         }
+        public static string SnapToSVG(SKSize chartSize) {
+            SvgCanvas theCanvas = null; // store the canvas internally generated by GenPainter for use in writing the SVG out
+            Func<Colorer> GenColorer = () => {
+                return new SvgColorer();
+            };
+            Func<SKSize, ChartPainter> GenPainter = (SKSize canvasSize) => {
+                SvgCanvas canvas = new SvgCanvas(canvasSize, new SKSize(29.7f, 21.0f));
+                theCanvas = canvas;
+                return new SvgChartPainter(canvas);
+            };
+            Snap(GenColorer, GenPainter, chartSize);
+            return theCanvas.Close();
+        }
     }
 
     public class KChart {
+        private SKSize sizeOfLastDrawn;
         private float pointSize;
         private float margin; // margin around the left, right, bottom, and between the top and the tile
         private float textHeight;  // for axis labels text, >= margin
@@ -201,10 +249,11 @@ namespace Kaemika {
             this.margin = 20.0f; // * platformScaling;
             this.textHeight = 20.0f; // * platformScaling;
             this.titleHeight = 22.0f; // * platformScaling;
+            this.sizeOfLastDrawn = new SKSize(0, 0);
         }
 
-        public KChart(string sampleName) {
-            Init(sampleName, new KTimecourse(sampleName));
+        public KChart(string sampleName, string baseUnitX, string baseUnitY) {
+            Init(sampleName, new KTimecourse(sampleName, baseUnitX, baseUnitY));
         }
 
         public KChart(string newSampleName, KTimecourse timecourse) {
@@ -230,8 +279,13 @@ namespace Kaemika {
             return pointSize;
         }
 
+        public SKSize Size() { // better to use Gui.gui.ChartSize(), which is the size of the chart in actual GUI
+            return this.sizeOfLastDrawn;
+        }
+
         // called asynchronously by the GUI
         public void Draw(ChartPainter painter, int originX, int originY, int width, int height) {
+            this.sizeOfLastDrawn = new SKSize(width, height);
             this.pointSize = PointSize(width, height);
             this.margin = 12.0f * pointSize;
             this.textHeight = 12.0f * pointSize;
@@ -277,17 +331,17 @@ namespace Kaemika {
 
         public string HitListTooltip(string xValue, string[] yFlows, string[] yValues) {
             if (yFlows == null) return "";
-            string time = "time";
+            string dimensionX = (timecourse.baseUnitX == "s") ? "time" : "-x->";
             int yFlowsWidth = 0;
             for (int i = 0; i < yFlows.Length; i++)
                 if (yFlows[i] != null)
                     yFlowsWidth = Math.Max(yFlowsWidth, yFlows[i].Length);
-            yFlowsWidth = Math.Max(yFlowsWidth, time.Length);
+            yFlowsWidth = Math.Max(yFlowsWidth, dimensionX.Length);
             string toolTip = "";
             for (int i = 0; i < yFlows.Length; i++)
                 if (yFlows[i] != null)
                     toolTip += yFlows[i] + new string(' ', yFlowsWidth - yFlows[i].Length + 1) + yValues[i] + Environment.NewLine;
-            toolTip += time + new string(' ', yFlowsWidth - time.Length + 1) + xValue;
+            toolTip += dimensionX + new string(' ', yFlowsWidth - dimensionX.Length + 1) + xValue;
             return toolTip;
         }
 
@@ -297,7 +351,7 @@ namespace Kaemika {
 
     }
 
-    public enum KLineMode { Line, Range }
+    public enum KLineMode { Line, Range, FillUnder }
     public enum KLineStyle { Thin, Thick }
 
     public class KSeries {
@@ -307,6 +361,8 @@ namespace Kaemika {
         public KLineMode lineMode;    // this tells us if it is a mean (Line) or mean+-variance (Range) series
         public KLineStyle lineStyle;  // a KLineMode.Line can be KLineStyle.Thin or KLineStyle.Thick (but a KLineMode.Range can only be KLineStyle.Thin?)
         public bool visible;
+        public KButton lineButton;
+        public KButton nameButton;
         public KSeries(string name, Flow asFlow, Color color, KLineMode lineMode, KLineStyle lineStyle) {
             this.name = name;
             this.asFlow = asFlow;
@@ -314,6 +370,8 @@ namespace Kaemika {
             this.lineMode = lineMode;
             this.lineStyle = lineStyle;
             this.visible = true;
+            this.lineButton = null;
+            this.nameButton = null;
         }
     }
 
@@ -353,10 +411,14 @@ namespace Kaemika {
         private KChartEntry lastEntry;                   // the last entry to accumulate the equal-time points
         private int lastEntryCount;                      // to know when we have completed the last entry
         private Dictionary<string, int> seriesIndex;     // maintaining the connection between seriesList and timecourse
+        public string baseUnitX;
+        public string baseUnitY;
 
-        public KTimecourse(string sampleName) {
+        public KTimecourse(string sampleName, string baseUnitX, string baseUnitY) {
             this.mutex = new object();
             this.sampleName = sampleName;
+            this.baseUnitX = baseUnitX;
+            this.baseUnitY = baseUnitY;
             this.seriesList = new List<KSeries>();
             this.list = new List<KChartEntry>();
             this.seriesIndex = new Dictionary<string, int>();
@@ -417,16 +479,13 @@ namespace Kaemika {
                     if (lastEntry == null) {
                         var Y = new float[seriesList.Count];
                         var Yrange = new float[seriesList.Count];
-                        //var Ylabel = new string[seriesList.Count];
                         Y[index] = mean;
                         Yrange[index] = variance;
-                        //Ylabel[index] = seriesName;
                         lastEntry = new KChartEntry(X: t, Y: Y, Yrange: Yrange); //, Ylabel: Ylabel);
                         lastEntryCount = 1;
                     } else  {
                         lastEntry.Y[index] = mean;
                         lastEntry.Yrange[index] = variance;
-                        //lastEntry.Ylabel[index] = seriesName;
                         lastEntryCount++;
                     }
                     if (lastEntryCount == seriesList.Count) {
@@ -460,7 +519,7 @@ namespace Kaemika {
                             foreach (var keyPair in meanFlowDictionary) {
                                 SpeciesValue headSpecies = keyPair.Key;
                                 Flow derivative = keyPair.Value; 
-                                if (seriesHit.asFlow.Involves(new List<SpeciesValue> { headSpecies }))
+                                if (seriesHit.asFlow != null && seriesHit.asFlow.Involves(new List<SpeciesValue> { headSpecies }))
                                     seriesTag += derivative.FormatAsODE(headSpecies, KChartHandler.executionStyle, "∂ ") + Environment.NewLine;
                             }
                             if (seriesTag != "") return (null, null, null, seriesTag.Substring(0, seriesTag.Length - 1));
@@ -542,6 +601,39 @@ namespace Kaemika {
             }
         }
 
+        public void AllOtherVisible(string seriesName, bool visible) {
+            lock (mutex) {
+                foreach (KSeries series in seriesList)
+                    if (series.name != seriesName) series.visible = visible;
+            }
+        }
+
+        public void ShiftInvertVisible(string seriesName) {
+            lock (mutex) {
+                KSeries thisSeries = null;
+                bool allOtherOff = true;
+                bool allOtherOn = true;
+                foreach (KSeries series in seriesList) {
+                    if (series.name == seriesName)
+                        thisSeries = series;
+                    else {
+                        allOtherOff = allOtherOff && !series.visible;
+                        allOtherOn = allOtherOn && series.visible;
+                    }
+                }
+                if (thisSeries == null) return;
+
+                // thisOn & not allOtherOff -> thisOn & allOtherOff
+                if (thisSeries.visible && !allOtherOff) AllOtherVisible(seriesName, false);
+                // thisOn & allOtherOff -> thisOn & allOtherOn
+                else if (thisSeries.visible && allOtherOff) { thisSeries.visible = true; AllOtherVisible(seriesName, true); }
+                // thisOff & not allOtherOff -> thisOn & allOtherOff
+                else if ((!thisSeries.visible) && !allOtherOff) { thisSeries.visible = true; AllOtherVisible(seriesName, false); }
+                // thisOff & allOtherOff -> thisOn & allOtherOn
+                else if ((!thisSeries.visible) && allOtherOff) { thisSeries.visible = true; AllOtherVisible(seriesName, true); }
+            }
+        }
+
         public void InvertVisible(string seriesName) {
             lock (mutex) {
                 foreach (KSeries series in seriesList) {
@@ -569,18 +661,23 @@ namespace Kaemika {
         }
 
         private float XlocOfXvalInPlotarea(float Xval, float minX, float maxX, SKSize plotSize) {
-            return (Xval / (maxX - minX)) * plotSize.Width;
+            if (minX == maxX) return 0.0f;
+            return ((Xval - minX) * plotSize.Width) / (maxX - minX);
         }
         private float XvalOfXlocInPlotarea(float Xloc, float minX, float maxX, SKSize plotSize) {
-            return Xloc / plotSize.Width * (maxX - minX);
+            if (plotSize.Width == 0) return 0.0f;
+            return minX + (Xloc * (maxX - minX)) / plotSize.Width;
         }
         private float YlocOfYvalInPlotarea(float Yval, float minY, float maxY, SKSize plotSize) {  // the Y axis is flipped
+            if (minY == maxY) return plotSize.Height;
             return ((maxY - Yval) * plotSize.Height) / (maxY - minY);
         }
         private float YvalOfYlocInPlotarea(float Yloc, float minY, float maxY, SKSize plotSize) {  // the Y axis is flipped
+            if (plotSize.Height == 0.0f) return 0.0f;
             return maxY - (Yloc * (maxY - minY)) / plotSize.Height;
         }
         private float YlocRangeOfYvalRangeInPlotarea(float YvalRange, float minY, float maxY, SKSize plotSize) {
+            if (minY == maxY) return 0.0f;
             return (YvalRange * plotSize.Height) / (maxY - minY);
         }
        
@@ -603,8 +700,48 @@ namespace Kaemika {
             }
         }
 
-        private float SignificantOne(float n) {
-            return float.Parse(n.ToString("G1"));
+        //private float SignificantOne(float n) {
+        //    return float.Parse(n.ToString("G1"));
+        //}
+        //private (float minS, float maxS) SignificantOnes(float min, float max) {
+        //    float diff = max - min;
+        //    float diffS = SignificantOne(diff);
+        //    float minS = SignificantOne(min);
+        //    float maxS = SignificantOne(max);
+        //    //while (min < minS) minS -= diffS;
+        //    //while (max > maxS) maxS += diffS;
+        //    return (minS, maxS);
+        //}
+
+        public double RoundToSignificantDigits(double d, int digits) {
+            if(d == 0) return 0;
+            double scale = Math.Pow(10, Math.Floor(Math.Log10(Math.Abs(d))) + 1);
+            return scale * Math.Round(d / scale, digits);
+        }
+        static double TruncateToSignificantDigits(double d, int digits) {
+            if(d == 0) return 0;
+            double scale = Math.Pow(10, Math.Floor(Math.Log10(Math.Abs(d))) + 1 - digits);
+            return scale * Math.Truncate(d / scale);
+        }
+
+        private (float minS, float maxS) Smooth(float min, float max) {
+            float minEqui = (float)RoundToSignificantDigits((double)min, 1);
+            float maxEqui = (float)RoundToSignificantDigits((double)max, 1);
+            if (minEqui == maxEqui) {
+                minEqui = (float)RoundToSignificantDigits((double)min, 2);
+                maxEqui = (float)RoundToSignificantDigits((double)max, 2);
+            }
+            if (minEqui == maxEqui) {
+                minEqui = (float)RoundToSignificantDigits((double)min, 3);
+                maxEqui = (float)RoundToSignificantDigits((double)max, 3);
+            }
+            if (minEqui == maxEqui) {
+                minEqui = (float)RoundToSignificantDigits((double)min, 4);
+                maxEqui = (float)RoundToSignificantDigits((double)max, 4);
+            }
+            //int maxMagn = (int)Math.Ceiling(Math.Log10((double)Math.Abs(max)));
+            //minEqui = (Math.Abs(minEqui) < Math.Pow(10, maxMagn - 3)) ? 0.0f : minEqui;
+            return (minEqui, maxEqui);
         }
 
         private void Inner_DrawXMark(ChartPainter painter, float X, float Y, float markLength, SKColor theColor, Swipe pinchPan) {
@@ -614,44 +751,96 @@ namespace Kaemika {
             }
         }
 
-        private void Inner_DrawXLabel(ChartPainter painter, string text, float X, float Y, float markLength, float textHeight, SKColor theColor, Swipe pinchPan){
-            using (var paint = painter.TextPaint(painter.font, pinchPan % textHeight, theColor)) {
-                painter.DrawText(text, new SKPoint((pinchPan % new SKPoint(X + 6, 0)).X, Y + textHeight), paint); // Clamped to hor axis
+        private void Inner_DrawXLabel(ChartPainter painter, string text, float X, float Y, float markLength, float pointSize, float textHeight, SKColor theColor, Swipe pinchPan){
+           float gap = 6 * pointSize; // between the mark and the label
+           using (var paint = painter.TextPaint(painter.font, pinchPan % textHeight, theColor)) {
+                painter.DrawText(text, new SKPoint((pinchPan % new SKPoint(X + gap, 0)).X, Y + textHeight), paint); // Clamped to hor axis
             }
         }
 
-        private void Inner_DrawXLabels(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float textHeight, SKColor zeroColor, SKColor color, float minX, float maxX, Swipe pinchPan) {
-            const float epsilon = 0.001f;
-            if (minX == maxX) return;
-            float labelSize = painter.MeasureText("| 0.001 ms  ", painter.TextPaint(painter.font, textHeight, SKColors.Red)).Width;
-            float minXtickVal = SignificantOne(minX);
-            float maxXtickVal = SignificantOne(maxX);
+        private void Inner_DrawXLabels(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float pointSize, float textHeight, SKColor zeroColor, SKColor color, float minX, float maxX, Swipe pinchPan) {
+            float labelSize = painter.MeasureText("| 0.01 ms___", painter.TextPaint(painter.font, textHeight, SKColors.Red)).Width;
+            float minLabelSize = painter.MeasureText("0.01 ms", painter.TextPaint(painter.font, textHeight, SKColors.Red)).Width;
+            (float minTickVal, float maxTickVal, float incrTickVal) = MeasureXTicks(minX, maxX, labelSize, plotSize);
 
-            float minXTickLoc = XlocOfXvalInPlotarea(minXtickVal, minX, maxX, plotSize);
-            float maxXTickLoc = XlocOfXvalInPlotarea(maxXtickVal, minX, maxX, plotSize);
-            int numOfTicks = (int)((maxXTickLoc - minXTickLoc) / labelSize);
-            if (numOfTicks == 0) return;
-            int power = 1; while (power < numOfTicks) power *= 2;
-            numOfTicks = power; if (numOfTicks >= 2) numOfTicks /= 2; // set numOfTicks to biggest power of 2 less then numOfTicks
+            if (minX > 0.0f)      
+                Inner_DrawXLabelsUpward  (painter, plotOrigin, plotSize, margin, pointSize, minLabelSize, textHeight, zeroColor, color, minX, maxX, pinchPan,
+                                          minTickVal, maxTickVal, incrTickVal, true);
+            else if (maxX < 0.0f) 
+                Inner_DrawXLabelsDownward(painter, plotOrigin, plotSize, margin, pointSize, textHeight, zeroColor, color, minX, maxX, pinchPan,
+                                          minTickVal, maxTickVal, incrTickVal, true);
+            else {
+                bool paintedZero =
+                Inner_DrawXLabelsDownward(painter, plotOrigin, plotSize, margin, pointSize, textHeight, zeroColor, color, minX, maxX, pinchPan,
+                                          minTickVal, 0.0f, incrTickVal, true);
+                Inner_DrawXLabelsUpward  (painter, plotOrigin, plotSize, margin, pointSize, minLabelSize, textHeight, zeroColor, color, minX, maxX, pinchPan,
+                                          0.0f, maxTickVal, incrTickVal, !paintedZero);
+            }
+        }
 
-            float incrXtickVal = (maxXtickVal - minXtickVal) / numOfTicks; 
-            if (incrXtickVal == 0) return;
+        private (float minTickVal, float maxTickVal, float incrTickVal) MeasureXTicks(float min, float max, float labelSize, SKSize plotSize) {
+            (float minTickVal, float maxTickVal) = Smooth(min, max);
 
-            float iXtickVal = minXtickVal;
-            float iXtickLoc;
+            float minTickLoc = XlocOfXvalInPlotarea(minTickVal, min, max, plotSize);
+            float maxTickLoc = XlocOfXvalInPlotarea(maxTickVal, min, max, plotSize);
+            float labelVal = (plotSize.Width == 0) ? 0.0f : (max - min) / plotSize.Width * labelSize;
+            int numOfTicks = (int)((maxTickLoc - minTickLoc) / labelSize);
+
+            int multiple = 1; while (multiple * 4 < numOfTicks) multiple++;
+            if (numOfTicks == 3) numOfTicks = 2;
+            else if (numOfTicks > 4) numOfTicks = (multiple - 1) * 4; // set numOfTicks to the biggest multiple of 4 less than numOfTicks
+
+            float incrTickVal = (numOfTicks == 0) ? 0.0f : (maxTickVal - minTickVal) / numOfTicks;
+            incrTickVal = Math.Max(incrTickVal, labelVal);
+            return (minTickVal, maxTickVal, incrTickVal);
+        }
+
+        private bool Inner_DrawXLabelsUpward(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float pointSize, float labelSize, float textHeight, SKColor zeroColor, SKColor color, float min, float max, Swipe pinchPan,
+                                             float minTickVal, float maxTickVal, float incrTickVal, bool paintZero) {
+            float locEpsilon = 2; // pixels
+            float gap = 2 * pointSize; // between the mark and the label
+            bool paintedZero = false;
+            float iTickVal = minTickVal;
+            float iTickLoc;
             do {
-                iXtickLoc = XlocOfXvalInPlotarea(iXtickVal, minX, maxX, plotSize);
-                var X = plotOrigin.X + iXtickLoc;
-                var Y = plotOrigin.Y + plotSize.Height;
-                SKColor theColor = (iXtickVal == 0.0f) ? zeroColor : color;
-                if (iXtickLoc >= -epsilon && iXtickLoc <= plotSize.Width + epsilon)
+                iTickLoc = XlocOfXvalInPlotarea(iTickVal, min, max, plotSize);
+                bool isZero = iTickVal == 0.0f;
+                if (iTickLoc >= -locEpsilon && iTickLoc <= plotSize.Width + locEpsilon && (paintZero || !isZero)) { //### minus labelSize for labels
+                    if (isZero) paintedZero = true;
+                    var X = plotOrigin.X + iTickLoc;
+                    var Y = plotOrigin.Y + plotSize.Height;
+                    SKColor theColor = isZero ? zeroColor : color;
                     Inner_DrawXMark(painter, X, Y, margin, theColor, pinchPan);
-                if (iXtickLoc >= -epsilon && iXtickLoc <= plotSize.Width - labelSize + epsilon)
-                    Inner_DrawXLabel(painter, Kaemika.Gui.FormatUnit(iXtickVal, " ", "s", "g3"), X, Y - 2, margin, textHeight, theColor, pinchPan);
-                iXtickVal += incrXtickVal;
-            } while (iXtickLoc <= plotSize.Width + epsilon);
-            // the point series from the simulation may not reach quite up to the given time limit, hence omitting the last mark by a hair, so we plot it anyway:
-            if (iXtickLoc < plotSize.Width + margin) Inner_DrawXMark(painter, plotOrigin.X + maxXTickLoc, plotOrigin.Y + plotSize.Height, margin, zeroColor, pinchPan);
+                    if (iTickLoc <= plotSize.Width - labelSize + locEpsilon) Inner_DrawXLabel(painter, Kaemika.Gui.FormatUnit(iTickVal, " ", this.baseUnitX, "g3"), X, Y - gap, margin, pointSize, textHeight, theColor, pinchPan);
+                }
+                iTickVal += incrTickVal;
+                if (incrTickVal == 0.0f) { if (iTickVal == maxTickVal) return paintedZero; iTickVal = maxTickVal; }
+            } while (iTickLoc <= plotSize.Width + locEpsilon);
+            return paintedZero;
+        }
+
+        private bool Inner_DrawXLabelsDownward(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float pointSize, float textHeight, SKColor zeroColor, SKColor color, float min, float max, Swipe pinchPan,
+                                               float minTickVal, float maxTickVal, float incrTickVal, bool paintZero) {
+            float locEpsilon = 2; // pixels
+            float gap = 2 * pointSize; // between the mark and the label
+            bool paintedZero = false;
+            float iTickVal = maxTickVal;
+            float iTickLoc;
+            do {
+                iTickLoc = XlocOfXvalInPlotarea(iTickVal, min, max, plotSize);
+                bool isZero = iTickVal == 0.0f;
+                if (iTickLoc >= -locEpsilon && iTickLoc <= plotSize.Width + locEpsilon && (paintZero || !isZero)) { 
+                    if (isZero) paintedZero = true;
+                    var X = plotOrigin.X + iTickLoc;
+                    var Y = plotOrigin.Y + plotSize.Height;
+                    SKColor theColor = isZero ? zeroColor : color;
+                    Inner_DrawXMark(painter, X, Y, margin, theColor, pinchPan);
+                    Inner_DrawXLabel(painter, Kaemika.Gui.FormatUnit(iTickVal, " ", this.baseUnitX, "g3"), X, Y - gap, margin, pointSize, textHeight, theColor, pinchPan);
+                }
+                iTickVal -= incrTickVal;
+                if (incrTickVal == 0.0f) { if (iTickVal == minTickVal) return paintedZero; iTickVal = minTickVal; }
+            } while (iTickLoc >= -locEpsilon); //margin?
+            return paintedZero;
         }
 
         private void Inner_DrawYMark(ChartPainter painter, float X, float Y, float markLength, SKColor theColor, Swipe pinchPan) {
@@ -659,96 +848,107 @@ namespace Kaemika {
             using (var paint = painter.FillPaint(theColor)) {
                 painter.DrawRect(new SKRect(X, r.Top, X + r.Width, r.Bottom), paint); // Clamped to left of ver axis
             }
-       }
+        }
 
-        private void Inner_DrawYLabel(ChartPainter painter, string text, float X, float Y, float markLength, float textHeight, SKColor theColor, Swipe pinchPan){
+        private void Inner_DrawYLabel(ChartPainter painter, string text, float X, float Y, float markLength, float pointSize, float textHeight, SKColor theColor, Swipe pinchPan){
+           float gap = 6 * pointSize; // between the mark and the label
             using (var paint = painter.TextPaint(painter.font, pinchPan % textHeight, theColor)) {
-                painter.DrawText(text, new SKPoint(X, (pinchPan % new SKPoint(0, Y - 6)).Y), paint); // Clamped to ver axis
+                painter.DrawText(text, new SKPoint(X, (pinchPan % new SKPoint(0, Y - gap)).Y), paint); // Clamped to ver axis
             }
         }
 
-        private bool Inner_DrawYLabelsUpward(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float textHeight, SKColor zeroColor, SKColor color, float minY, float maxY, Swipe pinchPan,
-                                             float minYtickVal, float maxYtickVal, float incrYtickVal, bool paintZero) {
-            float locEpsilon = 2; // pixels
-            bool paintedZero = false;
-            float iYtickVal = minYtickVal;
-            float iYtickLoc;
-            do {
-                iYtickLoc = YlocOfYvalInPlotarea(iYtickVal, minY, maxY, plotSize);
-                bool isZero = iYtickVal == 0.0f;
-                if (iYtickLoc >= -locEpsilon && iYtickLoc <= plotSize.Height + locEpsilon && (paintZero || !isZero)) {
-                    if (isZero) paintedZero = true;
-                    var X = plotOrigin.X - margin;
-                    var Y = plotOrigin.Y + iYtickLoc;
-                    SKColor theColor = isZero ? zeroColor : color;
-                    Inner_DrawYMark(painter, X, Y, margin, theColor, pinchPan);
-                    Inner_DrawYLabel(painter, Kaemika.Gui.FormatUnit(iYtickVal, " ", "M", "g3"), X + 2, Y, margin, textHeight, theColor, pinchPan);
-                }
-                iYtickVal += incrYtickVal;
-            } while (iYtickLoc >= -locEpsilon);
-            return paintedZero;
-        }
-
-        private bool Inner_DrawYLabelsDownward(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float textHeight, SKColor zeroColor, SKColor color, float minY, float maxY, Swipe pinchPan,
-                                               float minYtickVal, float maxYtickVal, float incrYtickVal, bool paintZero) {
-            float locEpsilon = 2; // pixels
-            bool paintedZero = false;
-            float iYtickVal = maxYtickVal;
-            float iYtickLoc;
-            do {
-                iYtickLoc = YlocOfYvalInPlotarea(iYtickVal, minY, maxY, plotSize);
-                bool isZero = iYtickVal == 0.0f;
-                if (iYtickLoc >= -locEpsilon && iYtickLoc <= plotSize.Height + locEpsilon && (paintZero || !isZero)) {
-                    if (isZero) paintedZero = true;
-                    var X = plotOrigin.X - margin;
-                    var Y = plotOrigin.Y + iYtickLoc;
-                    SKColor theColor = isZero ? zeroColor : color;
-                    Inner_DrawYMark(painter, X, Y, margin, theColor, pinchPan);
-                    Inner_DrawYLabel(painter, Kaemika.Gui.FormatUnit(iYtickVal, " ", "M", "g3"), X + 2, Y, margin, textHeight, theColor, pinchPan);
-                }
-                iYtickVal -= incrYtickVal;
-            } while (iYtickLoc <= plotSize.Height + locEpsilon);
-            return paintedZero;
-        }
-
-        private void Inner_DrawYLabels(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float textHeight, SKColor zeroColor, SKColor color, float minY, float maxY, Swipe pinchPan) {
+        private void Inner_DrawYLabels(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float pointSize, float textHeight, SKColor zeroColor, SKColor color, float minY, float maxY, Swipe pinchPan) {
             float labelSize = 3 * textHeight;
-            float minYtickVal = SignificantOne(minY);
-            float maxYtickVal = SignificantOne(maxY);
-
-            float minYTickLoc = YlocOfYvalInPlotarea(minYtickVal, minY, maxY, plotSize);
-            float maxYTickLoc = YlocOfYvalInPlotarea(maxYtickVal, minY, maxY, plotSize);
-            int numOfTicks = (int)((minYTickLoc - maxYTickLoc) / labelSize); // y axis inversion
-            if (numOfTicks <= 0) return;
-            int power = 1; while (power < numOfTicks) power *= 2;
-            numOfTicks = power; if (numOfTicks >= 2) numOfTicks /= 2; // set numOfTicks to biggest power of 2 less then numOfTicks
-
-            float incrYtickVal = SignificantOne(maxYtickVal - minYtickVal) / numOfTicks;  // round interval off by SignificantOne
-            if (incrYtickVal <= 0) return;
+            (float minTickVal, float maxTickVal, float incrTickVal) = MeasureYTicks(minY, maxY, labelSize, plotSize);
 
             if (minY > 0.0f)      
-                Inner_DrawYLabelsUpward  (painter, plotOrigin, plotSize, margin, textHeight, zeroColor, color, minY, maxY, pinchPan,
-                                          minYtickVal, maxYtickVal, incrYtickVal, true);
+                Inner_DrawYLabelsUpward  (painter, plotOrigin, plotSize, margin, pointSize, textHeight, zeroColor, color, minY, maxY, pinchPan,
+                                          minTickVal, maxTickVal, incrTickVal, true);
             else if (maxY < 0.0f) 
-                Inner_DrawYLabelsDownward(painter, plotOrigin, plotSize, margin, textHeight, zeroColor, color, minY, maxY, pinchPan,
-                                          minYtickVal, maxYtickVal, incrYtickVal, true);
+                Inner_DrawYLabelsDownward(painter, plotOrigin, plotSize, margin, pointSize, textHeight, zeroColor, color, minY, maxY, pinchPan,
+                                          minTickVal, maxTickVal, incrTickVal, true);
             else {
                 bool paintedZero =
-                Inner_DrawYLabelsDownward(painter, plotOrigin, plotSize, margin, textHeight, zeroColor, color, minY, maxY, pinchPan,
-                                          minYtickVal, 0.0f, incrYtickVal, true);
-                Inner_DrawYLabelsUpward  (painter, plotOrigin, plotSize, margin, textHeight, zeroColor, color, minY, maxY, pinchPan,
-                                          0.0f, maxYtickVal, incrYtickVal, !paintedZero);
+                Inner_DrawYLabelsDownward(painter, plotOrigin, plotSize, margin, pointSize, textHeight, zeroColor, color, minY, maxY, pinchPan,
+                                          minTickVal, 0.0f, incrTickVal, true);
+                Inner_DrawYLabelsUpward  (painter, plotOrigin, plotSize, margin, pointSize, textHeight, zeroColor, color, minY, maxY, pinchPan,
+                                          0.0f, maxTickVal, incrTickVal, !paintedZero);
             }
+        }
+
+        private (float minTickVal, float maxTickVal, float incrTickVal) MeasureYTicks(float min, float max, float labelSize, SKSize plotSize) {
+            (float minTickVal, float maxTickVal) = Smooth(min, max);
+
+            float minTickLoc = YlocOfYvalInPlotarea(minTickVal, min, max, plotSize);
+            float maxTickLoc = YlocOfYvalInPlotarea(maxTickVal, min, max, plotSize);
+            float labelVal = (plotSize.Height == 0) ? 0.0f : (max - min) / plotSize.Height * labelSize;
+            int numOfTicks = (int)((minTickLoc - maxTickLoc) / labelSize); // y axis inversion
+
+            int multiple = 1; while (multiple * 4 < numOfTicks) multiple++;
+            if (numOfTicks == 3) numOfTicks = 2;
+            else if (numOfTicks > 4) numOfTicks = (multiple - 1) * 4; // set numOfTicks to the biggest multiple of 4 less than numOfTicks
+
+            float incrTickVal = (numOfTicks == 0) ? 0.0f : (maxTickVal - minTickVal) / numOfTicks;
+            incrTickVal = Math.Max(incrTickVal, labelVal);
+            return (minTickVal, maxTickVal, incrTickVal);
+        }
+
+        private bool Inner_DrawYLabelsUpward(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float pointSize, float textHeight, SKColor zeroColor, SKColor color, float min, float max, Swipe pinchPan,
+                                             float minTickVal, float maxTickVal, float incrTickVal, bool paintZero) {
+            float locEpsilon = 2; // pixels
+            float gap = 2 * pointSize; // between the mark and the label
+            bool paintedZero = false;
+            float iTickVal = minTickVal;
+            float iTickLoc;
+            do {
+                iTickLoc = YlocOfYvalInPlotarea(iTickVal, min, max, plotSize);
+                bool isZero = iTickVal == 0.0f;
+                if (iTickLoc >= -locEpsilon && iTickLoc <= plotSize.Height + locEpsilon && (paintZero || !isZero)) {
+                    if (isZero) paintedZero = true;
+                    var X = plotOrigin.X - margin;
+                    var Y = plotOrigin.Y + iTickLoc;
+                    SKColor theColor = isZero ? zeroColor : color;
+                    Inner_DrawYMark(painter, X, Y, margin, theColor, pinchPan);
+                    Inner_DrawYLabel(painter, Kaemika.Gui.FormatUnit(iTickVal, " ", this.baseUnitY, "g3"), X + gap, Y, margin, pointSize, textHeight, theColor, pinchPan);
+                }
+                iTickVal += incrTickVal;
+                if (incrTickVal == 0.0f) { if (iTickVal == maxTickVal) return paintedZero; iTickVal = maxTickVal; }
+            } while (iTickLoc >= -locEpsilon);
+            return paintedZero;
+        }
+
+        private bool Inner_DrawYLabelsDownward(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float pointSize, float textHeight, SKColor zeroColor, SKColor color, float min, float max, Swipe pinchPan,
+                                               float minTickVal, float maxTickVal, float incrTickVal, bool paintZero) {
+            float locEpsilon = 2; // pixels
+            float gap = 2 * pointSize; // between the mark and the label
+            bool paintedZero = false;
+            float iTickVal = maxTickVal;
+            float iTickLoc;
+            do {
+                iTickLoc = YlocOfYvalInPlotarea(iTickVal, min, max, plotSize);
+                bool isZero = iTickVal == 0.0f;
+                if (iTickLoc >= -locEpsilon && iTickLoc <= plotSize.Height + locEpsilon && (paintZero || !isZero)) {
+                    if (isZero) paintedZero = true;
+                    var X = plotOrigin.X - margin;
+                    var Y = plotOrigin.Y + iTickLoc;
+                    SKColor theColor = isZero ? zeroColor : color;
+                    Inner_DrawYMark(painter, X, Y, margin, theColor, pinchPan);
+                    Inner_DrawYLabel(painter, Kaemika.Gui.FormatUnit(iTickVal, " ", this.baseUnitY, "g3"), X + gap, Y, margin, pointSize, textHeight, theColor, pinchPan);
+                }
+                iTickVal -= incrTickVal;
+                if (incrTickVal == 0.0f) { if (iTickVal == minTickVal) return paintedZero; iTickVal = minTickVal; }
+            } while (iTickLoc <= plotSize.Height + locEpsilon);
+            return paintedZero;
         }
 
         private Dictionary<KSeries, SKRect> seriesTagLocations = null;
 
-        private SKRect PositionSeriesTag(KSeries series, SKPoint point, SKRect textBounds)  {
-            SKRect position = new SKRect(point.X - textBounds.Width, point.Y - textBounds.Height, point.X, point.Y);
+        private SKRect PositionSeriesTag(KSeries series, SKPoint point, SKSize tagSize)  {
+            SKRect position = new SKRect(point.X - tagSize.Width, point.Y - tagSize.Height, point.X, point.Y);
             foreach (var conflict in seriesTagLocations) {
                 SKRect inter = SKRect.Intersect(position, conflict.Value);
                 if (inter.Width > 0 && inter.Height > 0)
-                    return PositionSeriesTag(series, new SKPoint(conflict.Value.Left - 3, point.Y), textBounds);
+                    return PositionSeriesTag(series, new SKPoint(conflict.Value.Left - 3, point.Y), tagSize);
             }
             seriesTagLocations[series] = position;
             return position;
@@ -762,16 +962,18 @@ namespace Kaemika {
 
         private void Inner_DrawSeriesTag(ChartPainter painter, int seriesIndex, float textHeight, float margin, Swipe pinchPan) {
             if (showSeriesTags && list.Count > 0) {
-                SKPaint textPaint = painter.TextPaint(painter.font, pinchPan % textHeight, seriesList[seriesIndex].color);
-                string name = seriesList[seriesIndex].name;
                 SKPoint endPoint = list[list.Count - 1].Ypoint[seriesIndex];
-                SKRect textBounds = SKRect.Inflate(painter.MeasureText(name, textPaint), 3, 3);
                 if (float.IsNaN(endPoint.X) || float.IsInfinity(endPoint.X) || float.IsNaN(endPoint.Y) || float.IsInfinity(endPoint.Y)) return;
-                //SKRect position = PositionSeriesTag(seriesList[seriesIndex], new SKPoint(endPoint.X + margin - 4, endPoint.Y), textBounds);
-                SKRect position = PositionSeriesTag(seriesList[seriesIndex], new SKPoint(endPoint.X - 2, endPoint.Y), textBounds);
+                string name = seriesList[seriesIndex].name;
+                float textHightPP = pinchPan % textHeight;
+                float padding = textHightPP / 4.0f;
+                SKPaint textPaint = painter.TextPaint(painter.font, textHightPP, seriesList[seriesIndex].color);
+                SKRect textBounds = painter.MeasureText(name, textPaint);
+                SKSize tagSize = new SKSize(textBounds.Width + 2*padding, textBounds.Height + 2*padding);
+                SKRect position = PositionSeriesTag(seriesList[seriesIndex], new SKPoint(endPoint.X - 2, endPoint.Y), tagSize);
                 painter.DrawRoundRect(position, 2, painter.FillPaint(SKColors.Gray));
-                painter.DrawRoundRect(SKRect.Inflate(position,-1,-1), 2, painter.FillPaint(SKColors.White));
-                painter.DrawText(name, new SKPoint(position.Left + 3, position.Bottom - 3), textPaint);
+                painter.DrawRoundRect(SKRect.Inflate(position, -padding / 3, -padding / 3), 2, painter.FillPaint(SKColors.White));
+                painter.DrawText(name, new SKPoint(position.Left + padding - textBounds.Left, position.Top + padding - textBounds.Top), textPaint);
             }
         }
 
@@ -780,7 +982,7 @@ namespace Kaemika {
             for (int j = 0; j < seriesList.Count; j++) {
                 KSeries series = seriesList[j];
                 if (series.visible) {
-                    if (series.lineMode == KLineMode.Line) {
+                    if (series.lineMode == KLineMode.Line || series.lineMode == KLineMode.FillUnder) {
                         Inner_DrawSeriesTag(painter, j, textHeight, margin, pinchPan);
                     } else if (series.lineMode == KLineMode.Range && list.Count > 1) {
                     }
@@ -788,15 +990,29 @@ namespace Kaemika {
             }
         }
 
-        private void Inner_DrawLines(ChartPainter painter, float pointSize, float margin, Swipe pinchPan) {
+        private void Inner_DrawLines(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float pointSize, Swipe pinchPan) {
+            float thinWeigth = 1 * pointSize;
+            float thickWeigth = 3 * pointSize;
+            for (int j = 0; j < seriesList.Count; j++) {
+                KSeries series = seriesList[j];
+                if (series.visible) {
+                    if (series.lineMode == KLineMode.FillUnder){
+                        SKColor color = new SKColor(series.color.Red, series.color.Green, series.color.Blue, KChart.transparency);
+                        painter.DrawLineFill(list, j, plotOrigin.Y + plotSize.Height, color, pinchPan);
+                    }
+                }
+            }
             for (int j = 0; j < seriesList.Count; j++) {
                 KSeries series = seriesList[j];
                 if (series.visible) {
                     if (series.lineMode == KLineMode.Line) {
-                        var weight = series.lineStyle == KLineStyle.Thin ? 1 * pointSize : 3 * pointSize;
+                        var weight = series.lineStyle == KLineStyle.Thin ? thinWeigth : thickWeigth;
                         painter.DrawLine(list, j, weight, series.color, pinchPan);
                     } else if (series.lineMode == KLineMode.Range && list.Count > 1) {
                         painter.DrawLineRange(list, j, series.color, pinchPan);
+                    } else if (series.lineMode == KLineMode.FillUnder){
+                        var weight = series.lineStyle == KLineStyle.Thin ? thinWeigth : thickWeigth;
+                        painter.DrawLine(list, j, weight, series.color, pinchPan);
                     }
                 }
             }
@@ -806,10 +1022,10 @@ namespace Kaemika {
             lock (mutex) {
                 (float minX, float maxX, float minY, float maxY) = Inner_Bounds();
                 Inner_DrawTitle(painter, this.sampleName, plotOrigin, plotSize, margin, titleHeight, pinchPan);
-                Inner_DrawXLabels(painter, plotOrigin, plotSize, margin, textHeight, zeroColor, axisColor, minX, maxX, pinchPan);
-                Inner_DrawYLabels(painter, plotOrigin, plotSize, margin, textHeight, zeroColor, axisColor, minY, maxY, pinchPan);
+                Inner_DrawXLabels(painter, plotOrigin, plotSize, margin, pointSize, textHeight, zeroColor, axisColor, minX, maxX, pinchPan);
+                Inner_DrawYLabels(painter, plotOrigin, plotSize, margin, pointSize, textHeight, zeroColor, axisColor, minY, maxY, pinchPan);
                 Inner_CalculatePoints(plotOrigin, plotSize, minX, maxX, minY, maxY);
-                Inner_DrawLines(painter, pointSize, margin, pinchPan);
+                Inner_DrawLines(painter, plotOrigin, plotSize, pointSize, pinchPan);
                 Inner_DrawSeriesTags(painter, textHeight, margin, pinchPan);
             }
         }
@@ -843,7 +1059,12 @@ namespace Kaemika {
                 float textX = origin.X + lineW + textHeight;
                 for (int s = 0; s < this.seriesList.Count; s++) {
                     var series = seriesList[s];
-                    float lineH = (series.lineStyle == KLineStyle.Thick) ? 3.0f : (series.lineMode == KLineMode.Line) ? 1.0f : 8.0f; 
+                    float lineH = 1.0f;
+                    if (series.lineMode == KLineMode.Line && series.lineStyle == KLineStyle.Thin) lineH = 1.0f;
+                    if (series.lineMode == KLineMode.Line && series.lineStyle == KLineStyle.Thick) lineH = 3.0f;
+                    if (series.lineMode == KLineMode.Range) lineH = 8.0f;
+                    if (series.lineMode == KLineMode.FillUnder && series.lineStyle == KLineStyle.Thin) lineH = 1.0f;
+                    if (series.lineMode == KLineMode.FillUnder && series.lineStyle == KLineStyle.Thick) lineH = 3.0f;
                     float centerY = origin.Y + (this.seriesList.Count - 1 - s) * textHeight + 0.5f * textHeight;
                     float lineY = centerY - lineH / 2.0f;
                     float textY = centerY + 0.4f * textHeight;
@@ -872,6 +1093,8 @@ namespace Kaemika {
                                csvLine = seriesName + "," + point.X + "," + point.Y[s];
                             } else if (theSeries[s].lineMode == KLineMode.Range) {
                                csvLine = seriesName + "," + point.X + "," + (point.Y[s] - point.Yrange[s]) + "," + (point.Y[s] + point.Yrange[s]);
+                            } else if (theSeries[s].lineMode == KLineMode.FillUnder) {
+                                csvLine = seriesName + "," + point.X + "," + point.Y[s];
                             }
                             csvContent += csvLine + Environment.NewLine;
                         }
@@ -881,5 +1104,56 @@ namespace Kaemika {
             }
         }
 
+    }
+
+    // -----------------
+    // TIME
+    // -----------------
+    public static class TimeLib {
+
+        public static string TimeStamp(DateTime time) {
+            //        return DateTime.Now.ToUniversalTime().ToString("HH:mm:ss.fff");
+            if (time == DateTime.MinValue) return "MinValue";
+            if (time == DateTime.MaxValue) return "MaxValue";
+            return time.ToLocalTime().ToString("HH:mm:ss.fff");
+        }
+
+        public static bool Precedes(DateTime t1, DateTime t2) { // t1 is STRICTLY LESS than t2
+            return DateTime.Compare(t1, t2) < 0;
+        }
+
+        public static DateTime MinTime(DateTime t1, DateTime t2) {
+            if (Precedes(t1, t2)) return t1; else return t2;
+        }
+ 
+        public static DateTime MaxTime(DateTime t1, DateTime t2) {
+            if (Precedes(t1, t2)) return t2; else return t1;
+        }
+    
+        private static Dictionary<string, DateTime> oncePerDict = new Dictionary<string, DateTime>();
+
+        public static bool OncePerMilliseconds(string key, int millisecs) {
+            if (!oncePerDict.ContainsKey(key)) oncePerDict[key] = DateTime.MinValue;
+            if (Precedes(oncePerDict[key].AddMilliseconds(millisecs), DateTime.Now)) {
+                oncePerDict[key] = DateTime.Now;
+                return true;
+            } else return false;
+        }
+
+        public static bool OncePerSeconds(string key, int secs) {
+            if (!oncePerDict.ContainsKey(key)) oncePerDict[key] = DateTime.MinValue;
+            if (Precedes(oncePerDict[key].AddSeconds(secs), DateTime.Now)) {
+                oncePerDict[key] = DateTime.Now;
+                return true;
+            } else return false;
+        }
+
+        public static bool OncePerMinutes(string key, int mins) {
+            if (!oncePerDict.ContainsKey(key)) oncePerDict[key] = DateTime.MinValue;
+            if (Precedes(oncePerDict[key].AddMinutes(mins), DateTime.Now)) {
+                oncePerDict[key] = DateTime.Now;
+                return true;
+            } else return false;
+        }
     }
 }

@@ -7,6 +7,7 @@ using Android.Graphics;
 using Xamarin.Forms;
 using Xamarin.Forms.Platform.Android;
 using KaemikaXM.Pages;
+using Kaemika;
 
 ////https://docs.microsoft.com/en-us/xamarin/xamarin-forms/app-fundamentals/custom-renderer/view
 
@@ -211,7 +212,7 @@ namespace KaemikaXM.Droid {
             this.Gravity = Android.Views.GravityFlags.Top; //first line at top of area, not center
             this.SetPadding(20, 0, 0, 50); // bottom margin needed to stay above the red line
             this.SetTextSize(Android.Util.ComplexUnitType.Dip, CustomTextEditView.defaultFontSize);
-            if (typeface == null) typeface = Typeface.CreateFromAsset(Context.Assets, "DroidSansMono.ttf"); // "CutiveMono-Regular.ttf"
+            if (typeface == null) typeface = Typeface.CreateFromAsset(Context.Assets, new PlatformTexter().fixedFontFamily);
             this.SetTypeface(typeface, TypefaceStyle.Bold);
             this.SetBackgroundColor(Android.Graphics.Color.White); // by default it is transparent and shows through overlapping views
         }

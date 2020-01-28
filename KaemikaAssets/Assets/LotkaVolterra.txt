@@ -3,15 +3,15 @@
 // (simplified with all rates = 1)
 //======================================
 
-number x1₀ =? uniform(0,1) // random x1₀
-number x2₀ =? uniform(0,1) // random x2₀
+parameter x1₀ <- uniform(0,1)
+parameter x2₀ <- uniform(0,1)
 
 species x1 @ x1₀ M     // prey
 species x2 @ x2₀ M     // predator
 
 x1 -> x1 + x1       {1}// prey reproduces
 x1 + x2 -> x2 + x2  {1}// predator eats prey
-x2 -> #             {1}// predator dies
+x2 -> Ø             {1}// predator dies
 
 report x1, x2, 0
 

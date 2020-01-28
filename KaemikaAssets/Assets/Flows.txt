@@ -112,7 +112,7 @@ cond(a<b, a, b)
 Basic example of usage of flows:
 
 species a @ 1M
-a -> #   {{ 3 }}          
+a -> Ø   {{ 3 }}          
 // 3 here is a (constant) flow: it  gets 
 // sampled at every time point and 
 // used as a rate
@@ -142,7 +142,7 @@ number n = 3
 // later between 'number' 3 and 'flow' 3, 
 // because of the context where 'n' is used.
 
-a -> #   {{n*a}}	
+a -> Ø   {{n*a}}	
 // degradation reaction with rate 
 // 3*molarity(a), i.e. a mass action rate law 
 // written inside {{..}} general rate brackets
@@ -160,7 +160,7 @@ function f(flow n) { n*a }
 // for n is 'flow', the returned value n*a
 // is also a flow
 
-a -> #   {{f(3)}}
+a -> Ø   {{f(3)}}
 // same as before
 
 report a, f(3)
@@ -178,7 +178,7 @@ In order for this to work, LNA
 simulation must be activated.
 
 species a,b@1M
-# -> a + b;  a -> #;  b + b -> #		
+Ø -> a + b;  a -> Ø;  b + b -> Ø		
 // building up some non-trivial 
 // noise on a,b species
 

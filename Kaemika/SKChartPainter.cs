@@ -46,5 +46,19 @@ namespace Kaemika
             }
         }
 
+        public /*interface ChartPainter*/ void DrawLineFill(List<KChartEntry> list, int seriesIndex, float bottom, SKColor color, Swipe pinchPan) {
+            if (list.Count > 1) {
+                using (var paint = FillPaint(color)) {
+                    var path = new SKPath();
+                    path.MoveTo(pinchPan % new SKPoint(list[0].Ypoint[seriesIndex].X, bottom));
+                    path.LineTo(pinchPan % list[0].Ypoint[seriesIndex]);
+                    for (int i = 0; i < list.Count; i++) path.LineTo(pinchPan % list[i].Ypoint[seriesIndex]);
+                    path.LineTo(pinchPan % new SKPoint(list[list.Count-1].Ypoint[seriesIndex].X, bottom));
+                    path.Close();
+                    canvas.DrawPath(path, paint);
+                }
+            }
+        }
+
     }
 }

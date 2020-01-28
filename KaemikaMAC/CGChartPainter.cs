@@ -51,5 +51,19 @@ namespace KaemikaMAC {
             }
         }
 
+        public /*interface ChartPainter*/ void DrawLineFill(List<KChartEntry> list, int seriesIndex, float bottom, SKColor color, Swipe pinchPan) {
+            if (list.Count > 1) {
+                canvas.SetFillColor(CG.Color(color));
+                var path = new CGPath();
+                path.MoveToPoint(CG.Point(pinchPan % new SKPoint(list[0].Ypoint[seriesIndex].X, bottom)));
+                path.AddLineToPoint(CG.Point(pinchPan % list[0].Ypoint[seriesIndex]));
+                for (int i = 0; i < list.Count; i++) path.AddLineToPoint(CG.Point(pinchPan % list[i].Ypoint[seriesIndex]));
+                path.AddLineToPoint(CG.Point(pinchPan % new SKPoint(list[list.Count-1].Ypoint[seriesIndex].X, bottom)));
+                path.CloseSubpath();
+                canvas.AddPath(path);
+                canvas.FillPath();
+            }
+        }
+
     }
 }

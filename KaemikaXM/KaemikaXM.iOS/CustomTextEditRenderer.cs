@@ -5,6 +5,7 @@ using Xamarin.Forms;
 using Xamarin.Forms.Platform.iOS;
 using KaemikaXM.Pages;
 using System.Threading.Tasks;
+using Kaemika;
 
 //https://docs.microsoft.com/en-us/xamarin/xamarin-forms/app-fundamentals/custom-renderer/view
 
@@ -181,13 +182,7 @@ namespace KaemikaXM.iOS
         // private static Typeface typeface = null;
         public DisEditText(CustomTextEditView view) : base() {
             this.view = view;
-            // properly set up the EditText:
-            // this.Gravity = Android.Views.GravityFlags.Top; //first line at top of area, not center
-            // this.SetPadding(20, 0, 0, 50); // bottom margin needed to stay above the red line
-            // this.SetTextSize(Android.Util.ComplexUnitType.Dip, CustomTextEditView.defaultFontSize);
-            // if (typeface == null) typeface = Typeface.CreateFromAsset(Context.Assets, "DroidSansMono.ttf"); // "CutiveMono-Regular.ttf"
-            // this.SetTypeface(typeface, TypefaceStyle.Bold);
-            // this.SetBackgroundColor(Android.Graphics.Color.White); // by default it is transparent and shows through overlapping views
+            this.Font = UIFont.FromName(new PlatformTexter().fixedFontFamily, CustomTextEditView.defaultFontSize);
         }
         protected override void Dispose(bool disposing)  {
             this.view.ClearEditText();

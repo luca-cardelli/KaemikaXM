@@ -23,7 +23,7 @@
           "Microsoft.NETCore.Platforms": "1.1.0"
         }
       },
-      "SkiaSharp/1.68.1": {
+      "SkiaSharp/1.68.1.1": {
         "dependencies": {
           "System.IO.UnmanagedMemoryStream": "4.3.0",
           "System.Memory": "4.5.3"
@@ -31,7 +31,7 @@
         "runtime": {
           "lib/netstandard1.3/SkiaSharp.dll": {
             "assemblyVersion": "1.68.0.0",
-            "fileVersion": "1.68.1.0"
+            "fileVersion": "1.68.1.1"
           }
         }
       },
@@ -201,7 +201,7 @@
       },
       "QuickGraphStd/1.0.0": {
         "dependencies": {
-          "SkiaSharp": "1.68.1"
+          "SkiaSharp": "1.68.1.1"
         },
         "runtime": {
           "QuickGraphStd.dll": {}
@@ -236,12 +236,12 @@
       "path": "netstandard.library/2.0.3",
       "hashPath": "netstandard.library.2.0.3.nupkg.sha512"
     },
-    "SkiaSharp/1.68.1": {
+    "SkiaSharp/1.68.1.1": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-HT+Ks5hC71IkOKlmWYPeb9SkHqdOV5FVYuQxXgkQF06qmbhDD7cIvB0p+TcnxtKgO5U7bb9wK6BkOQ9Ni7PubQ==",
-      "path": "skiasharp/1.68.1",
-      "hashPath": "skiasharp.1.68.1.nupkg.sha512"
+      "sha512": "sha512-fJteGIKAMmLD9tSQgdvZqLqECub6B55pK1MH5QyanLOr8JQ8uUMKKcrAcpocNnmIS/YsUJOL4AD7dO6mAwP7mQ==",
+      "path": "skiasharp/1.68.1.1",
+      "hashPath": "skiasharp.1.68.1.1.nupkg.sha512"
     },
     "System.Buffers/4.4.0": {
       "type": "package",

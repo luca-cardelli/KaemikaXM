@@ -29,9 +29,13 @@ Comment Block @= { Nesting = All }
 <Fun>            ::= <Headers> '{' <Expression> '}'                          ! function abstraction
 
 <Network>        ::= Id '=' <Expression>                                     ! binding a network value to a network id
-                    | Id <Net>                                                 ! network id definition
-<Net>            ::= <Header> '{' <Statements> '}'                           ! networks are nothing but functions that do not return values
+                    | Id <Net>                                               ! network id definition
+<Net>            ::= <Header> '{' <Statements> '}'                           ! network abstraction (networks are nothing but functions that do not return values)
 
+<Random>         ::= Id '=' <Expression>                                     ! binding a random variable value to a random variabl id
+                    | Id <Rand>                                              ! random variable id definition
+<Rand>           ::= '(' 'omega' Id ')' '{' <Expression> '}'                 ! random variable abstraction
+                  
 <EmptySample>    ::= Id '{' <Expression> <Volume> ',' <Expression> <Temperature> '}'
 <Sample>         ::= Id '=' <Expression>                                     ! binding a sample value to a sample id
                     | <EmptySample>                                          ! empty sample definition, parameterized by volume and temperature
@@ -41,7 +45,7 @@ Comment Block @= { Nesting = All }
                     | '{' <Substances> '}'                                   ! declaration of multiple species (unallocated)
                     | <Substances> '@' <Expression> <Quantity> <Allocation>  ! allocation of multiple <Ids> species to a sample, 
                                                                              !     short for '{'<Substances>'}' ';' 'amount' <Ids> '@' <Expression> <Quantity> <Allocation>
-                  
+
 <Headers>        ::= <Headers> <Header>
                     | <Header>
                                       
@@ -60,8 +64,13 @@ Comment Block @= { Nesting = All }
                     | 'species' <Ids>              ! species are values. n.b. individual reactions are not values, but networks are
                     | 'sample' <Ids>               ! samples are containers that have volume and temperature, populated with species that have concentrations
                     | 'function' <Ids>             ! functions can receive and return values, species, functions, and networks  
-                    | 'network' <Ids>              ! networks can receive values, species, functions, and networks, and return nothing        
-                    | '[' <Params> ']'             ! list pattern matching          
+                    | 'network' <Ids>              ! networks can receive values, species, functions, and networks, and return nothing    
+                    | 'random' <Ids>               ! random variables    
+                    | <Pattern>                    ! list pattern matching 
+
+<Pattern>       ::= '[' <Params> ']'                  ! a fixed length list pattern
+                    | '[' <Params> ']' '++' 'list' Id  ! a variable length list pattern, with tail on the right
+                    | 'list' Id '++' '[' <Params> ']'  ! a variable length list pattern, with tail on the left
 
 <Ids>           ::= <Ids> Id
                     | Id
@@ -85,19 +94,21 @@ Comment Block @= { Nesting = All }
                     | <Reaction>                              ! reactions are the only statements not prefixed by a keyword (other than instances)
                     | 'bool' Id '=' <Expression>              ! binding a bool value to a bool id
                     | 'number' Id '=' <Expression>            ! binding a number value to a number id
-                    | 'number' Id '=?' <Distribution>         ! binding a number value drawn from a distribution to a number id
                     | 'string' Id '=' <Expression>            ! binding a string value to a string id
                     | 'list' Id '=' <Expression>              ! binding a list value to a list id
                     | 'flow' Id '=' <Expression>              ! binding a flow value to a flow id
-                    | 'constant' <IdSeq>                      ! binding flow constants to flow ids
+                    | 'random' <Random>                       ! binding a random variable value to a random variable id
+                    | 'constant' <IdSeq>                      ! an undetermined constant (used for exporting ODEs containing symbolic constants)
+                    | 'parameter' Id '<-' <Expression>        ! drawing a parameter from a random variable (and displaying it in the GUI)
                     | 'species' <Species>                     ! binding a species to a species id or species def
                     | 'sample' <Sample>                       ! binding a sample to a sample id or sample def
                     | 'function' <Function>                   ! binding a function to a function id or function def
                     | 'network' <Network>                     ! binding a network to a network id or network def
-                    | '[' <Params> ']' '=' <Expression>       ! binding list elements to ids; length and types must match                  
+                    | <Pattern> '=' <Expression>              ! binding list elements to ids; length and types must match                  
                     | 'amount' <Ids> '@' <Expression> <Quantity> <Allocation>  ! set initial quantity of species in a sample
                     | 'report' <Reports>                                       ! report species for plotting (can use arithmetic, but restrictions apply)
                     | 'if' <Expression> 'then' <Statements> <Else>             ! conditional
+                    | <Draw>                                                   ! draw samples from (lists of) functions or random variables and plot them
                     | ';'                                                      ! rarely used optional syntactic noise for same-line multiple statements
                     
                     | 'mix' Id '=' <ExpressionSeq>                                ! mix samples and name the new sample
@@ -117,6 +128,8 @@ Comment Block @= { Nesting = All }
 <Else>           ::=  'elseif' <Expression> 'then' <Statements> <Else>  ! cascading if statements: else is optional
                     | 'else' <Statements> 'end'
                     | 'end'
+
+<Draw>          ::= 'draw' <Expression> 'from' <Expression>
                                    
 ! REACTIONS --------------------------------------------
 
@@ -141,10 +154,11 @@ Comment Block @= { Nesting = All }
                     | Id '*' Id                                         ! stoichiometry: 'n * a' is the same as 'a + ... + a' n times for integer n>=0
                     | Id                                                ! a species
                     | '#'                                               ! zero species: for creation and degradation
+                    | 'Ø'                                               ! zero species: for creation and degradation
 
 ! EXPRESSIONS --------------------------------------------
           
-<Expression>    ::=  <Or Exp>                                               ! see below
+<Expression>    ::=  <Op Exp>                                               ! see below
                  
 <Base Exp>      ::= <Fun Instance> 
                     | 'true' | 'false'                                      ! bool literal
@@ -153,8 +167,10 @@ Comment Block @= { Nesting = All }
                     | 'if' <Expression> 'then' <Expression> <Else Exp>      ! no statements allowed inside if-expressions: uses if-statements for that
                     | 'fun' <Fun>                                           ! function abstraction
                     | 'net' <Net>                                           ! network abstraction
+                    | 'rand' <Rand>                                         ! random variable bstraction
                     | '(' <Expression> ')'                                  ! parenthesized expression
                     | '[' <Expressions> ']'                                 ! list
+                    | <Draw>                                                ! draw a list from (lists of) functions or random variables
                     | 'define' <Statements> 'yield' <Expression>            ! numerous but mild shift-reduce conflicts because no 'end' bracket. 
                                                                             ! E.g. (define number n = 3 yield n) + 3   vs. define number n = 3 return (n + 3)
                                                                             ! resolved as the latter
@@ -176,13 +192,14 @@ Comment Block @= { Nesting = All }
 <Report>         ::= <Expression> 'as' <Expression>
                     | <Expression> 
 
-<Distribution>   ::= Id '(' <ExpressionSeq> ')'     ! uniform(lo,hi), normal(mean,stdev), exponential(lambda), parabolic(mean,halfwidth), bernoulli(p)
-                  
 <EndCondition>   ::= 'for' <Expression>
                   
 ! OPERATORS  --------------------------------------------                                 
 
-<Or Exp>        ::=  <Or Exp> 'or' <And Exp>                                 ! boring encoding of prefix/infix operator precedence         
+<Op Exp>        ::= <Op Exp> '|' <Or Exp>                                 ! boring encoding of prefix/infix operator precedence  
+                    | <Or Exp>
+
+<Or Exp>        ::=  <Or Exp> 'or' <And Exp>       
                     | <And Exp> 
 
 <And Exp>       ::=  <And Exp> 'and' <Not Exp>                                          
@@ -207,8 +224,12 @@ Comment Block @= { Nesting = All }
                     | <Mult Exp> '/' <Neg Exp>                                           
                     | <Neg Exp> 
 
-<Neg Exp>       ::= '-' <Powr Exp> 
-                    | '∂' <Powr Exp>
+<Neg Exp>       ::= '-' <Conc Exp> 
+                    | '∂' <Conc Exp>
+                    | '<-' <Conc Exp>
+                    | <Conc Exp>
+                    
+<Conc Exp>      ::= <Conc Exp> '++' <Powr Exp>
                     | <Powr Exp>
                     
 <Powr Exp>      ::= <Powr Exp> '^' <Base Exp>                               ! -2^2 = -4;  -2^-2 is error, use -2^(-2)

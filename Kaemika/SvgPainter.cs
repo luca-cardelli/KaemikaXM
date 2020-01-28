@@ -39,8 +39,42 @@ namespace Kaemika {
         }
     }
 
-    public class SvgColorer : SKColorer {
+    public class SvgTexter : Texter {
+        public /*interface Texter*/ string fontFamily {
+            // do not use alternaltive fonts like "Arial, Helvetica, sans-serif" because then FromFamilyName will pick platforms-specific fonts
+            // and if we force "sans-serif" in SvgTextPaint, it may not match the computations done by MeasureText 
+            get { return "Arial"; }
+        }
+        public /*interface Texter*/ string fixedFontFamily {
+            // do not use alternaltive fonts like "Courier, monospace" because then FromFamilyName will pick platforms-specific fonts
+            // and if we force "sans-serif" in SvgTextPaint it may not match the computations done by MeasureText 
+            get { return "Courier"; }
+        }
+    }
+
+    public class SvgColorer : SvgTexter, Colorer {
         public SvgColorer() : base() {
+        }
+        public /*interface Colorer*/ SKTypeface font {
+            get { return SKTypeface.FromFamilyName(this.fontFamily, SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright); }
+        }
+        public /*interface Colorer*/ SKTypeface fixedFont { 
+            get { return SKTypeface.FromFamilyName(this.fixedFontFamily, SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright); }
+        }
+        public /*interface Colorer*/ SKPaint TextPaint(SKTypeface typeface, float textSize, SKColor color) {
+            return new SKPaint { Typeface = typeface, IsStroke = false, Style = SKPaintStyle.Fill, TextSize = textSize, Color = color, IsAntialias = true };
+        }
+        public /*interface Colorer*/ SKPaint FillPaint(SKColor color) { 
+            return new SKPaint { IsStroke = false, Style = SKPaintStyle.Fill, Color = color, IsAntialias = true };
+        }
+        public /*interface Colorer*/ SKPaint LinePaint(float strokeWidth, SKColor color) {
+            return new SKPaint { Style = SKPaintStyle.Stroke, StrokeWidth = strokeWidth, Color = color, IsAntialias = true };
+        }
+        public virtual /*interface Colorer*/ SKRect MeasureText(string text, SKPaint paint) {
+            if (string.IsNullOrEmpty(text)) return new SKRect(0, 0, 0, 0); // or MeasureText will crash
+            var bounds = new SKRect();
+            float length = paint.MeasureText(text, ref bounds);
+            return bounds;
         }
         public string SvgFillPaint(SKPaint paint) {
             return
@@ -134,7 +168,7 @@ namespace Kaemika {
                 SvgPoint(point) +
                 SvgTextPaint(paint) + 
                 ">" + Environment.NewLine +
-                text + Environment.NewLine +
+                text.Replace("<","&lt;").Replace(">","&gt;") + Environment.NewLine +
                 "</text>" + 
                 Environment.NewLine
                 );
@@ -191,6 +225,18 @@ namespace Kaemika {
                         float range = entry.YpointRange[seriesIndex];
                         LineTo(pinchPan % new SKPoint(meanPoint.X, meanPoint.Y + range));
                     }
+                    EndPolygon();
+                }
+            }
+        }
+        public /*interface ChartPainter*/ void DrawLineFill(List<KChartEntry> list, int seriesIndex, float bottom, SKColor color, Swipe pinchPan) {
+            if (list.Count > 1) {
+                using (var paint = FillPaint(color)) {
+                    NewPolygon(paint);
+                    MoveTo(pinchPan % new SKPoint(list[0].Ypoint[seriesIndex].X, bottom));
+                    LineTo(pinchPan % list[0].Ypoint[seriesIndex]);
+                    for (int i = 0; i < list.Count; i++) LineTo(pinchPan % list[i].Ypoint[seriesIndex]);
+                    LineTo(pinchPan % new SKPoint(list[list.Count-1].Ypoint[seriesIndex].X, bottom));
                     EndPolygon();
                 }
             }

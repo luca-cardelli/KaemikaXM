@@ -74,6 +74,7 @@ namespace KaemikaXM.Pages {
             ImageButton button = new ImageButton() {
                 Source = "icons8BigA40.png",
                 HeightRequest = MainTabbedPage.buttonHeightRequest,
+                WidthRequest = MainTabbedPage.buttonHeightRequest,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
                 BackgroundColor = MainTabbedPage.secondBarColor,
             };
@@ -87,6 +88,7 @@ namespace KaemikaXM.Pages {
             ImageButton button = new ImageButton() {
                 Source = "icons8SmallA40.png",
                 HeightRequest = MainTabbedPage.buttonHeightRequest,
+                WidthRequest = MainTabbedPage.buttonHeightRequest,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
                 BackgroundColor = MainTabbedPage.secondBarColor,
             };
@@ -98,8 +100,8 @@ namespace KaemikaXM.Pages {
         }
 
         public void StartAction(bool forkWorker, bool switchToChart, bool switchToOutput, bool autoContinue = false) {
-            if (Exec.IsExecuting() && !Gui.gui.ContinueEnabled()) return; // we are already running a simulation, don't start a concurrent one
-            if (Exec.IsExecuting() && Gui.gui.ContinueEnabled()) { // we are already running a simulation; make start button work as continue button
+            if (Exec.IsExecuting() && !Gui.toGui.ContinueEnabled()) return; // we are already running a simulation, don't start a concurrent one
+            if (Exec.IsExecuting() && Gui.toGui.ContinueEnabled()) { // we are already running a simulation; make start button work as continue button
                 Protocol.continueExecution = true; 
                 MainTabbedPage.SwitchToTab(MainTabbedPage.theChartPageNavigation);
             } else { // do a start
@@ -120,6 +122,7 @@ namespace KaemikaXM.Pages {
             ImageButton button = new ImageButton() {
                 Source = "icons8play40.png",
                 HeightRequest = MainTabbedPage.buttonHeightRequest,
+                WidthRequest = MainTabbedPage.buttonHeightRequest,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
                 BackgroundColor = MainTabbedPage.secondBarColor,
             };
@@ -134,6 +137,7 @@ namespace KaemikaXM.Pages {
             ImageButton button = new ImageButton() {
                 Source = "icons8device40off.png",
                 HeightRequest = MainTabbedPage.buttonHeightRequest,
+                WidthRequest = MainTabbedPage.buttonHeightRequest,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
                 BackgroundColor = MainTabbedPage.secondBarColor,
             };
@@ -185,9 +189,9 @@ namespace KaemikaXM.Pages {
             };
             foreach (Noise s in Gui.noise) noisePicker.Items.Add(Gui.StringOfNoise(s));
             noisePicker.Unfocused += async (object sender, FocusEventArgs e) => {
-                Noise oldSelection = ClickerHandler.SelectNoiseSelectedItem;
-                ClickerHandler.SelectNoiseSelectedItem = Gui.NoiseOfString(noisePicker.SelectedItem as string);
-                if (ClickerHandler.SelectNoiseSelectedItem != oldSelection)
+                Noise oldSelection = KControls.SelectNoiseSelectedItem;
+                KControls.SelectNoiseSelectedItem = Gui.NoiseOfString(noisePicker.SelectedItem as string);
+                if (KControls.SelectNoiseSelectedItem != oldSelection)
                     MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: true, switchToOutput: false, autoContinue: true);
                 //Noise oldSelection = noisePickerSelection;
                 //noisePickerSelection = Gui.NoiseOfString(noisePicker.SelectedItem as string);
@@ -201,7 +205,7 @@ namespace KaemikaXM.Pages {
 
         string[] subscripts = new string[] { "_", "₊", "₋", "₌", "₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉", "₍", "₎"};
         string[] superscripts = new string[] { "\'", "⁺", "⁻", "⁼", "⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹", "⁽", "⁾"};
-        string[] math = new string[] { "(", ")", "-", "*", "/", "^", ">", "<", ">=", "<=", "<>", "∂", "μ", "pi", "e", "time", "var", "cov", "poisson", "gauss", "true", "false", "not", "and", "or", "abs", "arccos", "arcsin", "arctan", "arctan2", "ceiling", "cos", "cosh", "exp", "floor", "int", "log", "max", "min", "pos", "sign", "sin", "sinh", "sqrt", "tan", "tanh" };
+        string[] math = new string[] { "(", ")", "-", "*", "/", "^", ">", "<", ">=", "<=", "<>", "∂", "Ø", "μ", "pi", "e", "time", "var", "cov", "poisson", "gauss", "true", "false", "not", "and", "or", "abs", "arccos", "arcsin", "arctan", "arctan2", "ceiling", "cos", "cosh", "exp", "floor", "int", "log", "max", "min", "pos", "sign", "sin", "sinh", "sqrt", "tan", "tanh" };
         public Picker SymbolPicker(string title, int fontSize, string[] items) {
             Picker symbolPicker = new Picker {
                 Title = title, TitleColor = MainTabbedPage.barColor,
@@ -238,20 +242,26 @@ namespace KaemikaXM.Pages {
         public Grid stepper;
         public Grid TextSizeStepper(ICustomTextEdit editor) {
             Grid stepper = new Grid { RowSpacing = 0, Margin = 0 };
+            //stepper.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            //stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            //stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) });
+            //stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) });
+            //stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            //stepper.BackgroundColor = MainTabbedPage.secondBarColor;
+            //stepper.Children.Add(TextDn(editor), 1, 0);
+            //stepper.Children.Add(TextUp(editor), 2, 0);
             stepper.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) });
-            stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) });
             stepper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             stepper.BackgroundColor = MainTabbedPage.secondBarColor;
-            stepper.Children.Add(TextDn(editor), 1, 0);
-            stepper.Children.Add(TextUp(editor), 2, 0);
+            stepper.Children.Add(TextDn(editor), 0, 0);
+            stepper.Children.Add(TextUp(editor), 1, 0);
             return stepper;
         }
 
         public void SyncNoisePicker(Picker noisePicker) {
 //            noisePicker.SelectedItem = Gui.StringOfNoise(noisePickerSelection);
-            noisePicker.SelectedItem = Gui.StringOfNoise(ClickerHandler.SelectNoiseSelectedItem);
+            noisePicker.SelectedItem = Gui.StringOfNoise(KControls.SelectNoiseSelectedItem);
         }
 
         public ModelEntryPage() {
@@ -274,7 +284,7 @@ namespace KaemikaXM.Pages {
             copyAllItem = CopyAllItem();
             ToolbarItems.Add(copyAllItem);
 
-            editor = Kaemika.GUI_Xamarin.TextEditor();
+            editor = Kaemika.XamarinToGui.TextEditor();
 
             editor.OnTextChanged(
                 async(ICustomTextEdit textEdit) => {
@@ -300,7 +310,7 @@ namespace KaemikaXM.Pages {
             spamPlus = BtnInsertText(editor, "+", 12, " + "); 
             spamArrow = BtnInsertText(editor, "->", 12, " -> "); 
             spamBiArrow = BtnInsertText(editor, "<->", 12, " <-> "); 
-            spamSharp = BtnInsertText(editor, "#", 12, "#"); 
+            spamSharp = BtnInsertText(editor, "Ø", 12, "Ø"); 
             spamCatal = BtnInsertText(editor, ">>", 12, " >> "); 
             spamBra = BtnInsertText(editor, "{", 12, "{"); 
             spamKet = BtnInsertText(editor, "}", 12, "}"); 

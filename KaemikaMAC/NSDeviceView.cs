@@ -58,7 +58,7 @@ namespace KaemikaMAC
 
         public override void MouseDown(NSEvent theEvent) {
             base.MouseDown(theEvent);
-            MainClass.form.clickerHandler.CloseOpenMenu();
+            MainClass.guiToMac.kControls.CloseOpenMenu();
         }
 
     }

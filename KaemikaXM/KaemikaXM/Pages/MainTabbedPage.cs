@@ -68,8 +68,8 @@ namespace KaemikaXM.Pages {
             theChartPage = new ChartPage();
 
             theDocListPageNavigation = new NavigationPage(theDocListPage) { Title = "Tutorial", IconImageSource = "icons8usermanual100.png", BarBackgroundColor = barColor, BarTextColor = Color.White }; 
-            theModelListPageNavigation = new NavigationPage(theModelListPage) { Title = "Networks", IconImageSource = "icons8openedfolder96.png", BarBackgroundColor = barColor, BarTextColor = Color.White }; 
-            theModelEntryPageNavigation = new NavigationPage(theModelEntryPage) { Title = "Network", IconImageSource = "icons8mindmap96.png", BarBackgroundColor = barColor, BarTextColor = Color.White }; 
+            theModelListPageNavigation = new NavigationPage(theModelListPage) { Title = "Files", IconImageSource = "icons8openedfolder96.png", BarBackgroundColor = barColor, BarTextColor = Color.White }; 
+            theModelEntryPageNavigation = new NavigationPage(theModelEntryPage) { Title = "Edit", IconImageSource = "icons8mindmap96.png", BarBackgroundColor = barColor, BarTextColor = Color.White }; 
             theOutputPageNavigation = new NavigationPage(theOutputPage) { Title = "Output", IconImageSource = "icons8truefalse100.png", BarBackgroundColor = barColor, BarTextColor = Color.White }; 
             theChartPageNavigation = new NavigationPage(theChartPage) { Title = "Chart", IconImageSource = "icons8combochart48.png", BarBackgroundColor = barColor, BarTextColor = Color.White };  // DO NOT use "icons8combochart96.png", it will not scale
 

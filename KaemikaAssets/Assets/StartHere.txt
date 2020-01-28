@@ -7,10 +7,10 @@
 
 species a,b @ 1 M   
 
-// Define some reactions (# is 'no species')
+// Define some reactions 
 
 a + 2b -> a
-a -> #
+a -> Ø       // Ø or # is 'no species'
 
 // Decide what to plot
 

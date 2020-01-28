@@ -40,7 +40,7 @@ network Triplet2(species lo hi act1 inh1 act2 inh2, number rate1 rate2) {
 }
 
 // Approximate Majority bistable switch:
-// like the above AM circuit, but with addition 
+// like the above AM circuit, but with additional 
 // external switching controls act and ihn
 
 network AM2(species lo hi act inh, number rate1 rate2) {

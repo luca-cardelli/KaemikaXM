@@ -40,6 +40,7 @@ namespace KaemikaXM.Pages {
         private Dictionary<string, OutputAction> outputActions;
         private List<OutputAction> outputActionsList() {
             return new List<OutputAction>() {
+                new OutputAction(this, "Reaction Network", OutputKind.Text, ExportAs.CRN),
                 new OutputAction(this, "Chemical Trace", OutputKind.Text, ExportAs.ChemicalTrace),
                 new OutputAction(this, "Computational Trace", OutputKind.Text, ExportAs.ComputationalTrace),
                 new OutputAction(this, "Reaction Graph", OutputKind.Graph, ExportAs.ReactionGraph),
@@ -49,6 +50,7 @@ namespace KaemikaXM.Pages {
                 new OutputAction(this, "System Reactions", OutputKind.Text, ExportAs.PDMPreactions),
                 new OutputAction(this, "System Equations", OutputKind.Text, ExportAs.PDMPequations),
                 new OutputAction(this, "System Stoichiometry", OutputKind.Text, ExportAs.PDMPstoichiometry),
+                new OutputAction(this, "Scalable Vector Graphics", OutputKind.Text, ExportAs.SVG),
                 //new OutputAction(this, "Protocol State Graph (Par.)", OutputKind.Graph, ExportAs.PDMPGraph_Parallel),
             };
         }
@@ -69,7 +71,7 @@ namespace KaemikaXM.Pages {
                     textOutputButton.IsEnabled = true;
                 });
             }
-            Gui.gui.OutputSetText("");
+            Gui.toGui.OutputSetText("");
             Exec.Execute_Exporter(true, export);
         }
 
@@ -93,7 +95,7 @@ namespace KaemikaXM.Pages {
                 FontSize = 14,
             };
 
-            currentTextOutputAction = outputActions["Chemical Trace"];
+            currentTextOutputAction = outputActions["Reaction Network"];
             currentGraphOutputAction = outputActions["Protocol Step Graph"];
             currentOutputAction = currentTextOutputAction;
 
@@ -107,6 +109,14 @@ namespace KaemikaXM.Pages {
                 currentOutputAction.action();
             };
             return outputPicker;
+        }
+
+        public void SetTraceComputational() {
+            string selectedItem = "Computational Trace";
+            outputPicker.SelectedItem = selectedItem;
+            //// that should trigger the rest:
+            //currentOutputAction = outputActions[selectedItem];
+            //currentTextOutputAction = currentOutputAction;
         }
 
         public OutputPage() {
@@ -142,7 +152,7 @@ namespace KaemikaXM.Pages {
                     if (text != "") await Clipboard.SetTextAsync(text);
                 }));
 
-            editor = Kaemika.GUI_Xamarin.TextEditor();
+            editor = Kaemika.XamarinToGui.TextEditor();
             editor.SetEditable(false);
 
             plot = new GraphLayoutView() {

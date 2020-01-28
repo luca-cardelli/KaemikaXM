@@ -20,7 +20,7 @@ namespace KaemikaXM
         public App(CustomTextEditorDelegate customTextEditorDelegate) {
 //          FolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
             FolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
-            Gui.gui = new GUI_Xamarin(customTextEditorDelegate);
+            Gui.toGui = new XamarinToGui(customTextEditorDelegate);
             DocListPage.docs = Tutorial.Groups();
             MainTabbedPage.theMainTabbedPage = new MainTabbedPage();
             MainTabbedPage.theMainTabbedPage.CurrentPageChanged += MainTabbedPage.currentPageChangedDelegate;

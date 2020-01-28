@@ -7,8 +7,8 @@ namespace KaemikaMAC {
     public class CGColorer : SKColorer {
         public override /*interface Colorer*/ SKRect MeasureText(string text, SKPaint paint) {
             if (string.IsNullOrEmpty(text)) return new SKRect(0, 0, 0, 0);
-            CGSize size = CG.MeasureText(text, paint);
-            return new SKRect(0,0,(float)size.Width, (float)size.Height);
+            CGRect rect = CG.MeasureText(text, paint);
+            return new SKRect((float)rect.Left, (float)rect.Top, (float)rect.Right, (float)rect.Bottom);
         }
     }
 
@@ -33,7 +33,7 @@ namespace KaemikaMAC {
         }
 
         public /*interface Painter*/ void DrawText(string text, SKPoint point, SKPaint paint) {
-            CG.DrawText(canvas, text, point, paint);
+            CG.DrawTextS(canvas, text, point, paint);
         }
 
         public /*interface Painter*/ object GetCanvas() { // platform dependent
@@ -110,7 +110,7 @@ namespace KaemikaMAC {
             //Style(Fill|Stroke),
             //Color,
             //StrokeWidth(if Style=Stroke)
-        public static CGSize DrawText(CGContext canvas, string text, SKPoint point, SKPaint paint) {
+        public static CGSize DrawTextS(CGContext canvas, string text, SKPoint point, SKPaint paint) {
             // BASIC TEXT DRAWING IN CGContext:
             //canvas.SetTextDrawingMode(toCGTextDrawingMode(paint.Style));
             //canvas.SetFillColor(CGUtil.toCGColor(paint.Color));
@@ -154,18 +154,25 @@ namespace KaemikaMAC {
             return textSize;
         }
 
-        public static CGSize MeasureText(string text, SKPaint paint) {
-            // https://docs.microsoft.com/en-us/dotnet/api/foundation.nsattributedstring?view=xamarin-ios-sdk-12
+        public static CGRect MeasureText(string text, SKPaint paint) {
             var typeface = (paint.Typeface == null) ? "Helvetica" : paint.Typeface.FamilyName;
-            var attributedString = new Foundation.NSAttributedString (text,
-                   new CoreText.CTStringAttributes () {
-                       ForegroundColor = Color(paint.Color), // ForegroundColor is used (only?) if paint.Style = Fill, and overrides paint.Color
-                       Font = new CoreText.CTFont(typeface, paint.TextSize)
-                   });
-            var textLine = new CoreText.CTLine(attributedString);
-            return attributedString.Size;  // maybe we can extract the true baseline origin and return a Rect instead of a Size?
+            CoreText.CTFont font = new CoreText.CTFont(typeface, paint.TextSize);
+            var size = MeasureTextSize2(text, font);
+            return new CGRect(0, -font.AscentMetric, size.Width, font.AscentMetric + font.DescentMetric);
         }
 
+        private static CGSize MeasureTextSize1(string text, CoreText.CTFont font) { // this method seems to give the wrong width
+            // https://stackoverflow.com/questions/11245526/measuring-the-text-width
+            var dict = new Foundation.NSDictionary<Foundation.NSString,CoreText.CTFont> ( new Foundation.NSString("font"), font );
+            return new Foundation.NSString(text).StringSize(dict);
+        }
+
+        private static CGSize MeasureTextSize2(string text, CoreText.CTFont font) {
+            // https://docs.microsoft.com/en-us/dotnet/api/foundation.nsattributedstring?view=xamarin-ios-sdk-12
+            var attributedString = new Foundation.NSAttributedString (text,
+                   new CoreText.CTStringAttributes () { Font = font });
+            return attributedString.Size;
+        }
 
     }
 }

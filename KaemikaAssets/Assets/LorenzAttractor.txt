@@ -26,7 +26,7 @@ y⁻ ->{s} y⁻ + x⁻
 x⁺ ->{s} x⁺ + x⁻
    add some dampening (does not change 
    the original ODE solution)
-2 x⁺ + 2 x⁻ -> #
+2 x⁺ + 2 x⁻ -> Ø
 
    initialize x⁺₀ - x⁻₀ = x₀
    and plot x⁺ - x⁻ over time
@@ -69,9 +69,9 @@ x⁺ + y⁻ -> x⁺ + y⁻ + z⁻
 x⁻ + y⁺ -> x⁻ + y⁺ + z⁻
 z⁺ ->{b} z⁺ + z⁻
 
-2 x⁺ + 2 x⁻ -> #
-2 y⁺ + 2 y⁻ -> #
-2 z⁺ + 2 z⁻ -> #
+2 x⁺ + 2 x⁻ -> Ø
+2 y⁺ + 2 y⁻ -> Ø
+2 z⁺ + 2 z⁻ -> Ø
 
 report y⁺ - y⁻ //, x⁺ - x⁻, z⁺ - z⁻
 

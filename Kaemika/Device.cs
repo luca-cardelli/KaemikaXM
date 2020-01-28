@@ -42,7 +42,7 @@ namespace Kaemika {
         }
         public static void Start(int phaseDelay, int stepDelay) {
             device = new Device(phaseDelay, stepDelay);
-            Gui.gui.DeviceUpdate();
+            Gui.toGui.DeviceUpdate();
         }
         public static void Stop() {
             device = null;
@@ -50,7 +50,7 @@ namespace Kaemika {
         public static void Clear() {
             if (device == null) return;
             device = new Device(device.phaseDelay, device.stepDelay);
-            Gui.gui.DeviceUpdate();
+            Gui.toGui.DeviceUpdate();
         }
         public static Swipe PinchPan() {
             if (device == null) return Swipe.Id;
@@ -209,7 +209,7 @@ namespace Kaemika {
                     this.colsNo = Math.Max(this.colsNo, columns);
                     this.sizeChanged = true;
                 }
-                Gui.gui.DeviceUpdate(); // outside of lock, or it will deadlock
+                Gui.toGui.DeviceUpdate(); // outside of lock, or it will deadlock
             }
             private void StretchRowsToSize(int i) {
                 if (i > places.GetLength(0)) GrowToSize(i, places.GetLength(1));
@@ -271,7 +271,7 @@ namespace Kaemika {
 
             public void Sample(SampleValue sample, Style style) {
                 if (!Exec.IsExecuting()) throw new ExecutionEnded("");
-                Gui.Log("Device: NEW DROPLET " + sample.FormatSymbol(style));
+                //Gui.Log("Device: NEW DROPLET " + sample.FormatSymbol(style));
                 Place source = ReservePlaceInColumn(zone["staging"]);
                 placement.Appear(sample, source, style);
                 //placement.Place(sample, source, style);
@@ -279,7 +279,7 @@ namespace Kaemika {
             }
             public void Mix(SampleValue outSample, List<SampleValue> inSamples, Style style) {
                 if (!Exec.IsExecuting()) throw new ExecutionEnded("");
-                Gui.Log("Device: MIX " + outSample.FormatSymbol(style) + " = " + Style.FormatSequence(inSamples, ", ", x => x.FormatSymbol(style)));
+                //Gui.Log("Device: MIX " + outSample.FormatSymbol(style) + " = " + Style.FormatSequence(inSamples, ", ", x => x.FormatSymbol(style)));
                 Place[,] area = FreeAreaInColumn(zone["mixing"], minRow: placement.PlaceOf(inSamples[0], style).Row(), rows: 1, cols: 2*inSamples.Count-1); // find free columns in "mixing" block, on the same row
 
                 List<Place>[] routes = new List<Place>[inSamples.Count];
@@ -301,7 +301,7 @@ namespace Kaemika {
             }
             public void Split(List<SampleValue> outSamples, SampleValue inSample, Style style) {
                 if (!Exec.IsExecuting()) throw new ExecutionEnded("");
-                Gui.Log("Device: SPLIT " + Style.FormatSequence(outSamples, ", ", x => x.FormatSymbol(style)) + " = " + inSample.FormatSymbol(style));
+                //Gui.Log("Device: SPLIT " + Style.FormatSequence(outSamples, ", ", x => x.FormatSymbol(style)) + " = " + inSample.FormatSymbol(style));
 
                 Place[,] area = FreeAreaInColumn(zone["mixing"], minRow: placement.PlaceOf(inSample, style).Row(), rows: 1, cols: 2 * outSamples.Count - 1); // find free columns in "mixing" block, on the same row
                 placement.MoveHorFirst(inSample, area[0, 0], clearance: 1, style);
@@ -325,7 +325,7 @@ namespace Kaemika {
             }
             public void Dispose(List<SampleValue> samples, Style style) {
                 if (!Exec.IsExecuting()) throw new ExecutionEnded("");
-                Gui.Log("Device: DISPOSE " + Style.FormatSequence(samples, ", ", x => x.FormatSymbol(style)));
+                //Gui.Log("Device: DISPOSE " + Style.FormatSequence(samples, ", ", x => x.FormatSymbol(style)));
                 Place[,] area = FreeAreaInColumn(zone["mixing"], minRow: 0, rows: 1, cols: 2 * samples.Count - 1); // find free columns in "mixing" block, on the same row
 
                 List<Place>[] routes = new List<Place>[samples.Count];
@@ -338,7 +338,7 @@ namespace Kaemika {
             public void Regulate(List<SampleValue> outSamples, List<SampleValue> inSamples, Style style) {
                 if (!Exec.IsExecuting()) throw new ExecutionEnded("");
                 List<Place>[] routes = new List<Place>[inSamples.Count];
-                Gui.Log("Device: REGULATE " + Style.FormatSequence(outSamples, ", ", x =>x.FormatSymbol(style)) + " = " + Style.FormatSequence(inSamples, ", ", x => x.FormatSymbol(style)));
+                //Gui.Log("Device: REGULATE " + Style.FormatSequence(outSamples, ", ", x =>x.FormatSymbol(style)) + " = " + Style.FormatSequence(inSamples, ", ", x => x.FormatSymbol(style)));
                 for (int i = 0; i < inSamples.Count; i++) {
                     string toZone = (outSamples[i].Temperature() < ProtocolDevice.coldTemperature) ? "staging" : (outSamples[i].Temperature() > ProtocolDevice.hotTemperature) ? "hot" : "warm";
                     Place from = placement.PlaceOf(inSamples[i], style);
@@ -351,21 +351,21 @@ namespace Kaemika {
                     placement.Remove(inSamples[i], style);
                     placement.Place(outSamples[i], place, style);
                 }
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
             }
             public void Concentrate(List<SampleValue> outSamples, List<SampleValue> inSamples, Style style) {
                 if (!Exec.IsExecuting()) throw new ExecutionEnded("");
-                Gui.Log("Device: CONCENTRATE " + Style.FormatSequence(outSamples, ", ", x =>x.FormatSymbol(style)) + " = " + Style.FormatSequence(inSamples, ", ", x => x.FormatSymbol(style)));
+                //Gui.Log("Device: CONCENTRATE " + Style.FormatSequence(outSamples, ", ", x =>x.FormatSymbol(style)) + " = " + Style.FormatSequence(inSamples, ", ", x => x.FormatSymbol(style)));
                 for (int i = 0; i < inSamples.Count; i++) {
                     Place place = placement.PlaceOf(inSamples[i], style);
                     placement.Remove(inSamples[i], style);
                     placement.Place(outSamples[i], place, style);
                 }
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
             }
             public List<Place> StartEquilibrate(List<SampleValue> inSamples, double fortime, Style style) {
                 if (!Exec.IsExecuting()) throw new ExecutionEnded("");
-                Gui.Log("Device: EQUILIBRATE Start " + Style.FormatSequence(inSamples, ", ", x => x.FormatSymbol(style)) + " for " + style.FormatDouble(fortime));
+                //Gui.Log("Device: EQUILIBRATE Start " + Style.FormatSequence(inSamples, ", ", x => x.FormatSymbol(style)) + " for " + style.FormatDouble(fortime));
 
                 List<Place> goBacks = new List<Place> { };
                 List<Place>[] routes = new List<Place>[inSamples.Count];
@@ -379,12 +379,12 @@ namespace Kaemika {
                 placement.FollowRoutes(routes, clearance: 1, style);
                 device.dropletColor = dropletColorGrey;
                 device.dropletBiggieColor = dropletColorGrey;
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
                 return goBacks;
             }
             public void EndEquilibrate(List<Place> goBacks, List<SampleValue> outSamples, List<SampleValue> inSamples, double fortime, Style style) {
                 if (!Exec.IsExecuting()) throw new ExecutionEnded("");
-                Gui.Log("Device: EQUILIBRATE End " + Style.FormatSequence(outSamples, ", ", x => x.FormatSymbol(style)) + " = " + Style.FormatSequence(inSamples, ", ", x => x.FormatSymbol(style)) + " for " + style.FormatDouble(fortime));
+                //Gui.Log("Device: EQUILIBRATE End " + Style.FormatSequence(outSamples, ", ", x => x.FormatSymbol(style)) + " = " + Style.FormatSequence(inSamples, ", ", x => x.FormatSymbol(style)) + " for " + style.FormatDouble(fortime));
                 device.dropletColor = dropletColorRed;
                 device.dropletBiggieColor = dropletColorPurple;
                 for (int i = 0; i < inSamples.Count; i++) {
@@ -392,7 +392,7 @@ namespace Kaemika {
                     placement.Remove(inSamples[i], style, log: false);
                     placement.Place(outSamples[i], place, style, log: false);
                 }
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
                 List<Place>[] routes = new List<Place>[inSamples.Count];
                 for (int i = 0; i < inSamples.Count; i++) {
                     routes[i] = placement.PathVerFirst(placement.PlaceOf(outSamples[i], style), goBacks[i]);
@@ -474,7 +474,7 @@ namespace Kaemika {
                     if (!Exec.IsExecuting()) throw new ExecutionEnded("");
                     if (IsPlaced(sample)) throw new Error("ERROR Device.Placement.Place");
                     if (IsOccupied(place)) throw new Error("ERROR Device.Placement.Place");
-                    if (log) Gui.Log("Device:   Place " + sample.FormatSymbol(style) + " into " + place.Format(style));
+                    //if (log) Gui.Log("Device:   Place " + sample.FormatSymbol(style) + " into " + place.Format(style));
                     sampleToPlace[sample] = place;
                     placeToSample[place] = sample;
                     sampleToStyle[sample] = style;
@@ -485,7 +485,7 @@ namespace Kaemika {
                     if (!Exec.IsExecuting()) throw new ExecutionEnded("");
                     CheckIsPlaced(sample, style);
                     Place place = sampleToPlace[sample];
-                    if (log) Gui.Log("Device:   Remove " + sample.FormatSymbol(style) + " from " + place.Format(style));
+                    //if (log) Gui.Log("Device:   Remove " + sample.FormatSymbol(style) + " from " + place.Format(style));
                     sampleToPlace.Remove(sample);
                     placeToSample.Remove(place);
                     sampleToStyle.Remove(sample);
@@ -497,7 +497,7 @@ namespace Kaemika {
                     if (!Exec.IsExecuting()) throw new ExecutionEnded("");
                     CheckIsOccupied(place);
                     SampleValue sample = placeToSample[place];
-                    if (log) Gui.Log("Device:   Extract " + sample.FormatSymbol(style) + " from " + place.Format(style));
+                    //if (log) Gui.Log("Device:   Extract " + sample.FormatSymbol(style) + " from " + place.Format(style));
                     sampleToPlace.Remove(sample);
                     placeToSample.Remove(place);
                     sampleToStyle.Remove(sample);
@@ -507,7 +507,7 @@ namespace Kaemika {
 
             public SampleValue Clear(Place place, Style style, bool log = true) {
                 CheckIsOccupied(place);
-                if (log) Gui.Log("Device:   Clear " + place.Format(style));
+                //if (log) Gui.Log("Device:   Clear " + place.Format(style));
                 SampleValue sample = SampleOf(place);
                 Remove(sample, style, log); 
                 return sample;
@@ -536,13 +536,13 @@ namespace Kaemika {
 
             public void Step(Direction direction, Place from, Place to, Style style) {
                 StepPhase(0, direction, from, to, style);
-                Gui.gui.DeviceUpdate(); Thread.Sleep(device.phaseDelay);
+                Gui.toGui.DeviceUpdate(); Thread.Sleep(device.phaseDelay);
                 StepPhase(1, direction, from, to, style);
-                Gui.gui.DeviceUpdate(); Thread.Sleep(device.phaseDelay);
+                Gui.toGui.DeviceUpdate(); Thread.Sleep(device.phaseDelay);
                 StepPhase(2, direction, from, to, style);
-                Gui.gui.DeviceUpdate(); Thread.Sleep(device.phaseDelay);
+                Gui.toGui.DeviceUpdate(); Thread.Sleep(device.phaseDelay);
                 StepPhase(3, direction, from, to, style);
-                Gui.gui.DeviceUpdate(); Thread.Sleep(device.stepDelay);
+                Gui.toGui.DeviceUpdate(); Thread.Sleep(device.stepDelay);
             }
 
             public void StepPhase(int phase, Direction direction, Place from, Place to, Style style) {
@@ -563,61 +563,61 @@ namespace Kaemika {
             public void Appear(SampleValue sample, Place place, Style style) {
                 Place(sample, place, style);
                 place.SetAnimation(Animation.SizeQuarter);
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
                 Thread.Sleep(device.stepDelay);
                 place.SetAnimation(Animation.SizeHalf);
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
                 Thread.Sleep(device.phaseDelay);
                 place.SetAnimation(Animation.None);
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
                 Thread.Sleep(device.stepDelay);
             }
 
             // disappear
             public void Disappear(Place place, Style style) {
                 place.SetAnimation(Animation.SizeHalf);
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
                 Thread.Sleep(device.phaseDelay);
                 place.SetAnimation(Animation.SizeQuarter);
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
                 Thread.Sleep(device.stepDelay);
                 Clear(place, style, log: false);
                 place.SetAnimation(Animation.None);
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
                 Thread.Sleep(device.stepDelay);
             }
 
             // split Lft into Lft and Rht
             public void SplitHor(SampleValue splitLft, SampleValue splitRht, Place placeLft, Place placeRht, Style style) {
                 placeLft.SetAnimation(Animation.PullRht);
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
                 Thread.Sleep(device.phaseDelay);
                 placeLft.SetAnimation(Animation.SplitRht);
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
                 Thread.Sleep(device.stepDelay);
                 Clear(placeLft, style, log: false);
                 placeLft.SetAnimation(Animation.None);
                 Place(splitLft, placeLft, style);
                 placeRht.SetAnimation(Animation.None);
                 Place(splitRht, placeRht, style);
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
                 Thread.Sleep(device.stepDelay);
             }
 
             // split Top into Top and Bot
             public void SplitVer(SampleValue splitTop, SampleValue splitBot, Place placeTop, Place placeBot, Style style) {
                 placeTop.SetAnimation(Animation.PullBot);
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
                 Thread.Sleep(device.phaseDelay);
                 placeTop.SetAnimation(Animation.SplitBot);
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
                 Thread.Sleep(device.stepDelay);
                 Clear(placeTop, style);
                 placeTop.SetAnimation(Animation.None);
                 Place(splitTop, placeTop, style);
                 placeBot.SetAnimation(Animation.None);
                 Place(splitBot, placeBot, style);
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
                 Thread.Sleep(device.stepDelay);
             }
 
@@ -625,14 +625,14 @@ namespace Kaemika {
             public void MixHor(SampleValue sample, Place placeLft, Place placeRht, Style style) {
                 placeLft.SetAnimation(Animation.PullRht);
                 placeRht.SetAnimation(Animation.PullLft);
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
                 Thread.Sleep(device.phaseDelay);
                 Clear(placeLft, style);
                 Clear(placeRht, style);
                 placeLft.SetAnimation(Animation.None);
                 placeRht.SetAnimation(Animation.None);
                 Place(sample, placeLft, style);
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
                 Thread.Sleep(device.stepDelay);
             }
 
@@ -640,14 +640,14 @@ namespace Kaemika {
             public void MixVer(SampleValue sample, Place placeTop, Place placeBot, Style style) {
                 placeTop.SetAnimation(Animation.PullBot);
                 placeBot.SetAnimation(Animation.PullTop);
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
                 Thread.Sleep(device.phaseDelay);
                 Clear(placeTop, style);
                 Clear(placeBot, style);
                 placeTop.SetAnimation(Animation.None);
                 placeBot.SetAnimation(Animation.None);
                 Place(sample, placeTop, style);
-                Gui.gui.DeviceUpdate();
+                Gui.toGui.DeviceUpdate();
                 Thread.Sleep(device.stepDelay);
             }
 
@@ -692,7 +692,7 @@ namespace Kaemika {
                             }
                         }
                         if (!allFinished && !stepped) throw new Error("ERROR: FollowRoutes failed");
-                        Gui.gui.DeviceUpdate();
+                        Gui.toGui.DeviceUpdate();
                         if (phase < 3) Thread.Sleep(device.phaseDelay); else Thread.Sleep(device.stepDelay);
                     }
                 } while (!allFinished);
@@ -742,12 +742,12 @@ namespace Kaemika {
             }
 
             public void MoveHorFirst(SampleValue sample, Place place, int clearance, Style style) {
-                Gui.Log("Device:   Move " + sample.FormatSymbol(style) + " from " + PlaceOf(sample, style).Format(style) + " to " + place.Format(style));
+                //Gui.Log("Device:   Move " + sample.FormatSymbol(style) + " from " + PlaceOf(sample, style).Format(style) + " to " + place.Format(style));
                 FollowRoute(PathHorFirst(PlaceOf(sample, style), place), clearance, style, log:false);
             }
 
             public void MoveVerFirst(SampleValue sample, Place place, int clearance, Style style) {
-                Gui.Log("Device:   Move " + sample.FormatSymbol(style) + " from " + PlaceOf(sample, style).Format(style) + " to " + place.Format(style));
+                //Gui.Log("Device:   Move " + sample.FormatSymbol(style) + " from " + PlaceOf(sample, style).Format(style) + " to " + place.Format(style));
                 FollowRoute(PathVerFirst(PlaceOf(sample, style), place), clearance, style, log: false);
             }
 

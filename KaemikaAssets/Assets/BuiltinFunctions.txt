@@ -2,11 +2,13 @@
 // UNDO text changes
 //======================================
 
-"Hacker's Keyboard" (a keyboard alternative 
-from the Play Store that selectably replaces 
-the built-in keyboard) supports undo via 
-Ctrl-Z, as well as Ctrl-X/C/V. There is no 
-other known way to undo text on Android.
+All is well on Win, Mac, iOS.
+Android's "Hacker's Keyboard" (a keyboard 
+alternative from the Play Store that 
+selectably replaces the built-in keyboard) 
+supports undo via Ctrl-Z, as well as 
+Ctrl-X/C/V. There is no other known way 
+to undo text changes on Android.
 
 //======================================
 // Builtin functions and operators
@@ -15,7 +17,8 @@ other known way to undo text on Android.
 // All numbers are double precision, 
 // illegal operations may produce NAN
 
-// The default sample for species:
+// The default sample for species that
+// are not explicitly put in a sample:
 
 vessel
 
@@ -32,13 +35,17 @@ true false (integer) (float) (string)
 
 +  -  *  /  ^  and  or  =  <>  <=  >=  <  > 
 
+// Infix species operators (eq, not eq):
+
+=  <>
+
 // Infix string operators (concat, eq, not eq):
 
 +  =  <>
 
-// Infix list operators (concat):
+// Infix list operators (concat, eq, not eq):
 
-+
+++  =  <>
 
 // All of the following are normally-bound 
 // variables in the initial environment
@@ -78,50 +85,136 @@ sqrt(n)
 tan(n)
 tanh(n)
 
+//======================================
 // List manipulation
+//======================================
 
 list v = ..         list definition
 function f(list v, ..){..} list parameter
 [e1,..,en]          fixed length list
-l1 + l2             concatenation
+l1 ++ l2            list concatenation
 l()                 length
 l(n)                indexing, from 0
 l(n,m)              sublist (start,length)
 [t1 v1, .., tn vn] = e
    fixed length pattern matching
-   ti can be "number", "list", etc.
-[..ti vi..] + list v = e
-list v + [..ti vi..] = e
+   ti can be 'number', 'list', etc.
+[..ti vi..] ++ list v = e
+list v ++ [..ti vi..] = e
    variable length pattern matching
 
 //Examples: constructors/destructors
-list l = [0] + [1,2]       // =[0,1,2]
+list l = [0] ++ [1,2]      // =[0,1,2]
 number first = l(0)        // =0
 list late = l(1, l()-1)    // =[1,2]
 list early = l(0, l()-1)   // =[0,1]
 number last = l(l()-1)     // =2
 //Examples: pattern matching
 [number n0 n1 n2] = l
-[number first] + list late = l
-list early + [number last] = l
-function f([number n]+list l) {l+[n]}
+[number first] ++ list late = l
+list early ++ [number last] = l
+function f([number n]++list l) {l++[n]}
 list r = f([0,1,2])   // = [1,2,0]
 
-// Distributions
+//Draw-from expressions:
+draw n from f   
+// = [f(0), ..., f(n-1)]
+draw n from [.. f_i ..] 
+// = [.. draw n from f_i ..]
 
-// number n =? ...(...)
-// samples n from a distribution
-// and adds n as a parameter to the GUI
-// where the values it assumes can be monitored
-// The builtin distributions are:
+//Draw-from statements:
+//the resulting lists are plotted 
+//instead of returned
+
+//======================================
+// Random Variables
+//======================================
+
+rand(omega w) { ... w(0) ... w(1) ... }
+// is an expression denoting a random variable
+// that accesses the sample space w of type omega.
+// Each w(i) is an orthogonal [0..1] dimension 
+// of the sample space yielding a random
+// number. Separate random variables access 
+// separate subdimensions but w(i) is always 
+// the same number for the same random variable
+// and the same w. (See the Omega language.)
+
+rand(omega w) { w(0) } 
+// is a pure [0..1] random number generator
+
+random X = ...
+// declares a variable X of type random variable
+// and expects a random variable to bind to it.
+// Also, "random" can be used as a parameter type:
+function f(random X) { ... }
+
+random X(omega w) {...}
+// is a declaration of a random variable named X, 
+// on sample space w, equivalent to:
+random X = rand(omega w) {...}
+
+<-X 
+// samples a random variable X (it creates a fresh
+// sample space and passes it to the random variable)
+
+X(w) 
+// samples X from a particular sample space w, e.g.:
+function gtzero(random X) {
+   rand(omega w) { X(w)>0 }
+}
+// returns a discrete boolean random variable 
+// based on X>0
+
+X | Y
+// a random variable which is X conditioned 
+// on Y = true, e.g.:    
+X | gtzero(X)
+// if sampled this returns only the elements of X that
+// satisfy gtzero(X), i.e. the positive ones.
+// This works by rejection sampling, hence not very
+// efficienty in general, and sampling will loop if the 
+// condition never holds.
+
+draw n from X
+draw n from [X1,...,Xn]
+// draw a number of samples from a random variable or
+// a list of random variables and show a density plot.
+// When used as expressions, they return the lists
+// of numbers instead of plotting them
+
+parameter n <- X
+// declares a number n and assigns to it a random
+// number drawn from random variable X. 
+// Hence it is equivalent to:
+number n = <-X
+// but in addition, these declared numerical 
+// parameters can be manipulated in the GUI
+
+//======================================
+// Distributions
+//======================================
+
+// Via the above random variables, distributions 
+// are programmable, e.g.:
+function uniform(number a b) {
+   rand(omega w) { w(0)*(b-a)+a }
+}
+// uniform(3,5) returns a random variable with a
+// uniform distribution between 3 and 5.
+
+// Although all distributions are programmable,
+// the following distributions are built-in:
 
 uniform(lo,hi), 
 normal(mean,stdev)        // Gauss
 parabolic(mean,halfwidth) // Epanechnikov
 exponential(lambda)
-bernoulli(p)  // either 0 with prob. p, or 1
+bernoulli(p)  // true with prob. p, or false
 
+//======================================
 // Observation (see Flow-expressions)
+//======================================
 
 observe(f)   // same as observe(f,vessel)
 observe(f,s) // observe a flow f in sample s
@@ -134,18 +227,6 @@ observe(a+2b^2,s) // combined observations
 observe(var(a),s) // requires LNA active
 observe(time,s) // nonzero only if s was the
  // *input* sample of equilibrate s'=s for t
-
-// Optimization
-
-argmin(f, i, d) // BFGS Optimizer
-//f: list -> [number, list]
-//   input is a list of numbers (the parameters to optimize)
-//   outputs are the number cost of those parameters 
-//   and a list of partial gradients for the parameters 
-//i: list of numbers
-//   initial guess for the parameters
-//d: number
-//   numeric tolerance for convergence, e.g. 1e-2
 
 //======================================
 // Flow-expressions
@@ -242,7 +323,7 @@ function Arrhenius(flow cf ae) {
 // the rate of a reaction
 
 species a,b @ 1M
-a + b -> #  {{ Arrhenius(2,50)*a*b }}
+a + b -> Ø  {{ Arrhenius(2,50)*a*b }}
 
 // plot a, b, and the instantanous 
 // rate of their reaction over time
@@ -250,15 +331,12 @@ a + b -> #  {{ Arrhenius(2,50)*a*b }}
 report a, b, Arrhenius(2,50)*a*b     
 equilibrate for 10                        
 
-
-//======================================
 // If vs. cond
-//======================================
 
 species a @ 1M
 species b @ 0M
-a -> #
-# -> b
+a -> Ø
+Ø -> b
 
 // min is built-in; it plots 
 // min(molarity(a)(t), molarity(b)(t)) 
@@ -280,5 +358,18 @@ report if a<b then a else b end // ERROR
 
 report if 3>2 then a else b end    
 
+//======================================
+// Optimization
+//======================================
+
+argmin(f, i, d) // BFGS Optimizer
+//f: list -> [number, list]
+//   input is a list of numbers (the parameters to optimize)
+//   outputs are the number cost of those parameters 
+//   and a list of partial gradients for the parameters 
+//i: list of numbers
+//   initial guess for the parameters
+//d: number
+//   numeric tolerance for convergence, e.g. 1e-2
 
 

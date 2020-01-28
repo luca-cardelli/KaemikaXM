@@ -3,6 +3,7 @@ using Xamarin.Forms;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Kaemika;
+using SkiaSharp;
 
 namespace KaemikaXM.Pages
 {
@@ -12,7 +13,7 @@ namespace KaemikaXM.Pages
 
         public ChartPageLandscape() {
             chartView = new ChartView() {
-                Chart = new KChart(""),
+                Chart = new KChart("", "s", "M"),
                 BackgroundColor = Color.White,
             };
             Content = chartView;
@@ -68,11 +69,15 @@ namespace KaemikaXM.Pages
         private CollectionView parameterView;        // parameter = leaf
         public DeviceView deviceView;                // device = leaf
 
+        public SKSize ChartSize() {
+            return this.chartView.CanvasSize;
+        }
+
         private ToolbarItem SolverRK547MButton() {
             return new ToolbarItem("RK547M", "icons8refresh96solver1", () => {
                 if (Exec.IsExecuting()) return;
                 solverRK547MButton.IsEnabled = false;
-                ClickerHandler.solver = "RK547M";
+                KControls.solver = "RK547M";
                 MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: false, switchToOutput: false, autoContinue: false);
                 solverGearBDFButton.IsEnabled = true;
             });
@@ -82,7 +87,7 @@ namespace KaemikaXM.Pages
             return new ToolbarItem("GearBDF", "icons8refresh96solver2", () => {
                 if (Exec.IsExecuting()) return;
                 solverGearBDFButton.IsEnabled = false;
-                ClickerHandler.solver = "GearBDF";
+                KControls.solver = "GearBDF";
                 MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: false, switchToOutput: false, autoContinue: false);
                 solverRK547MButton.IsEnabled = true;
             });
@@ -120,6 +125,7 @@ namespace KaemikaXM.Pages
             ImageButton button = new ImageButton() {
                 Source = "icons8stop40.png",
                 HeightRequest = MainTabbedPage.buttonHeightRequest,
+                WidthRequest = MainTabbedPage.buttonHeightRequest,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
                 BackgroundColor = MainTabbedPage.secondBarColor,
             };
@@ -192,7 +198,7 @@ namespace KaemikaXM.Pages
 
             inspectionView = new StackLayout();
 
-            chartView = new ChartView() { Chart = new KChart(""), HeightRequest = 300, BackgroundColor = Color.White };
+            chartView = new ChartView() { Chart = new KChart("", "s", "M"), HeightRequest = 300, BackgroundColor = Color.White };
             legendView = LegendView();
             parameterView = ParameterView();
             deviceView = new DeviceView() { }; // Device = device };
@@ -239,7 +245,8 @@ namespace KaemikaXM.Pages
         const int LegendFontSize = 12;
         const int LegendItemHeight = 21; // If this value is too small (for the font size?), Label items will flash a gray box for 2 senconds when updated
 
-        public void SetLegend(KSeries[] legend) {
+        public void SetLegend() {
+            KSeries[] legend = KChartHandler.Legend();
             Xamarin.Forms.Device.BeginInvokeOnMainThread(() => {
                 var legendList = new ObservableCollection<LegendItem>();
                 for (int i = legend.Length - 1; i >= 0; i--)
@@ -250,7 +257,7 @@ namespace KaemikaXM.Pages
                         Height =
                             (legend[i].lineStyle == KLineStyle.Thick) ? 4  // show a wide bar for thick plot lines
                           : (legend[i].lineMode == KLineMode.Line) ? 1     // show a smaller bar for think plot lines
-                          : LegendItemHeight,                                         // show a full rectangle for Range areas
+                          : LegendItemHeight,                              // show a full rectangle for Range areas
                     });
                 legendView.ItemsSource = legendList;
                 MainTabbedPage.theChartPage.inspectionView.Children[0].HeightRequest = 40 + LegendItemHeight * (legend.Length + 1) / 2;  // seems redundant?
@@ -293,7 +300,6 @@ namespace KaemikaXM.Pages
                 grid.Children.Add(nameLabel, 1, 0);
                 // grid.Children.Add(new Label { Text = "xxx" }, 2, 0); //it is definitely labels that flash a gray box when updated
 
-
                 return grid;
             });
 
@@ -302,8 +308,8 @@ namespace KaemikaXM.Pages
                 if (item != null) {
                     KChartHandler.InvertVisible(item.Name);
                     KChartHandler.VisibilityRemember();
-                    Gui.gui.ChartUpdate();
-                    Gui.gui.LegendUpdate();
+                    KChartHandler.ChartUpdate();
+                    Gui.toGui.LegendUpdate();
                     collectionView.SelectedItem = null; // avoid some visible flashing of the selection
                 }
             };
@@ -315,104 +321,38 @@ namespace KaemikaXM.Pages
 
         const int ParameterItemHeight = 40;
 
-        private static Dictionary<string, ParameterInfo> parameterInfoDict = new Dictionary<string, ParameterInfo>(); // persistent information
-        private static Dictionary<string, ParameterState> parameterStateDict = new Dictionary<string, ParameterState>();
-        private static object parameterLock = new object(); // protects parameterInfoDict and parameterStateDict
-
-        // clear the parameterStateDict at the beginning of every execution, but we keep the parametersInfoDict forever
-
-        public void ParametersClear() {
-        lock (parameterLock) { 
-                parameterStateDict = new Dictionary<string, ParameterState>(); 
-            }
+        public class ParameterBinding {
+            // bind the parameter info to the gui via SetBinding/BindingContext, ugh!
+            public string Parameter { get; set; } // do not rename: bound property, ugh!
+            public string Format { get; set; } // do not rename: bound property, ugh!
+            public string Value { get; set; } // do not rename: bound property, ugh! // a double
+            public bool Locked { get; set; } // do not rename: bound property, ugh!
         }
-
-        public class ParameterState {
-            public string parameter;
-            private double value; // normalized to [0..1] so we never change the default min/max for slider
-            public ParameterState(string parameter, ParameterInfo info) {  // NormalizeAndSetValue from info.draw
-                this.parameter = parameter;
-                this.value = NormalizeValue(info);   
-            }
-            public double UnnormalizeAndGetValue(ParameterInfo info) {     // return [info.rangeMin..info.rangeMax]
-                return UnnormalizeValue(this.value, info);
-            }
-            public double GetNormalizedValue() { // [0..1]
-                return this.value;
-            }
-            public void SetNormalizedValue(double value, ParameterInfo info) {  // [0..1]
-                if (info.distribution == "bernoulli") { this.value = (value < 0.5) ? 0.0 : 1.0; }
-                else this.value = value;
-            }
-            private double NormalizeValue(ParameterInfo info) {
-                return (info.range == 0.0) ? 0.5 : (info.drawn - info.rangeMin) / info.range;
-            }
-            private double UnnormalizeValue(double value, ParameterInfo info) {
-                return info.rangeMin + value * info.range;
-            }
-        }
- 
-        // ask the gui if this parameter is locked
-
-        public double ParameterOracle(string parameter) { // returns NAN if oracle not available
-            lock (parameterLock) {
-                if (parameterInfoDict.ContainsKey(parameter) && parameterInfoDict[parameter].locked)
-                    // parameter does not exist yet in parameterStateDict but will exist at the end of the run, and it will be locked
-                    return parameterInfoDict[parameter].drawn;
-                return double.NaN;
-            }
-        }
-
-        // reflect the parameter state into the gui
 
         public void ParametersUpdate() {
             Xamarin.Forms.Device.BeginInvokeOnMainThread(() => {
-                lock (parameterLock) {
+                lock (KControls.parameterLock) {
                     RefreshParameters();
                 }
-                MainTabbedPage.theChartPage.inspectionView.Children[1].HeightRequest = 20 + ParameterItemHeight * parameterInfoDict.Count;               
+                MainTabbedPage.theChartPage.inspectionView.Children[1].HeightRequest = 20 + ParameterItemHeight * KControls.parameterInfoDict.Count;               
             });
         }
         private void RefreshParameters() {  
             // call it with already locked parameterLock
             var parameterList = new ObservableCollection<ParameterBinding>();
-            foreach (var kvp in parameterStateDict) {
-                ParameterInfo info = parameterInfoDict[kvp.Key];
-                ParameterState state = parameterStateDict[kvp.Key];
-                ParameterBinding parameterBinding = 
+            foreach (var kvp in KControls.parameterStateDict) {
+                ParameterInfo info = KControls.parameterInfoDict[kvp.Key];
+                KControls.ParameterState state = KControls.parameterStateDict[kvp.Key];
+                ParameterBinding parameterBinding =
                     new ParameterBinding {
                         Parameter = info.parameter,
-                        Format = info.ParameterLabel(true),
-                        Value = state.GetNormalizedValue(), // [0..1]
+                        Format = info.ParameterLabel(),
+                        Value = state.value.ToString("G4"),
                         Locked = info.locked,
                     };
                 parameterList.Add(parameterBinding);
             }
             parameterView.ItemsSource = parameterList;
-        }
-
-        public void AddParameter(string parameter, double drawn, string distribution, double[] arguments) {
-            lock (parameterLock) {
-                if (!parameterInfoDict.ContainsKey(parameter)) {
-                    parameterInfoDict[parameter] = new ParameterInfo(parameter, drawn, distribution, arguments);
-                    parameterStateDict[parameter] = new ParameterState(parameter, parameterInfoDict[parameter]);
-                }
-                parameterStateDict[parameter] = new ParameterState(parameter, parameterInfoDict[parameter]); // use the old value, not the one from drawn
-                if (parameterInfoDict.ContainsKey(parameter) && parameterInfoDict[parameter].locked) return; // do not change the old value if locked
-                ParameterInfo info = new ParameterInfo(parameter, drawn, distribution, arguments);           // use the new value, from drawn
-                ParameterState state = new ParameterState(parameter, info);                                  // update the value
-                parameterInfoDict[parameter] = info;
-                parameterStateDict[parameter] = state;
-            }
-        }
-
-        // bind the parameter info to the gui via SetBinding/BindingContext, ugh!
-
-        public class ParameterBinding {
-            public string Parameter { get; set; } // do not rename: bound property, ugh!
-            public string Format { get; set; } // do not rename: bound property, ugh!
-            public double Value { get; set; } // do not rename: bound property, ugh!
-            public bool Locked { get; set; } // do not rename: bound property, ugh!
         }
 
         public CollectionView ParameterView () {
@@ -426,33 +366,23 @@ namespace KaemikaXM.Pages
             collectionView.ItemTemplate = new DataTemplate(() => {                   // CollectionView contains ParameterBindings with bindings set in ItemTemplate, ugh!
                 Grid grid = new Grid { Padding = 2 };
                 grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(ParameterItemHeight) });
-                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = 150 });
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = 75 });
                 grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
                 grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-                Slider slider = new Slider();
-                slider.MaximumTrackColor = Color.Blue;
-                slider.SetBinding(Slider.ValueProperty, "Value"); // property of ParameterBinding, ugh!
-                //slider.ValueChanged += (object source, ValueChangedEventArgs e) => {
-                //    if (slider.BindingContext == null) return;
-                //    ParameterBinding parameterBinding = (ParameterBinding)slider.BindingContext;
-                //    ParameterInfo parameterInfo = parameterInfoDict[parameterBinding.Parameter];
-                //    Slider sl = source as Slider;
-                //    //parameterInfo.drawn = (source as Slider).Value;
-                //    //parameterBinding.Format = parameterInfo.ParameterLabel();
-                //    //SetParameters(); // don't call RefreshParameters because we may be in a worker thread
-                //};
-                slider.DragCompleted += (object source, EventArgs e) => {
+                Xamarin.Forms.Entry slider = new Xamarin.Forms.Entry { FontSize = 10, FontAttributes = FontAttributes.Bold, VerticalTextAlignment = TextAlignment.Center };
+                slider.SetBinding(Xamarin.Forms.Entry.TextProperty, "Value"); // property of ParameterBinding, ugh!
+                slider.TextChanged += (object source, TextChangedEventArgs e) => { 
                     if (slider.BindingContext == null) return;
                     ParameterBinding parameterBinding = (ParameterBinding)slider.BindingContext; // the implicit binding context, ugh!
-                    lock (parameterLock) {
-                        if ((!parameterStateDict.ContainsKey(parameterBinding.Parameter)) || (!parameterInfoDict.ContainsKey(parameterBinding.Parameter))) return;
-                        ParameterInfo info = parameterInfoDict[parameterBinding.Parameter];
-                        ParameterState state = parameterStateDict[parameterBinding.Parameter];
-                        state.SetNormalizedValue((source as Slider).Value, info);
-                        info.drawn = state.UnnormalizeAndGetValue(info);
-                        parameterBinding.Format = info.ParameterLabel(true);
-                        RefreshParameters(); // otherwise formatLabel does not update even though it has a data binding, ugh!
+                    lock (KControls.parameterLock) {
+                        if ((!KControls.parameterStateDict.ContainsKey(parameterBinding.Parameter)) || (!KControls.parameterInfoDict.ContainsKey(parameterBinding.Parameter))) return;
+                        ParameterInfo info = KControls.parameterInfoDict[parameterBinding.Parameter];
+                        KControls.ParameterState state = KControls.parameterStateDict[parameterBinding.Parameter];
+                        try { state.value = double.Parse((source as Xamarin.Forms.Entry).Text); } catch { }
+                        info.drawn = state.value;
+                        parameterBinding.Format = info.ParameterLabel();
+                        //RefreshParameters(); // No longer needed, and it now seems to mess up the rows. OLD: otherwise formatLabel does not update even though it has a data binding, ugh!
                     }
                 };
 
@@ -461,14 +391,14 @@ namespace KaemikaXM.Pages
                 switcher.Toggled += (object source, ToggledEventArgs e) => {
                     if (switcher.BindingContext == null) return; // ugh!
                     ParameterBinding parameterBinding = (ParameterBinding)switcher.BindingContext; // the implicit binding context, ugh!
-                    lock (parameterLock) {
-                        if (!parameterInfoDict.ContainsKey(parameterBinding.Parameter)) return;
-                        ParameterInfo parameterInfo = parameterInfoDict[parameterBinding.Parameter];
+                    lock (KControls.parameterLock) {
+                        if (!KControls.parameterInfoDict.ContainsKey(parameterBinding.Parameter)) return;
+                        ParameterInfo parameterInfo = KControls.parameterInfoDict[parameterBinding.Parameter];
                         parameterInfo.locked = (source as Switch).IsToggled;
                     }
                 };
 
-                Label formatLabel = new Label { FontSize = 12, FontAttributes = FontAttributes.Bold };
+                Label formatLabel = new Label { FontSize = 12, FontAttributes = FontAttributes.Bold, VerticalTextAlignment = TextAlignment.Center };
                 formatLabel.SetBinding(Label.TextProperty, "Format"); // property of ParameterBinding, ugh!
 
                 grid.Children.Add(slider, 0, 0);
@@ -488,7 +418,7 @@ namespace KaemikaXM.Pages
             if (!Exec.IsExecuting() && // we could be waiting on a continuation! StartAction would switch us right back to this page even if it does not start a thread!
                 currentModelInfo != MainTabbedPage.theModelEntryPage.modelInfo) // forkWorker: we can compute the chart concurrently
                 MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: false, switchToOutput: false, autoContinue: false);
-            Gui.gui.ChartUpdate();
+            KChartHandler.ChartUpdate();
         }
 
     }

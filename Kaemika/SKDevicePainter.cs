@@ -43,8 +43,7 @@ namespace Kaemika {
             }
 
             using (var dropletFillPaint = new SKPaint { Style = SKPaintStyle.Fill, Color = device.dropletColor, IsAntialias = true })
-            using (var dropletBiggieFillPaint = new SKPaint { Style = SKPaintStyle.Fill, Color = device.dropletBiggieColor, IsAntialias = true })
-            {
+            using (var dropletBiggieFillPaint = new SKPaint { Style = SKPaintStyle.Fill, Color = device.dropletBiggieColor, IsAntialias = true }) {
                 ProtocolDevice.Place[,] places = device.places;
                 ProtocolDevice.Placement placement = device.placement;
                 for (int row = 0; row < places.GetLength(0); row++) {
@@ -61,11 +60,11 @@ namespace Kaemika {
                                 volumeRadius = 2 * padRadius;
                                 fillPaint = dropletBiggieFillPaint;
                             }
-                            SKPoint here = new SKPoint(canvasX + margin + padRadius + col * diameter, canvasY + margin + padRadius + row * diameter);
-                            SKPoint rht  = new SKPoint(canvasX + margin + padRadius + (col + 1) * diameter, canvasY + margin + padRadius + row * diameter);
-                            SKPoint lft  = new SKPoint(canvasX + margin + padRadius + (col - 1) * diameter, canvasY + margin + padRadius + row * diameter);
-                            SKPoint bot  = new SKPoint(canvasX + margin + padRadius + col * diameter, canvasY + margin + padRadius + (row + 1) * diameter);
-                            SKPoint top  = new SKPoint(canvasX + margin + padRadius + col * diameter, canvasY + margin + padRadius + (row - 1) * diameter);
+                            SKPoint here = new SKPoint(deviceX + margin + padRadius + col * diameter, deviceY + margin + padRadius + row * diameter);
+                            SKPoint rht  = new SKPoint(deviceX + margin + padRadius + (col + 1) * diameter, deviceY + margin + padRadius + row * diameter);
+                            SKPoint lft  = new SKPoint(deviceX + margin + padRadius + (col - 1) * diameter, deviceY + margin + padRadius + row * diameter);
+                            SKPoint bot  = new SKPoint(deviceX + margin + padRadius + col * diameter, deviceY + margin + padRadius + (row + 1) * diameter);
+                            SKPoint top  = new SKPoint(deviceX + margin + padRadius + col * diameter, deviceY + margin + padRadius + (row - 1) * diameter);
                             string label = sample.symbol.Raw(); // sample.FormatSymbol(placement.StyleOf(sample, style))
                             if (place.IsAnimation(ProtocolDevice.Animation.None))
                                 DrawDroplet(canvas, label, biggie, here, 

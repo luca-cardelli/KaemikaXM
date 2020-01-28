@@ -14,8 +14,8 @@ network SinCos(species S⁺ S⁻ C⁺ C⁻, number freq ampl phase) {
     C⁻ -> C⁻ + S⁻ 	{r}
     S⁺ -> S⁺ + C⁻ 	{r}
     S⁻ -> S⁻ + C⁺ 	{r}
-    C⁺ + C⁻ -> #      {10*r}
-    S⁺ + S⁻ -> #      {10*r}
+    C⁺ + C⁻ -> Ø      {10*r}
+    S⁺ + S⁻ -> Ø      {10*r}
 }
 
 network SquareWave(species Q⁺ Q⁻, number n freq ampl phase Q₀) {
