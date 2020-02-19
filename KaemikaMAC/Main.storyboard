@@ -880,6 +880,14 @@
                                                                     <autoresizingMask key="autoresizingMask"/>
                                                                 </scroller>
                                                             </scrollView>
+                                                            <box fixedFrame="YES" boxType="custom" borderWidth="0.0" title="Box" translatesAutoresizingMaskIntoConstraints="NO" id="rod-PZ-ZS5" userLabel="Score Box">
+                                                                <rect key="frame" x="0.0" y="0.0" width="457" height="322"/>
+                                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                                <view key="contentView" ambiguous="YES" id="14D-YX-TwR" userLabel="Kaemika Score" customClass="NSScoreView">
+                                                                    <rect key="frame" x="0.0" y="0.0" width="457" height="322"/>
+                                                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                                </view>
+                                                            </box>
                                                             <box fixedFrame="YES" boxType="custom" borderType="line" title="Box" translatesAutoresizingMaskIntoConstraints="NO" id="1tQ-vY-Vzt" userLabel="LegendFlyout Box">
                                                                 <rect key="frame" x="276" y="104" width="177" height="114"/>
                                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
@@ -1470,6 +1478,7 @@
                         <outlet property="inputTextView" destination="HiK-6e-DeW" id="1qb-dp-02F"/>
                         <outlet property="kaemikaChart" destination="Vmy-IS-MLk" id="oMf-Go-1AN"/>
                         <outlet property="kaemikaDevice" destination="hDY-Wd-PTQ" id="bXB-Un-eU3"/>
+                        <outlet property="kaemikaScore" destination="14D-YX-TwR" id="R00-09-UUU"/>
                         <outlet property="keyboardFlyoutBox" destination="DEc-bL-CMD" id="TQy-Ez-WxK"/>
                         <outlet property="keyboardFlyoutMenu" destination="7G7-f6-MfJ" id="t6K-e9-oai"/>
                         <outlet property="leftButtonPanel" destination="0V8-Xa-nSc" id="W7c-Kg-LlT"/>
@@ -1483,6 +1492,7 @@
                         <outlet property="parametersFlyoutMenu" destination="GP8-PZ-VGQ" id="EVF-Jg-n1s"/>
                         <outlet property="rightButtonPanel" destination="EXp-mr-EK6" id="6oY-n3-iQM"/>
                         <outlet property="rightPanelClicker" destination="P1j-IU-xQz" id="s2j-ef-JpE"/>
+                        <outlet property="scoreBox" destination="rod-PZ-ZS5" id="N21-XC-9SZ"/>
                         <outlet property="settingsFlyoutBox" destination="4zr-Ey-AJp" id="wne-64-JIh"/>
                         <outlet property="settingsFlyoutMenu" destination="eTx-Iq-rHa" id="1bQ-Zs-4Vu"/>
                         <outlet property="shareFlyoutBox" destination="opn-AM-iqi" id="5d3-Zx-BQa"/>

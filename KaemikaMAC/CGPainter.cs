@@ -1,4 +1,5 @@
-﻿using SkiaSharp;
+﻿using System.Collections.Generic;
+using SkiaSharp;
 using CoreGraphics;
 using Kaemika;
 
@@ -21,17 +22,24 @@ namespace KaemikaMAC {
             canvas.SetFillColor(CG.Color(background));
             canvas.FillRect(canvas.GetClipBoundingBox());
         }
-
+        public /*interface Painter*/ void DrawLine(List<SKPoint> points, SKPaint paint) {
+            CG.DrawLine(canvas, points, paint);
+        }
+        public /*interface Painter*/ void DrawPolygon(List<SKPoint> points, SKPaint paint) {
+            CG.DrawPolygon(canvas, points, paint);
+        }
+        public /*interface Painter*/ void DrawSpline(List<SKPoint> points, SKPaint paint) {
+            CG.DrawSpline(canvas, points, paint);
+        }
         public /*interface Painter*/ void DrawRect(SKRect rect, SKPaint paint) {
-            CG.DrawRect(canvas, CG.Rect(rect), CG.Color(paint.Color));
+            CG.DrawRect(canvas, CG.Rect(rect), paint);
         }
         public /*interface Painter*/ void DrawRoundRect(SKRect rect, float padding, SKPaint paint) {
-            CG.DrawRoundRect(canvas, rect, padding, CG.Color(paint.Color));
+            CG.DrawRoundRect(canvas, rect, padding, paint);
         }
         public /*interface Painter*/ void DrawCircle(SKPoint p, float radius, SKPaint paint) {
-            CG.DrawCircle(canvas, p, radius, CG.Color(paint.Color));
+            CG.DrawCircle(canvas, p, radius, paint);
         }
-
         public /*interface Painter*/ void DrawText(string text, SKPoint point, SKPaint paint) {
             CG.DrawTextS(canvas, text, point, paint);
         }
@@ -60,6 +68,66 @@ namespace KaemikaMAC {
             context.ConcatCTM(flipVertical);
         }
 
+        private static void PaintPath(CGContext canvas, CGPath path, SKPaint paint) {
+            if (paint.IsStroke) {
+                canvas.SetStrokeColor(CG.Color(paint.Color));
+                canvas.SetLineWidth(paint.StrokeWidth);
+                canvas.SetLineCap(LineCap(paint.StrokeCap));
+                canvas.SetLineJoin(LineJoin(paint.StrokeJoin));
+                canvas.AddPath(path);
+                canvas.StrokePath();
+            } else {
+                canvas.SetFillColor(CG.Color(paint.Color));
+                canvas.AddPath(path);
+                canvas.ClosePath();
+                canvas.FillPath();
+            }
+        }
+
+        public static void DrawLine(CGContext canvas, List<SKPoint> points, SKPaint paint) {
+            if (points.Count > 1) {
+                var path = new CGPath();
+                path.MoveToPoint(CG.Point(points[0]));
+                for (int i = 0; i < points.Count; i++) path.AddLineToPoint(CG.Point(points[i]));
+                PaintPath(canvas, path, paint);
+            }
+        }
+
+        public static void DrawPolygon(CGContext canvas, List<SKPoint> points, SKPaint paint) {
+            if (points.Count > 1) {
+                var path = new CGPath();
+                path.MoveToPoint(CG.Point(points[0]));
+                for (int i = 0; i < points.Count; i++) path.AddLineToPoint(CG.Point(points[i]));
+                PaintPath(canvas, path, paint);
+            }
+        }
+
+        public static void DrawSpline(CGContext canvas, List<SKPoint> points, SKPaint paint) {
+            if (points.Count > 1) {
+                CGPath path = DrawSplinePath(points);
+                PaintPath(canvas, path, paint);
+            }
+        }
+        private static CGPath DrawSplinePath(List<SKPoint> points) { // points.Count > 1
+            points.Insert(0, points[0]); // duplicate first point for spline
+            SKPoint ultimate = points[points.Count - 1];
+            points.Insert(points.Count, ultimate); // duplicate last point for spline
+            List<SKPoint> controlPoints = SKPainter.ControlPoints(points);
+            return AddBeziers(new CGPath(), controlPoints.ToArray());
+        }
+        private static CGPath AddBeziers(CGPath path, SKPoint[] controlPoints) {
+            path.MoveToPoint(CG.Point(controlPoints[0]));
+            for (int i = 0; i < controlPoints.Length - 2; i += 4) {
+                if (i+3 > controlPoints.Length - 1) {
+                    var cp = CG.Point(controlPoints[i + 1]); var p = CG.Point(controlPoints[i + 2]);
+                    path.AddQuadCurveToPoint(cp.X, cp.Y, p.X, p.Y);
+                } else {
+                    path.AddCurveToPoint(CG.Point(controlPoints[i + 1]), CG.Point(controlPoints[i + 2]), CG.Point(controlPoints[i + 3]));
+                }
+            }
+            return path;
+        }  
+
         public static void DrawRect(CGContext canvas, CGRect rect, CGColor color) {
             var path = new CGPath();
             path.AddRect(rect);
@@ -68,7 +136,13 @@ namespace KaemikaMAC {
             canvas.FillPath();
         }
 
-        public static void DrawRoundRect(CGContext canvas, SKRect rect, float padding, CGColor color) {
+        public static void DrawRect(CGContext canvas, CGRect rect, SKPaint paint) {
+            var path = new CGPath();
+            path.AddRect(rect);
+            PaintPath(canvas, path, paint);
+        }
+
+        public static void DrawRoundRect(CGContext canvas, SKRect rect, float padding, SKPaint paint) {
             var path = new CGPath();
             path.MoveToPoint(rect.Left + padding, rect.Top);
             path.AddLineToPoint(rect.Right - padding, rect.Top);
@@ -79,19 +153,14 @@ namespace KaemikaMAC {
             path.AddQuadCurveToPoint(rect.Left, rect.Bottom, rect.Left, rect.Bottom - padding);
             path.AddLineToPoint(rect.Left, rect.Top + padding);
             path.AddQuadCurveToPoint(rect.Left, rect.Top, rect.Left + padding, rect.Top);
-            path.CloseSubpath();
-            canvas.SetFillColor(color);
-            canvas.AddPath(path);
-            canvas.FillPath();
+            PaintPath(canvas, path, paint);
         }
 
-        public static void DrawCircle(CGContext canvas, SKPoint p, float radius, CGColor color) {
+        public static void DrawCircle(CGContext canvas, SKPoint p, float radius, SKPaint paint) {
             var path = new CGPath();
             CGRect rect = new CGRect(p.X - radius, p.Y - radius, 2*radius, 2*radius);
             path.AddEllipseInRect(rect);
-            canvas.SetFillColor(color);
-            canvas.AddPath(path);
-            canvas.FillPath();
+            PaintPath(canvas, path, paint);
         }
 
       //https://csharp.hotexamples.com/examples/-/CGBitmapContext/-/php-cgbitmapcontext-class-examples.html

@@ -289,8 +289,9 @@ namespace Kaemika {
             this.type = new Type("list");
             this.elements = elements;
         }
+        public static ListValue<T> empty = new ListValue<T>(new List<T>());
         public override string Format(Style style) {
-            return "[" + Style.FormatSequence(elements, ", ", x => (x is Value) ? (x as Value).Format(style) : (x is Flow)? (x as Flow).Format(style) : "") + "]";
+            return "[" + Style.FormatSequence(elements, ", ", x => (x is Value xV) ? xV.Format(style) : (x is Flow xF) ? xF.Format(style) : "", "", 10) + "]";
         }
         public T Select(Value arg, Style style) {
             if (!(arg is NumberValue)) throw new Error("List index is not a number: " + this.Format(style) + "(" + arg.Format(style) + ")");
@@ -325,6 +326,35 @@ namespace Kaemika {
                 result[i] = (element as NumberValue).value;
             }
             return result;
+        }
+        public static ListValue<T> Map(Func<T,T> f, ListValue<T> l) {
+            List<T> res = new List<T>();
+            foreach (T e in l.elements) res.Add(f(e));
+            return new ListValue<T>(res);
+        }
+        public static ListValue<T> Filter(Func<T,bool> f, ListValue<T> l) {
+            List<T> res = new List<T>();
+            foreach (T e in l.elements) if (f(e)) res.Add(e);
+            return new ListValue<T>(res);
+        }
+        public static ListValue<T> Filter(Func<T,Value> f, ListValue<T> l) {
+            List<T> res = new List<T>();
+            foreach (T e in l.elements) if (f(e) is BoolValue eAs) { if (eAs.value == true) res.Add(e); } else throw new Error("filter predicate should return a boolean");
+            return new ListValue<T>(res);
+        }
+        public static T FoldL(Func<T,T,T> f, T z, ListValue<T> l) {
+            T res = z;
+            foreach (T e in l.elements) res = f(res, e);
+            return res;
+        }
+        public static T FoldR(Func<T,T,T> f, T z, ListValue<T> l) {
+            T res = z;
+            foreach (T e in l.elements) res = f(e, res);
+            return res;
+        }
+        public static ListValue<Value> Foreach(Action<Value, Value> f, ListValue<Value> l) {
+            for (int i = 0; i < l.elements.Count; i++) f(new NumberValue(i), l.elements[i]);
+            return ListValue<Value>.empty;
         }
     }
 
@@ -390,20 +420,22 @@ namespace Kaemika {
             return FormatSymbol(style) + " ≡ " + FormatDescription();
         }
 
-        public virtual Value Generate(OmegaValue omega) { return null; }                                        // may produce a sample in the distribution or a rejection (Reject exception)
-        public virtual Value Draw() { return null; }                                                            // produce a non-rejection sample, or loop while trying to
+        public virtual Value Generate(OmegaValue omega, Style style) { return null; }                           // may produce a sample in the distribution or a rejection (Reject exception)
+        public virtual Value Draw(Style style) { return null; }                                                 // produce a non-rejection sample, or loop while trying to
         public virtual DistributionValue ConditionOn(DistributionValue condition, Style style) { return null; } // may produce a sample in the distribution or a rejection (Reject exception)
         public virtual DistributionValue Pred(Func<Value, BoolValue> pred, Style style) { return null; }        // reject the elements of the distribution that do not satisfy the predicate
         public virtual DistributionValue NumberPred(Func<double, double> pred, Style style) { return null; }    // reject the elements of the numerical distribution that do not satisfy the predicate
 
-        protected virtual (int rej, double sample) DrawBool() { return (0, double.NaN); }
-        protected virtual (int rej, double sample) DrawNumber() { return (0, double.NaN); }
+        protected virtual (int rej, double sample) DrawBool(Style style) { return (0, double.NaN); }
+        protected virtual (int rej, double sample) DrawNumber(Style style) { return (0, double.NaN); }
 
         private static DateTime lastUpdate = DateTime.MinValue;
         private static int paletteNo = 0;
-        private static void DensityPlotUpdate(double lo, double hi, int listCount, string[] series, int samplesNo, double[][] samples, bool incremental) {
+        private static void DensityPlotUpdate(double lo, double hi, int listCount, string[] series, int samplesNo, double[][] samples, Style style, bool incremental) {
+            if (!style.chartOutput) return; // should be redundant
             if (TimeLib.Precedes(lastUpdate, DateTime.Now.AddSeconds(-0.2))) {
-                KChartHandler.ChartClearData(); // but not the series
+                KChartHandler.ChartClearData(style); // but not the series
+                if (hi == lo) { hi = hi + 1; lo = lo - 1; } // deal with single-point density plots
                 double scan = lo;
                 double step = (hi - lo) / 100.0;
                 if (step > 0)
@@ -416,13 +448,14 @@ namespace Kaemika {
                         }
                         scan += step;
                     }
-                KChartHandler.ChartUpdate(incremental);
+                KChartHandler.ChartUpdate(style, incremental);
                 lastUpdate = DateTime.Now; 
             }
         }
         public static void DensityPlot(int samplesNo, List<DistributionValue> list, Style style) {
+            if (!style.chartOutput) return;
             if (samplesNo > 0 && list.Count > 0) {
-                KChartHandler.ChartClear("", "", "");
+                KChartHandler.ChartClear("", "", "", style);
                 lastUpdate = DateTime.MinValue;
                 string[] series = new string[list.Count];
                 paletteNo = list.Count - 1;
@@ -434,25 +467,22 @@ namespace Kaemika {
                     KChartHandler.ChartAddSeries(series[d], null, Palette.GetColor(paletteNo), KLineMode.FillUnder, KLineStyle.Thick);
                     paletteNo--;
                 }
-                KChartHandler.LegendUpdate();
+                KChartHandler.LegendUpdate(style);
                 double[][] samples = new double[list.Count][];
                 for (int d = 0; d < list.Count; d++) samples[d] = new double[samplesNo];
-                int rejected = 0;
                 double hi = double.MinValue;
                 double lo = double.MaxValue;
                 for (int i = 0; i < samplesNo; i++) {
                     for (int d = 0; d < list.Count; d++) {
-                        (int rej, double sample) = list[d].DrawNumber();
-                        rejected += rej;
+                        (int rej, double sample) = list[d].DrawNumber(style.RestyleAsChartOutput(false)); // suppress chart output during evaluation of sample 
                         hi = Math.Max(hi, sample);
                         lo = Math.Min(lo, sample);
                         samples[d][i] = sample;
                     }
-                    DensityPlotUpdate(lo, hi, list.Count, series, samplesNo, samples, true);
+                    DensityPlotUpdate(lo, hi, list.Count, series, samplesNo, samples, style, true);
                 }
                 lastUpdate = DateTime.MinValue;
-                DensityPlotUpdate(lo, hi, list.Count, series, samplesNo, samples, false);
-                Gui.Log("Rejected samples: " + rejected);
+                DensityPlotUpdate(lo, hi, list.Count, series, samplesNo, samples, style, false);
             }
         }
 
@@ -467,187 +497,192 @@ namespace Kaemika {
 
         public static Value Enumerate(int samplesNo, DistributionValue dist, Style style) {
             List<Value> elements = new List<Value>();
-            for (int i = 0; i < samplesNo; i++) elements.Add(dist.Draw());
+            for (int i = 0; i < samplesNo; i++) elements.Add(dist.Draw(style));
             return new ListValue<Value>(elements);
         }
 
     }
 
     public class HiDistributionValue : DistributionValue {
-        private Func<OmegaValue, Value> generator;
-        public HiDistributionValue(Symbol symbol, string format, Func<OmegaValue, Value> generator) : base(symbol, format) {
+        private Func<OmegaValue, Style, Value> generator; //pass the Style to inhibit chart output of inner equilibrate during Plot/DensityPlot chart output
+        public HiDistributionValue(Symbol symbol, string format, Func<OmegaValue, Style, Value> generator) : base(symbol, format) {
             this.generator = generator;
         }
-        public override Value Generate(OmegaValue omega) {   // may produce a sample in the distribution or null = reject
-            return Generate(omega.sampleSpace); // discard the subsamplespace (apply inverse projection) and reproject on this.subsamplespace
+        public override Value Generate(OmegaValue omega, Style style) {   // may produce a sample in the distribution or null = reject
+            return Generate(omega.sampleSpace, style); // discard the subsamplespace (apply inverse projection) and reproject on this.subsamplespace
         }
-        public Value Generate(SampleSpace sampleSpace) {   // may produce a sample in the distribution or null = reject
-            return this.generator(new OmegaValue(sampleSpace, this.subSampleSpace)); // reproject the sample space on this.subsamplespace
+        public Value Generate(SampleSpace sampleSpace, Style style) {   // may produce a sample in the distribution or null = reject
+            return this.generator(new OmegaValue(sampleSpace, this.subSampleSpace), style); // reproject the sample space on this.subsamplespace
         }
-        public override Value Draw() { // does not return null = reject
-            (int rej, Value sample) = DrawHiValue();
+        public override Value Draw(Style style) { // does not return null = reject
+            (int rej, Value sample) = DrawHiValue(style);
             return sample;
         }
-        private (int rej, Value sample) DrawHiValue() { // does not return null = reject
+        private (int rej, Value sample) DrawHiValue(Style style) { // does not return null = reject
             Value sample = null;
             int rej = 0;
             do {
                 if (!Exec.IsExecuting()) throw new ExecutionEnded("");
-                sample = Generate(new SampleSpace());
+                sample = Generate(new SampleSpace(), style);
                 if (sample == null) rej++;
             } while (sample == null);
             return (rej, sample);
         }
-        protected override (int rej, double sample) DrawBool() { // does not return NaN = reject
-            (int rej, Value v) = DrawHiValue();
+        protected override (int rej, double sample) DrawBool(Style style) { // does not return NaN = reject
+            (int rej, Value v) = DrawHiValue(style);
             if (v is BoolValue vAs) return (rej, vAs.value ? double.PositiveInfinity : double.NegativeInfinity);
             else throw new Error("draw: expecting a boolean");
         }
-        protected override (int rej, double sample) DrawNumber() { // does not return NaN = reject
-            (int rej, Value v) = DrawHiValue();
-            if (v is NumberValue vAs) return (rej, vAs.value);
+        protected override (int rej, double sample) DrawNumber(Style style) { // does not return NaN = reject
+            (int rej, Value v) = DrawHiValue(style);
+            if (v is BoolValue vAsB) return (rej, vAsB.value == false ? 0 : 1); // bool as 0/1
+            else if (v is NumberValue vAs) return (rej, vAs.value);
             else throw new Error("draw: expecting a number");
         }
         public override DistributionValue ConditionOn(DistributionValue condition, Style style) {
             return new HiDistributionValue(null, null,
-                (OmegaValue omega) => {
+                (OmegaValue omega, Style dynamicStyle) => {
                     bool cond;
                     if (condition is LoDistributionValue conditionAs) {
-                        double sample = conditionAs.LoGenerate(omega);
-                        if (double.IsNaN(sample)) return null; //reject
+                        double sample = conditionAs.LoGenerate(omega, dynamicStyle);
+                        if (double.IsNaN(sample)) { ExecutionInstance.Reject(); return null; } //reject
                         if (double.IsPositiveInfinity(sample)) cond = true;
                         else if(double.IsNegativeInfinity(sample)) cond = false;
                         else throw new Error("'|': expecting a boolean");
                     } else {
-                        Value v = (condition as HiDistributionValue).Generate(omega);
-                        if (v == null) return null; //reject
+                        Value v = (condition as HiDistributionValue).Generate(omega, dynamicStyle);
+                        if (v == null) { ExecutionInstance.Reject(); return null; } //reject
                         if (v is BoolValue vAs) cond = vAs.value;
                         else throw new Error("'|': expecting a boolean");
                     } 
-                    if (cond) return this.Generate(omega);
-                    else return null; //reject
+                    if (cond) return this.Generate(omega, dynamicStyle);
+                    else { ExecutionInstance.Reject(); return null; } //reject
                 });
         }
         public override DistributionValue Pred(Func<Value, BoolValue> pred, Style style) {
-            return new HiDistributionValue(null, null, (OmegaValue omega) => {
-                Value sample = this.Generate(omega);
-                if (sample == null) return null; //reject
-                BoolValue result = pred(sample);
-                return result;
-            });
+            return new HiDistributionValue(null, null, 
+                (OmegaValue omega, Style dynamicStyle) => {
+                    Value sample = this.Generate(omega, dynamicStyle);
+                    if (sample == null) return null; //reject
+                    BoolValue result = pred(sample);
+                    return result;
+                });
         }
         public override DistributionValue NumberPred(Func<double, double> pred, Style style) { //pred should take a good number and return a +/-inf encoded boolean
-            return new LoDistributionValue(null, null, (OmegaValue omega) => {
-                Value v = this.Generate(omega);
-                if (v == null) return double.NaN; //reject 
-                double sample = ((v is NumberValue n) ? n.value : throw new Error("NumberPred: number expected"));
-                double result = pred(sample);
-                if (double.IsNaN(result)) return double.NaN; //reject
-                if (double.IsInfinity(result)) return result;
-                else throw new Error("NumberPred: pred did not return a boolean");
-            });
+            return new LoDistributionValue(null, null, 
+                (OmegaValue omega, Style dynamicStyle) => {
+                    Value v = this.Generate(omega, dynamicStyle);
+                    if (v == null) return double.NaN; //reject 
+                    double sample = ((v is NumberValue n) ? n.value : throw new Error("NumberPred: number expected"));
+                    double result = pred(sample);
+                    if (double.IsNaN(result)) return double.NaN; //reject
+                    if (double.IsInfinity(result)) return result;
+                    else throw new Error("NumberPred: pred did not return a boolean");
+                });
         }
     }
 
     public class LoDistributionValue : DistributionValue {
-        private Func<OmegaValue, double> generator;
+        private Func<OmegaValue, Style, double> generator;
         // a generator from (implicitly) the global random hypercube to a value; it draws samples from the distribution
         // note that the generator can invoke this.omegaIndexer.Access(i) multiple times, always getting the same random number for the same i
         // but different random variables will get different random numbers for same i
 
-        public LoDistributionValue(Symbol symbol, string format, Func<OmegaValue, double> generator) : base(symbol, format) {
+        public LoDistributionValue(Symbol symbol, string format, Func<OmegaValue, Style, double> generator) : base(symbol, format) {
             this.generator = generator;
         }
-        public override Value Generate(OmegaValue omega) {  // may produce a sample in the distribution or NaN = reject
-            double sample = LoGenerate(omega);
+        public override Value Generate(OmegaValue omega, Style style) {  // may produce a sample in the distribution or NaN = reject
+            double sample = LoGenerate(omega, style);
             if (double.IsNaN(sample)) return null; //reject
             if (double.IsInfinity(sample)) return new BoolValue(double.IsPositiveInfinity(sample));
             else return new NumberValue(sample);
         }
-        public double LoGenerate(OmegaValue omega) {
-            return LoGenerate(omega.sampleSpace); // discard the subsamplespace (apply inverse projection) and reproject on this.subsamplespace
+        public double LoGenerate(OmegaValue omega, Style style) {
+            return LoGenerate(omega.sampleSpace, style); // discard the subsamplespace (apply inverse projection) and reproject on this.subsamplespace
         }
-        public double LoGenerate(SampleSpace sampleSpace) {   // may produce a sample in the distribution or NaN = reject
-            return this.generator(new OmegaValue(sampleSpace, this.subSampleSpace));  // reproject the sample space on this.subsamplespace
+        public double LoGenerate(SampleSpace sampleSpace, Style style) {   // may produce a sample in the distribution or NaN = reject
+            return this.generator(new OmegaValue(sampleSpace, this.subSampleSpace), style);  // reproject the sample space on this.subsamplespace
         }
-        public override Value Draw() { // does not return NaN = reject
-            (int rej, double sample) = DrawLoValue();
+        public override Value Draw(Style style) { // does not return NaN = reject
+            (int rej, double sample) = DrawLoValue(style);
             if (double.IsInfinity(sample)) return new BoolValue(double.IsPositiveInfinity(sample));
             else return new NumberValue(sample);
         }
-        private (int rej, double sample) DrawLoValue() { // does not return NaN = reject
+        private (int rej, double sample) DrawLoValue(Style style) { // does not return NaN = reject
             double sample = double.NaN;
             int rej = 0;
             do {
                 if (!Exec.IsExecuting()) throw new ExecutionEnded("");
-                sample = LoGenerate(new SampleSpace());
+                sample = LoGenerate(new SampleSpace(), style);
                 if (double.IsNaN(sample)) rej++;
             } while (double.IsNaN(sample));
             return (rej, sample);
         }
-        protected override (int rej, double sample) DrawBool() {
-            (int rej, double sample) = DrawLoValue();
+        protected override (int rej, double sample) DrawBool(Style style) {
+            (int rej, double sample) = DrawLoValue(style);
             if (double.IsInfinity(sample)) return (rej, sample); 
             else throw new Error("DrawBool: expecting a boolean instead of a number");
         }
-        protected override (int rej, double sample) DrawNumber() {
-            (int rej, double sample) = DrawLoValue();
-            if (!double.IsInfinity(sample)) return (rej, sample); 
+        protected override (int rej, double sample) DrawNumber(Style style) {
+            (int rej, double sample) = DrawLoValue(style);
+            if (double.IsNegativeInfinity(sample)) return (rej, 0); // false as 0
+            else if (double.IsPositiveInfinity(sample)) return (rej, 1); // true as 1
+            else if (!double.IsInfinity(sample)) return (rej, sample); 
             else throw new Error("DrawNumber: expecting a number instead of a boolean");
         }
 
         public override DistributionValue ConditionOn(DistributionValue condition, Style style) {
             return new LoDistributionValue(null, null,
-                (OmegaValue omega) => {
+                (OmegaValue omega, Style dynamicStyle) => {
                     bool cond;
                     if (condition is LoDistributionValue conditionAs) {
-                        double sample = conditionAs.LoGenerate(omega);
-                        if (double.IsNaN(sample)) return double.NaN; //reject
+                        double sample = conditionAs.LoGenerate(omega, dynamicStyle);
+                        if (double.IsNaN(sample)) { ExecutionInstance.Reject(); return double.NaN; } //reject
                         if (double.IsPositiveInfinity(sample)) cond = true;
                         else if(double.IsNegativeInfinity(sample)) cond = false;
                         else throw new Error("'|': expecting a boolean");
                     } else {
-                        Value v = (condition as HiDistributionValue).Generate(omega);
-                        if (v == null) return double.NaN; //reject
+                        Value v = (condition as HiDistributionValue).Generate(omega, dynamicStyle);
+                        if (v == null) { ExecutionInstance.Reject(); return double.NaN; } //reject
                         if (v is BoolValue vAs) cond = vAs.value;
                         else throw new Error("'|': expecting a boolean");
                     } 
-                    if (cond) return this.LoGenerate(omega);
-                    else return double.NaN; // reject
+                    if (cond) return this.LoGenerate(omega, dynamicStyle);
+                    else { ExecutionInstance.Reject(); return double.NaN; } // reject
                 });
         }
         public override DistributionValue Pred(Func<Value, BoolValue> pred, Style style) {
-            return new LoDistributionValue(null, null, (OmegaValue omega) => {
-                double sample = this.LoGenerate(omega); 
-                if (double.IsNaN(sample)) return double.NaN; //reject
-                Value value =
-                    (double.IsPositiveInfinity(sample)) ? (Value)new BoolValue(true) :
-                    (double.IsNegativeInfinity(sample)) ? (Value)new BoolValue(false) :
-                    (Value)new NumberValue(sample);
-                BoolValue result = pred(value);
-                if (result == null) return double.NaN; //reject
-                if (result.value) return double.PositiveInfinity; else return double.NegativeInfinity;
-            });
+            return new LoDistributionValue(null, null, 
+                (OmegaValue omega, Style dynamicStyle) => {
+                    double sample = this.LoGenerate(omega, dynamicStyle); 
+                    if (double.IsNaN(sample)) return double.NaN; //reject
+                    Value value =
+                        (double.IsPositiveInfinity(sample)) ? (Value)new BoolValue(true) :
+                        (double.IsNegativeInfinity(sample)) ? (Value)new BoolValue(false) :
+                        (Value)new NumberValue(sample);
+                    BoolValue result = pred(value);
+                    if (result == null) return double.NaN; //reject
+                    if (result.value) return double.PositiveInfinity; else return double.NegativeInfinity;
+                });
         }
         public override DistributionValue NumberPred(Func<double, double> pred, Style style) { //pred should take a good number and return a +/-inf encoded boolean
-            return new LoDistributionValue(null, null, (OmegaValue omega) => {
-                double sample = this.LoGenerate(omega); 
-                if (double.IsNaN(sample)) return double.NaN; // reject
-                if (double.IsInfinity(sample)) throw new Error("NumberPred: number expected");
-                double result = pred(sample);
-                if (double.IsNaN(result)) return double.NaN; //reject
-                if (double.IsInfinity(result)) return result;
-                else throw new Error("NumberPred: pred did not return a boolean");
-            });
+            return new LoDistributionValue(null, null, 
+                (OmegaValue omega, Style dynamicStyle) => {
+                    double sample = this.LoGenerate(omega, dynamicStyle); 
+                    if (double.IsNaN(sample)) return double.NaN; // reject
+                    if (double.IsInfinity(sample)) throw new Error("NumberPred: number expected");
+                    double result = pred(sample);
+                    if (double.IsNaN(result)) return double.NaN; //reject
+                    if (double.IsInfinity(result)) return result;
+                    else throw new Error("NumberPred: pred did not return a boolean");
+                });
         }
 
         public static DistributionValue Uniform(double lo, double hi, Style style) {
             if (lo <= hi) {
-                //var dist = new MathNet.Numerics.Distributions.ContinuousUniform(lo, hi);
                 return new LoDistributionValue(null,
                     "uniform(" + style.FormatDouble(lo) + ", " + style.FormatDouble(hi) + ")",
-                    //(OmegaValue omega) => { return dist.Sample(); }
-                    (OmegaValue omega) => {
+                    (OmegaValue omega, Style dynamicStyle) => {
                         return omega.Access(0) * (hi - lo) + lo; 
                     }
                 );
@@ -655,38 +690,32 @@ namespace Kaemika {
         }
         public static DistributionValue Normal(double mean, double stdev, Style style) {
             if (stdev >= 0) {
-                //var dist = new MathNet.Numerics.Distributions.Normal(mean, stdev);
                 return new LoDistributionValue(null,
                     "normal(" + style.FormatDouble(mean) + ", " + style.FormatDouble(stdev) + ")",
-                    //(OmegaValue omega) => { return dist.Sample(); }
-                    (OmegaValue omega) => {
+                    (OmegaValue omega, Style dynamicStyle) => {
                         double u1 = 1.0 - omega.Access(0);
                         double u2 = 1.0 - omega.Access(1);
                         double normal01 = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Sin(2.0 * Math.PI * u2);
                         return mean + stdev * normal01;
                     }
                 );
-            }
-            else throw new Error("Bad distribution arguments: " + "normal(" + mean.ToString() + ", " + stdev.ToString() + ")");
+            } else throw new Error("Bad distribution arguments: " + "normal(" + mean.ToString() + ", " + stdev.ToString() + ")");
         }
         public static DistributionValue Exponential(double lambda, Style style) {
             if (lambda > 0) {
-                //var dist = new MathNet.Numerics.Distributions.Exponential(lambda);
                 return new LoDistributionValue(null,
                     "exponential(" + style.FormatDouble(lambda) + ")",
-                    //(OmegaValue omega) => { return dist.Sample(); }
-                    (OmegaValue omega) => {
+                    (OmegaValue omega, Style dynamicStyle) => {
                         return Math.Log(1 - omega.Access(0)) / (-lambda); 
                     }
                 );
-            }
-            else throw new Error("Bad distribution arguments: " + "exponential(" + lambda.ToString() + ")");
+            } else throw new Error("Bad distribution arguments: " + "exponential(" + lambda.ToString() + ")");
         }
         public static DistributionValue Parabolic(double center, double halfwidth, Style style) {
             if (halfwidth >= 0) {
                 return new LoDistributionValue(null,
                     "parabolic(" + style.FormatDouble(center) + ", " + style.FormatDouble(halfwidth) + ")",
-                    (OmegaValue omega) => {
+                    (OmegaValue omega, Style dynamicStyle) => {
                         //https://stats.stackexchange.com/questions/173637/generating-a-sample-from-epanechnikovs-kernel
                         double u1 = 2 * omega.Access(0) - 1.0;
                         double u2 = 2 * omega.Access(1) - 1.0;
@@ -694,20 +723,16 @@ namespace Kaemika {
                         double sample01 = (Math.Abs(u3) >= Math.Abs(u2) && Math.Abs(u3) >= Math.Abs(u1)) ? u2 : u3;
                         return center + halfwidth * sample01;
                     });
-            }
-            else throw new Error("Bad distribution arguments: " + "parabolic(" + center.ToString() + ", " + halfwidth.ToString() + ")");
+            } else throw new Error("Bad distribution arguments: " + "parabolic(" + center.ToString() + ", " + halfwidth.ToString() + ")");
         }
         public static DistributionValue Bernoulli(double p, Style style) {
             if (p >= 0 && p <= 1) {
-                //var dist = new MathNet.Numerics.Distributions.Bernoulli(p);
                 return new LoDistributionValue(null,
                     "bernoulli(" + style.FormatDouble(p) + ")",
-                    //(OmegaValue omega) => { return (dist.Sample() == 1) ? double.PositiveInfinity : double.NegativeInfinity; }
-                    (OmegaValue omega) => {
+                    (OmegaValue omega, Style dynamicStyle) => {
                         return (omega.Access(0) <= p) ? double.PositiveInfinity : double.NegativeInfinity; 
                     });
-            }
-            else throw new Error("Bad distribution arguments: " + "bernoulli(" + p.ToString() + ")");
+            } else throw new Error("Bad distribution arguments: " + "bernoulli(" + p.ToString() + ")");
         }
     }
 
@@ -720,11 +745,17 @@ namespace Kaemika {
             mset = new List<Symbol>();
             foreach (Symbol symbol in set) mset.Add(symbol);
         }
-        public int Count(Symbol symbol) {
+        public int Sum() {
+            return mset.Count;
+        }
+        public int Cardinality(Symbol symbol) {
             int n = 0;
             foreach (Symbol s in mset)
                 if (s.SameSymbol(symbol)) n += 1;
             return n;
+        }
+        public bool Has(Symbol symbol) {
+            return Cardinality(symbol) > 0;
         }
         public List<Symbol> ToList() {
             var list = new List<Symbol>();
@@ -744,6 +775,17 @@ namespace Kaemika {
                 for (int j = 0; j < mset.Count; j++)
                     if (mset[j].SameSymbol(symbol)) { mset.RemoveAt(j); break; }
         }
+        public string Format(Style style) {
+            string s = "";
+            List<Symbol> set = ToSet();
+            for (int i = 0; i < set.Count; i++) {
+                int card = Cardinality(set[i]);
+                if (card > 1) s += card.ToString();
+                s += set[i].Format(style);
+                if (i < set.Count - 1) s += " + ";
+            }
+            return (s == "") ? "Ø" : s;
+        }
     }
 
     public class ReactionValue : Value {
@@ -761,6 +803,10 @@ namespace Kaemika {
             string products = Style.FormatSequence(this.products, " + ", x => x.Format(style), empty: "Ø");
             string rate = this.rate.Format(style);
             return reactants + " -> " + products + " " + rate;
+        }
+        public string FormatNormal(Style style) {
+            (SymbolMultiset reactants, SymbolMultiset products) = NormalForm();
+            return reactants.Format(style) + " -> " + products.Format(style) + " " + this.rate.Format(style);
         }
         public int Stoichiometry(Symbol species, List<Symbol> complex) {
             int n = 0;
@@ -811,12 +857,15 @@ namespace Kaemika {
                 if (!species.Exists(x => x.symbol.SameSymbol(rs))) { notCovered = rs; return false; };
             notCovered = null; return true;
         }
-        public (SymbolMultiset catalysts, SymbolMultiset catalyzedRactants, SymbolMultiset catalyzedProducts) CatalistForm() {
+        public (SymbolMultiset reactants, SymbolMultiset products) NormalForm() {
+            return (new SymbolMultiset(this.reactants), new SymbolMultiset(this.products));
+        }
+        public (SymbolMultiset catalysts, SymbolMultiset catalyzedRactants, SymbolMultiset catalyzedProducts) CatalystForm() {
             var catalysts = new SymbolMultiset();
             var catalyzedRactants = new SymbolMultiset(reactants); 
             var catalyzedProducts = new SymbolMultiset(products); 
             foreach (Symbol symbol in reactants) {
-                int n = Math.Min(catalyzedRactants.Count(symbol), catalyzedProducts.Count(symbol));
+                int n = Math.Min(catalyzedRactants.Cardinality(symbol), catalyzedProducts.Cardinality(symbol));
                 if (n > 0) {
                     catalysts.Add(symbol, 1);
                     catalyzedRactants.Subtract(symbol, 1);
@@ -843,7 +892,7 @@ namespace Kaemika {
             this.rateFunction = rateFunction;
         }
         public override string Format(Style style) {
-            return "{{" + rateFunction.Format(style) + "}}";
+            return "{{" + rateFunction.TopFormat(style) + "}}";
         }
         public override double Action(SampleValue sample, List<Symbol> reactants, double time, Vector state, double temperature, Style style) {
             // We earlier checked that rateFunction HasDeterministicMean. If it is not a numeric flow, we now get an error from ReportMean.
@@ -899,13 +948,19 @@ namespace Kaemika {
             this.env = env;
         }
         public override string Format(Style style) {
-            if (style.dataFormat == "symbol") return (symbol == null) ? "<function>" : symbol.Format(style);
-            else if (style.dataFormat == "header") return ((symbol == null) ? "<function>" : symbol.Format(style)) + "(" + parameters.Format() + ")";
-            else if (style.dataFormat == "full") return ((symbol == null) ? "<function>" : symbol.Format(style)) + "(" + parameters.Format() + ") {" + Environment.NewLine + body.Format() + Environment.NewLine + "}";
+            if (style.dataFormat == "symbol") return (symbol == null) ? "λ" : symbol.Format(style);
+            else if (style.dataFormat == "header") return ((symbol == null) ? "λ" : symbol.Format(style)) + "(" + parameters.Format() + ")";
+            else if (style.dataFormat == "full") return ((symbol == null) ? "λ" : symbol.Format(style)) + "(" + parameters.Format() + ") {" + Environment.NewLine + body.Format() + Environment.NewLine + "}";
             else return "unknown format: " + style.dataFormat;
         }
         public Value ApplyReject(List<Value> arguments, Netlist netlist, Style style, int s) {
             return body.EvalReject(env.ExtendValues(parameters.parameters, arguments, null, (symbol == null ? "<nameless>" : symbol.Format(style)), style, s + 1), netlist, style, s + 1); 
+        }
+        public Value ApplyReject(Value argument, Netlist netlist, Style style, int s) {
+            return body.EvalReject(env.ExtendValue(parameters.parameters, argument, null, (symbol == null ? "<nameless>" : symbol.Format(style)), style, s + 1), netlist, style, s + 1); 
+        }
+        public Value ApplyReject(Value argument1, Value argument2, Netlist netlist, Style style, int s) {
+            return body.EvalReject(env.ExtendValue(parameters.parameters, argument1, argument2, null, (symbol == null ? "<nameless>" : symbol.Format(style)), style, s + 1), netlist, style, s + 1); 
         }
         public Value ApplyFlow(List<Value> arguments, Style style, int s) {
             return body.EvalFlow(env.ExtendValues<Value>(parameters.parameters, arguments, null, (symbol == null ? "<nameless>" : symbol.Format(style)), style, s + 1), style, s + 1);
@@ -938,8 +993,9 @@ namespace Kaemika {
         private static DateTime lastUpdate = DateTime.MinValue;
         private static int paletteNo = 0;
         public static void Plot(int samplesNo, List<FunctionValue> list, Netlist netlist, Style style, int s) {
+            if (!style.chartOutput) return;
             if (samplesNo > 0 && list.Count > 0) {
-                KChartHandler.ChartClear("", "", "");
+                KChartHandler.ChartClear("", "", "", style);
                 lastUpdate = DateTime.MinValue;
                 string[] series = new string[list.Count];
                 paletteNo = list.Count - 1;
@@ -951,30 +1007,28 @@ namespace Kaemika {
                     KChartHandler.ChartAddSeries(series[d], null, Palette.GetColor(paletteNo), KLineMode.FillUnder, KLineStyle.Thick);
                     paletteNo--;
                 }
-                KChartHandler.LegendUpdate();
+                KChartHandler.LegendUpdate(style);
                 double[][] samples = new double[list.Count][];
                 for (int d = 0; d < list.Count; d++) samples[d] = new double[samplesNo];
-                int rejected = 0;
                 for (int i = 0; i < samplesNo; i++) {
                     for (int d = 0; d < list.Count; d++) {
-                        Value sample = list[d].ApplyReject(new List<Value>() { new NumberValue(i) }, netlist, style, s);
+                        Value sample = list[d].ApplyReject(new List<Value>() { new NumberValue(i) }, netlist, style.RestyleAsChartOutput(false), s); // suppress chart output during evaluation of function
                         if (sample != Value.REJECT && sample is NumberValue sampleAs) {
                             samples[d][i] = sampleAs.value;
                         } else {
                             samples[d][i] = double.NaN;
-                            rejected++;
                         }
                     }
-                    PlotUpdate(list.Count, series, samplesNo, samples, true);
+                    PlotUpdate(list.Count, series, samplesNo, samples, style, true);
                 }
                 lastUpdate = DateTime.MinValue;
-                PlotUpdate(list.Count, series, samplesNo, samples, false);
-                Gui.Log("Rejected samples: " + rejected);
+                PlotUpdate(list.Count, series, samplesNo, samples, style, false);
             }
         }
-        private static void PlotUpdate(int listCount, string[] series, int samplesNo, double[][] samples, bool incremental) {
+        private static void PlotUpdate(int listCount, string[] series, int samplesNo, double[][] samples, Style style, bool incremental) {
+            if (!style.chartOutput) return; // should be redundant
             if (TimeLib.Precedes(lastUpdate, DateTime.Now.AddSeconds(-0.2))) {
-                KChartHandler.ChartClearData(); // but not the series
+                KChartHandler.ChartClearData(style); // but not the series
                 for (int i = 0; i < samplesNo; i++) {
                     for (int d = 0; d < listCount; d++) {
                         if (series[d] != null) { // may be null if there were duplicate series names
@@ -982,7 +1036,7 @@ namespace Kaemika {
                         }
                     }
                 }
-                KChartHandler.ChartUpdate(incremental);
+                KChartHandler.ChartUpdate(style, incremental);
                 lastUpdate = DateTime.Now; 
             }
         }
@@ -1004,9 +1058,14 @@ namespace Kaemika {
             } else if (arguments.Count == 1) {
                 return ApplyFlow(arguments, style);
             } else if (arguments.Count == 2) {
-                return ApplyFlow(arguments, style);
+                if (name == "map") if (arguments[0] is FunctionValue arg1As && arguments[1] is ListValue<Value> arg2As) return ListValue<Value>.Map((Value e) => arg1As.ApplyReject(e, netlist, style, s), arg2As); else throw new Error(BadArgs());
+                else if (name == "filter") if (arguments[0] is FunctionValue arg1As && arguments[1] is ListValue<Value> arg2As) return ListValue<Value>.Filter((Value e) => arg1As.ApplyReject(e, netlist, style, s), arg2As); else throw new Error(BadArgs());
+                else if (name == "foreach") if (arguments[0] is NetworkValue arg1As && arguments[1] is ListValue<Value> arg2As) return ListValue<Value>.Foreach((Value i, Value e) => arg1As.ApplyReject(i, e, netlist, style, s), arg2As); else throw new Error(BadArgs());
+                else return ApplyFlow(arguments, style);
             } else if (arguments.Count == 3) {
                 if (name == "argmin") return Protocol.Argmin(arguments[0], arguments[1], arguments[2], netlist, style, s); // BFGF
+                else if (name == "foldr") if (arguments[0] is FunctionValue arg1As && arguments[2] is ListValue<Value> arg3As) return ListValue<Value>.FoldR((Value e1, Value e2) => arg1As.ApplyReject(e1, e2, netlist, style, s), arguments[1], arg3As); else throw new Error(BadArgs());
+                else if (name == "foldl") if (arguments[0] is FunctionValue arg1As && arguments[2] is ListValue<Value> arg3As) return ListValue<Value>.FoldL((Value e1, Value e2) => arg1As.ApplyReject(e1, e2, netlist, style, s), arguments[1], arg3As); else throw new Error(BadArgs());
                 else return ApplyFlow(arguments, style);
                 //} else if (arguments.Count == 4) {
                 //    if (name == "argmin") return Protocol.Argmin(arguments[0], arguments[1], arguments[2], arguments[3], netlist, style); // GoldenSection
@@ -1021,7 +1080,7 @@ namespace Kaemika {
                 Value arg1 = arguments[0];
                 if (name == "not") if (arg1 is BoolValue) return new BoolValue(!((BoolValue)arg1).value); else throw new Error(BadArgs());
                 else if (name == "-") if (arg1 is NumberValue) return new NumberValue(-((NumberValue)arg1).value); else throw new Error(BadArgs());
-                else if (name == "<-") if (arg1 is DistributionValue arg1As) return arg1As.Draw(); else throw new Error(BadArgs());
+                else if (name == "<-") if (arg1 is DistributionValue arg1As) return arg1As.Draw(style); else throw new Error(BadArgs());
                 else if (name == "abs") if (arg1 is NumberValue) return new NumberValue(Math.Abs(((NumberValue)arg1).value)); else throw new Error(BadArgs());
                 else if (name == "arccos") if (arg1 is NumberValue) return new NumberValue(Math.Acos(((NumberValue)arg1).value)); else throw new Error(BadArgs());
                 else if (name == "arcsin") if (arg1 is NumberValue) return new NumberValue(Math.Asin(((NumberValue)arg1).value)); else throw new Error(BadArgs());
@@ -1126,6 +1185,10 @@ namespace Kaemika {
             else if (style.dataFormat == "header") return ((symbol == null) ? "<network>" : symbol.Format(style)) + "(" + parameters.Format() + ")";
             else if (style.dataFormat == "full") return ((symbol == null) ? "<network>" : symbol.Format(style)) + "(" + parameters.Format() + ") {" + Environment.NewLine + body.Format() + Environment.NewLine + "}";
             else return "unknown format: " + style.dataFormat;
+        }
+        public Env ApplyReject(Value argument1, Value argument2, Netlist netlist, Style style, int s) {
+            Env ignoreEnv = body.EvalReject(env.ExtendValue(parameters.parameters, argument1, argument2, null, (symbol == null ? "<nameless>" : symbol.Format(style)), style, s + 1), netlist, style, s + 1);
+            return ignoreEnv;
         }
         public Env ApplyReject(List<Value> arguments, Netlist netlist, Style style, int s) {
             string source = symbol == null ? "<nameless>" : symbol.Format(style);

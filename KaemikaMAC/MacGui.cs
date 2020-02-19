@@ -12,7 +12,9 @@ using SkiaSharp;
 namespace KaemikaMAC {
     // This all runs in the gui thread: external-thread calls should be made through GuiInterface.
 
-    public partial class GuiToMac : NSViewController, KGuiControl {
+    public partial class MacGui : NSViewController, KGuiControl {
+
+        public static MacGui macGui;    // "The" GUI
 
         private PlatformTexter texter;
         private static Dictionary<float, NSFont> fonts;
@@ -20,12 +22,12 @@ namespace KaemikaMAC {
 
         /* GUI INITIALIZATION */
 
-        public MacControls macControls;              // set up platform-specific gui controls 
-        public KControls kControls;      // bind actions to them (non-platform specific) //####### Register them with KGui like on the Windows side
+        public MacControls macControls;              // platform-specific gui controls 
 
-        // Constructor, invoked by ??? and bound to guiToMac by ViewDidLoad
-        public GuiToMac(IntPtr handle) : base(handle) {
-            // see ViewDidLoad
+        // Constructor, invoked by ???
+        public MacGui(IntPtr handle) : base(handle) {
+            macGui = this;                
+            Gui.platform = Kaemika.Platform.macOS;
         }
 
         public NSFont GetFont(float pointSize, bool fixedWidth) {
@@ -50,26 +52,22 @@ namespace KaemikaMAC {
 
         public override void ViewDidLoad() {
             base.ViewDidLoad();
-
             this.nsForm = NSObject.FromObject(this);
-
-            Gui.platform = Kaemika.Platform.macOS;
-            MainClass.guiToMac = this;                              // of type GuiToMac : ViewController,  will contain a clicker: GuiControls
-
-            KGui.Register(this);
 
             this.texter = new PlatformTexter();
             fonts = new Dictionary<float, NSFont>();
             fontsFixed = new Dictionary<float, NSFont>();
 
-            leftPanelClicker.Activated += (object sender, EventArgs e) => { MainClass.guiToMac.kControls.CloseOpenMenu(); };
-            rightPanelClicker.Activated += (object sender, EventArgs e) =>{ MainClass.guiToMac.kControls.CloseOpenMenu(); };
+            // Register this Gui for platform-independent access via interface KGuiControl
+            KGui.Register(this);
 
-            // Controls
-
+            // Register this Gui for platform-independent access via interface KControls
             macControls = new MacControls();                        // set up platform-specific gui controls 
-            kControls = new KControls(macControls);      // bind actions to them (non-platform specific)
+            KGui.Register(new KControls(macControls));              // bind actions to them (non-platform specific)
             macControls.RestorePreferences(); //needs kControls initialized
+
+            leftPanelClicker.Activated += (object sender, EventArgs e) => { KGui.kControls.CloseOpenMenu(); };
+            rightPanelClicker.Activated += (object sender, EventArgs e) =>{ KGui.kControls.CloseOpenMenu(); };
 
             // Text Areas
 
@@ -98,7 +96,7 @@ namespace KaemikaMAC {
 
             // Saved state
 
-            KGui.gui.GuiRestoreInput();
+            GuiRestoreInput();
 
             // Dark Mode Detection
 
@@ -143,8 +141,6 @@ namespace KaemikaMAC {
         public void ScoreShow() {
             scoreBox.Hidden = false;
         }
-
-
 
         // ====  Mouse and Keyboard =====
 
@@ -204,43 +200,12 @@ namespace KaemikaMAC {
         }
                         
         public void SetStartButtonToContinue() {
-            MainClass.guiToMac.kControls.ContinueEnable(true);
+            KGui.kControls.ContinueEnable(true);
 
         }
         public void SetContinueButtonToStart() {
-            MainClass.guiToMac.kControls.ContinueEnable(false);
+            KGui.kControls.ContinueEnable(false);
         }
-
-        //public class NSIntrinsicBox : NSBox {
-        //    CGSize size;
-        //    public NSIntrinsicBox(CGSize size, int border, NSColor fillColor, NSColor borderColor) {
-        //        this.size = new CGSize(size.Width+2*border, size.Height+2*border);
-        //        this.BoxType = NSBoxType.NSBoxCustom;
-        //        this.BorderType = NSBorderType.LineBorder;
-        //        this.BorderWidth = border;
-        //        this.FillColor = fillColor;
-        //        this.BorderColor = borderColor;
-        //    }
-        //    public override CGSize IntrinsicContentSize => this.size;
-        //}
-
-        //private CGSize LegendLineSize(KSeries series) {
-        //    float width = 40;
-        //    float height = (series.lineStyle == KLineStyle.Thick) ? 3 : (series.lineMode == KLineMode.Line) ? 1 : 8;  //############# get the widths from painter
-        //    return new CGSize(width, height);
-        //    }
-
-        //private NSIntrinsicBox LegendLine (KSeries series, NSColor background) {
-        //    float R = ((float)series.color.Red) / 255.0f;
-        //    float G = ((float)series.color.Green) / 255.0f;
-        //    float B = ((float)series.color.Blue) / 255.0f;
-        //    float A = ((float)series.color.Alpha) / 255.0f;
-        //    CGColor colorOverWhite = new CGColor(R*A+(1.0f-A), G*A+(1.0f-A), B*A+(1.0f-A), 1.0f);
-        //    return new NSIntrinsicBox(
-        //        LegendLineSize(series), 3,
-        //        NSColor.FromCGColor(colorOverWhite),
-        //        background);
-        //}
 
         // #### SaveInput also on change of focus on input text area
         public override void ViewWillDisappear() {
@@ -265,7 +230,7 @@ namespace KaemikaMAC {
 
         public static Task<T> BeginInvokeOnMainThreadAsync<T>(Func<T> a) {
             var tcs = new TaskCompletionSource<T>();
-            NSObject nsViewCon = NSObject.FromObject(MainClass.guiToMac);
+            NSObject nsViewCon = NSObject.FromObject(MacGui.macGui);
             nsViewCon.BeginInvokeOnMainThread(() => {
                 try {
                     var result = a();
@@ -354,16 +319,17 @@ namespace KaemikaMAC {
         }
         public /* Interface KGuiControl */ void GuiBeginningExecution() { // signals that execution is starting
             if (NSThread.IsMain) {
-                MainClass.guiToMac.kControls.Executing(true);
+                KGui.kControls.Executing(true);
             } else { _ = BeginInvokeOnMainThreadAsync(() => { GuiBeginningExecution(); return ack; }).Result; }
         }
         public /* Interface KGuiControl */ void GuiEndingExecution() { // signals that execution has ended (run to end, or stopped)
             if (NSThread.IsMain) {
-                MainClass.guiToMac.kControls.Executing(false);
+                KGui.kControls.Executing(false);
             } else { _ = BeginInvokeOnMainThreadAsync(() => { GuiEndingExecution(); return ack; }).Result; }
         }
 
         private bool continueButtonIsEnabled = false;
+
         public /* Interface KGuiControl */ void GuiContinueEnable(bool b) {
             if (NSThread.IsMain) {
                 continueButtonIsEnabled = b;
@@ -385,7 +351,7 @@ namespace KaemikaMAC {
         public /* Interface KGuiControl */ void GuiLegendUpdate() {
             if (NSThread.IsMain) {
                 KChartHandler.VisibilityRestore(); // this is needed to hide the series in the legend
-                MainClass.guiToMac.kControls.SetLegend();
+                KGui.kControls.SetLegend();
             } else { _ = BeginInvokeOnMainThreadAsync(() => { GuiLegendUpdate(); return ack; }).Result; }
         }
 
@@ -405,7 +371,7 @@ namespace KaemikaMAC {
 
         public /* Interface KGuiControl */ void GuiParametersUpdate() {
             if (NSThread.IsMain) {
-                MainClass.guiToMac.kControls.ParametersUpdate();
+                KGui.kControls.ParametersUpdate();
             } else { _ = BeginInvokeOnMainThreadAsync(() => { GuiParametersUpdate(); return ack; }).Result; }
         }
 
@@ -414,7 +380,7 @@ namespace KaemikaMAC {
         public /* Interface KGuiControl */ void GuiDeviceUpdate() {
             if (NSThread.IsMain) {
                 if (this.deviceBox == null || this.kaemikaDevice == null) return;
-                if (this.deviceBox.Hidden) { MainClass.guiToMac.macControls.onOffDeviceView.Selected(!MainClass.guiToMac.macControls.onOffDeviceView.IsSelected()); return; }
+                if (this.deviceBox.Hidden) { MacGui.macGui.macControls.onOffDeviceView.Selected(!MacGui.macGui.macControls.onOffDeviceView.IsSelected()); return; }
                 this.kaemikaDevice.SetFrameSize(this.deviceBox.Frame.Size);
                 this.kaemikaDevice.Invalidate();
             } else { _ = BeginInvokeOnMainThreadAsync(() => { GuiDeviceUpdate(); return ack; }).Result; }
@@ -567,7 +533,6 @@ namespace KaemikaMAC {
             txtTarget.AutomaticTextReplacementEnabled = false;
             txtTarget.AutomaticTextCompletionEnabled = false;
         }
-
 
     }
 }

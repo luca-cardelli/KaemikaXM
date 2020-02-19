@@ -1,9 +1,59 @@
 ﻿using System;
 using System.Collections.Generic;
+using SkiaSharp;
 using KaemikaAssets;
 
-namespace Kaemika
-{
+namespace Kaemika {
+
+    // ====  PLATFORM-GUI REGISTRATION =====
+
+    public abstract class KGui { // Provides platform independent access:     KGui.gui : KGuiControl (Win,Mac,XM),  KGui.kControls : KControls (Win,Mac)
+        public static KGuiControl gui { get; private set; }
+        public static void Register(KGuiControl platformGui)  { gui = platformGui; }
+        public static KControls kControls { get; private set; }
+        public static void Register(KControls platformControls) { kControls = platformControls; }
+    }
+
+    public interface KGuiControl { // the main gui Form of each platform implements this interface and registers itself on loading
+        string GuiInputGetText();
+        void GuiInputSetText(string text);
+        void GuiInputInsertText(string text);
+        void GuiInputSetErrorSelection(int lineNumber, int columnNumber, int length, string failCategory, string failMessage);
+
+        void GuiOutputTextShow();
+        void GuiOutputTextHide();
+        void GuiOutputSetText(string text, bool savePosition = false);
+        string GuiOutputGetText();
+        void GuiOutputAppendText(string text);
+
+        void GuiDeviceShow();
+        void GuiDeviceHide();
+        void GuiDeviceUpdate();
+
+        void GuiBeginningExecution();   // signals that execution is starting
+        void GuiEndingExecution();     // signals that execution has ended (run to end, or stopped)
+        void GuiContinueEnable(bool b);
+        bool GuiContinueEnabled();
+
+        void GuiSaveInput();
+        void GuiRestoreInput();
+
+        void GuiClipboardSetText(string text);
+        void GuiChartSnap();
+        void GuiChartSnapToSvg();
+        SKSize GuiChartSize();
+        void GuiChartData();
+        void GuiOutputCopy();
+
+        void GuiOutputClear();
+        void GuiProcessOutput();
+        void GuiProcessGraph(string graphFamily);  // deliver execution output in graph form
+
+        void GuiChartUpdate();
+        void GuiLegendUpdate();
+        void GuiParametersUpdate();
+    }
+
     // ====  COMMON WIN/MAC BUTTONS =====
 
     public interface KControl { }
@@ -42,7 +92,7 @@ namespace Kaemika
         bool autoClose { get; set; }
         KButton selectedItem { get; set; }
         void ClearMenuItems();
-        void AddMenuItem(KControl item);     // a single item
+        void AddMenuItem(KControl item, string name = null); // a single item; the name can be used by SetSelection
         void AddMenuItems(KControl[] items); // a row of items as a single item (not spread in a grid)
         void AddMenuRow(KControl[] items);   // a row of items spread in a grid
         void AddMenuGrid(KControl[,] items); // a full grid of items
@@ -51,6 +101,7 @@ namespace Kaemika
         KButton NewMenuItemButton(bool multiline = false);
         KSlider NewMenuItemTrackBar();
         KNumerical NewMenuItemNumerical();
+        void SetSelection(string name);
         bool IsOpen();
         void Open();
         void Close();
@@ -96,19 +147,13 @@ namespace Kaemika
             }
         }
 
-        private void InitItemClicked(KFlyoutMenu menu, KButton menuItem, bool setSelection) {
-            if (setSelection) {
-                menu.selectedItem = menuItem;
-                menuItem.Selected(true);
-            }
+        public static void ItemSelected(KFlyoutMenu menu, KButton menuItem) {
+            if (menu.selectedItem != null) menu.selectedItem.Selected(false);
+            menu.selectedItem = menuItem;
+            menuItem.Selected(true);
         }
-
         private void ItemClicked(KFlyoutMenu menu, KButton menuItem, bool setSelection) {
-            if (setSelection) {
-                if (menu.selectedItem != null) menu.selectedItem.Selected(false);
-                menu.selectedItem = menuItem;
-                menuItem.Selected(true);
-            }
+            if (setSelection) ItemSelected(menu, menuItem);
             menu.Close();
             if (menu.autoClose) currentlyOpenMenu = null;
         }
@@ -127,7 +172,7 @@ namespace Kaemika
                 (object sender, EventArgs e) => {
                     // if (!modelInfo.executable) return;
                     CloseOpenMenu();
-                    StartAction(forkWorker: true, autoContinue: false);
+                    StartAction(forkWorker: true, autoContinue: guiControls.IsShiftDown());
                 });
             guiControls.onOffEval.Visible(true);
             guiControls.onOffEval.Enabled(true);
@@ -138,6 +183,7 @@ namespace Kaemika
             if (Exec.IsExecuting() && !ContinueEnabled()) return; // we are already running a simulation, don't start a concurrent one
             if (Exec.IsExecuting() && ContinueEnabled()) { // we are already running a simulation; make start button work as continue button
                 Protocol.continueExecution = true;
+                if (Exec.lastExecution != null) Exec.lastExecution.netlist.autoContinue = autoContinue;
             } else { // do a start
                 Exec.Execute_Starter(forkWorker, autoContinue: autoContinue); // This is where it all happens
             }
@@ -152,13 +198,17 @@ namespace Kaemika
             guiControls.onOffEval.Enabled(false);
 
         }
-        private bool continueButtonIsEnabled = false;
+        private static bool continueButtonIsEnabled = false;
         public void ContinueEnable(bool b) {
             continueButtonIsEnabled = b;
             if (continueButtonIsEnabled) SetStartButtonToContinue(); else SetContinueButtonToStart();
         }
-        public bool ContinueEnabled() {
+        public static bool ContinueEnabled() {
             return continueButtonIsEnabled;
+        }
+
+        public static bool IsSimulating() {
+            return Exec.IsExecuting() && !ContinueEnabled();
         }
 
         public void Executing(bool executing) {
@@ -232,8 +282,8 @@ namespace Kaemika
             guiControls.onOffDevice.OnClick(
                 (object sender, EventArgs e) => {
                     CloseOpenMenu();
-                    if (!ProtocolDevice.Exists()) {
-                        ProtocolDevice.Start(30, 100);
+                    if (!KDeviceHandler.Exists()) {
+                        KDeviceHandler.Start(30, 100);
                         guiControls.MicrofluidicsOn();
                         guiControls.onOffDevice.SetImage("icons8device_ON_48x48");
                         guiControls.onOffDeviceView.Visible(true);
@@ -243,7 +293,7 @@ namespace Kaemika
                             guiControls.onOffDeviceView.Visible(false);
                             guiControls.MicrofluidicsOff();
                             guiControls.onOffDevice.SetImage("icons8device_OFF_48x48");
-                            ProtocolDevice.Stop();
+                            KDeviceHandler.Stop();
                         }
                     }
                 });
@@ -327,7 +377,7 @@ namespace Kaemika
         }
 
         private void SelectTutorial(KFlyoutMenu menu, KButton menuItem, ModelInfo menuSelection) {
-            Gui.toGui.InputSetText(menuSelection.text);
+            KGui.gui.GuiInputSetText(menuSelection.text);
         }
 
         // Export menu
@@ -384,12 +434,12 @@ namespace Kaemika
                 menuItem.SetText(output.name);
                 menuItem.OnClick((object s, EventArgs e) => { 
                     ItemClicked(guiControls.menuOutput, menuItem, true);           // handle the selection graphical feedback
-                    SelectOutput(menuSelection);                                   // handle storing the menuSelection value
+                    ExecOutputAction(menuSelection);                               // handle storing the menuSelection value
                 });
-                guiControls.menuOutput.AddMenuItem(menuItem);
-                if (menuSelection.name == "Show initial CRN") {                   // initialize default selection
-                    InitItemClicked(guiControls.menuOutput, menuItem, true);      // handle the selection graphical feedback
-                    InitSelectOutput(menuSelection);                              // handle storing the menuSelection value
+                guiControls.menuOutput.AddMenuItem(menuItem, name: output.name);
+                if (menuSelection.name == "Show reaction score") {                // initialize default selection
+                    ItemSelected(guiControls.menuOutput, menuItem);               // handle the selection graphical feedback
+                    SetOutputAction(menuSelection);                              // handle storing the menuSelection value
                 }
                 if (output.name == "Show computational trace") showComputationalTraceButton = menuItem;
             }
@@ -397,17 +447,21 @@ namespace Kaemika
             guiControls.menuOutput.Enabled(true);
         }
 
-        private static void InitSelectOutput(ExportAction outputAction) {
-            Exec.currentOutputAction = outputAction;
+        private static void SetOutputAction(ExportAction menuSelection) {
+            Exec.currentOutputAction = menuSelection;
         }
-        public void SetTraceComputational() {
-            var menuSelection = Exec.showComputationalTraceOutputAction;
-            ItemClicked(guiControls.menuOutput, showComputationalTraceButton, true);
-            SelectOutput(menuSelection);  // handle storing the menuSelection value
-        }
-        private static void SelectOutput(ExportAction menuSelection) {
+        private void ExecOutputAction(ExportAction menuSelection) {
             Exec.currentOutputAction = menuSelection; 
             Exec.currentOutputAction.action();
+            guiControls.SavePreferences();
+        }
+        public void SetOutputSelection(string name) {
+            guiControls.menuOutput.SetSelection(name); // just calls back ItemSelected(menu,menuItem) after recovering the menuItem from the menu by name
+            SetOutputAction(Exec.OutputActionNamed(name));
+        }
+        public void ClickOutputSelection(string name) {
+            guiControls.menuOutput.SetSelection(name); // just calls back ItemSelected(menu,menuItem) after recovering the menuItem from the menu by name
+            ExecOutputAction(Exec.OutputActionNamed(name));
         }
 
         // Math menu
@@ -436,7 +490,7 @@ namespace Kaemika
         }
 
         private void SelectMath(KFlyoutMenu menu, KButton menuItem, string menuSelection) {
-            Gui.toGui.InputInsertText(menuSelection);
+            KGui.gui.GuiInputInsertText(menuSelection);
         }
 
         // Settings menu
@@ -446,8 +500,10 @@ namespace Kaemika
         private static string defaultUserDataDirectory = Environment.GetFolderPath(defaultUserDataDirectoryPath);
         private static string defaultKaemikaDataDirectory = Environment.GetFolderPath(defaultKaemikaDataDirectoryPath) + "\\Kaemika";
 
+        public static string scoreStyle = "Bach";
         public static string solver = "RK547M";
         public static bool precomputeLNA = false;
+        public static bool packReactions = false;
 
         private void SettingsMenu() {
             guiControls.menuSettings.SetImage("icons8_settings_384_W_48x48");
@@ -455,6 +511,43 @@ namespace Kaemika
             guiControls.menuSettings.autoClose = true;
 
             var header = guiControls.menuSettings.NewMenuSection(level: -2); header.SetText("Settings");
+            var score = guiControls.menuSettings.NewMenuSection(level: 2); score.SetText("Reaction score");
+            var mozart = guiControls.menuSettings.NewMenuItemButton(); mozart.SetText("Mozart"); 
+            var bach = guiControls.menuSettings.NewMenuItemButton(); bach.SetText("Bach"); bach.Selected(true);
+            var influence = guiControls.menuSettings.NewMenuItemButton(); influence.SetText("influence");
+            var binpacking = guiControls.menuSettings.NewMenuItemButton(); binpacking.SetText("[pack]");
+            mozart.OnClick((object s, EventArgs e) => {
+                bach.Selected(false);
+                scoreStyle = "Mozart";
+                mozart.Selected(true);
+                KScoreHandler.ScoreUpdate();
+            });
+            bach.OnClick((object s, EventArgs e) => {
+                mozart.Selected(false);
+                scoreStyle = "Bach";
+                bach.Selected(true);
+                KScoreHandler.ScoreUpdate();
+            });
+            influence.OnClick((object s, EventArgs e) => {
+                if (influence.IsSelected()) {
+                    KScoreHandler.showInfluences = false;
+                    influence.Selected(false);
+                } else {
+                    KScoreHandler.showInfluences = true;
+                    influence.Selected(true);
+                }
+                KScoreHandler.ScoreUpdate();
+            });
+            binpacking.OnClick((object s, EventArgs e) => {
+                if (binpacking.IsSelected()) {
+                    packReactions = false;
+                    binpacking.Selected(false);
+                } else {
+                    packReactions = true;
+                    binpacking.Selected(true);
+                }
+                KScoreHandler.ScoreUpdate();
+            });
             var solvers = guiControls.menuSettings.NewMenuSection(level: 2); solvers.SetText("ODE Solvers");
             var rk547m = guiControls.menuSettings.NewMenuItemButton(); rk547m.SetText("RK547M"); rk547m.Selected(true);
             var gearBDF = guiControls.menuSettings.NewMenuItemButton(); gearBDF.SetText("GearBDF");
@@ -485,14 +578,20 @@ namespace Kaemika
                 guiControls.SetDirectory();
             });
             var privacy = guiControls.menuSettings.NewMenuSection(level: 2); privacy.SetText("Privacy policy");
-            var policyURL = guiControls.menuSettings.NewMenuItemButton(); policyURL.SetText("Copy URL to clipboard");
+            var policyURL = guiControls.menuSettings.NewMenuItemButton(); policyURL.SetText("Copy url to clipboard");
             policyURL.OnClick((object s, EventArgs e) => {
                 guiControls.PrivacyPolicyToClipboard();
             });
             var version = guiControls.menuSettings.NewMenuSection(level: 4); version.SetText("Version 6.02214076e23");
+            version.OnClick((object s, EventArgs e) => { guiControls.SetSnapshotSize(); });
 
             guiControls.menuSettings.ClearMenuItems();
             guiControls.menuSettings.AddMenuItem(header);
+            guiControls.menuSettings.AddSeparator();
+            guiControls.menuSettings.AddMenuItem(score);
+            guiControls.menuSettings.AddMenuItems(new KButton[3] { mozart, bach, binpacking });
+            //guiControls.menuSettings.AddMenuItems(new KButton[2] { mozart, bach });
+            //guiControls.menuSettings.AddMenuItems(new KButton[2] { influence, binpacking });
             guiControls.menuSettings.AddSeparator();
             guiControls.menuSettings.AddMenuItem(solvers);
             guiControls.menuSettings.AddMenuItems(new KButton[2] { rk547m, gearBDF });
@@ -526,7 +625,7 @@ namespace Kaemika
                 Noise menuSelection = noise;
                 KButton menuItem = guiControls.menuNoise.NewMenuItemButton();
                 if (menuSelection == Noise.None) { // initialize default selection
-                    InitItemClicked(guiControls.menuNoise, menuItem, true);      // handle the selection graphical feedback
+                    ItemSelected(guiControls.menuNoise, menuItem);               // handle the selection graphical feedback
                     InitSelectNoise(guiControls.menuNoise, menuSelection);       // handle storing the menuSelection value
                 }
                 menuItem.SetImage(ImageOfNoise(noise));
@@ -575,24 +674,27 @@ namespace Kaemika
             guiControls.menuLegend.Enabled(true);
         }
 
-        public void SetLegend() {
+        public void OnLegendClick(KSeries[] legend, KSeries series) {
+            if (guiControls.IsShiftDown()) {
+                KChartHandler.ShiftInvertVisible(series.name);
+                foreach (var seriesI in legend) seriesI.lineButton.SetLegendImage(seriesI);
+            } else {
+                KChartHandler.InvertVisible(series.name);
+                series.lineButton.SetLegendImage(series); // accessing the shared series data structure!
+            }
+            KChartHandler.VisibilityRemember();
+            KChartHandler.ChartUpdate(null); // cannot provide style: would have to marshall it throug KGui but is ok to update
+        }
+
+        public void SetLegend() { // Called by LegendUpdate
             KSeries[] legend = KChartHandler.Legend();
             guiControls.menuLegend.ClearMenuItems();
             for (int i = legend.Length - 1; i >= 0; i--) {
                 KSeries series = legend[i]; // captured in the OnClick closure
                 series.lineButton = guiControls.menuLegend.NewMenuSection(); series.lineButton.SetLegendImage(series);
+                series.lineButton.OnClick((object s, EventArgs e) => { OnLegendClick(legend, series); });
                 series.nameButton = guiControls.menuLegend.NewMenuItemButton(); series.nameButton.SetText(series.name);
-                series.nameButton.OnClick((object s, EventArgs e) => {
-                    if (guiControls.IsShiftDown()) {
-                        KChartHandler.ShiftInvertVisible(series.name);
-                        foreach (var seriesI in legend) seriesI.lineButton.SetLegendImage(seriesI);
-                    } else {
-                        KChartHandler.InvertVisible(series.name);
-                        series.lineButton.SetLegendImage(series); // accessing the shared series data structure!
-                    }
-                    KChartHandler.VisibilityRemember();
-                    KChartHandler.ChartUpdate();
-                });
+                series.nameButton.OnClick((object s, EventArgs e) => { OnLegendClick(legend, series); });
                 guiControls.menuLegend.AddMenuRow(new KButton[2] { series.lineButton, series.nameButton }); //, pad });
             }
             guiControls.menuLegend.Open();
@@ -684,8 +786,9 @@ namespace Kaemika
             }
         }
 
-        public static void ParametersClear() {
+        public static void ParametersClear(Style style) {
             // clear the parameterStateDict at the beginning of every execution, but we keep the parametersInfoDict forever
+            if (!style.chartOutput) return;
             lock (parameterLock) {
                 parameterStateDict = new Dictionary<string, ParameterState>();
             }

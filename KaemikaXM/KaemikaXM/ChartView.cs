@@ -1,104 +1,60 @@
-﻿// Copyright (c) Aloïs DENIEL. All rights reserved.
-// Licensed under the MIT License. See LICENSE in the project root for license information.
-using System;
+﻿using System;
 using Xamarin.Forms;
 using SkiaSharp.Views.Forms;
 using SkiaSharp;
 using Kaemika;
+using XFormsTouch; // see KTouch.cs
 
 namespace KaemikaXM {
 
-    public class ChartView : SKCanvasView {
+    public class ChartView : SKCanvasView, KTouchable, KTouchClient {
 
         public ChartView() {
-            this.BackgroundColor = Color.Transparent;
+            // register this as KTouchable so that touch callbacks can be attached through interface KTouchable:
+            // (If we want to add special actions for Tap, etc. beyond built-in two-finger swiping and zooming)
+            // KChartHandler.Register(this); 
+
+            HeightRequest = 300;
+            this.BackgroundColor = Color.White;
             this.PaintSurface += OnPaintCanvas;
 
-            var panGesture = new PanGestureRecognizer();
-            panGesture.PanUpdated += OnPanUpdated;
-            this.GestureRecognizers.Add(panGesture);
-            var pinchGesture = new PinchGestureRecognizer();
-            pinchGesture.PinchUpdated += OnPinchUpdated;
-            this.GestureRecognizers.Add(pinchGesture);
-            var tapGesture = new TapGestureRecognizer();
-            tapGesture.NumberOfTapsRequired = 2;
-            tapGesture.Tapped += OnTapped;
-            this.GestureRecognizers.Add(tapGesture);
+            /* Attact Touch effect from KTouch.OnTouchEffectAction */
+            TouchEffect touchEffect = new TouchEffect();
+            touchEffect.TouchAction += KTouchServer.OnTouchEffectAction;
+            touchEffect.Capture = true; // "This has the effect of delivering all subsequent events to the same event handler"
+            this.Effects.Add(touchEffect);
+
+            /* Initialize Interface KTouchClient with a locally-sourced KTouchClientData closure */
+            this.data = new KTouchClientData(
+                invalidateSurface: () => { this.InvalidateSurface(); },
+                setManualPinchPan: (Swipe pinchPan) => { KChartHandler.SetManualPinchPan(pinchPan); }
+                );
         }
 
-        public static readonly BindableProperty ChartProperty = BindableProperty.Create(nameof(Chart), typeof(KChart), typeof(ChartView), null, propertyChanged: OnChartChanged);
-
-        public KChart Chart {
-            get { return (KChart)GetValue(ChartProperty); }
-            set { SetValue(ChartProperty, value); }
-        }
-
-        private static void OnChartChanged(BindableObject bindable, object oldValue, object newValue) {
-            //((ChartView)bindable).InvalidateSurface();
-            //###iOS required:
-            Xamarin.Forms.Device.BeginInvokeOnMainThread(() => {
-                ((ChartView)bindable).InvalidateSurface();
-            });
-        }
+        public /*Interface KTouchClient */ KTouchClientData data { get; }
 
         private void OnPaintCanvas(object sender, SKPaintSurfaceEventArgs e) {
-            if (this.Chart != null) {
-                this.Chart.Draw(new SKChartPainter(e.Surface.Canvas), 0, 0, e.Info.Width, e.Info.Height);
-            }
+            SKChartPainter painter = new SKChartPainter(e.Surface.Canvas);
+            KChartHandler.Draw(painter, 0, 0, e.Info.Width, e.Info.Height);
+            data.DisplayTouchLocation(painter);
         }
 
-        private Swipe pinchPan = Swipe.Id;      // remember transform at beginning of pinch or pan
-        private float pinchAccum = 1.0f;                                // accumulate pinching transform
-        private bool panJustStarted = false;    // prevent pan jerk in pinch-pan and pan-pinch-pan sequences when holding one finger down
-        private double totalXinit = 0;          // allows smooth pinch-pan and pan-pinch continuation
-        private double totalYinit = 0;          // while holding one finger down
-        private float mysteriousScaling = 3.5f; // touch position seems scaled by this factor ?!?
-
-        void OnTapped(object sender, EventArgs e) {
-            if (Chart == null) return;
-            Chart.pinchPan = Swipe.Id;
-            this.InvalidateSurface();
-        }
-
-        void OnPanUpdated(object sender, PanUpdatedEventArgs e) {
-            if (Chart == null) return;
-            if (e.StatusType == GestureStatus.Started) {
-                panJustStarted = true; 
-            } else if (e.StatusType == GestureStatus.Running) {
-                if (panJustStarted) { // calibrate pan position to ignore inital jerk
-                    pinchPan = Chart.pinchPan;
-                    totalXinit = e.TotalX;
-                    totalYinit = e.TotalY;
-                    panJustStarted = false;
-                } else {
-                    Chart.pinchPan = pinchPan * new Swipe(1.0f, new SKPoint((float)(mysteriousScaling * (e.TotalX-totalXinit)), (float)(mysteriousScaling * (e.TotalY-totalYinit))));
-                    this.InvalidateSurface();
-                }
-            } else if (e.StatusType == GestureStatus.Completed) {
+        // Two finger swipe: Pan
+        // Two finger pinch: Zoom
+        // Two finger tap: Pan/Zoom reset
+        public /*Interface KTouchable*/ void OnTouchTapOrMouseMove(Action<SKPoint> action) { data.onTouchTapOrMouseMove = action; }                     // Hover/Hilight item
+        public /*Interface KTouchable*/ void OnTouchDoubletapOrMouseClick(Action<SKPoint> action) { data.onTouchDoubletapOrMouseClick = action; }       // Activate Item
+        public /*Interface KTouchable*/ void OnTouchSwipeOrMouseDrag(Action<SKPoint, SKPoint> action) { data.onTouchSwipeOrMouseDrag = action; }        // Drag Item
+        public /*Interface KTouchable*/ void OnTouchSwipeOrMouseDragEnd(Action<SKPoint, SKPoint> action) { data.onTouchSwipeOrMouseDragEnd = action; }  // Drag Item End
+        public /*Interface KTouchable*/ void DoShow() { this.IsVisible = true; }
+        public /*Interface KTouchable*/ void DoHide() { this.IsVisible = false; }
+        public /*Interface KTouchable*/ void DoInvalidate() {
+            // iOS required BeginInvokeOnMainThread:
+            Xamarin.Forms.Device.BeginInvokeOnMainThread(() => {
                 this.InvalidateSurface();
-            }
-        }
-
-        void OnPinchUpdated(object sender, PinchGestureUpdatedEventArgs e) {
-            if (Chart == null) return;
-            if (e.Status == GestureStatus.Started) {
-                pinchPan = Chart.pinchPan;
-                pinchAccum = 1.0f;
-                Chart.displayPinchOrigin = true;
-            } else if (e.Status == GestureStatus.Running) {
-                pinchAccum = pinchAccum * (float)e.Scale;
-                pinchAccum = (float)Math.Max(0.1, pinchAccum);
-                float pinchOriginX = (float)(e.ScaleOrigin.X * mysteriousScaling * this.Width);
-                float pinchOriginY = (float)(e.ScaleOrigin.Y * mysteriousScaling * this.Height);
-                Chart.pinchPan = pinchPan * new Swipe(pinchAccum, new SKPoint((1 - pinchAccum) * pinchOriginX, (1 - pinchAccum) * pinchOriginY));
-                Chart.pinchOrigin = new SKPoint(pinchOriginX, pinchOriginY);
-                this.InvalidateSurface();
-            } else if (e.Status == GestureStatus.Completed) {
-                Chart.displayPinchOrigin = false;
-                panJustStarted = true; // force pan to recalibrate if it is still running
-                this.InvalidateSurface();
-            }
+            });
         }
 
     }
 }
+

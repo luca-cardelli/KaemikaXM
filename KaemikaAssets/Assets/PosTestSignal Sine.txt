@@ -8,7 +8,7 @@ network Signal(species X, function f) {
 }
 
 species A @ 0 M
-Signal(A, fun(){1+sin(time)})
+Signal(A, λ(){1+sin(time)})
 
 report A            // plot test signal
 report 1+sin(time)  // compare with true function

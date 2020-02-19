@@ -18,6 +18,7 @@ namespace Kaemika {
 
     public abstract class IParser {
         public abstract bool Parse(string source, out IReduction reduction);
+        public abstract string FailCategory(); // line zero reported as 1, column zero reported as 1
         public abstract string FailMessage(); // line zero reported as 1, column zero reported as 1
         public abstract int FailLineNumber(); // first line is 0
         public abstract int FailColumnNumber(); // first column is 0
@@ -31,11 +32,11 @@ namespace Kaemika {
         public abstract bool IsTerminal(int i); // whether the i-th rhs child is a terminal 
         public abstract string Terminal(int i); // the i-th rhs child, assuming it is a terminal
         public abstract IReduction Nonterminal(int i); // the i-th rhs child, assuming it is a nonterminal
-        public void DrawReductionTree(ToGui gui) {
+        public void DrawReductionTree() {
             StringBuilder tree = new StringBuilder();
             tree.AppendLine("+-" + this.Head());
             this.DrawReduction(tree, 1);
-            gui.OutputSetText(tree.ToString());
+            KGui.gui.GuiOutputSetText(tree.ToString());
         }
         private void DrawReduction(StringBuilder tree, int indent) {
             int n;
@@ -555,6 +556,8 @@ namespace Kaemika {
             } else  if (reduction.Production()       == "<Base Exp> ::= QuotedString") {
                 return new StringLiteral(ParseString(reduction.Terminal(0)));
             } else  if (reduction.Production()       == "<Base Exp> ::= fun <Fun>") {
+                return ParseFunctionAbstraction(reduction.Nonterminal(1));
+            } else  if (reduction.Production()       == "<Base Exp> ::= λ <Fun>") {
                 return ParseFunctionAbstraction(reduction.Nonterminal(1));
             } else  if (reduction.Production()       == "<Base Exp> ::= net <Net>") {
                 return ParseNetworkAbstraction(reduction.Nonterminal(1));

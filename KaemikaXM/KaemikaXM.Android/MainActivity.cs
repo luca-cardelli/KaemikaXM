@@ -1,10 +1,7 @@
-﻿using System;
-using Android.App;
+﻿using Android.App;
 using Android.Content.PM;
 using Android.Runtime;
 using Android.OS;
-using System.IO;
-using System.Collections.Generic;
 using Kaemika;
 
 namespace KaemikaXM.Droid {

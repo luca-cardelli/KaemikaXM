@@ -7,7 +7,7 @@ using GraphSharp;
 
 namespace KaemikaXM.Pages {
 
-    public enum OutputKind {Text, Graph};
+    public enum OutputKind {Text, Graph, Score};
 
     public class OutputAction {
         public string name;
@@ -27,24 +27,28 @@ namespace KaemikaXM.Pages {
         private Grid grid;
         private AbsoluteLayout overlapping;
         private ICustomTextEdit editor;
-        private View plot;     // is a GraphLayoutView
+        private GraphLayoutView plot;     // is a GraphLayoutView
+        private View score;    // is a ScoreView
         private View backdrop; // because the editor stops short of filling the view
         public ToolbarItem textOutputButton;
         public ToolbarItem graphOutputButton;
+        public ToolbarItem scoreOutputButton;
         private Picker outputPicker;
 
         public OutputAction currentOutputAction;
         private OutputAction currentTextOutputAction;
         private OutputAction currentGraphOutputAction;
+        private OutputAction currentScoreOutputAction;
 
         private Dictionary<string, OutputAction> outputActions;
         private List<OutputAction> outputActionsList() {
             return new List<OutputAction>() {
+                new OutputAction(this, "Reaction Score", OutputKind.Score, ExportAs.ReactionScore),
                 new OutputAction(this, "Reaction Network", OutputKind.Text, ExportAs.CRN),
                 new OutputAction(this, "Chemical Trace", OutputKind.Text, ExportAs.ChemicalTrace),
                 new OutputAction(this, "Computational Trace", OutputKind.Text, ExportAs.ComputationalTrace),
-                new OutputAction(this, "Reaction Graph", OutputKind.Graph, ExportAs.ReactionGraph),
-                new OutputAction(this, "Reaction Complex Graph", OutputKind.Graph, ExportAs.ComplexGraph),
+                //new OutputAction(this, "Reaction Graph", OutputKind.Graph, ExportAs.ReactionGraph),
+                //new OutputAction(this, "Reaction Complex Graph", OutputKind.Graph, ExportAs.ComplexGraph),
                 new OutputAction(this, "Protocol Step Graph", OutputKind.Graph, ExportAs.ProtocolGraph),
                 new OutputAction(this, "Protocol State Graph", OutputKind.Graph, ExportAs.PDMPGraph),
                 new OutputAction(this, "System Reactions", OutputKind.Text, ExportAs.PDMPreactions),
@@ -62,16 +66,26 @@ namespace KaemikaXM.Pages {
                     overlapping.RaiseChild(backdrop);
                     overlapping.RaiseChild(editor.AsView());
                     graphOutputButton.IsEnabled = true;
+                    scoreOutputButton.IsEnabled = true;
                 });
-            } else {
+            } else if (kind == OutputKind.Graph ) {
                 Device.BeginInvokeOnMainThread(async () => {
                     graphOutputButton.IsEnabled = false;
                     overlapping.RaiseChild(backdrop);
                     overlapping.RaiseChild(plot);
                     textOutputButton.IsEnabled = true;
+                    scoreOutputButton.IsEnabled = true;
+                });
+            } else if (kind == OutputKind.Score ) {
+                Device.BeginInvokeOnMainThread(async () => {
+                    scoreOutputButton.IsEnabled = false;
+                    overlapping.RaiseChild(backdrop);
+                    overlapping.RaiseChild(score);
+                    textOutputButton.IsEnabled = true;
+                    graphOutputButton.IsEnabled = true;
                 });
             }
-            Gui.toGui.OutputSetText("");
+            KGui.gui.GuiOutputSetText("");
             Exec.Execute_Exporter(true, export);
         }
 
@@ -87,6 +101,12 @@ namespace KaemikaXM.Pages {
             });
         }
 
+        private ToolbarItem ScoreOutputButton() {
+            return new ToolbarItem("ScoreOutput", "icons8scorefilled100", () => {
+                outputPicker.SelectedItem = currentScoreOutputAction.name; // triggers a Picker.SelectedIndexChanged event
+            });
+        }
+
         public Picker OutputPicker() {
             Picker outputPicker = new Picker {
                 Title = "Output and Export", TitleColor = MainTabbedPage.barColor,
@@ -97,7 +117,8 @@ namespace KaemikaXM.Pages {
 
             currentTextOutputAction = outputActions["Reaction Network"];
             currentGraphOutputAction = outputActions["Protocol Step Graph"];
-            currentOutputAction = currentTextOutputAction;
+            currentScoreOutputAction = outputActions["Reaction Score"];
+            currentOutputAction = currentScoreOutputAction;
 
             foreach (var kvp in outputActions) outputPicker.Items.Add(kvp.Key);
             outputPicker.SelectedItem = currentOutputAction.name;
@@ -106,17 +127,10 @@ namespace KaemikaXM.Pages {
                 currentOutputAction = outputActions[outputPicker.SelectedItem as string];
                 if (currentOutputAction.kind == OutputKind.Text) currentTextOutputAction = currentOutputAction;
                 if (currentOutputAction.kind == OutputKind.Graph) currentGraphOutputAction = currentOutputAction;
+                if (currentOutputAction.kind == OutputKind.Score) currentScoreOutputAction = currentOutputAction;
                 currentOutputAction.action();
             };
             return outputPicker;
-        }
-
-        public void SetTraceComputational() {
-            string selectedItem = "Computational Trace";
-            outputPicker.SelectedItem = selectedItem;
-            //// that should trigger the rest:
-            //currentOutputAction = outputActions[selectedItem];
-            //currentTextOutputAction = currentOutputAction;
         }
 
         public OutputPage() {
@@ -131,11 +145,14 @@ namespace KaemikaXM.Pages {
 
             textOutputButton = TextOuputButton();
             graphOutputButton = GraphOutputButton();
+            scoreOutputButton = ScoreOutputButton();
 
+            ToolbarItems.Add(scoreOutputButton);
+            scoreOutputButton.IsEnabled = false;
             ToolbarItems.Add(graphOutputButton);
             graphOutputButton.IsEnabled = true;
             ToolbarItems.Add(textOutputButton);
-            textOutputButton.IsEnabled = false;
+            textOutputButton.IsEnabled = true;
             ToolbarItems.Add(
                 new ToolbarItem("CopyAll", "icons8export96", async () => {
                     string text = "";
@@ -143,22 +160,24 @@ namespace KaemikaXM.Pages {
                         text = editor.GetText();
                     }
                     if (currentOutputAction.kind == OutputKind.Graph) {
-                        var layout = (plot as GraphLayoutView).GraphLayout;
+                        var layout = GraphLayoutHandler.GraphLayout();
                         if (layout == null) return;
                         var graph = layout.GRAPH;
                         if (graph == null) return;
                         text = Export.GraphViz(graph);
                     }
+                    if (currentOutputAction.kind == OutputKind.Score) {
+                        // ####  SVG
+                    }
                     if (text != "") await Clipboard.SetTextAsync(text);
                 }));
 
-            editor = Kaemika.XamarinToGui.TextEditor();
+            editor = Kaemika.XMGui.TextEditor();
             editor.SetEditable(false);
 
-            plot = new GraphLayoutView() {
-                GraphLayout = null,
-                BackgroundColor = Color.White,
-            };
+            plot = new GraphLayoutView();
+
+            score = new ScoreView();
 
             var stepper = MainTabbedPage.theModelEntryPage.TextSizeStepper(editor);
             var startButton = MainTabbedPage.theModelEntryPage.StartButton(switchToChart: false, switchToOutput: false); // just needed to get its HightRequest
@@ -184,12 +203,15 @@ namespace KaemikaXM.Pages {
             backdrop = new Label { Text = "", BackgroundColor = Color.White };
 
             overlapping = new AbsoluteLayout();
+            AbsoluteLayout.SetLayoutBounds(score, new Rectangle(0, 0, 1, 1));
+            AbsoluteLayout.SetLayoutFlags(score, AbsoluteLayoutFlags.All);
             AbsoluteLayout.SetLayoutBounds(plot, new Rectangle(0, 0, 1, 1));
             AbsoluteLayout.SetLayoutFlags(plot, AbsoluteLayoutFlags.All);
             AbsoluteLayout.SetLayoutBounds(backdrop, new Rectangle(0, 0, 1, 1));
             AbsoluteLayout.SetLayoutFlags(backdrop, AbsoluteLayoutFlags.All);
             AbsoluteLayout.SetLayoutBounds(editor.AsView(), new Rectangle(0, 0, 1, 1));
             AbsoluteLayout.SetLayoutFlags(editor.AsView(), AbsoluteLayoutFlags.All);
+            overlapping.Children.Add(score);
             overlapping.Children.Add(plot);
             overlapping.Children.Add(backdrop);
             overlapping.Children.Add(editor.AsView());
@@ -223,7 +245,7 @@ namespace KaemikaXM.Pages {
         public void ProcessGraph(string graphFamily) {
             var execution = Exec.lastExecution; // atomically copy it
             if (execution == null) return; // something's wrong
-            lock (Exec.exporterMutex) { (plot as GraphLayoutView).GraphLayout = GraphLayout.MessageGraph("...","... working ...","..."); }
+            lock (Exec.exporterMutex) { GraphLayoutHandler.SetGraphLayout(GraphLayout.MessageGraph("...","... working ...","...")); plot.DoInvalidate(); }
             Dictionary<string, object> layoutCache = execution.layoutCache; // Dictionary<string, GraphLayout>
             GraphLayout layout;
             if (layoutCache.ContainsKey(graphFamily)) {
@@ -236,13 +258,13 @@ namespace KaemikaXM.Pages {
                      catch { layout = GraphLayout.MessageGraph("...","...","... failed !!!"); }
             }
             execution.layoutCache[graphFamily] = layout;
-            lock (Exec.exporterMutex) { (plot as GraphLayoutView).GraphLayout = layout; } // This property assignment triggers redrawing the graph
+            lock (Exec.exporterMutex) { GraphLayoutHandler.SetGraphLayout(layout); plot.DoInvalidate();  }
         }
 
         public void OutputClear() { // external call, wait until we switch to this page
             if (MainTabbedPage.theMainTabbedPage.CurrentPage == MainTabbedPage.theOutputPageNavigation) {
                 SetText("");
-                lock (Exec.exporterMutex) { (plot as GraphLayoutView).GraphLayout = GraphLayout.MessageGraph("Preparing ...", "...", "..."); }
+                lock (Exec.exporterMutex) { GraphLayoutHandler.SetGraphLayout(GraphLayout.MessageGraph("Preparing ...", "...", "...")); plot.DoInvalidate(); }
             }
         }
         public void ProcessOutput() { // external call, wait until we switch to this page

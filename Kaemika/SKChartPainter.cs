@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using SkiaSharp;
 
 namespace Kaemika
@@ -8,7 +7,8 @@ namespace Kaemika
         public SKChartPainter(SKCanvas canvas) : base(canvas) {
         }
 
-        public /*interface ChartPainter*/ void DrawLine(List<KChartEntry> list,  int seriesIndex, float pointSize, SKColor color, Swipe pinchPan) {
+        public /*interface ChartPainter*/ void DrawCourse(List<KChartEntry> list,  int seriesIndex, float pointSize, SKColor color, Swipe pinchPan) {
+            if (list.Count == 1) canvas.DrawCircle(list[0].Ypoint[seriesIndex], pinchPan % 8, FillPaint(color));
             if (list.Count > 1) {
                 using (var paint = LinePaint(pointSize, color)) {
                     var path = new SKPath();
@@ -19,7 +19,8 @@ namespace Kaemika
             }
         }
 
-        public /*interface ChartPainter*/ void DrawLineRange(List<KChartEntry> list, int seriesIndex, SKColor color, Swipe pinchPan) {
+        public /*interface ChartPainter*/ void DrawCourseRange(List<KChartEntry> list, int seriesIndex, SKColor color, Swipe pinchPan) {
+            if (list.Count == 1) canvas.DrawCircle(list[0].Ypoint[seriesIndex], pinchPan % 8, FillPaint(color));
             if (list.Count > 1) {
                 using (var paint = FillPaint(color)) {
                     var path = new SKPath();
@@ -46,7 +47,7 @@ namespace Kaemika
             }
         }
 
-        public /*interface ChartPainter*/ void DrawLineFill(List<KChartEntry> list, int seriesIndex, float bottom, SKColor color, Swipe pinchPan) {
+        public /*interface ChartPainter*/ void DrawCourseFill(List<KChartEntry> list, int seriesIndex, float bottom, SKColor color, Swipe pinchPan) {
             if (list.Count > 1) {
                 using (var paint = FillPaint(color)) {
                     var path = new SKPath();

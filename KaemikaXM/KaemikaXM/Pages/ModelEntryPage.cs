@@ -100,8 +100,8 @@ namespace KaemikaXM.Pages {
         }
 
         public void StartAction(bool forkWorker, bool switchToChart, bool switchToOutput, bool autoContinue = false) {
-            if (Exec.IsExecuting() && !Gui.toGui.ContinueEnabled()) return; // we are already running a simulation, don't start a concurrent one
-            if (Exec.IsExecuting() && Gui.toGui.ContinueEnabled()) { // we are already running a simulation; make start button work as continue button
+            if (Exec.IsExecuting() && !KGui.gui.GuiContinueEnabled()) return; // we are already running a simulation, don't start a concurrent one
+            if (Exec.IsExecuting() && KGui.gui.GuiContinueEnabled()) { // we are already running a simulation; make start button work as continue button
                 Protocol.continueExecution = true; 
                 MainTabbedPage.SwitchToTab(MainTabbedPage.theChartPageNavigation);
             } else { // do a start
@@ -144,13 +144,13 @@ namespace KaemikaXM.Pages {
             button.Clicked += async (object sender, EventArgs e) => {
                 if (!modelInfo.executable) return;
                 if (Exec.IsExecuting()) return; // pretend button is in disabled state
-                if (ProtocolDevice.Exists()) {
+                if (KDeviceHandler.Exists()) {
                     deviceButton.Source = "icons8device40off.png";
                     MainTabbedPage.theChartPage.deviceButton.Source = "icons8device40off.png";
                     MainTabbedPage.theChartPage.SwitchToPlotView();
-                    ProtocolDevice.Stop();
+                    KDeviceHandler.Stop();
                 } else {
-                    ProtocolDevice.Start(35, 200);
+                    KDeviceHandler.Start(35, 200);
                     MainTabbedPage.theChartPage.SwitchToDeviceView();
                     deviceButton.Source = "icons8device40on.png";
                     MainTabbedPage.theChartPage.deviceButton.Source = "icons8device40on.png";
@@ -205,7 +205,7 @@ namespace KaemikaXM.Pages {
 
         string[] subscripts = new string[] { "_", "₊", "₋", "₌", "₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉", "₍", "₎"};
         string[] superscripts = new string[] { "\'", "⁺", "⁻", "⁼", "⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹", "⁽", "⁾"};
-        string[] math = new string[] { "(", ")", "-", "*", "/", "^", ">", "<", ">=", "<=", "<>", "∂", "Ø", "μ", "pi", "e", "time", "var", "cov", "poisson", "gauss", "true", "false", "not", "and", "or", "abs", "arccos", "arcsin", "arctan", "arctan2", "ceiling", "cos", "cosh", "exp", "floor", "int", "log", "max", "min", "pos", "sign", "sin", "sinh", "sqrt", "tan", "tanh" };
+        string[] math = new string[] { "Ø", "λ", "(", ")", "-", "*", "/", "^", ">", "<", ">=", "<=", "<>", "∂", "μ", "pi", "e", "time", "var", "cov", "poisson", "gauss", "true", "false", "not", "and", "or", "abs", "arccos", "arcsin", "arctan", "arctan2", "ceiling", "cos", "cosh", "exp", "floor", "int", "log", "max", "min", "pos", "sign", "sin", "sinh", "sqrt", "tan", "tanh", "map", "filter", "foldl", "foldr" };
         public Picker SymbolPicker(string title, int fontSize, string[] items) {
             Picker symbolPicker = new Picker {
                 Title = title, TitleColor = MainTabbedPage.barColor,
@@ -284,7 +284,7 @@ namespace KaemikaXM.Pages {
             copyAllItem = CopyAllItem();
             ToolbarItems.Add(copyAllItem);
 
-            editor = Kaemika.XamarinToGui.TextEditor();
+            editor = Kaemika.XMGui.TextEditor();
 
             editor.OnTextChanged(
                 async(ICustomTextEdit textEdit) => {

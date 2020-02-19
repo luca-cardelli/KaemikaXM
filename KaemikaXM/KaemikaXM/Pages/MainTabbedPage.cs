@@ -39,7 +39,7 @@ namespace KaemikaXM.Pages {
         public static int buttonHeightRequest = 40;
 
         public static MainTabbedPage theMainTabbedPage;
-        public static ChartPageLandscape theChartPageLandscape = new ChartPageLandscape();      // this page is never pushed, there is only one
+        //public static ChartPageLandscape theChartPageLandscape = new ChartPageLandscape();      // this page is never pushed, there is only one
 
         public static DocListPage theDocListPage;                           // this page is never pushed, there is only one
         public static ModelListPage theModelListPage;                     // this page is never pushed, there is only one
@@ -105,8 +105,8 @@ namespace KaemikaXM.Pages {
                 theOutputPageNavigation.IconImageSource = "icons8truefalse100.png";
                 theChartPageNavigation.IconImageSource = "icons8combochart48.png"; // DO NOT use icons8combochart96, it will not scale
                 // we need to use size 40x40 icons or they get stuck at wrong size after changing icon:
-                theModelEntryPage.deviceButton.Source = ProtocolDevice.Exists() ? "icons8device40on.png" : "icons8device40off.png";
-                theChartPage.deviceButton.Source = ProtocolDevice.Exists() ? "icons8device40on.png" : "icons8device40off.png";
+                theModelEntryPage.deviceButton.Source = KDeviceHandler.Exists() ? "icons8device40on.png" : "icons8device40off.png";
+                theChartPage.deviceButton.Source = KDeviceHandler.Exists() ? "icons8device40on.png" : "icons8device40off.png";
                 theModelEntryPage.startButton.Source = "icons8play40.png";
                 theChartPage.startButton.Source = "icons8play40.png"; 
                 theChartPage.stopButton.Source = "icons8stop40disabled.png";

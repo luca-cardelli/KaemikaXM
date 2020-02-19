@@ -67,8 +67,8 @@ namespace Kaemika {
         public /*interface Colorer*/ SKPaint FillPaint(SKColor color) { 
             return new SKPaint { IsStroke = false, Style = SKPaintStyle.Fill, Color = color, IsAntialias = true };
         }
-        public /*interface Colorer*/ SKPaint LinePaint(float strokeWidth, SKColor color) {
-            return new SKPaint { Style = SKPaintStyle.Stroke, StrokeWidth = strokeWidth, Color = color, IsAntialias = true };
+        public /*interface Colorer*/ SKPaint LinePaint(float strokeWidth, SKColor color, SKStrokeCap cap = SKStrokeCap.Butt) {
+            return new SKPaint { Style = SKPaintStyle.Stroke, StrokeWidth = strokeWidth, Color = color, IsAntialias = true, StrokeCap = cap, StrokeJoin = SKColorer.StrokeJoin(cap) };
         }
         public virtual /*interface Colorer*/ SKRect MeasureText(string text, SKPaint paint) {
             if (string.IsNullOrEmpty(text)) return new SKRect(0, 0, 0, 0); // or MeasureText will crash
@@ -76,16 +76,22 @@ namespace Kaemika {
             float length = paint.MeasureText(text, ref bounds);
             return bounds;
         }
-        public string SvgFillPaint(SKPaint paint) {
-            return
-                " stroke=\"none\"" +
-                SvgColorFill(paint.Color);
-        }
-        public string SvgStrokePaint(SKPaint paint) {
-            return
-                " fill=\"none\"" +
-                SvgColorStroke(paint.Color) +
-                " stroke-width=\"" + paint.StrokeWidth + "\"";
+        public string SvgPaintPath(SKPaint paint) {
+            if (paint.IsStroke) {
+                return
+                    " fill=\"none\"" +
+                    SvgColorStroke(paint.Color) +
+                    " stroke-width=\"" + paint.StrokeWidth + "\"" +
+                    " stroke-linecap=\"" + 
+                        (paint.StrokeCap==SKStrokeCap.Butt ? "butt" :
+                        paint.StrokeCap==SKStrokeCap.Round ? "round" :
+                        paint.StrokeCap==SKStrokeCap.Square ? "square" : "")
+                        +"\"";
+            } else {
+                return
+                    " stroke=\"none\"" +
+                    SvgColorFill(paint.Color);
+            }
         }
         public string SvgTextPaint(SKPaint paint) {
             return 
@@ -128,11 +134,51 @@ namespace Kaemika {
             using (var paint = FillPaint(background)) { DrawRect(new SKRect(0.0f, 0.0f, canvas.size.Width, canvas.size.Height), paint); }
         }
 
+        public /*interface Painter*/ void DrawLine(List<SKPoint> points, SKPaint paint) {
+            if (points.Count > 1) {
+                NewPolyLine(paint);
+                MoveTo(points[0]);
+                for (int i = 0; i < points.Count; i++) LineTo(points[i]);
+                EndPolyLine();
+            }
+        }
+
+        public /*interface Painter*/ void DrawPolygon(List<SKPoint> points, SKPaint paint) {
+            if (points.Count > 1) {
+                NewPolygon(paint);
+                MoveTo(points[0]);
+                for (int i = 0; i < points.Count; i++) LineTo(points[i]);
+                EndPolygon();
+            }
+        }
+
+        public /*interface Painter*/ void DrawSpline(List<SKPoint> points, SKPaint paint) {
+            if (points.Count > 1) {
+                points.Insert(0, points[0]); // duplicate first point for spline
+                SKPoint ultimate = points[points.Count - 1];
+                points.Insert(points.Count, ultimate); // duplicate last point for spline
+                List<SKPoint> controlPoints = SKPainter.ControlPoints(points);
+                NewPath(paint);
+                AddBeziers(controlPoints.ToArray());
+                EndPath();
+            }
+        }
+        private void AddBeziers(SKPoint[] controlPoints) {
+            PathMoveTo(controlPoints[0]);
+            for (int i = 0; i < controlPoints.Length - 2; i += 4) {
+                if (i+3 > controlPoints.Length - 1) {
+                    PathQuadTo(controlPoints[i + 1], controlPoints[i + 2]);
+                } else {
+                    PathCubicTo(controlPoints[i + 1], controlPoints[i + 2], controlPoints[i + 3]);
+                }
+            }
+        }
+
         public /*interface Painter*/ void DrawRect(SKRect rect, SKPaint paint) {
             canvas.Add( 
                 "<rect" +
                 SvgRect(rect) +
-                SvgFillPaint(paint)  + 
+                SvgPaintPath(paint)  + 
                 "/>" +
                 Environment.NewLine
                 );
@@ -144,7 +190,7 @@ namespace Kaemika {
                 SvgRect(rect) +
                 " rx=\"" + padding + "\"" +
                 " ry=\"" + padding + "\"" +
-                SvgFillPaint(paint) +
+                SvgPaintPath(paint) +
                 "/>" +
                 Environment.NewLine
                 );
@@ -156,7 +202,7 @@ namespace Kaemika {
                 " cx=\"" + p.X + "\"" +
                 " cy=\"" + p.Y + "\"" +
                 " r=\"" + radius + "\"" +
-                SvgFillPaint(paint) +
+                SvgPaintPath(paint) +
                 "/>" +
                 Environment.NewLine
                 );
@@ -188,13 +234,82 @@ namespace Kaemika {
                 " height=\"" + rect.Height + "\"" +
                 Environment.NewLine;
         }
+
+        protected void NewPath(SKPaint paint) {
+            canvas.Add(
+                "<path" +
+                SvgPaintPath(paint) +
+                " d=\""
+                );
+        }
+        protected void EndPath() {
+            canvas.Add(
+                "\" />" + 
+                Environment.NewLine
+                );
+        }
+
+        protected void NewPolyLine(SKPaint paint) {
+            canvas.Add(
+                "<polyline" +
+                SvgPaintPath(paint) +
+                " points=\""
+                );
+        }
+        protected void EndPolyLine() {
+            canvas.Add(
+                "\" />" + 
+                Environment.NewLine
+                );
+        }
+
+        protected void NewPolygon(SKPaint paint) {
+            canvas.Add(
+                "<polygon" +
+                SvgPaintPath(paint) +
+                " points=\""
+                );
+        }
+        protected void EndPolygon() {
+            canvas.Add(
+                "\" />" + 
+                Environment.NewLine
+                );
+        }
+
+        protected void MoveTo(SKPoint point) {
+            canvas.Add(
+                " " + point.X + "," + point.Y
+                );
+        }
+        protected void LineTo(SKPoint point) {
+            canvas.Add(
+                " " + point.X + "," + point.Y
+                );
+        }
+
+        protected void PathMoveTo(SKPoint point) {
+            canvas.Add(
+                " M " + point.X + " " + point.Y
+                );
+        }
+        protected void PathQuadTo(SKPoint point1, SKPoint point2) {
+            canvas.Add(
+                " Q " + point1.X + " " + point1.Y + ", " + point2.X + " " + point2.Y
+                );
+        }
+        protected void PathCubicTo(SKPoint point1, SKPoint point2, SKPoint point3) {
+            canvas.Add(
+                " C " + point1.X + " " + point1.Y + ", " + point2.X + " " + point2.Y + ", " + point3.X + " " + point3.Y
+                );
+        }
     }
 
     public class SvgChartPainter : SvgPainter, ChartPainter { 
 
         public SvgChartPainter(SvgCanvas canvas) : base(canvas) {
         }
-        public /*interface ChartPainter*/ void DrawLine(List<KChartEntry> list, int seriesIndex, float pointSize, SKColor color, Swipe pinchPan) {
+        public /*interface ChartPainter*/ void DrawCourse(List<KChartEntry> list, int seriesIndex, float pointSize, SKColor color, Swipe pinchPan) {
             if (list.Count > 1) {
                 using (var paint = LinePaint(pointSize, color)) {
                     NewPolyLine(paint);
@@ -204,7 +319,7 @@ namespace Kaemika {
                 }
             }
         }
-        public /*interface ChartPainter*/ void DrawLineRange(List<KChartEntry> list, int seriesIndex, SKColor color, Swipe pinchPan) {
+        public /*interface ChartPainter*/ void DrawCourseRange(List<KChartEntry> list, int seriesIndex, SKColor color, Swipe pinchPan) {
             if (list.Count > 1) {
                 using (var paint = FillPaint(color)) {
                     NewPolygon(paint);
@@ -229,7 +344,7 @@ namespace Kaemika {
                 }
             }
         }
-        public /*interface ChartPainter*/ void DrawLineFill(List<KChartEntry> list, int seriesIndex, float bottom, SKColor color, Swipe pinchPan) {
+        public /*interface ChartPainter*/ void DrawCourseFill(List<KChartEntry> list, int seriesIndex, float bottom, SKColor color, Swipe pinchPan) {
             if (list.Count > 1) {
                 using (var paint = FillPaint(color)) {
                     NewPolygon(paint);
@@ -242,42 +357,6 @@ namespace Kaemika {
             }
         }
 
-        private void NewPolyLine(SKPaint paint) {
-            canvas.Add(
-                "<polyline" +
-                SvgStrokePaint(paint) +
-                " points=\""
-                );
-        }
-        private void NewPolygon(SKPaint paint) {
-            canvas.Add(
-                "<polygon" +
-                SvgFillPaint(paint) +
-                " points=\""
-                );
-        }
-        private void MoveTo(SKPoint point) {
-            canvas.Add(
-                " " + point.X + "," + point.Y
-                );
-        }
-        private void LineTo(SKPoint point) {
-            canvas.Add(
-                " " + point.X + "," + point.Y
-                );
-        }
-        private void EndPolyLine() {
-            canvas.Add(
-                "\" />" + 
-                Environment.NewLine
-                );
-        }
-        private void EndPolygon() {
-            canvas.Add(
-                "\" />" + 
-                Environment.NewLine
-                );
-        }
     }
 
 }

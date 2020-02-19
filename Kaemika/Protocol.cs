@@ -62,6 +62,7 @@ namespace Kaemika
         }
 
         public static (string[] series, string[] seriesLNA) GenerateSeries(List<ReportEntry> reports, Noise noise, Style style) {
+            if (!style.chartOutput) return (null, null);
 
             string[] seriesLNA = new string[reports.Count]; // can contain nulls if series are duplicates
             paletteNo = (reports.Count - 1) % palette.Length; // because we scan palette backwards
@@ -178,12 +179,12 @@ namespace Kaemika
         public static void PauseEquilibrate(Netlist netlist, Style style) {
             if (!netlist.autoContinue) {
                 while ((!continueExecution) && Exec.IsExecuting()) {
-                    // if (!Gui.gui.ContinueEnabled()) Gui.gui.OutputAppendText(netlist.Format(style));
-                    Gui.toGui.ContinueEnable(true);
+                    // if (!KGui.gui.GuiContinueEnabled()) KGui.gui.GuiOutputAppendText(netlist.Format(style));
+                    KGui.gui.GuiContinueEnable(true);
                     Thread.Sleep(100);
                 }
-                Gui.toGui.ContinueEnable(false); continueExecution = false;
-                //Gui.gui.OutputSetText(""); // clear last results in preparation for the next, only if not autoContinue
+                KGui.gui.GuiContinueEnable(false); continueExecution = false;
+                //KGui.gui.GuiOutputSetText(""); // clear last results in preparation for the next, only if not autoContinue
             }
         }
 
@@ -200,7 +201,7 @@ namespace Kaemika
             double finalTime = fortime;
 
             string sampleName = (outSymbol.Raw() == "vessel") ? "" : "Sample " + inSample.FormatSymbol(style);
-            KChartHandler.ChartClear(sampleName, "s", "M");
+            KChartHandler.ChartClear(sampleName, "s", "M", style);
 
             List<SpeciesValue> inSpecies = inSample.stateMap.species;
             State initialState = inSample.stateMap.state;
@@ -208,9 +209,10 @@ namespace Kaemika
             if ((noise != Noise.None) && !initialState.lna) initialState = new State(initialState.size, lna: true).InitMeans(initialState.MeanVector());
             List<ReactionValue> reactions = inSample.RelevantReactions(netlist, style);
             CRN crn = new CRN(inSample, reactions, precomputeLNA: (noise != Noise.None) && KControls.precomputeLNA);
-            KChartHandler.SetMeanFlowDictionary(crn.MeanFlowDictionary());
+            KChartHandler.SetMeanFlowDictionary(crn.MeanFlowDictionary(), style);
             List<ReportEntry> reports = netlist.Reports(inSpecies);
-            Exec.lastExecution.lastCRN = crn; Gui.toGui.OutputSetText(crn.FormatNice(style));
+            Exec.lastExecution.lastCRN = crn; KGui.gui.GuiOutputSetText(crn.FormatNice(style));
+            Exec.lastExecution.ResetGraphCache();
 
             Func<double, double, Vector, Func<double, Vector, Vector>, IEnumerable<SolPoint>> Solver;
             if (KControls.solver == "GearBDF") Solver = Ode.GearBDF; else if (KControls.solver == "RK547M") Solver = Ode.RK547M; else throw new Error("No solver");
@@ -219,15 +221,13 @@ namespace Kaemika
             if (noise != Noise.None) Flux = (t, x) => crn.LNAFlux(t, x, style);
             else Flux = (t, x) => crn.Flux(t, x, style);
 
-            (string[] series, string[] seriesLNA) = GenerateSeries(reports, noise, style);
-
             bool nonTrivialSolution =
                 (inSpecies.Count > 0)        // we don't want to run on the empty species list: Oslo crashes
                 && (!crn.Trivial(style))     // we don't want to run trivial ODEs: some Oslo solvers hang on very small stepping
                 && finalTime > 0;            // we don't want to run when fortime==0
 
-            (double lastTime, State lastState, int pointsCounter, int renderedCounter) =
-                Integrate(Solver, initialState, initialTime, finalTime, Flux, inSample, reports, noise, series, seriesLNA, nonTrivialSolution, style);
+            (double lastTime, State lastState) =
+                Integrate(Solver, initialState, initialTime, finalTime, Flux, inSample, reports, noise, nonTrivialSolution, style);
 
             if (lastState == null) lastState = initialState.Clone();
             lastState = lastState.Positive();
@@ -236,8 +236,8 @@ namespace Kaemika
 
             inSample.Consume(reactions, lastTime, lastState, netlist, style);
 
-            Exec.lastReport = "======= Last report: time=" + lastTime.ToString() + ", " + lastState.FormatReports(reports, inSample, Flux, lastTime, noise, series, seriesLNA, style);
-            Exec.lastState = "======= Last state: total points=" + pointsCounter + ", drawn points=" + renderedCounter + ", time=" + lastTime.ToString() + ", " + lastState.FormatSpecies(inSpecies, style);
+            //if (style.chartOutput) Exec.lastReport = "======= Last report: time=" + lastTime.ToString() + ", " + lastState.FormatReports(reports, inSample, Flux, lastTime, noise, series, seriesLNA, style);
+            //if (style.chartOutput) Exec.lastState = "======= Last state: total points=" + pointsCounter + ", drawn points=" + renderedCounter + ", time=" + lastTime.ToString() + ", " + lastState.FormatSpecies(inSpecies, style);
             return outSample;
         }
 
@@ -264,10 +264,10 @@ namespace Kaemika
             return solution;
         }
 
-        private static (double lastTime, State lastState, int pointsCounter, int renderedCounter)
+        private static (double lastTime, State lastState)
             Integrate(Func<double, double, Vector, Func<double, Vector, Vector>, IEnumerable<SolPoint>> Solver,
                 State initialState, double initialTime, double finalTime, Func<double, Vector, Vector> Flux,
-                SampleValue sample, List<ReportEntry> reports, Noise noise, string[] series, string[] seriesLNA, bool nonTrivialSolution, Style style) {
+                SampleValue sample, List<ReportEntry> reports, Noise noise, bool nonTrivialSolution, Style style) {
             double redrawTick = initialTime; double redrawStep = (finalTime - initialTime) / 50;
             double densityTick = initialTime; double densityStep = (finalTime - initialTime) / 1000;
             int pointsCounter = 0;
@@ -276,15 +276,18 @@ namespace Kaemika
             State lastState = null;
             if (initialState.NaN()) {
                 Gui.Log("Initial state contains NaN.");
-                return (lastTime, lastState, pointsCounter, renderedCounter);
+                return (lastTime, lastState);
             }
 
-            KChartHandler.ChartClearData();
-            KChartHandler.LegendUpdate();
+            KChartHandler.ChartClearData(style);
+            (string[] series, string[] seriesLNA) = GenerateSeries(reports, noise, style);
+            KChartHandler.LegendUpdate(style);
+            KScoreHandler.ScoreUpdate();
 
             IEnumerable<SolPoint> solution = SolutionGererator(Solver, initialState, initialTime, finalTime, Flux, nonTrivialSolution);
 
             // BEGIN foreach (SolPoint solPoint in solution)  -- done by hand to catch exceptions in MoveNext()
+
             SolPoint solPoint = new SolPoint(0, new Vector());
             bool hasSolPoint = false;
             var enumerator = solution.GetEnumerator();
@@ -296,48 +299,52 @@ namespace Kaemika
                 }
                 catch (ConstantEvaluation e) { // stop simulation but allow execution to proceed
                     Gui.Log("Simulation stopped and ignored: cannot evaluate constant '" + e.Message + "'");
-                    return (lastTime, lastState, pointsCounter, renderedCounter); 
+                    return (lastTime, lastState); 
                 } 
                 catch (Error e) { throw new Error(e.Message); }
                 catch (Exception e) { throw new Error("ODE Solver FAILED: " + e.Message); }
                 pointsCounter++;
 
                 // LOOP BODY of foreach (SolPoint solPoint in solution):
-                if (!Exec.IsExecuting()) break;
-                if (solPoint.T >= densityTick) { // avoid drawing too many points
-                    State state = new State(sample.Count(), lna: noise != Noise.None).InitAll(solPoint.X);
-                    for (int i = 0; i < reports.Count; i++) {
-                        if (series[i] != null) { // if a series was actually generated from this report
-                            // generate deterministic series
-                            if ((noise == Noise.None && reports[i].flow.HasDeterministicValue()) ||
-                                (noise != Noise.None && reports[i].flow.HasStochasticMean())) {
-                                double mean = reports[i].flow.ObserveMean(sample, solPoint.T, state, Flux, style);
-                                KChartHandler.ChartAddPoint(series[i], solPoint.T, mean, 0.0, Noise.None);
-                            }
-                            // generate LNA-dependent series
-                            if (noise != Noise.None && reports[i].flow.HasStochasticVariance() && !reports[i].flow.HasNullVariance()) {
-                                double mean = reports[i].flow.ObserveMean(sample, solPoint.T, state, Flux, style);
-                                double variance = reports[i].flow.ObserveVariance(sample, solPoint.T, state, style);
-                                KChartHandler.ChartAddPoint(seriesLNA[i], solPoint.T, mean, variance, noise);
+                if (!Exec.IsExecuting()) { KChartHandler.ChartUpdate(style); throw new ExecutionEnded(""); } // break;
+
+                if (style.chartOutput) { // Plot the new solution point
+                    if (solPoint.T >= densityTick) { // avoid drawing too many points
+                        State state = new State(sample.Count(), lna: noise != Noise.None).InitAll(solPoint.X);
+                        for (int i = 0; i < reports.Count; i++) {
+                            if (series[i] != null) { // if a series was actually generated from this report
+                                // generate deterministic series
+                                if ((noise == Noise.None && reports[i].flow.HasDeterministicValue()) ||
+                                    (noise != Noise.None && reports[i].flow.HasStochasticMean())) {
+                                    double mean = reports[i].flow.ObserveMean(sample, solPoint.T, state, Flux, style);
+                                    KChartHandler.ChartAddPoint(series[i], solPoint.T, mean, 0.0, Noise.None);
+                                }
+                                // generate LNA-dependent series
+                                if (noise != Noise.None && reports[i].flow.HasStochasticVariance() && !reports[i].flow.HasNullVariance()) {
+                                    double mean = reports[i].flow.ObserveMean(sample, solPoint.T, state, Flux, style);
+                                    double variance = reports[i].flow.ObserveVariance(sample, solPoint.T, state, style);
+                                    KChartHandler.ChartAddPoint(seriesLNA[i], solPoint.T, mean, variance, noise);
+                                }
                             }
                         }
+                        renderedCounter++;
+                        densityTick += densityStep;
                     }
-                    renderedCounter++;
-                    densityTick += densityStep;
+                    if (solPoint.T >= redrawTick) { // avoid redrawing the plot too often
+                        KChartHandler.ChartUpdate(style, incremental: true);
+                        redrawTick += redrawStep;
+                    }
                 }
-                if (solPoint.T >= redrawTick) { // avoid redrawing the plot too often
-                    KChartHandler.ChartUpdate(incremental: true);
-                    redrawTick += redrawStep;
-                }
+
                 lastTime = solPoint.T;
 
                 // END foreach (SolPoint solPoint in solution)
             } while (true);
 
             if (hasSolPoint) lastState = new State(sample.Count(), lna: noise != Noise.None).InitAll(solPoint.X);
-            KChartHandler.ChartUpdate(incremental: false);
+            KChartHandler.ChartUpdate(style, incremental: false);
 
-            return (lastTime, lastState, pointsCounter, renderedCounter);
+            return (lastTime, lastState);
         }
 
         // BFGF Minimizer
@@ -365,7 +372,7 @@ namespace Kaemika
                 if (results.Count != 2 || !(results[0] is NumberValue) || !(results[1] is ListValue<Value>)) throw new Error(badResult);
                 double cost = (results[0] as NumberValue).value;
                 ListValue<Value> gradients = results[1] as ListValue<Value>;
-                Gui.toGui.OutputAppendText("argmin: parameters=" + arg1.Format(style) + " => cost=" + style.FormatDouble(cost) + ", gradients=" + results[1].Format(style) + Environment.NewLine);
+                    KGui.gui.GuiOutputAppendText("argmin: parameters=" + arg1.Format(style) + " => cost=" + style.FormatDouble(cost) + ", gradients=" + results[1].Format(style) + Environment.NewLine);
                 return new Tuple<double, Vector<double>>(cost, CreateVector.Dense(gradients.ToDoubleArray(badResult)));
             });
 
@@ -376,7 +383,7 @@ namespace Kaemika
                     List<Value> elements = new List<Value>();
                     for (int i = 0; i < result.MinimizingPoint.Count; i++) elements.Add(new NumberValue(result.MinimizingPoint[i]));
                     ListValue<Value> list = new ListValue<Value>(elements);
-                    Gui.toGui.OutputAppendText("argmin: converged with parameters " + list.Format(style) + " and reason '" + result.ReasonForExit + "'" + Environment.NewLine);
+                    KGui.gui.GuiOutputAppendText("argmin: converged with parameters " + list.Format(style) + " and reason '" + result.ReasonForExit + "'" + Environment.NewLine);
                     return list;
                  } else throw new Error("reason '" + result.ReasonForExit.ToString() + "'");
             } catch (Exception e) { throw new Error("argmin ended: " + ((e.InnerException == null) ? e.Message : e.InnerException.Message)); } // somehow we need to recatch the inner exception coming from CostAndGradient
@@ -402,14 +409,14 @@ namespace Kaemika
                     if (result == null) throw new Error("Objective function returned null");
                     netlist.autoContinue = autoContinue;
                     if (!(result is NumberValue)) throw new Error("Objective function must return a number, not: " + result.Format(style));
-                    Gui.toGui.OutputAppendText("argmin: parameter=" + Style.FormatSequence(arguments, ", ", x => x.Format(style)) + " => cost=" + result.Format(style) + Environment.NewLine);
+                    KGui.gui.GuiOutputAppendText("argmin: parameter=" + Style.FormatSequence(arguments, ", ", x => x.Format(style)) + " => cost=" + result.Format(style) + Environment.NewLine);
                     return (result as NumberValue).value;
                 });
 
             try {
                 ScalarMinimizationResult result = GoldenSectionMinimizer.Minimum(objectiveFunction, lower, upper);
                 if (result.ReasonForExit == ExitCondition.Converged || result.ReasonForExit == ExitCondition.BoundTolerance) {
-                    Gui.toGui.OutputAppendText("argmin: converged with parameter=" + result.MinimizingPoint + " and reason '" + result.ReasonForExit + "'" + Environment.NewLine);
+                    KGui.gui.GuiOutputAppendText("argmin: converged with parameter=" + result.MinimizingPoint + " and reason '" + result.ReasonForExit + "'" + Environment.NewLine);
                     return new NumberValue(result.MinimizingPoint);
                  } else throw new Error("reason '" + result.ReasonForExit.ToString() + "'");
             } catch (Exception e) { throw new Error("argmin ended: " + ((e.InnerException == null) ? e.Message : e.InnerException.Message)); } // somehow we need to recatch the inner exception coming from CostAndGradient

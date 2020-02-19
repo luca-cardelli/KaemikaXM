@@ -26,7 +26,7 @@ namespace KaemikaXM.iOS
 
             CustomTextEditorDelegate neutralTextEditor =
                () => {
-                   XamarinToGui.NeutralTextEditView editor = new XamarinToGui.NeutralTextEditView();
+                   XMGui.NeutralTextEditView editor = new XMGui.NeutralTextEditView();
                    Xamarin.Forms.View view = editor.AsView();
                    view.HorizontalOptions = Xamarin.Forms.LayoutOptions.FillAndExpand;
                    view.VerticalOptions = Xamarin.Forms.LayoutOptions.FillAndExpand;

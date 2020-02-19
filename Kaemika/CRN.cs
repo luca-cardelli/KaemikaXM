@@ -7,8 +7,8 @@ using SkiaSharp;
 namespace Kaemika {
 
     public class CRN {
-        private SampleValue sample;
-        private List<ReactionValue> reactions;
+        public SampleValue sample;
+        public List<ReactionValue> reactions;
         private double temperature;
         private Matrix stoichio;        // for each species s and reaction r the net stoichiometry of s in r
         private double[,,] driftFactor; // LNA precomputation
@@ -34,7 +34,7 @@ namespace Kaemika {
                     for (int j = 0; j < species.Count; j++)
                         for (int r = 0; r < reactions.Count; r++)
                             driftFactor[i, j, r] = stoichio[i, r] * stoichio[j, r];
-                if (Exec.lastExecution != null) Gui.toGui.OutputAppendText(Exec.lastExecution.PartialElapsedTime("After precomputeLNA"));
+                if (Exec.lastExecution != null) KGui.gui.GuiOutputAppendText(Exec.lastExecution.PartialElapsedTime("After precomputeLNA"));
             }
         }
 
@@ -48,6 +48,19 @@ namespace Kaemika {
                 + sample.FormatContent(style, true, false, false) + Environment.NewLine + Environment.NewLine
                 + Style.FormatSequence(this.reactions, Environment.NewLine, x => x.Format(style)) + Environment.NewLine + Environment.NewLine
                 + FormatAsODE(style, "∂ ", "", false) + Environment.NewLine;
+        }
+        public static string FormatCanonical(List<Symbol> complex, Style style) {
+            SortedList<string, int> l = CanonicalComplex(complex, style);
+            return Style.FormatSequence(l, "+", kvp => ((kvp.Value > 1) ? kvp.Value.ToString() : "") + kvp.Key);
+        }
+        public static SortedList<string, int> CanonicalComplex(List<Symbol> complex, Style style) {
+            SortedList<string, int> l = new SortedList<string, int>();
+            foreach (Symbol symbol in complex) {
+                string species = symbol.Format(style);
+                if (!l.ContainsKey(species)) l[species] = 0;
+                l[species]++;
+            }
+            return l;
         }
 
         public SKSize Measure(Colorer colorer, float pointSize, Style style) {

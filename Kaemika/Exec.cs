@@ -7,7 +7,7 @@ using SkiaSharp;
 
 namespace Kaemika {
 
-    public enum ExportAs : int { None, CRN,
+    public enum ExportAs : int { None, ReactionScore, CRN,
         ChartSnapToClipboard, ChartSnapToSvg, ChartData, OutputCopy,
         ChemicalTrace, ComputationalTrace,
         ReactionGraph, ComplexGraph,
@@ -42,6 +42,7 @@ namespace Kaemika {
         public DateTime endTime;
         public Dictionary<string, AdjacencyGraph<Vertex, Edge<Vertex>>> graphCache;
         public Dictionary<string, object> layoutCache; // Dictionary<string, GraphSharp.GraphLayout> from KaemikaXM.GraphLayout.cs
+        public int rejected;
         public ExecutionInstance(SampleValue vessel, Netlist netlist, Style style, DateTime startTime, DateTime evalTime) {
             this.Id = id; id++;
             this.vessel = vessel;
@@ -53,10 +54,13 @@ namespace Kaemika {
             this.endTime = DateTime.MinValue;
             this.graphCache = new Dictionary<string, AdjacencyGraph<Vertex, Edge<Vertex>>>();
             this.layoutCache = new Dictionary<string, object>();
+            this.rejected = 0;
         }
         public void EndTime() { this.endTime = DateTime.Now; }
         public string ElapsedTime() {
-            return "Elapsed Time: " + endTime.Subtract(startTime).TotalSeconds + "s" 
+            return 
+                (rejected > 0 ? "Rejected " + rejected.ToString() + Environment.NewLine : "" ) +
+                "Elapsed Time: " + endTime.Subtract(startTime).TotalSeconds + "s" 
                 //+ "(total), " + endTime.Subtract(evalTime).TotalSeconds + "s (eval)" 
                 + Environment.NewLine;
         }
@@ -64,6 +68,13 @@ namespace Kaemika {
             return "Partial Elapsed Time: " + DateTime.Now.Subtract(startTime).TotalSeconds + "s (" + msg + ")" 
                 //+ "(total), " + endTime.Subtract(evalTime).TotalSeconds + "s (eval)" 
                 + Environment.NewLine;
+        }
+        public void ResetGraphCache() {
+            this.graphCache = new Dictionary<string, AdjacencyGraph<Vertex, Edge<Vertex>>>();
+            this.layoutCache = new Dictionary<string, object>();
+        }
+        public static void Reject() {
+            if (Exec.lastExecution != null) Exec.lastExecution.rejected++;
         }
     }
 
@@ -96,50 +107,60 @@ namespace Kaemika {
         public static string defaultVarchar = "•";  // "•" "≈" "▪"
         public static ExecutionInstance lastExecution = null;
 
-        public static string lastReport = ""; // the last report of the last simulation, in string form
-        public static string lastState = ""; // the last state of the last simulation, in string form, including covariance matrix if LNA
-            
+        //public static string lastReport = ""; // the last report of the last simulation, in string form
+        //public static string lastState = ""; // the last state of the last simulation, in string form, including covariance matrix if LNA
+
+        public static ExportAction showReactionScoreOutputAction =
+            new ExportAction("Show reaction score", ExportAs.ReactionScore, () => { KScoreHandler.ScoreShow(); KGui.gui.GuiOutputTextHide(); Exec.Execute_Exporter(false, ExportAs.ReactionScore); });
         public static ExportAction showInitialCRNOutputAction =
-            new ExportAction("Show initial CRN", ExportAs.CRN, () => { Gui.toGui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.CRN); });
+            new ExportAction("Show initial CRN", ExportAs.CRN, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.CRN); });
         public static ExportAction showComputationalTraceOutputAction =
-            new ExportAction("Show computational trace", ExportAs.ComputationalTrace, () => { Gui.toGui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ComputationalTrace); });
+            new ExportAction("Show computational trace", ExportAs.ComputationalTrace, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ComputationalTrace); });
+
         public static ExportAction currentOutputAction =
-            showInitialCRNOutputAction;
+            showReactionScoreOutputAction;
 
         public static List<ExportAction> outputActionsList() {
             return new List<ExportAction>() {
+                showReactionScoreOutputAction,
                 showInitialCRNOutputAction,
-                new ExportAction("Show chemical trace", ExportAs.ChemicalTrace, () => { Gui.toGui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ChemicalTrace); }),
+                new ExportAction("Show chemical trace", ExportAs.ChemicalTrace, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ChemicalTrace); }),
                 showComputationalTraceOutputAction,
-                new ExportAction("Show reactions", ExportAs.PDMPreactions, () => { Gui.toGui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPreactions); }),
-                new ExportAction("Show equations", ExportAs.PDMPequations, () => { Gui.toGui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPequations); }),
-                new ExportAction("Show stoichiometry", ExportAs.PDMPstoichiometry, () => { Gui.toGui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPstoichiometry); }),
-                new ExportAction("Show protocol", ExportAs.Protocol, () => { Gui.toGui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.Protocol); }),
-                new ExportAction("Show last simulation state", ExportAs.None, () => {
-                    Gui.toGui.OutputSetText("");
-                    string s = Exec.lastReport + Environment.NewLine + Exec.lastState + Environment.NewLine;
-                    Gui.toGui.OutputAppendText(s);
-                    // try { System.Windows.Forms.Clipboard.SetText(s); } catch (ArgumentException) { };
-                }),
+                new ExportAction("Show reactions", ExportAs.PDMPreactions, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide();  KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPreactions); }),
+                new ExportAction("Show equations", ExportAs.PDMPequations, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide();  KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPequations); }),
+                new ExportAction("Show stoichiometry", ExportAs.PDMPstoichiometry, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide();  KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPstoichiometry); }),
+                new ExportAction("Show protocol", ExportAs.Protocol, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide();  KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.Protocol); }),
+                //new ExportAction("Show last simulation state", ExportAs.None, () => {
+                //    KGui.gui.GuiOutputSetText("");
+                //    string s = Exec.lastReport + Environment.NewLine + Exec.lastState + Environment.NewLine;
+                //    KGui.gui.GuiOutputAppendText(s);
+                //    // try { System.Windows.Forms.Clipboard.SetText(s); } catch (ArgumentException) { };
+                //}),
             };
+        }
+
+        public static ExportAction OutputActionNamed(string name) {
+            foreach (ExportAction item in outputActionsList())
+                if (item.name == name) return item;
+            return null;
         }
 
         public static List<ExportAction> exportActionsList() {
             return new List<ExportAction>() {
-                new ExportAction("Write chart image to clipboard", ExportAs.ChartSnapToClipboard, () => { Gui.toGui.ChartSnap(); }),
-                new ExportAction("Write chart image as SVG", ExportAs.ChartSnapToSvg, () => { Gui.toGui.ChartSnapToSvg(); }),
-                new ExportAction("Write visible chart data to disk", ExportAs.ChartData, () => { Gui.toGui.ChartData(); }),
-                new ExportAction("Write output text to clipboard", ExportAs.OutputCopy, () => { Gui.toGui.OutputCopy(); }),
+                new ExportAction("Write images to clipboard", ExportAs.ChartSnapToClipboard, () => { KGui.gui.GuiChartSnap(); }),
+                new ExportAction("Write images to file (SVG)", ExportAs.ChartSnapToSvg, () => { KGui.gui.GuiChartSnapToSvg(); }),
+                new ExportAction("Write visible chart data to file", ExportAs.ChartData, () => { KGui.gui.GuiChartData(); }),
+                new ExportAction("Write output text to clipboard", ExportAs.OutputCopy, () => { KGui.gui.GuiOutputCopy(); }),
 
-                new ExportAction("Export reaction graph", ExportAs.ReactionGraph, () => { Gui.toGui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ReactionGraph); }),
-                new ExportAction("Export reaction complex graph", ExportAs.ComplexGraph, () => { Gui.toGui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ComplexGraph); }),
-                new ExportAction("Export protocol step graph", ExportAs.ProtocolGraph, () => { Gui.toGui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ProtocolGraph); }),
-                new ExportAction("Export protocol state graph", ExportAs.PDMPGraph, () => { Gui.toGui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPGraph); }),
+                //new ExportAction("Export reaction graph", ExportAs.ReactionGraph, () => { KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ReactionGraph); }),
+                //new ExportAction("Export reaction complex graph", ExportAs.ComplexGraph, () => { KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ComplexGraph); }),
+                new ExportAction("Export protocol step graph", ExportAs.ProtocolGraph, () => { KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ProtocolGraph); }),
+                new ExportAction("Export protocol state graph", ExportAs.PDMPGraph, () => { KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPGraph); }),
 
-                new ExportAction("Export CRN (LBS silverlight)", ExportAs.MSRC_LBS, () => { Gui.toGui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.MSRC_LBS); }),
-                new ExportAction("Export CRN (LBS html5)", ExportAs.MSRC_CRN, () => { Gui.toGui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.MSRC_CRN); }),
-                new ExportAction("Export ODE (Oscill8)", ExportAs.ODE, () => { Gui.toGui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ODE); }),
-                new ExportAction("Export equilibrium (Wolfram)", ExportAs.SteadyState, () => { Gui.toGui.OutputSetText(""); Exec.Execute_Exporter(false, ExportAs.SteadyState); }),
+                new ExportAction("Export CRN (LBS silverlight)", ExportAs.MSRC_LBS, () => { KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.MSRC_LBS); }),
+                new ExportAction("Export CRN (LBS html5)", ExportAs.MSRC_CRN, () => { KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.MSRC_CRN); }),
+                new ExportAction("Export ODE (Oscill8)", ExportAs.ODE, () => { KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ODE); }),
+                new ExportAction("Export equilibrium (Wolfram)", ExportAs.SteadyState, () => { KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.SteadyState); }),
 
                 //new ExportAction("PDMP GraphViz", ExportAs.PDMP_GraphViz, () => { Exec.Execute_Exporter(false, ExportAs.PDMP_GraphViz); }),
                 //new ExportAction("PDMP Parallel", ExportAs.PDMP_Parallel, () => { Exec.Execute_Exporter(false, ExportAs.PDMP_Parallel); }),
@@ -147,18 +168,18 @@ namespace Kaemika {
             }; 
         }
 
-        public static void Execute_Starter(bool forkWorker, bool doParse = false, bool doAST = false, bool doScope = false, bool autoContinue = false) {
+        public static void Execute_Starter(bool forkWorker, bool doParse = false, bool doAST = false, bool doScope = false, bool autoContinue = false, bool chartOutput = true) {
             lock (executionMutex) {
                 if (executionMutex.IsExecuting()) return; // we are already running an executor worker thread
                 else executionMutex.BeginningExecution();
             }
             Protocol.continueExecution = true;
             if (forkWorker) {
-                Thread thread = new Thread(() => Execute_Worker(doParse, doAST, doScope, autoContinue));
+                Thread thread = new Thread(() => Execute_Worker(doParse, doAST, doScope, autoContinue, chartOutput));
                 thread.SetApartmentState(ApartmentState.STA); // required to use the clipboard
                 thread.Start();
             } else {
-                Execute_Worker(doParse, doAST, doScope, autoContinue);
+                Execute_Worker(doParse, doAST, doScope, autoContinue, chartOutput);
             }
         }
 
@@ -170,61 +191,66 @@ namespace Kaemika {
 
         public static void EndingExecution() {
             executionMutex.EndingExecution();
-            Gui.toGui.EndingExecution();
+            KGui.gui.GuiEndingExecution();
         }
 
         const bool scopeVariants = true;
         const bool remapVariants = true;
 
-        private static void Execute_Worker(bool doParse, bool doAST, bool doScope, bool autoContinue) {
-            Gui.toGui.BeginningExecution();
-            Gui.toGui.SaveInput();
-            Gui.toGui.OutputClear("");
-            KChartHandler.ChartClear("", "s", "M");
-            KChartHandler.LegendUpdate();
-            KControls.ParametersClear();
-            ProtocolDevice.Clear();
+        private static void Execute_Worker(bool doParse, bool doAST, bool doScope, bool autoContinue, bool chartOutput) {
+            KGui.gui.GuiBeginningExecution();
             lastExecution = null;
+            KGui.gui.GuiSaveInput();
+            KGui.gui.GuiOutputClear();
             DateTime startTime = DateTime.Now;
-            if (TheParser.Parser().Parse(Gui.toGui.InputGetText(), out IReduction root)) {
-                if (doParse) root.DrawReductionTree(Gui.toGui);
+            if (TheParser.Parser().Parse(KGui.gui.GuiInputGetText(), out IReduction root)) {
+               if (doParse) root.DrawReductionTree();
                 else {
                     Netlist netlist = new Netlist(autoContinue);
                     try {
                         Statements statements = Parser.ParseTop(root);
-                        if (doAST) Gui.toGui.OutputAppendText(statements.Format());
+                        if (doAST) KGui.gui.GuiOutputAppendText(statements.Format());
                         else {
                             SampleValue vessel = Vessel();
                             Scope scope = statements.Scope(new NullScope().BuiltIn(vessel));
-                            if (doScope) Gui.toGui.OutputAppendText(scope.Format());
+                            if (doScope) KGui.gui.GuiOutputAppendText(scope.Format());
                             else {
                                 Style style = new Style(varchar: scopeVariants ? defaultVarchar : null, new SwapMap(),
                                                         map: remapVariants ? new AlphaMap() : null, numberFormat: "G4", dataFormat: "full",  // we want it full for samples, but maybe only headers for functions/networks?
-                                                        exportTarget: ExportTarget.Standard, traceComputational: false);
-                                KChartHandler.SetStyle(style);
-                                ProtocolDevice.SetStyle(style);
-                                ProtocolDevice.Sample(vessel, style);
+                                                        exportTarget: ExportTarget.Standard, traceComputational: false, chartOutput: chartOutput);
+
+                                KChartHandler.ChartClear("", "s", "M", style);
+                                KChartHandler.LegendUpdate(style);
+                                KScoreHandler.ScoreClear();
+                                KControls.ParametersClear(style);
+                                KDeviceHandler.Clear(style);
+                                KDeviceHandler.Sample(vessel, style);
+
                                 netlist.Emit(new SampleEntry(vessel));
                                 DateTime evalTime = DateTime.Now;
                                 lastExecution = new ExecutionInstance(vessel, netlist, style, startTime, evalTime);
                                 Env ignoreEnv = statements.EvalReject(new NullEnv().BuiltIn(vessel), netlist, style, 0);
                                 if (ignoreEnv == null) throw new Error("Top level reject");
                                 lastExecution.EndTime();
-                                foreach (ParameterEntry parameter in netlist.Parameters())
-                                    KControls.AddParameter(parameter.symbol.Format(style), (parameter.value as NumberValue).value, parameter.distribution, style);
-                                Gui.toGui.ParametersUpdate();
-                                Gui.toGui.ProcessOutput();
+
+                                if (style.chartOutput) {
+                                    foreach (ParameterEntry parameter in netlist.Parameters())
+                                        KControls.AddParameter(parameter.symbol.Format(style), (parameter.value as NumberValue).value, parameter.distribution, style);
+                                    KGui.gui.GuiParametersUpdate(); // calls back KControls.ParametersUpdate, but only on Win/Mac
+                                }
+
+                                KGui.gui.GuiProcessOutput();
                             }
                         }
                     }
-                    catch (ExecutionEnded) { lastExecution.EndTime(); Gui.toGui.OutputAppendText(lastExecution.ElapsedTime()); }
-                    catch (Error ex) { netlist.Emit(new CommentEntry(ex.Message)); Gui.toGui.InputSetErrorSelection(-1, -1, 0, ex.Message); }
-                    catch (ConstantEvaluation ex) { string msg = "ERROR: cannot evaluate an unknown constant: " + ex.Message;  netlist.Emit(new CommentEntry(msg)); Gui.toGui.InputSetErrorSelection(-1, -1, 0, msg); }
-                    catch (StackOverflowException ex) { netlist.Emit(new CommentEntry(ex.Message)); Gui.toGui.InputSetErrorSelection(-1, -1, 0, ex.Message); } // Gui.toGui.SetTraceComputational();
-                    catch (Exception ex) { string msg = "ERROR: Something happened: " + ex.Message; netlist.Emit(new CommentEntry(msg)); Gui.toGui.InputSetErrorSelection(-1, -1, 0, msg); } // Gui.toGui.SetTraceComputational(); }
+                    catch (ExecutionEnded) { lastExecution.EndTime(); KGui.gui.GuiOutputAppendText(lastExecution.ElapsedTime()); }
+                    catch (Error ex) { netlist.Emit(new CommentEntry(ex.Message)); KGui.gui.GuiInputSetErrorSelection(-1, -1, 0, "Error", ex.Message); }
+                    catch (ConstantEvaluation ex) { string cat = "Cannot evaluate an unknown constant";  netlist.Emit(new CommentEntry(cat + ": " + ex.Message)); KGui.gui.GuiInputSetErrorSelection(-1, -1, 0, cat, ex.Message); }
+                    catch (StackOverflowException ex) { netlist.Emit(new CommentEntry(ex.Message)); KGui.gui.GuiInputSetErrorSelection(-1, -1, 0, "Stack Overflow", ex.Message); } 
+                    catch (Exception ex) { string cat = "Something happened"; netlist.Emit(new CommentEntry(cat + ": " + ex.Message)); KGui.gui.GuiInputSetErrorSelection(-1, -1, 0, cat, ex.Message); } 
                 }
             } else {
-                Gui.toGui.InputSetErrorSelection(TheParser.Parser().FailLineNumber(), TheParser.Parser().FailColumnNumber(), TheParser.Parser().FailLength(), TheParser.Parser().FailMessage());
+                KGui.gui.GuiInputSetErrorSelection(TheParser.Parser().FailLineNumber(), TheParser.Parser().FailColumnNumber(), TheParser.Parser().FailLength(), TheParser.Parser().FailCategory(), TheParser.Parser().FailMessage());
             }
             EndingExecution();
         }
@@ -259,80 +285,78 @@ namespace Kaemika {
                 if (execution == null) {
                 } else if (exportAs == ExportAs.None) {
 
+                } else if (exportAs == ExportAs.ReactionScore) {
+                    //######## if (execution.lastCRN != null) ReactionScore.Draw(execution.lastCRN);
                 } else if (exportAs == ExportAs.CRN) {
-                    Gui.toGui.OutputAppendText(execution.netlist.AllComments() + (execution.lastCRN != null ? execution.lastCRN.FormatNice(execution.style) : "") + execution.ElapsedTime());
+                    KGui.gui.GuiOutputAppendText(execution.netlist.AllComments() + (execution.lastCRN != null ? execution.lastCRN.FormatNice(execution.style) : "") + execution.ElapsedTime());
                 } else if (exportAs == ExportAs.ChemicalTrace) {
-                    Gui.toGui.OutputAppendText(execution.netlist.Format(execution.style.RestyleAsTraceComputational(false)) + execution.ElapsedTime());
+                    KGui.gui.GuiOutputAppendText(execution.netlist.Format(execution.style.RestyleAsTraceComputational(false)) + execution.ElapsedTime());
                 } else if (exportAs == ExportAs.ComputationalTrace) {
-                    Gui.toGui.OutputAppendText(execution.netlist.Format(execution.style.RestyleAsTraceComputational(true)) + execution.ElapsedTime());
+                    KGui.gui.GuiOutputAppendText(execution.netlist.Format(execution.style.RestyleAsTraceComputational(true)) + execution.ElapsedTime());
                 } else if (exportAs == ExportAs.PDMPreactions) {
-                    Gui.toGui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).HybridSystem(Export.Presentation.Reactions, execution.style));
-                    //try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
+                    KGui.gui.GuiOutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).HybridSystem(Export.Presentation.Reactions, execution.style));
                 } else if (exportAs == ExportAs.PDMPequations) {
-                    Gui.toGui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).HybridSystem(Export.Presentation.ODEs, execution.style));
-                    //try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
-                } else if (exportAs == ExportAs.PDMPstoichiometry) {
-                    Gui.toGui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).HybridSystem(Export.Presentation.Stoichiometry, execution.style));
-                    //try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
+                    KGui.gui.GuiOutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).HybridSystem(Export.Presentation.ODEs, execution.style));
+                }
+                else if (exportAs == ExportAs.PDMPstoichiometry) {
+                    KGui.gui.GuiOutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).HybridSystem(Export.Presentation.Stoichiometry, execution.style));
 
-                } else if (exportAs == ExportAs.ReactionGraph) {
-                    if (execution.graphCache.ContainsKey("ReactionGraph")) { }
-                    else execution.graphCache["ReactionGraph"] = Export.ReactionGraph(execution.netlist.AllSpecies(), execution.netlist.AllReactions(), execution.style);
-                    Gui.toGui.ProcessGraph("ReactionGraph");
-                } else if (exportAs == ExportAs.ComplexGraph) {
-                    if (execution.graphCache.ContainsKey("ComplexGraph")) { }
-                    else execution.graphCache["ComplexGraph"] = Export.ComplexGraph(execution.netlist.AllSpecies(), execution.netlist.AllReactions(), execution.style);
-                    Gui.toGui.ProcessGraph("ComplexGraph");
-                } else if (exportAs == ExportAs.ProtocolGraph) {
+                    //} else if (exportAs == ExportAs.ReactionGraph) {
+                    //    if (execution.graphCache.ContainsKey("ReactionGraph")) { }
+                    //    else execution.graphCache["ReactionGraph"] = Export.ReactionGraph(execution.netlist.AllSpecies(), execution.netlist.AllReactions(), execution.style);
+                    //    KGui.gui.GuiProcessGraph("ReactionGraph");
+                    //} else if (exportAs == ExportAs.ComplexGraph) {
+                    //    if (execution.graphCache.ContainsKey("ComplexGraph")) { }
+                    //    else execution.graphCache["ComplexGraph"] = Export.ComplexGraph(execution.netlist.AllSpecies(), execution.netlist.AllReactions(), execution.style);
+                    //    KGui.gui.GuiProcessGraph("ComplexGraph");
+                }
+                else if (exportAs == ExportAs.ProtocolGraph) {
                     if (execution.graphCache.ContainsKey("ProtocolGraph")) { }
                     else execution.graphCache["ProtocolGraph"] = Export.ProtocolGraph(execution.netlist, execution.style);
-                    Gui.toGui.ProcessGraph("ProtocolGraph");
+                    KGui.gui.GuiProcessGraph("ProtocolGraph");
                 } else if (exportAs == ExportAs.PDMPGraph) {
                     if (execution.graphCache.ContainsKey("PDMPGraphSequential")) { }
                     else execution.graphCache["PDMPGraphSequential"] = Export.PDMPGraph(execution.netlist, execution.style, sequential: true);
-                    Gui.toGui.ProcessGraph("PDMPGraphSequential");
+                    KGui.gui.GuiProcessGraph("PDMPGraphSequential");
 
                 // Android/iOS only
                 } else if (exportAs == ExportAs.SVG) {
-                    Gui.toGui.OutputAppendText(KChartHandler.SnapToSVG(Gui.toGui.ChartSize()));
+                    KGui.gui.GuiOutputAppendText(Export.SnapToSVG(KGui.gui.GuiChartSize()));
 
                 // Windows/Mac only
                 }
                 else if (exportAs == ExportAs.MSRC_LBS) { // export only the vessel
-                    Gui.toGui.OutputAppendText(Export.MSRC_LBS(execution.netlist.Reports(execution.vessel.stateMap.species), execution.vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.LBS, traceComputational: false)));
-                    //try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
-                } else if (exportAs == ExportAs.MSRC_CRN) { // export only the vessel
-                    Gui.toGui.OutputAppendText(Export.MSRC_CRN(execution.netlist.Reports(execution.vessel.stateMap.species), execution.vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.CRN, traceComputational: false)));
-                    //try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
-                } else if (exportAs == ExportAs.ODE) { // export only the vessel
-                    Gui.toGui.OutputAppendText(Export.ODE(execution.vessel, new CRN(execution.vessel, execution.vessel.ReactionsAsConsumed(execution.style), precomputeLNA: false),
-                        new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.Standard, traceComputational: false)));
-                    //try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
-                } else if (exportAs == ExportAs.SteadyState) { // export only the vessel
-                    Gui.toGui.OutputAppendText(Export.SteadyState(new CRN(execution.vessel, execution.vessel.ReactionsAsConsumed(execution.style), precomputeLNA: false),
-                        new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.WolframNotebook, traceComputational: false)));
-                    //try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
-                } else if (exportAs == ExportAs.Protocol) {
-                    Gui.toGui.OutputAppendText(Export.Protocol(execution.netlist, new Style(varchar: defaultVarchar, new SwapMap(), map: new AlphaMap(), numberFormat: "G4", dataFormat: "symbol", exportTarget: ExportTarget.Standard, traceComputational: false)));
-                    //try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
+                    KGui.gui.GuiOutputAppendText(Export.MSRC_LBS(execution.netlist.Reports(execution.vessel.stateMap.species), execution.vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.LBS, traceComputational: false, chartOutput: false)));
+                }
+                else if (exportAs == ExportAs.MSRC_CRN) { // export only the vessel
+                    KGui.gui.GuiOutputAppendText(Export.MSRC_CRN(execution.netlist.Reports(execution.vessel.stateMap.species), execution.vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.CRN, traceComputational: false, chartOutput: false)));
+                }
+                else if (exportAs == ExportAs.ODE) { // export only the vessel
+                    KGui.gui.GuiOutputAppendText(Export.ODE(execution.vessel, new CRN(execution.vessel, execution.vessel.ReactionsAsConsumed(execution.style), precomputeLNA: false),
+                        new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.Standard, traceComputational: false, chartOutput: false)));
+                }
+                else if (exportAs == ExportAs.SteadyState) { // export only the vessel
+                    KGui.gui.GuiOutputAppendText(Export.SteadyState(new CRN(execution.vessel, execution.vessel.ReactionsAsConsumed(execution.style), precomputeLNA: false),
+                        new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.WolframNotebook, traceComputational: false, chartOutput: false)));
+                }
+                else if (exportAs == ExportAs.Protocol) {
+                    KGui.gui.GuiOutputAppendText(Export.Protocol(execution.netlist, new Style(varchar: defaultVarchar, new SwapMap(), map: new AlphaMap(), numberFormat: "G4", dataFormat: "symbol", exportTarget: ExportTarget.Standard, traceComputational: false, chartOutput: false)));
 
-                //} else if (exportAs == ExportAs.PDMP_GraphViz) {
-                //    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).GraphViz(execution.style));
-                //    //try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
-                //} else if (exportAs == ExportAs.PDMP_Parallel) {
-                //    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: false).Format(execution.style));
-                //    //try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
-                //} else if (exportAs == ExportAs.PDMPGraph_Parallel) {
-                //    if (execution.graphCache.ContainsKey("PDMPGraphParallel")) { }
-                //    else execution.graphCache["PDMPGraphParallel"] = Export.PDMPGraph(execution.netlist, execution.style, sequential: false);
-                //    Gui.gui.ProcessGraph("PDMPGraphParallel"); 
-                //} else if (exportAs == ExportAs.PDMP_Parallel_GraphViz) {
-                //    Gui.gui.OutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: false).GraphViz(execution.style));
-                //    //try { Gui.gui.ClipboardSetText(Gui.gui.OutputGetText()); } catch (ArgumentException) { };
-                } else { };
+                    //} else if (exportAs == ExportAs.PDMP_GraphViz) {
+                    //    KGui.gui.GuiOutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: true).GraphViz(execution.style));
+                    //} else if (exportAs == ExportAs.PDMP_Parallel) {
+                    //    KGui.gui.GuiOutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: false).Format(execution.style));
+                    //} else if (exportAs == ExportAs.PDMPGraph_Parallel) {
+                    //    if (execution.graphCache.ContainsKey("PDMPGraphParallel")) { }
+                    //    else execution.graphCache["PDMPGraphParallel"] = Export.PDMPGraph(execution.netlist, execution.style, sequential: false);
+                    //    Gui.gui.ProcessGraph("PDMPGraphParallel"); 
+                    //} else if (exportAs == ExportAs.PDMP_Parallel_GraphViz) {
+                    //    KGui.gui.GuiOutputAppendText(Export.PDMP(execution.netlist, execution.style, sequential: false).GraphViz(execution.style));
+                }
+                else { };
 
                 lock (exporterMutex) { exporterMutex[exportAs] = false; }
-            } catch (Error ex) { Gui.toGui.InputSetErrorSelection(-1, -1, 0, ex.Message); }
+            } catch (Error ex) { KGui.gui.GuiInputSetErrorSelection(-1, -1, 0, "Error", ex.Message); }
         }
 
     }

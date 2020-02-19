@@ -44,10 +44,12 @@ namespace Kaemika {
             this.parser = parser;
         }
 
+        private string failCategory;
         private string failMessage;
         private int failLineNumber;
         private int failColumnNumber;
         private int failLength;
+        public override string FailCategory() { return failCategory; }
         public override string FailMessage() { return failMessage; }
         public override int FailLineNumber() { return failLineNumber; }
         public override int FailColumnNumber() { return failColumnNumber; }
@@ -68,7 +70,8 @@ namespace Kaemika {
             failLineNumber = args.Token.Location.LineNr;
             failColumnNumber = args.Token.Location.ColumnNr;
             failLength = args.Token.Text.Length;
-            failMessage = "Lexical Error: '" + args.Token.ToString() + "'" + Environment.NewLine +
+            failCategory = "Lexical Error";
+            failMessage = "'" + args.Token.ToString() + "'" + Environment.NewLine +
                           "Line " + (failLineNumber + 1) + ", Column " + (failColumnNumber + 1) + ", Length " + failLength + Environment.NewLine;
         }
 
@@ -76,7 +79,8 @@ namespace Kaemika {
             failLineNumber = args.UnexpectedToken.Location.LineNr;
             failColumnNumber = args.UnexpectedToken.Location.ColumnNr;
             failLength = args.UnexpectedToken.Text.Length;
-            failMessage = "Syntax Error: '" + args.UnexpectedToken.ToString() + "'" + Environment.NewLine +
+            failCategory = "Syntax Error";
+            failMessage = "'" + args.UnexpectedToken.ToString() + "'" + Environment.NewLine +
                           "Line " + (failLineNumber + 1) + ", Column " + (failColumnNumber + 1) + ", Length " + failLength + Environment.NewLine +
                           "Expecting one of: '" + args.ExpectedTokens.ToString()+"'";
         }

@@ -19,6 +19,16 @@ namespace Kaemika {
             }
             return env;
         }
+        public Env ExtendValue<T>(List<Pattern> parameters, T argument, Netlist netlist, string source, Style style, int s) where T : Value {  // bounded polymorphism :)
+            if (parameters.Count != 1) throw new Error("Different number of variables and values for '" + source + "'");
+            return this.ExtendValue<T>(parameters[0], argument, netlist, source, style, s + 1);
+        }
+        public Env ExtendValue<T>(List<Pattern> parameters, T argument1, T argument2, Netlist netlist, string source, Style style, int s) where T : Value {  // bounded polymorphism :)
+            if (parameters.Count != 2) throw new Error("Different number of variables and values for '" + source + "'");
+            Env env = this.ExtendValue<T>(parameters[0], argument1, netlist, source, style, s + 1);
+            env = env.ExtendValue<T>(parameters[1], argument2, netlist, source, style, s + 1);
+            return env;
+        }
         public Env ExtendValue<T>(Pattern pattern, T argument, Netlist netlist, string source, Style style, int s) where T : Value {  // bounded polymorphism :)
             Env env = this;
             if (pattern is SinglePattern) {
@@ -137,10 +147,12 @@ namespace Kaemika {
                 builtIn = new ValueEnv("parabolic", null, new OperatorValue("parabolic"), builtIn);
                 builtIn = new ValueEnv("bernoulli", null, new OperatorValue("bernoulli"), builtIn);
                 builtIn = new ValueEnv("<-", null, new OperatorValue("<-"), builtIn);
-                //### map, foldl, foldr, filter, length, append    http://www.cse.unsw.edu.au/~en1000/haskell/hof.html
-                //### filter could be given the index number to emulate range selection
-                //### vector(f,n) = [f(0),f(1),...,f(n-1)]
-                //### matrix(f,n,m) = [[f(0,0), f(0,1), ... ], ... ]
+                builtIn = new ValueEnv("map", null, new OperatorValue("map"), builtIn);
+                builtIn = new ValueEnv("filter", null, new OperatorValue("filter"), builtIn);
+                builtIn = new ValueEnv("foldl", null, new OperatorValue("foldl"), builtIn);
+                builtIn = new ValueEnv("foldr", null, new OperatorValue("foldr"), builtIn);
+                builtIn = new ValueEnv("foreach", null, new OperatorValue("foreach"), builtIn);
+                // primitive recursion over lists: https://www.cs.cmu.edu/~fp/courses/15317-f00/handouts/primrec.pdf
             }
             return builtIn;
         }

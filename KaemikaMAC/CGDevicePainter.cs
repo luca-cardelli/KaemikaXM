@@ -13,7 +13,7 @@ namespace KaemikaMAC
         {
         }
 
-        public /*interface DevicePainter*/ void Draw(ProtocolDevice.Device device, int canvasX, int canvasY, int canvasWidth, int canvasHeight)
+        public /*interface DevicePainter*/ void Draw(KDeviceHandler.KDevice device, int canvasX, int canvasY, int canvasWidth, int canvasHeight)
         {
 
             (float margin, float padRadius, float deviceWidth, float deviceHeight) = device.FittedDimensions(canvasWidth, canvasHeight);
@@ -54,13 +54,13 @@ namespace KaemikaMAC
             using (var dropletFillPaint = new SKPaint { Style = SKPaintStyle.Fill, Color = device.dropletColor, IsAntialias = true })
             using (var dropletBiggieFillPaint = new SKPaint { Style = SKPaintStyle.Fill, Color = device.dropletBiggieColor, IsAntialias = true })
             {
-                ProtocolDevice.Place[,] places = device.places;
-                ProtocolDevice.Placement placement = device.placement;
+                KDeviceHandler.Place[,] places = device.places;
+                KDeviceHandler.Placement placement = device.placement;
                 for (int row = 0; row < places.GetLength(0); row++)
                 {
                     for (int col = 0; col < places.GetLength(1); col++)
                     {
-                        ProtocolDevice.Place place = places[row, col];
+                        KDeviceHandler.Place place = places[row, col];
                         if (place != null && placement.IsOccupied(place))
                         {
                             SampleValue sample = placement.SampleOf(place);
@@ -80,45 +80,45 @@ namespace KaemikaMAC
                             SKPoint bot = new SKPoint(deviceX + margin + padRadius + col * diameter, deviceY + margin + padRadius + (row + 1) * diameter);
                             SKPoint top = new SKPoint(deviceX + margin + padRadius + col * diameter, deviceY + margin + padRadius + (row - 1) * diameter);
                             string label = sample.symbol.Raw(); // sample.FormatSymbol(placement.StyleOf(sample, style))
-                            if (place.IsAnimation(ProtocolDevice.Animation.None))
+                            if (place.IsAnimation(KDeviceHandler.Animation.None))
                                 DrawDroplet(canvas, label, biggie, here,
                                     padRadius, volumeRadius, textStrokeWidth, fillPaint, strokeWidth, accentStrokeWidth, device.pinchPan);
-                            if (place.IsAnimation(ProtocolDevice.Animation.SizeHalf))
+                            if (place.IsAnimation(KDeviceHandler.Animation.SizeHalf))
                                 DrawDroplet(canvas, label, biggie, here,
                                     padRadius, volumeRadius / 2, textStrokeWidth, fillPaint, strokeWidth, accentStrokeWidth, device.pinchPan);
-                            if (place.IsAnimation(ProtocolDevice.Animation.SizeQuarter))
+                            if (place.IsAnimation(KDeviceHandler.Animation.SizeQuarter))
                                 DrawDroplet(canvas, label, biggie, here,
                                     padRadius, volumeRadius / 4, textStrokeWidth, fillPaint, strokeWidth, accentStrokeWidth, device.pinchPan);
-                            if (place.IsAnimation(ProtocolDevice.Animation.PullRht))
-                                DrawDropletPulledHor(canvas, label, biggie, here, rht, ProtocolDevice.Direction.Rht,
+                            if (place.IsAnimation(KDeviceHandler.Animation.PullRht))
+                                DrawDropletPulledHor(canvas, label, biggie, here, rht, KDeviceHandler.Direction.Rht,
                                     padRadius, volumeRadius * 5 / 6, volumeRadius * 5 / 12, volumeRadius * 1 / 3,
                                     textStrokeWidth, fillPaint, strokeWidth, accentStrokeWidth, device.pinchPan);
-                            if (place.IsAnimation(ProtocolDevice.Animation.SplitRht))
-                                DrawDropletPulledHor(canvas, label, biggie, here, rht, ProtocolDevice.Direction.Rht,
+                            if (place.IsAnimation(KDeviceHandler.Animation.SplitRht))
+                                DrawDropletPulledHor(canvas, label, biggie, here, rht, KDeviceHandler.Direction.Rht,
                                     padRadius, volumeRadius * 2 / 3, volumeRadius * 1 / 3, volumeRadius * 2 / 3,
                                     textStrokeWidth, fillPaint, strokeWidth, accentStrokeWidth, device.pinchPan);
-                            if (place.IsAnimation(ProtocolDevice.Animation.PullLft))
-                                DrawDropletPulledHor(canvas, label, biggie, lft, here, ProtocolDevice.Direction.Lft,
+                            if (place.IsAnimation(KDeviceHandler.Animation.PullLft))
+                                DrawDropletPulledHor(canvas, label, biggie, lft, here, KDeviceHandler.Direction.Lft,
                                     padRadius, volumeRadius * 1 / 3, volumeRadius * 5 / 12, volumeRadius * 5 / 6,
                                     textStrokeWidth, fillPaint, strokeWidth, accentStrokeWidth, device.pinchPan);
-                            if (place.IsAnimation(ProtocolDevice.Animation.SplitLft))
-                                DrawDropletPulledHor(canvas, label, biggie, lft, here, ProtocolDevice.Direction.Lft,
+                            if (place.IsAnimation(KDeviceHandler.Animation.SplitLft))
+                                DrawDropletPulledHor(canvas, label, biggie, lft, here, KDeviceHandler.Direction.Lft,
                                     padRadius, volumeRadius * 2 / 3, volumeRadius * 1 / 3, volumeRadius * 2 / 3,
                                     textStrokeWidth, fillPaint, strokeWidth, accentStrokeWidth, device.pinchPan);
-                            if (place.IsAnimation(ProtocolDevice.Animation.PullBot))
-                                DrawDropletPulledVer(canvas, label, biggie, here, bot, ProtocolDevice.Direction.Bot,
+                            if (place.IsAnimation(KDeviceHandler.Animation.PullBot))
+                                DrawDropletPulledVer(canvas, label, biggie, here, bot, KDeviceHandler.Direction.Bot,
                                     padRadius, volumeRadius * 5 / 6, volumeRadius * 5 / 12, volumeRadius * 1 / 3,
                                     textStrokeWidth, fillPaint, strokeWidth, accentStrokeWidth, device.pinchPan);
-                            if (place.IsAnimation(ProtocolDevice.Animation.SplitBot))
-                                DrawDropletPulledVer(canvas, label, biggie, here, bot, ProtocolDevice.Direction.Bot,
+                            if (place.IsAnimation(KDeviceHandler.Animation.SplitBot))
+                                DrawDropletPulledVer(canvas, label, biggie, here, bot, KDeviceHandler.Direction.Bot,
                                     padRadius, volumeRadius * 2 / 3, volumeRadius * 1 / 3, volumeRadius * 2 / 3,
                                     textStrokeWidth, fillPaint, strokeWidth, accentStrokeWidth, device.pinchPan);
-                            if (place.IsAnimation(ProtocolDevice.Animation.PullTop))
-                                DrawDropletPulledVer(canvas, label, biggie, top, here, ProtocolDevice.Direction.Top,
+                            if (place.IsAnimation(KDeviceHandler.Animation.PullTop))
+                                DrawDropletPulledVer(canvas, label, biggie, top, here, KDeviceHandler.Direction.Top,
                                     padRadius, volumeRadius * 1 / 3, volumeRadius * 5 / 12, volumeRadius * 5 / 6,
                                     textStrokeWidth, fillPaint, strokeWidth, accentStrokeWidth, device.pinchPan);
-                            if (place.IsAnimation(ProtocolDevice.Animation.SplitTop))
-                                DrawDropletPulledVer(canvas, label, biggie, top, here, ProtocolDevice.Direction.Top,
+                            if (place.IsAnimation(KDeviceHandler.Animation.SplitTop))
+                                DrawDropletPulledVer(canvas, label, biggie, top, here, KDeviceHandler.Direction.Top,
                                     padRadius, volumeRadius * 2 / 3, volumeRadius * 1 / 3, volumeRadius * 2 / 3,
                                     textStrokeWidth, fillPaint, strokeWidth, accentStrokeWidth, device.pinchPan);
                         }
@@ -141,7 +141,7 @@ namespace KaemikaMAC
 
         public void DrawBackground(CGContext canvas, float canvasX, float canvasY, float canvasWidth, float canvasHeight)
         {
-            var backPaint = CG.Color(ProtocolDevice.deviceBackColor);
+            var backPaint = CG.Color(KDeviceHandler.deviceBackColor);
             canvas.SetFillColor(backPaint);
             var path = new CGPath();
             path.AddRect(new CGRect(canvasX, canvasY, canvasWidth, canvasHeight));
@@ -149,7 +149,7 @@ namespace KaemikaMAC
             canvas.FillPath();
         }
 
-        public void DrawDevice(ProtocolDevice.Device device, CGContext canvas,
+        public void DrawDevice(KDeviceHandler.KDevice device, CGContext canvas,
             float canvasX, float canvasY, float canvasWidth, float canvasHeight,
             float deviceX, float deviceY, float deviceWidth, float deviceHeight,
             float padRadius, float margin, Swipe swipe)
@@ -167,8 +167,8 @@ namespace KaemikaMAC
             DrawHeatZone(canvas, hotZoneRect, padRadius, hotZoneRect.Width / (2 * device.hotZoneWidth), hotColor, swipe);
             using (var zoneTextPaint = new SKPaint { Style = SKPaintStyle.Fill, TextSize = swipe % padRadius, TextAlign = SKTextAlign.Center, Color = SKColors.Blue, IsAntialias = true })
             {
-                CG.DrawTextS(canvas, "< " + ProtocolDevice.coldTemp, swipe % new SKPoint(coldZoneRect.MidX, coldZoneRect.Bottom + margin), zoneTextPaint);
-                CG.DrawTextS(canvas, "> " + ProtocolDevice.hotTemp, swipe % new SKPoint(hotZoneRect.MidX, hotZoneRect.Bottom + margin), zoneTextPaint);
+                CG.DrawTextS(canvas, "< " + KDeviceHandler.coldTemp, swipe % new SKPoint(coldZoneRect.MidX, coldZoneRect.Bottom + margin), zoneTextPaint);
+                CG.DrawTextS(canvas, "> " + KDeviceHandler.hotTemp, swipe % new SKPoint(hotZoneRect.MidX, hotZoneRect.Bottom + margin), zoneTextPaint);
             }
 
             float strokePaintStrokeWidth = padStrokeWidth;
@@ -187,7 +187,7 @@ namespace KaemikaMAC
 
         public void DrawHeatZone(CGContext canvas, SKRect zone, float halo, float groove, SKColor color, Swipe swipe)
         {
-            var radialGradient = SKShader.CreateRadialGradient(swipe % new SKPoint(zone.MidX, zone.MidY), swipe % groove, new SKColor[2] { color, ProtocolDevice.deviceBackColor }, null, SKShaderTileMode.Mirror); //, scaleMatrix);
+            var radialGradient = SKShader.CreateRadialGradient(swipe % new SKPoint(zone.MidX, zone.MidY), swipe % groove, new SKColor[2] { color, KDeviceHandler.deviceBackColor }, null, SKShaderTileMode.Mirror); //, scaleMatrix);
             using (var gradientPaint = new SKPaint { Style = SKPaintStyle.Fill, Shader = radialGradient })
             {
                 var path = new CGPath();
@@ -268,7 +268,7 @@ namespace KaemikaMAC
             DrawDropletLabel(canvas, label, center, radius, textStrokeWidth, biggie, swipe);
         }
 
-        public void DrawDropletPulledHor(CGContext canvas, string label, bool biggie, SKPoint c1, SKPoint c2, ProtocolDevice.Direction dir, float r, float r1, float neckY, float r2, float textStrokeWidth, SKPaint fillPaint, float strokeWidth, float accentStrokeWidth, Swipe swipe)
+        public void DrawDropletPulledHor(CGContext canvas, string label, bool biggie, SKPoint c1, SKPoint c2, KDeviceHandler.Direction dir, float r, float r1, float neckY, float r2, float textStrokeWidth, SKPaint fillPaint, float strokeWidth, float accentStrokeWidth, Swipe swipe)
         {
             float ratio = ((r1 + r2) / 2) / r;
             //strokeWidth = strokeWidth * ratio;
@@ -342,12 +342,12 @@ namespace KaemikaMAC
                 canvas.StrokePath();
             }
 
-            float rText = (r1 == r2) ? ((dir == ProtocolDevice.Direction.Lft) ? r1 : r2) : (r1 > r2) ? r1 : r2;
-            SKPoint cText = (r1 == r2) ? ((dir == ProtocolDevice.Direction.Lft) ? c1 : c2) : (r1 > r2) ? c1 : c2;
+            float rText = (r1 == r2) ? ((dir == KDeviceHandler.Direction.Lft) ? r1 : r2) : (r1 > r2) ? r1 : r2;
+            SKPoint cText = (r1 == r2) ? ((dir == KDeviceHandler.Direction.Lft) ? c1 : c2) : (r1 > r2) ? c1 : c2;
             DrawDropletLabel(canvas, label, cText, rText, textStrokeWidth, biggie, swipe);
         }
 
-        public void DrawDropletPulledVer(CGContext canvas, string label, bool biggie, SKPoint c1, SKPoint c2, ProtocolDevice.Direction dir, float r, float r1, float neckX, float r2, float textStrokeWidth, SKPaint fillPaint, float strokeWidth, float accentStrokeWidth, Swipe swipe)
+        public void DrawDropletPulledVer(CGContext canvas, string label, bool biggie, SKPoint c1, SKPoint c2, KDeviceHandler.Direction dir, float r, float r1, float neckX, float r2, float textStrokeWidth, SKPaint fillPaint, float strokeWidth, float accentStrokeWidth, Swipe swipe)
         {
             float ratio = ((r1 + r2) / 2) / r;
             //strokeWidth = strokeWidth * ratio;
@@ -421,8 +421,8 @@ namespace KaemikaMAC
                 canvas.StrokePath();
             }
 
-            float rYtext = (r1 == r2) ? ((dir == ProtocolDevice.Direction.Top) ? r1 : r2) : (r1 > r2) ? r1 : r2;
-            SKPoint cText = (r1 == r2) ? ((dir == ProtocolDevice.Direction.Top) ? c1 : c2) : (r1 > r2) ? c1 : c2;
+            float rYtext = (r1 == r2) ? ((dir == KDeviceHandler.Direction.Top) ? r1 : r2) : (r1 > r2) ? r1 : r2;
+            SKPoint cText = (r1 == r2) ? ((dir == KDeviceHandler.Direction.Top) ? c1 : c2) : (r1 > r2) ? c1 : c2;
             DrawDropletLabel(canvas, label, cText, rYtext, textStrokeWidth, biggie, swipe);
         }
 

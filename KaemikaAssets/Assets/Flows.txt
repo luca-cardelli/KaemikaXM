@@ -1,5 +1,5 @@
-//======================================
-// Building and using Flows
+ï»¿//======================================
+// Building and using Flows 
 //======================================
 
 Flows are a powerful expression language
@@ -71,7 +71,7 @@ a conditional flow which is either f2
 or f3 based on f1 being true or false 
 resp. at any given time
 
-- observe(f) == f
+- observe(f) == observe(f,vessel)
 - observe(f,A)
 observe a flow in another sample A
 (however, time is fixed in A, as it 
@@ -112,7 +112,7 @@ cond(a<b, a, b)
 Basic example of usage of flows:
 
 species a @ 1M
-a -> Ø   {{ 3 }}          
+a -> Ã˜   {{ 3 }}          
 // 3 here is a (constant) flow: it  gets 
 // sampled at every time point and 
 // used as a rate
@@ -142,7 +142,7 @@ number n = 3
 // later between 'number' 3 and 'flow' 3, 
 // because of the context where 'n' is used.
 
-a -> Ø   {{n*a}}	
+a -> Ã˜   {{n*a}}	
 // degradation reaction with rate 
 // 3*molarity(a), i.e. a mass action rate law 
 // written inside {{..}} general rate brackets
@@ -160,7 +160,7 @@ function f(flow n) { n*a }
 // for n is 'flow', the returned value n*a
 // is also a flow
 
-a -> Ø   {{f(3)}}
+a -> Ã˜   {{f(3)}}
 // same as before
 
 report a, f(3)
@@ -178,7 +178,7 @@ In order for this to work, LNA
 simulation must be activated.
 
 species a,b@1M
-Ø -> a + b;  a -> Ø;  b + b -> Ø		
+Ã˜ -> a + b;  a -> Ã˜;  b + b -> Ã˜		
 // building up some non-trivial 
 // noise on a,b species
 

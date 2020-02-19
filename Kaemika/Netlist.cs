@@ -126,7 +126,7 @@ namespace Kaemika
         }
         public override string Format(Style style) {
             if (style.traceComputational) {
-                return "new function " + symbol.Format(style) + " = " + value.Format(style);
+                return "new function " + symbol.Format(style); //### + " = " + value.Format(style);
             } else return "";
         }
     }
@@ -140,7 +140,7 @@ namespace Kaemika
         }
         public override string Format(Style style) {
             if (style.traceComputational) {
-                return "new random " + symbol.Format(style) + " = " + value.Format(style);
+                return "new random " + symbol.Format(style); //### + " = " + value.Format(style);
             } else return "";
         }
     }
@@ -154,7 +154,7 @@ namespace Kaemika
         }
         public override string Format(Style style) {
             if (style.traceComputational) {
-                return "new network " + symbol.Format(style) + " = " + value.Format(style);
+                return "new network " + symbol.Format(style); //### + " = " + value.Format(style);
             } else return "";
         }
     }

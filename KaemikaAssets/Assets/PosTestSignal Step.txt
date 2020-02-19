@@ -11,19 +11,19 @@ species A @ 0 M
 report A
 
 // Step function
-Signal(A, fun(){cond(time<1, 1, 2)})
+Signal(A, λ(){cond(time<1, 1, 2)})
 equilibrate for 2
 
 // Hyperbolic Tangent
-//Signal(A, fun(){1+tanh(time-pi)})
+//Signal(A, λ(){1+tanh(time-pi)})
 //equilibrate for 2*pi
 
 // Logistic Function
-//Signal(A, fun(){1/(1 + e^(2*pi-time))})
+//Signal(A, λ(){1/(1 + e^(2*pi-time))})
 //equilibrate for 4*pi
 
 // Hill Function
-//Signal(A, fun(){time^3/(1+time^3)})
+//Signal(A, λ(){time^3/(1+time^3)})
 //equilibrate for pi
 
 

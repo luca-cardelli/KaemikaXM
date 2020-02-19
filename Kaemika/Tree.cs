@@ -19,9 +19,11 @@ namespace Kaemika {
                                                 // "symbol", "header", "full", "operator"
         public ExportTarget exportTarget;       // How to format for external tools
 
-        public bool traceComputational;         // Weather to format for TraceComputational or TraceChemical
+        public bool traceComputational;         // Whether to format for TraceComputational or TraceChemical
 
-        public Style(string varchar, SwapMap swap, AlphaMap map, string numberFormat, string dataFormat, ExportTarget exportTarget, bool traceComputational) {
+        public bool chartOutput;                // Whether to produce a chart
+
+        public Style(string varchar, SwapMap swap, AlphaMap map, string numberFormat, string dataFormat, ExportTarget exportTarget, bool traceComputational, bool chartOutput) {
             this.varchar = varchar;
             this.swap = swap;
             this.map = map;
@@ -29,21 +31,25 @@ namespace Kaemika {
             this.dataFormat = dataFormat;
             this.exportTarget = exportTarget;
             this.traceComputational = traceComputational;
+            this.chartOutput = chartOutput;
         }
-        public Style() : this(null, null, null, null, "full", ExportTarget.Standard, false) {
+        public Style() : this(null, null, null, null, "full", ExportTarget.Standard, false, true) {
         }
         public static Style nil = new Style();
         public Style RestyleAsDataFormat(string dataFormat) {
-            return new Style(this.varchar, this.swap, this.map, this.numberFormat, dataFormat, this.exportTarget, this.traceComputational);
+            return new Style(this.varchar, this.swap, this.map, this.numberFormat, dataFormat, this.exportTarget, this.traceComputational, this.chartOutput);
         }
         public Style RestyleAsExportTarget(ExportTarget exportTarget) {
-            return new Style(this.varchar, this.swap, this.map, this.numberFormat, this.dataFormat, exportTarget, this.traceComputational);
+            return new Style(this.varchar, this.swap, this.map, this.numberFormat, this.dataFormat, exportTarget, this.traceComputational, this.chartOutput);
         }
         public Style RestyleAsNumberFormat(string numberFormat) {
-            return new Style(this.varchar, this.swap, this.map, numberFormat, this.dataFormat, this.exportTarget, this.traceComputational);
+            return new Style(this.varchar, this.swap, this.map, numberFormat, this.dataFormat, this.exportTarget, this.traceComputational, this.chartOutput);
         }
         public Style RestyleAsTraceComputational(bool traceComputational) {
-            return new Style(this.varchar, this.swap, this.map, this.numberFormat, this.dataFormat, this.exportTarget, traceComputational);
+            return new Style(this.varchar, this.swap, this.map, this.numberFormat, this.dataFormat, this.exportTarget, traceComputational, this.chartOutput);
+        }
+        public Style RestyleAsChartOutput(bool chartOutput) {
+            return new Style(this.varchar, this.swap, this.map, this.numberFormat, this.dataFormat, this.exportTarget, this.traceComputational, chartOutput);
         }
         public string Varchar() { return this.varchar; }
         public SwapMap Swap() { return this.swap; }
@@ -63,6 +69,15 @@ namespace Kaemika {
             return elements.Aggregate(empty, (a, b) => { string bs = FormatElement(b); return (a == empty) ? bs : (bs == "") ? a : a + separator + bs; });
             //return elements.Aggregate(empty, (a, b) => (a == empty) ? FormatItem(b) : a + separator + FormatItem(b));
             //return (objects.Count == 0) ? empty : objects.Aggregate("", (a, b) => (a == "") ? FormatItem(b) : a + separator + FormatItem(b));
+        }
+        public static string FormatSequence<T>(List<T> elements, string separator, FormatElementDelegate<T> FormatElement, string empty, int maxNo) {
+            string s = empty;
+            for (int i = 0; i < elements.Count; i++) {
+                if (i >= maxNo) { s = s + separator + ".."; break; }
+                if (i == 0) s = FormatElement(elements[i]);
+                else s = s + separator + FormatElement(elements[i]);
+            }
+            return s;
         }
         public static string FormatSequence<T,U>(SortedList<T,U> elements, string separator, FormatKeypairDelegate<T,U> FormatElement, string empty = "") {
             return elements.Aggregate(empty, (a, b) => { string bs = FormatElement(b); return (a == empty) ? bs : (bs == "") ? a : a + separator + bs; });
@@ -213,7 +228,7 @@ namespace Kaemika {
             this.body = body;
         }
         public override string Format() {
-            return "fun (" + parameters.Format() + ") {" + body.Format() + "}";
+            return "λ(" + parameters.Format() + ") {" + body.Format() + "}";
         }
         public override void Scope(Scope scope) {
             body.Scope(scope.Extend(parameters.parameters));
@@ -267,10 +282,11 @@ namespace Kaemika {
             body.Scope(new ConsScope(omegaName, scope));
         }
         public override Value EvalReject(Env env, Netlist netlist, Style style, int s) { StackCheck(s);
-            return new HiDistributionValue(null, null, (OmegaValue w) => {
-                Env closureEnv = new ValueEnv(omegaName, new Type("omega"), w, env); // does not emit this bindings into the netlist
-                return body.EvalReject(closureEnv, netlist, style, s + 1);
-                }
+            return new HiDistributionValue(null, null, 
+                (OmegaValue omega, Style dynamicStyle) => {
+                    Env closureEnv = new ValueEnv(omegaName, new Type("omega"), omega, env); // does not emit this bindings into the netlist
+                    return body.EvalReject(closureEnv, netlist, dynamicStyle, s + 1);
+                    }
             );
         }
         public override Value EvalFlow(Env env, Style style, int s) {
@@ -345,14 +361,16 @@ namespace Kaemika {
                 List<Value> arguments = this.arguments.EvalReject(env, netlist, style, s+1);
                 if (arguments == Expressions.REJECT) return Value.REJECT;
                 string invocation = "";
-                if (style.traceComputational) {
+                if (false) { //### style.traceComputational) {
                     Style restyle = style.RestyleAsDataFormat("symbol");
                     invocation = closure.Format(restyle) + "(" + Style.FormatSequence(arguments, ", ", x => x.Format(restyle)) + ")";
                     netlist.Emit(new CommentEntry("BEGIN " + invocation));
                 }
                 Value result = closure.ApplyReject(arguments, netlist, style, s);
                 if (result == Value.REJECT) return Value.REJECT;
-                if (style.traceComputational) netlist.Emit(new CommentEntry("END " + invocation));
+                if (false) { //### style.traceComputational) 
+                    netlist.Emit(new CommentEntry("END " + invocation));
+                }
                 return result;
             } else if (value is OperatorValue) {
                 OperatorValue oper = (OperatorValue)value;
@@ -399,7 +417,7 @@ namespace Kaemika {
                 List<Value> arguments = this.arguments.EvalReject(env, netlist, style, s + 1);
                 if (arguments == Expressions.REJECT) return Value.REJECT;
                 if (arguments.Count == 1) {
-                    if (arguments[0] is OmegaValue w) return dist.Generate(w);    // will generate w.r.t the subsamplespace of dist
+                    if (arguments[0] is OmegaValue omega) return dist.Generate(omega, style);    // will generate w.r.t the subsamplespace of dist
                     else throw new Error("Wrong argument to random variable: " + Format());
                 } else throw new Error("Wrong number of arguments to random variable: " + Format());
             } else if (value is HiDistributionValue) {
@@ -407,7 +425,7 @@ namespace Kaemika {
                 List<Value> arguments = this.arguments.EvalReject(env, netlist, style, s + 1);
                 if (arguments == Expressions.REJECT) return Value.REJECT;
                 if (arguments.Count == 1) {
-                    if (arguments[0] is OmegaValue w) return dist.Generate(w);   // will generate w.r.t the subsamplespace of dist
+                    if (arguments[0] is OmegaValue omega) return dist.Generate(omega, style);   // will generate w.r.t the subsamplespace of dist
                     else throw new Error("Wrong argument to random variable: " + Format());
                 } else throw new Error("Wrong number of arguments to random variable: " + Format());
             } else throw new Error("Invocation of a non-function, non-list, or non-operator: " + Format());
@@ -552,17 +570,17 @@ namespace Kaemika {
         //    // extEnv is not returned: the scope block is closed
         //}
         public Env EvalReject(Env env, Netlist netlist, Style style, int s) { // more complex version of Eval for recursive statement blocks, mutually recursive definitions must be contiguous
-            return EvalInc(this.statements, 0, env, netlist, style, s + 1);
+            return EvalInc(this.statements, 0, env, netlist, style, s);
         }
         public Env EvalInc(List<Statement> statements, int i, Env env, Netlist netlist, Style style, int s) { StackCheck(s); // incremental Eval
             if (i >= statements.Count) return env;
             Statement statement = statements[i];
             if (statement is FunctionDefinition || statement is NetworkDefinition)
-                return EvalRec(statements, i, env, netlist, style, s + 1); // switch to recursive eval
+                return EvalRec(statements, i, env, netlist, style, s); // switch to recursive eval
             else {
-                Env incEnv = statement.EvalReject(env, netlist, style, s+1);
+                Env incEnv = statement.EvalReject(env, netlist, style, s);
                 if (incEnv == Env.REJECT) return Env.REJECT;
-                return EvalInc(statements, i + 1, incEnv, netlist, style, s+1);
+                return EvalInc(statements, i + 1, incEnv, netlist, style, s);
             }
         }
         public Env EvalRec(List<Statement> statements, int i, Env env, Netlist netlist, Style style, int s) { StackCheck(s); // recursive Eval
@@ -581,17 +599,17 @@ namespace Kaemika {
                     Symbol symbol = recEnv.LookupSymbol(((FunctionDefinition)statement).Name());
                     FunctionValue value = ((FunctionDefinition)statement).FunctionClosure(symbol, recEnv);
                     recEnv.AssignValue(symbol, value);
-                    netlist.Emit(new FunctionEntry(symbol, value));     // insert the closures in the netlist
+                    if (s == 0) netlist.Emit(new FunctionEntry(symbol, value));     // insert the closures in the netlist
                 }
                 if (statement is NetworkDefinition) {
                     Symbol symbol = recEnv.LookupSymbol(((NetworkDefinition)statement).Name());
                     NetworkValue value = ((NetworkDefinition)statement).NetworkClosure(symbol, recEnv);
                     recEnv.AssignValue(symbol, value);
-                    netlist.Emit(new NetworkEntry(symbol, value));     // insert the closures in the netlist
+                    if (s == 0) netlist.Emit(new NetworkEntry(symbol, value));     // insert the closures in the netlist
                 }
                 j = j + 1;
             }
-            return EvalInc(statements, j, recEnv, netlist, style, s + 1); // switch to incremental eval
+            return EvalInc(statements, j, recEnv, netlist, style, s); // switch to incremental eval
         }
     }
 
@@ -623,7 +641,7 @@ namespace Kaemika {
             Value value = (type.Is("flow")) ? definee.BuildFlow(env, style, s + 1) : definee.EvalReject(env, netlist, style, s+1);     // evaluate
             if (value == Value.REJECT) return Env.REJECT;
             if (value is DistributionValue valueAs) valueAs.BindSymbol(symbol);
-            return new ValueEnv(symbol, type, value, netlist, env);  // make new symbol, check that types match, emit also in the netlist, return extended env
+            return new ValueEnv(symbol, type, value, s==0 ? netlist : null, env);  // make new symbol, check that types match, emit also in the netlist, return extended env
         }
         public Env BuildFlow(Env env, Style style, int s) {   // special case: only value definitions among all statements support BuildFlow
             Flow flow = definee.BuildFlow(env, style, s + 1);                              // evaluate
@@ -648,7 +666,7 @@ namespace Kaemika {
         public override Env EvalReject(Env env, Netlist netlist, Style style, int s) { StackCheck(s);
             Value value = definee.EvalReject(env, netlist, style, s);
             if (value == Value.REJECT) return Env.REJECT;
-            return env.ExtendValue<Value>(pattern, value, netlist, pattern.Format(), style, s);
+            return env.ExtendValue<Value>(pattern, value, s == 0 ? netlist : null, pattern.Format(), style, s);
         }
         public Env BuildFlow(Env env, Style style) {   // special case: only value definitions among all statements support BuildFlow
             throw new Error("Flow expression: a list definition is not a flow definition: " + this.Format()); // would have to support ListFlow first
@@ -682,7 +700,7 @@ namespace Kaemika {
                 double oracle = KControls.ParameterOracle(symbol.Format(style)); // returns NaN unless the value has been locked in the Gui
                 if (!double.IsNaN(oracle)) drawn = new NumberValue(oracle);
                 else {
-                    Value v = distribution.Draw();
+                    Value v = distribution.Draw(style);
                     if (v is NumberValue vAs) drawn = vAs;
                     else throw new Error("A parameter must be drawn from a numerical random variable: " + this.Format());
                 }
@@ -731,7 +749,7 @@ namespace Kaemika {
             if (temperatureValue < 0) throw new Error("Sample temperature must be non-negative: " + this.name);
             Symbol symbol = new Symbol(name);
             SampleValue sample = Protocol.Sample(symbol, volumeValue, temperatureValue);
-            ProtocolDevice.Sample(sample, style);
+            KDeviceHandler.Sample(sample, style);
             netlist.Emit(new SampleEntry(sample));
             return new ValueEnv(symbol, null, sample, env);
         }
@@ -835,7 +853,7 @@ namespace Kaemika {
             Symbol symbol = new Symbol(this.name);                              // create a new symbol from name
             FunctionValue value = this.FunctionClosure(symbol, env);
             Env extEnv = new ValueEnv(symbol, null, value, env);            // checks that the types match
-            netlist.Emit(new FunctionEntry(symbol, value));                     // embed the new symbol also in the netlist
+            if (s == 0) netlist.Emit(new FunctionEntry(symbol, value));                     // embed the new symbol also in the netlist
             return extEnv;                                                      // return the extended environment
         }
     }
@@ -864,7 +882,7 @@ namespace Kaemika {
             Symbol symbol = new Symbol(this.name);                              // create a new symbol from name
             NetworkValue value = this.NetworkClosure(symbol, env);
             Env extEnv = new ValueEnv(symbol, null, value, env);            // checks that the types match
-            netlist.Emit(new NetworkEntry(symbol, value));                      // embed the new symbol also in the netlist
+            if (s == 0) netlist.Emit(new NetworkEntry(symbol, value));                      // embed the new symbol also in the netlist
             return extEnv;                                                      // return the extended environment
         }
     }
@@ -889,12 +907,13 @@ namespace Kaemika {
         public override Env EvalReject(Env env, Netlist netlist, Style style, int s) { StackCheck(s);
             Symbol symbol = new Symbol(this.name);    
             Symbol omegaSymbol = new Symbol(this.omegaName);
-            DistributionValue value = new HiDistributionValue(symbol, null, (OmegaValue w) => {
-                Env closureEnv = new ValueEnv(omegaName, new Type("omega"), w, env); // does not emit this bindings into the netlist
-                return body.EvalReject(closureEnv, netlist, style, s + 1);
-            });
+            DistributionValue value = new HiDistributionValue(symbol, null, 
+                (OmegaValue omega, Style dynamicStyle) => {
+                    Env closureEnv = new ValueEnv(omegaName, new Type("omega"), omega, env); // does not emit this bindings into the netlist
+                    return body.EvalReject(closureEnv, netlist, dynamicStyle, s + 1);
+                });
             Env extEnv = new ValueEnv(symbol, new Type("random"), value, env); 
-            netlist.Emit(new RandomEntry(symbol, value)); 
+            if (s == 0) netlist.Emit(new RandomEntry(symbol, value)); 
             return extEnv;
         }
     }
@@ -934,9 +953,9 @@ namespace Kaemika {
     }
 
     public class NetworkInstance : Statement {
-        private Variable network;
+        private Expression network;
         private Expressions arguments;
-        public NetworkInstance(Variable network, Expressions arguments) {
+        public NetworkInstance(Expression network, Expressions arguments) {
             this.network = network;
             this.arguments = arguments;
         }
@@ -956,14 +975,14 @@ namespace Kaemika {
             if (value is NetworkValue) {
                 NetworkValue closure = (NetworkValue)value;
                 string invocation = "";
-                if (style.traceComputational) {
+                if (false) { //### (style.traceComputational) {
                     Style restyle = style.RestyleAsDataFormat("symbol");
                     invocation = closure.Format(restyle) + "(" + Style.FormatSequence(arguments, ", ", x => x.Format(restyle)) + ")";
                     netlist.Emit(new CommentEntry("BEGIN " + invocation));
                 }
                 Env ignoreEnv = closure.ApplyReject(arguments, netlist, style, s);
                 if (ignoreEnv == Env.REJECT) return Env.REJECT;
-                if (style.traceComputational) {
+                if (false) { //### style.traceComputational) {
                     netlist.Emit(new CommentEntry("END " + invocation));
                 }
                 return env;
@@ -1116,7 +1135,7 @@ namespace Kaemika {
                 if (speciesValue == Value.REJECT) return Env.REJECT;
                 if (!(speciesValue is SpeciesValue)) throw new Error("Amount " + this.FormatVars() + "has a non-species in the list of variables");
                 Protocol.Amount((SampleValue)sampleValue, (SpeciesValue)speciesValue, (NumberValue)initialValue, this.dimension, style);
-                ProtocolDevice.Amount((SampleValue)sampleValue, (SpeciesValue)speciesValue, (NumberValue)initialValue, this.dimension, style);
+                KDeviceHandler.Amount((SampleValue)sampleValue, (SpeciesValue)speciesValue, (NumberValue)initialValue, this.dimension, style);
                 netlist.Emit(new AmountEntry((SpeciesValue)speciesValue, (NumberValue)initialValue, this.dimension, (SampleValue)sampleValue));
             }
             return env;
@@ -1149,7 +1168,7 @@ namespace Kaemika {
             if (samples.Count < 2) throw new Error("mix '" + name + "' requires at least two samples to mix or a list of them");
             Symbol symbol = new Symbol(name);
             SampleValue sample = Protocol.Mix(symbol, samples, netlist, style);
-            ProtocolDevice.Mix(sample, samples, style);
+            KDeviceHandler.Mix(sample, samples, style);
             netlist.Emit(new MixEntry(sample, samples));
             return new ValueEnv(symbol, null, sample, env);
         }
@@ -1207,7 +1226,7 @@ namespace Kaemika {
             if (sum != 1.0) throw new Error("split '" + names.Format() + "' proportions do not sum up to 1: " + sum.ToString());
 
             List<SampleValue> samples = Protocol.Split(symbols, fromSample, proportionNumbers, netlist, style);
-            ProtocolDevice.Split(samples, fromSample, style);
+            KDeviceHandler.Split(samples, fromSample, style);
             netlist.Emit(new SplitEntry(samples, fromSample, proportionNumbers));
             Env extEnv = env;
             for (int i = symbols.Count - 1; i >= 0; i--)
@@ -1238,7 +1257,7 @@ namespace Kaemika {
                 dispSamples.Add((SampleValue)value);
             }
             Protocol.Dispose(dispSamples, netlist, style);
-            ProtocolDevice.Dispose(dispSamples, style);
+            KDeviceHandler.Dispose(dispSamples, style);
             netlist.Emit(new DisposeEntry(dispSamples));
             return env;
         }
@@ -1283,9 +1302,9 @@ namespace Kaemika {
 
             if (endcondition is EndConditionSimple) {
                 Protocol.PauseEquilibrate(netlist, style); // Gui pause between successive equilibrate, if enabled
-                List<ProtocolDevice.Place> goBacks = ProtocolDevice.StartEquilibrate(inSamples, forTime, style); // can be null
+                List<KDeviceHandler.Place> goBacks = KDeviceHandler.StartEquilibrate(inSamples, forTime, style); // can be null
                 List<SampleValue> outSamples = Protocol.EquilibrateList(outSymbols, inSamples, noise, forTime, netlist, style);
-                if (goBacks != null) ProtocolDevice.EndEquilibrate(goBacks, outSamples, inSamples, forTime, style);
+                if (goBacks != null) KDeviceHandler.EndEquilibrate(goBacks, outSamples, inSamples, forTime, style); 
                 netlist.Emit(new EquilibrateEntry(outSamples, inSamples, forTime));
                 Env extEnv = env;
                 for (int i = outSymbols.Count - 1; i >= 0; i--)
@@ -1345,7 +1364,7 @@ namespace Kaemika {
             if (outSymbols.Count != inSamples.Count) throw new Error("regulate '" + names.Format() + "' different number of ids and samples");
 
             List<SampleValue> outSamples = Protocol.Regulate(outSymbols, temperatureValue, inSamples, netlist, style);
-            ProtocolDevice.Regulate(outSamples, inSamples, style);
+            KDeviceHandler.Regulate(outSamples, inSamples, style);
             netlist.Emit(new RegulateEntry(outSamples, inSamples, temperatureValue));
             Env extEnv = env;
             for (int i = outSymbols.Count - 1; i >= 0; i--)
@@ -1393,7 +1412,7 @@ namespace Kaemika {
             if (outSymbols.Count != inSamples.Count) throw new Error("regulate '" + names.Format() + "' different number of ids and samples");
 
             List<SampleValue> outSamples = Protocol.Concentrate(outSymbols, volumeValue, inSamples, netlist, style);
-            ProtocolDevice.Concentrate(outSamples, inSamples, style);
+            KDeviceHandler.Concentrate(outSamples, inSamples, style);
             netlist.Emit(new ConcentrateEntry(outSamples, inSamples, volumeValue));
             Env extEnv = env;
             for (int i = outSymbols.Count - 1; i >= 0; i--)
@@ -1471,7 +1490,7 @@ namespace Kaemika {
         public override Env EvalReject(Env env, Netlist netlist, Style style, int s) { StackCheck(s);
             Value several = this.several.EvalReject(env, netlist, style, s + 1);
             if (several == Value.REJECT) return Env.REJECT;
-            Value from = this.from.EvalReject(env, netlist, style, s + 1);
+            Value from = this.from.EvalReject(env, netlist, style, s + 1);  
             if (from == Value.REJECT) return Env.REJECT;
             int count = (several is NumberValue severalAs) ? (int)severalAs.value : throw new Error("draw: number expected: " + this.Format());
             (List<DistributionValue> manyRand, List<FunctionValue> manyFun, bool single) = ExtractLists(from, () => { return this.Format(); });

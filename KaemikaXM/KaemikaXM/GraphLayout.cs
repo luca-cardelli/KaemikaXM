@@ -49,7 +49,7 @@ namespace GraphSharp {
         }
 
         // Get the bounding rect of the text found in all the vertices (used mostly for bounding hight)
-        private SKRect MeasureVertexText(IEnumerable<Vertex> vertexes, float textHeight){
+        private SKRect MeasureVertexText(IEnumerable<Vertex> vertexes, float textHeight) {
             SKRect fitRect = new SKRect(0, 0, 0, 0);
             using (var paint = new SKPaint()) {
                 paint.TextSize = textHeight; paint.IsAntialias = true; paint.Color = SKColors.Black; paint.IsStroke = false;
@@ -116,6 +116,24 @@ namespace GraphSharp {
         //}
     }
 
+    public static class GraphLayoutHandler {
+
+        private static GraphLayout graphLayout; // <<============== the only GraphLayout
+
+        public static GraphLayout GraphLayout() {
+            return graphLayout;
+        }
+
+        public static void SetGraphLayout(GraphLayout layout) {
+            graphLayout = layout; // caller needs to Invalidate after this
+        }
+
+        public static void Draw(SKCanvas canvas, int width, int height) {
+            if (graphLayout == null) canvas.Clear(SKColors.White);
+            else graphLayout.Draw(canvas, width, height);
+        }
+    }
+
     public class GraphLayout {
         private string title = "";
         private float margin { get; set; } = 20;
@@ -145,9 +163,13 @@ namespace GraphSharp {
             return new GraphLayout("Message", graph);
         }
 
-        public Swipe pinchPan = Swipe.Id;
+        public static Swipe pinchPan = Swipe.Id();
         public bool displayPinchOrigin = false;
         public SKPoint pinchOrigin;
+
+        public static void SetManualPinchPan(Swipe manualPinchPan) {
+            pinchPan = manualPinchPan;
+        }
 
         public void Draw(SKCanvas canvas, int width, int height) {
             if (MainTabbedPage.theOutputPage.currentOutputAction.kind != OutputKind.Graph) return;

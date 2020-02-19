@@ -153,9 +153,8 @@ Comment Block @= { Nesting = All }
 <Simplex>       ::= Integer Id                                          ! stoichiometry: '2a' is the same as 'a + a'
                     | Id '*' Id                                         ! stoichiometry: 'n * a' is the same as 'a + ... + a' n times for integer n>=0
                     | Id                                                ! a species
-                    | '#'                                               ! zero species: for creation and degradation
-                    | 'Ø'                                               ! zero species: for creation and degradation
-
+                    | '#' | 'Ø'                                         ! zero species: for creation and degradation
+ 
 ! EXPRESSIONS --------------------------------------------
           
 <Expression>    ::=  <Op Exp>                                               ! see below
@@ -165,9 +164,9 @@ Comment Block @= { Nesting = All }
                     | Integer | Float | Double                              ! double floating point literal. use int(n) to round to integers
                     | QuotedString                                          ! double-quoted string literal. use \" and \\ to represent " and \
                     | 'if' <Expression> 'then' <Expression> <Else Exp>      ! no statements allowed inside if-expressions: uses if-statements for that
-                    | 'fun' <Fun>                                           ! function abstraction
+                    | 'fun' <Fun> | 'λ' <Fun>                               ! function abstraction
                     | 'net' <Net>                                           ! network abstraction
-                    | 'rand' <Rand>                                         ! random variable bstraction
+                    | 'rand' <Rand>                                         ! random variable abstraction
                     | '(' <Expression> ')'                                  ! parenthesized expression
                     | '[' <Expressions> ']'                                 ! list
                     | <Draw>                                                ! draw a list from (lists of) functions or random variables

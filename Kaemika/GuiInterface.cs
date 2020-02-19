@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using SkiaSharp;
-using KaemikaAssets;
 
 namespace Kaemika
 {
@@ -35,15 +34,18 @@ namespace Kaemika
         SKTypeface fixedFont { get; }
         SKPaint TextPaint(SKTypeface typeface, float textSize, SKColor color);
         SKPaint FillPaint(SKColor color);
-        SKPaint LinePaint(float strokeWidth, SKColor color);
+        SKPaint LinePaint(float strokeWidth, SKColor color, SKStrokeCap cap = SKStrokeCap.Butt);
         SKRect MeasureText(string text, SKPaint paint);
     }
 
     public interface Painter : Colorer {
         // Painter implementations hold a private canvas on which to draw
         void Clear(SKColor background);
+        void DrawLine(List<SKPoint> points, SKPaint paint);
+        void DrawPolygon(List<SKPoint> points, SKPaint paint);
+        void DrawSpline(List<SKPoint> points, SKPaint paint); 
         void DrawRect(SKRect rect, SKPaint paint);
-        void DrawRoundRect(SKRect rect, float padding, SKPaint paint);
+        void DrawRoundRect(SKRect rect, float corner, SKPaint paint);
         void DrawCircle(SKPoint p, float radius, SKPaint paint);
         void DrawText(string text, SKPoint point, SKPaint paint);
     }
@@ -80,11 +82,9 @@ namespace Kaemika
 
     public class Gui {
         public static Platform platform = Platform.NONE;
-        public static ToGui toGui;                 // calls from execution thread to platform Gui
-        // public static GuiControls guiControls;  // platform controls and callbacks; only Win and Mac have this, not iOS/Android
 
         public static void Log(string s) {
-            Gui.toGui.OutputAppendText(s + System.Environment.NewLine);
+            KGui.gui.GuiOutputAppendText(s + System.Environment.NewLine);
             if (Exec.lastExecution != null) Exec.lastExecution.netlist.Emit(new CommentEntry(s));
         }
         public static Noise[] noise = (Noise[])Enum.GetValues(typeof(Noise));
@@ -114,46 +114,6 @@ namespace Kaemika
         public static string FormatUnit(float value, string spacer, string baseUnit, string numberFormat) {
             return FormatUnit((double)value, spacer, baseUnit, numberFormat);
         }
-    }
-
-    // Calls from (typically) the Execution thread that need to run in (typically) the Gui thread
-    // This is used by Mac, Win and XM(iOS/Android)
-
-    public abstract class ToGui { // this could be an interface
-        public abstract string InputGetText();
-        public abstract void InputSetText(string text);
-        public abstract void InputInsertText(string text);
-        public abstract void InputSetErrorSelection(int lineNumber, int columnNumber, int length, string failMessage);
-        public abstract void OutputSetText(string text);
-        public abstract string OutputGetText();
-        public abstract void OutputAppendText(string text);
-
-        public abstract void BeginningExecution();   // signals that execution is starting
-        public abstract void EndingExecution();     // signals that execution has ended (run to end, or stopped)
-        public abstract void ContinueEnable(bool b);
-        public abstract bool ContinueEnabled();
-        public abstract void SetTraceComputational();
-
-        public abstract void ChartUpdate();
-        public abstract void LegendUpdate();
-        public abstract void ParametersUpdate();
-
-        public abstract void OutputClear(string title);
-        public abstract void ProcessOutput();
-        public abstract void ProcessGraph(string graphFamily);  // deliver execution output in graph form
-
-        public abstract void DeviceShow();
-        public abstract void DeviceHide();
-        public abstract void DeviceUpdate();
-
-        public abstract void SaveInput();
-        public abstract void RestoreInput();
-        public abstract void ClipboardSetText(string text);
-        public abstract void ChartSnap();
-        public abstract void ChartSnapToSvg();
-        public abstract SKSize ChartSize();
-        public abstract void ChartData();
-        public abstract void OutputCopy();
     }
 
     // Platform-dependent controls to which we attach Gui-thread-run callbacks
@@ -187,6 +147,8 @@ namespace Kaemika
         void SetDirectory();
         void PrivacyPolicyToClipboard();
         void SplashOff();
+        void SavePreferences();
+        void SetSnapshotSize(); // set standard size for snapshots
     }
 
 }

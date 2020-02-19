@@ -12,7 +12,8 @@ namespace KaemikaMAC {
         public CGChartPainter(CGContext canvas) : base(canvas) {
         }
 
-        public /*interface ChartPainter*/ void DrawLine(List<KChartEntry> list,  int seriesIndex, float pointSize, SKColor color, Swipe pinchPan) {
+        public /*interface ChartPainter*/ void DrawCourse(List<KChartEntry> list,  int seriesIndex, float pointSize, SKColor color, Swipe pinchPan) {
+            if (list.Count == 1) DrawCircle(list[0].Ypoint[seriesIndex], pinchPan % 8, FillPaint(color));
             if (list.Count > 1) {
                 canvas.SetStrokeColor(CG.Color(color));
                 canvas.SetLineWidth(pointSize);
@@ -24,7 +25,8 @@ namespace KaemikaMAC {
             }
         }
 
-        public /*interface ChartPainter*/ void DrawLineRange(List<KChartEntry> list, int seriesIndex, SKColor color, Swipe pinchPan) {
+        public /*interface ChartPainter*/ void DrawCourseRange(List<KChartEntry> list, int seriesIndex, SKColor color, Swipe pinchPan) {
+            if (list.Count == 1) DrawCircle(list[0].Ypoint[seriesIndex], pinchPan % 8, FillPaint(color));
             if (list.Count > 1) {
                 canvas.SetFillColor(CG.Color(color));
                 var path = new CGPath();
@@ -51,7 +53,7 @@ namespace KaemikaMAC {
             }
         }
 
-        public /*interface ChartPainter*/ void DrawLineFill(List<KChartEntry> list, int seriesIndex, float bottom, SKColor color, Swipe pinchPan) {
+        public /*interface ChartPainter*/ void DrawCourseFill(List<KChartEntry> list, int seriesIndex, float bottom, SKColor color, Swipe pinchPan) {
             if (list.Count > 1) {
                 canvas.SetFillColor(CG.Color(color));
                 var path = new CGPath();

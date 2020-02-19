@@ -20,7 +20,7 @@ namespace KaemikaXM
         public App(CustomTextEditorDelegate customTextEditorDelegate) {
 //          FolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
             FolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
-            Gui.toGui = new XamarinToGui(customTextEditorDelegate);
+            KGui.Register(new XMGui(customTextEditorDelegate));
             DocListPage.docs = Tutorial.Groups();
             MainTabbedPage.theMainTabbedPage = new MainTabbedPage();
             MainTabbedPage.theMainTabbedPage.CurrentPageChanged += MainTabbedPage.currentPageChangedDelegate;
@@ -36,9 +36,9 @@ namespace KaemikaXM
             theApp.MainPage = MainTabbedPage.theMainTabbedPage;
         }
 
-        public static void LandscapeOrientation() {
-            theApp.MainPage = MainTabbedPage.theChartPageLandscape;
-        }
+        //public static void LandscapeOrientation() {
+        //    theApp.MainPage = MainTabbedPage.theChartPageLandscape;
+        //}
 
         protected override void OnStart() {
             // Handle when your app starts

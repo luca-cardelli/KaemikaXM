@@ -116,14 +116,24 @@ list early ++ [number last] = l
 function f([number n]++list l) {l++[n]}
 list r = f([0,1,2])   // = [1,2,0]
 
+//Iterators - will not stack overflow
+map(f,l) : ((a->b),[a])->[b]
+filter(f,l) : ((a->bool),[a])->[a]
+foldl(f,z,l) : (((b,a)->b),b,[a])->b
+foldr(f,z,l) : (((a,b)->b),b,[a])->b
+foreach(n,l) : (((number,a)->.),[a])->[]
+// foreach takes a network and a list as
+// arguments and returns the empty list;
+// the index is passed as a parameter
+
 //Draw-from expressions:
 draw n from f   
 // = [f(0), ..., f(n-1)]
 draw n from [.. f_i ..] 
 // = [.. draw n from f_i ..]
 
-//Draw-from statements:
-//the resulting lists are plotted 
+//Draw-from statements: same syntax
+//but the resulting lists are plotted 
 //instead of returned
 
 //======================================
@@ -133,15 +143,15 @@ draw n from [.. f_i ..]
 rand(omega w) { ... w(0) ... w(1) ... }
 // is an expression denoting a random variable
 // that accesses the sample space w of type omega.
-// Each w(i) is an orthogonal [0..1] dimension 
-// of the sample space yielding a random
+// Each w(i) is an orthogonal [0..1) dimension 
+// of the sample space yielding a uniform random
 // number. Separate random variables access 
 // separate subdimensions but w(i) is always 
 // the same number for the same random variable
 // and the same w. (See the Omega language.)
 
 rand(omega w) { w(0) } 
-// is a pure [0..1] random number generator
+// is a pure [0..1) random number generator
 
 random X = ...
 // declares a variable X of type random variable
@@ -163,8 +173,11 @@ X(w)
 function gtzero(random X) {
    rand(omega w) { X(w)>0 }
 }
-// returns a discrete boolean random variable 
-// based on X>0
+// returns a boolean random variable based on X>0
+function lift(function f)(random X) {
+  rand(omega w) { f(X(w)) }
+}
+// lifts a function f to a random variable
 
 X | Y
 // a random variable which is X conditioned 
@@ -178,9 +191,10 @@ X | gtzero(X)
 
 draw n from X
 draw n from [X1,...,Xn]
-// draw a number of samples from a random variable or
-// a list of random variables and show a density plot.
-// When used as expressions, they return the lists
+// statements that draw a number of samples from a 
+// random variable or a list of random variables and 
+// show a density plot of their distributions.
+// When used as expressions, these return the lists
 // of numbers instead of plotting them
 
 parameter n <- X
@@ -212,6 +226,12 @@ parabolic(mean,halfwidth) // Epanechnikov
 exponential(lambda)
 bernoulli(p)  // true with prob. p, or false
 
+// Each instance of e.g. uniform(lo,hi) is
+// independent, even when used in a context
+// like rand(omega w) ... uniform(lo,hi)(w) ...
+// because uniform will sample from a subspace
+// of w independent from anybody else's.
+
 //======================================
 // Observation (see Flow-expressions)
 //======================================
@@ -227,10 +247,25 @@ observe(a+2b^2,s) // combined observations
 observe(var(a),s) // requires LNA active
 observe(time,s) // nonzero only if s was the
  // *input* sample of equilibrate s'=s for t
+ // it returns the end time of equilibrate
 
 //======================================
 // Flow-expressions
 //======================================
+
+/* Flow-expressions denote time courses
+and are found in 'observe( ... , S)'
+for samples, in 'report ...' statements 
+for plotting, and in {{ ... }} special
+rate brackets to express arbitrary
+kinetic functions. Flow-expressions are
+a subset of expressions that include
+boolean and numerical operators and
+where species 's' are intepreted as
+molarity(s)(t): the numeric value
+of the concentration of 's' at time 't'.
+Flow expressions have type "flow".
+*/
 
 // Current time:
 
@@ -273,32 +308,20 @@ cov(a,b)
 
 cond(a,b,c)
 
-/* Flow-expressions denote time courses
-and are found in 'observe( ... , S)'
-for samples, in 'report ...' statements 
-for plotting, and in {{ ... }} special
-rate brackets to express arbitrary
-kinetic  functions. Flow-expressions are
-a subset of expressions that include
-boolean and numerical operators and
-where species 's' are intepreted as
-molarity(s)(t): the  numeric
-concentration value of 's' at time 't'.
-
-More technically, flow-expressions are
+/* More technically, flow-expressions are
 first *evaluated* to produce *flows* 
 (while ordinary expressions are
 evaluated to produce *values*). Flows
 are data structures consisting
 exclusively of numeric and boolean
-operators over  booleans, numbers,
+operators over booleans, numbers,
 species, and some special entities such
 as 'time'. The  process of producing
 flows can involve ordinary function
 invocation and if-then-else conditional
 execution, but those do not appear in
 resulting flows. At a  later stage,
-flows are *oberved*, that is evaluated
+flows are *observed*, that is evaluated
 at multiple time points,  during
 plotting or in the evaluation of
 reaction rates during simulations. Flows 
@@ -331,7 +354,7 @@ a + b -> Ø  {{ Arrhenius(2,50)*a*b }}
 report a, b, Arrhenius(2,50)*a*b     
 equilibrate for 10                        
 
-// If vs. cond
+// If vs. cond flows:
 
 species a @ 1M
 species b @ 0M
@@ -348,8 +371,8 @@ report min(a,b)
 
 report cond(a<b,a,b)
 
-// invalid flow: unlike 'cond', 'if' is not 
-// a flow operator, so it cannot compare flows:
+// unlike 'cond', 'if' is not a flow operator, 
+// so it cannot compare flows:
 
 report if a<b then a else b end // ERROR   
 
@@ -365,11 +388,17 @@ report if 3>2 then a else b end
 argmin(f, i, d) // BFGS Optimizer
 //f: list -> [number, list]
 //   input is a list of numbers (the parameters to optimize)
-//   outputs are the number cost of those parameters 
+//   output is a pair of the cost of the input parameters 
 //   and a list of partial gradients for the parameters 
+//   used by BFGS to select the next sample for f
 //i: list of numbers
 //   initial guess for the parameters
 //d: number
 //   numeric tolerance for convergence, e.g. 1e-2
+// If a gradient is a time derivative (of concentrations) 
+// it is possible to use the ∂ operator to obtain it.
+// Otherwise one may try to compute a local gradient by
+// multiple samples. See the "PIDController Optimization"
+// example.
 
 

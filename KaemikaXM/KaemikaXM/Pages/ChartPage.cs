@@ -7,42 +7,42 @@ using SkiaSharp;
 
 namespace KaemikaXM.Pages
 {
-    public class ChartPageLandscape : ContentPage {
+    //public class ChartPageLandscape : ContentPage {
 
-        private ChartView chartView;
+    //    private ChartView chartView;
 
-        public ChartPageLandscape() {
-            chartView = new ChartView() {
-                Chart = new KChart("", "s", "M"),
-                BackgroundColor = Color.White,
-            };
-            Content = chartView;
-        }
+    //    public ChartPageLandscape() {
+    //        chartView = new ChartView() {
+    //            Chart = new KChart("", "s", "M"),
+    //            BackgroundColor = Color.White,
+    //        };
+    //        Content = chartView;
+    //    }
 
-        public void SetChart(KChart chart) {
-            chartView.Chart = chart;
-        }
+    //    public void SetChart(KChart chart) {
+    //        chartView.Chart = chart;
+    //    }
  
-        protected override void OnAppearing() {
-            base.OnAppearing();
-            //(Gui.gui as GUI_Xamarin).ChartUpdateLandscape();
-        }
+    //    protected override void OnAppearing() {
+    //        base.OnAppearing();
+    //        //(Gui.gui as GUI_Xamarin).ChartUpdateLandscape();
+    //    }
 
-       // Device rotation handling
+    //   // Device rotation handling
 
-        private double width = 0;
-        private double height = 0;
+    //    private double width = 0;
+    //    private double height = 0;
 
-        protected override void OnSizeAllocated(double width, double height) {
-            base.OnSizeAllocated(width, height); //must be called
-            if ((width > 0 && this.width != width) || (height > 0 && this.height != height)) {
-                this.width = width;
-                this.height = height;
-                if (this.height > this.width) App.PortraitOrientation();
-                // else App.theApp.MainPage.ForceLayout(); // does not help, also check that theApp is not null
-            }
-        }
-    }
+    //    protected override void OnSizeAllocated(double width, double height) {
+    //        base.OnSizeAllocated(width, height); //must be called
+    //        if ((width > 0 && this.width != width) || (height > 0 && this.height != height)) {
+    //            this.width = width;
+    //            this.height = height;
+    //            if (this.height > this.width) App.PortraitOrientation();
+    //            // else App.theApp.MainPage.ForceLayout(); // does not help, also check that theApp is not null
+    //        }
+    //    }
+    //}
 
     public class ChartPage : KaemikaPage {
 
@@ -198,10 +198,10 @@ namespace KaemikaXM.Pages
 
             inspectionView = new StackLayout();
 
-            chartView = new ChartView() { Chart = new KChart("", "s", "M"), HeightRequest = 300, BackgroundColor = Color.White };
+            chartView = new ChartView();
             legendView = LegendView();
             parameterView = ParameterView();
-            deviceView = new DeviceView() { }; // Device = device };
+            deviceView = new DeviceView();
 
             // Fill layout structure
 
@@ -230,8 +230,7 @@ namespace KaemikaXM.Pages
         }
 
         public void InvalidateChart() {
-            // this is necessary to invalidate the chartView: we must assign a fresh value to chartView.Chart
-            chartView.Chart = KChartHandler.ChartCopy();
+            chartView.InvalidateSurface();
         }
 
         public void SetModel(ModelInfo modelInfo) {
@@ -308,8 +307,8 @@ namespace KaemikaXM.Pages
                 if (item != null) {
                     KChartHandler.InvertVisible(item.Name);
                     KChartHandler.VisibilityRemember();
-                    KChartHandler.ChartUpdate();
-                    Gui.toGui.LegendUpdate();
+                    KChartHandler.ChartUpdate(null);
+                    KGui.gui.GuiLegendUpdate();
                     collectionView.SelectedItem = null; // avoid some visible flashing of the selection
                 }
             };
@@ -330,12 +329,10 @@ namespace KaemikaXM.Pages
         }
 
         public void ParametersUpdate() {
-            Xamarin.Forms.Device.BeginInvokeOnMainThread(() => {
-                lock (KControls.parameterLock) {
-                    RefreshParameters();
-                }
-                MainTabbedPage.theChartPage.inspectionView.Children[1].HeightRequest = 20 + ParameterItemHeight * KControls.parameterInfoDict.Count;               
-            });
+            lock (KControls.parameterLock) {
+                RefreshParameters();
+            }
+            MainTabbedPage.theChartPage.inspectionView.Children[1].HeightRequest = 20 + ParameterItemHeight * KControls.parameterInfoDict.Count;               
         }
         private void RefreshParameters() {  
             // call it with already locked parameterLock
@@ -366,8 +363,8 @@ namespace KaemikaXM.Pages
             collectionView.ItemTemplate = new DataTemplate(() => {                   // CollectionView contains ParameterBindings with bindings set in ItemTemplate, ugh!
                 Grid grid = new Grid { Padding = 2 };
                 grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(ParameterItemHeight) });
-                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = 75 });
                 grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = 75 });
                 grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
                 Xamarin.Forms.Entry slider = new Xamarin.Forms.Entry { FontSize = 10, FontAttributes = FontAttributes.Bold, VerticalTextAlignment = TextAlignment.Center };
@@ -401,8 +398,8 @@ namespace KaemikaXM.Pages
                 Label formatLabel = new Label { FontSize = 12, FontAttributes = FontAttributes.Bold, VerticalTextAlignment = TextAlignment.Center };
                 formatLabel.SetBinding(Label.TextProperty, "Format"); // property of ParameterBinding, ugh!
 
-                grid.Children.Add(slider, 0, 0);
-                grid.Children.Add(switcher, 1, 0);
+                grid.Children.Add(switcher, 0, 0);
+                grid.Children.Add(slider, 1, 0);
                 grid.Children.Add(formatLabel, 2, 0);
 
                 return grid;
@@ -418,7 +415,7 @@ namespace KaemikaXM.Pages
             if (!Exec.IsExecuting() && // we could be waiting on a continuation! StartAction would switch us right back to this page even if it does not start a thread!
                 currentModelInfo != MainTabbedPage.theModelEntryPage.modelInfo) // forkWorker: we can compute the chart concurrently
                 MainTabbedPage.theModelEntryPage.StartAction(forkWorker: true, switchToChart: false, switchToOutput: false, autoContinue: false);
-            KChartHandler.ChartUpdate();
+            KChartHandler.ChartUpdate(null);
         }
 
     }

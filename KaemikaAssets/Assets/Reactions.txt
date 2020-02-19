@@ -31,6 +31,8 @@ number m = 3
 n*a -> m*a      // a + a -> a + a + a
 
 a >> b -> c     // catalysis: a + b -> a + c
+a >> Ø -> c     // a excites c (catalytically)
+a >> b -> Ø     // a represses b (catalytically)
 
 // Declare the species but do not initialize them:
 
@@ -105,6 +107,12 @@ c + d -> Ø  { 2, 50 }
 
 c + d -> Ø  {{ 2*exp(-50/(8.3144598*kelvin)) * c * d }}	
 
+// N.B.: the reaction with general kinetics
+Ø -> a {{ f }}
+// happens to produce the ODE
+// ∂a = f
+// this way, arbitrary ODE systems can be
+// encoded line by line as reactions
 
 //======================================
 // Advanced examples: Abstracting kinetic

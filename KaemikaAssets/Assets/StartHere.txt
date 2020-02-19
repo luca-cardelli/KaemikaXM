@@ -5,21 +5,24 @@
 // Declare some species and
 // their molarity (M, mM, μM, ...)
 
-species a,b @ 1 M   
+species a   @ 30 mM
+species b,c @  9 mM   
 
-// Define some reactions 
+// Define some reactions and their rates
 
-a + 2b -> a
-a -> Ø       // Ø or # is 'no species'
+a + b -> 2a {10}
+b + c -> 2b {100}
+c + a -> 2c {100}
+c -> #      {0.1}  // # means 'no species'
 
 // Decide what to plot
 
-report a, b, b-a, sin(time)
+report a, b, c, 2*b-a, sin(time)/30
 
-// Prepare a simulation 
+// Issue a simulation 
 // (or nothing much will happen)
 
-equilibrate for 2*pi
+equilibrate for 9*pi
 
 // Optionally select noise (μ, ±σ, ...)
 

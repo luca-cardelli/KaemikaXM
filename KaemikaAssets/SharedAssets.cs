@@ -15,9 +15,9 @@ namespace KaemikaAssets
     {
 
         public static List<string> symbols = new List<string> {
-                "Ø", "μ", "σ", "±", "∂", "ʃ", "∑", "∏", "\'",                                                  // Symbols
-                "⁺", "⁻", "⁼", "⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹", "⁽", "⁾",                     // Superscript
-                "_", "₊", "₋", "₌", "₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉", "₍", "₎"};               // Subscript
+                "Ø", "λ", "μ", "σ", "±", "∂", "∑", "∏",                                                  // Symbols  "ʃ"
+                "\'", "⁺", "⁻", "⁼", "⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹", "⁽", "⁾",         // Superscript
+                "_", "₊", "₋", "₌", "₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉", "₍", "₎"};         // Subscript
 
         // LOADING FILES EMBEDDED AS RESOURCES
         // https://docs.microsoft.com/en-us/xamarin/xamarin-forms/data-cloud/data/files?tabs=windows#Loading_Files_Embedded_as_Resources

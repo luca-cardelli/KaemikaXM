@@ -8,37 +8,58 @@ namespace KaemikaWPF {
 
     public class KChartSKControl : SkiaSharp.Views.Desktop.SKControl {
 
-        public static KChartSKControl chartControl = null;
+        private static KChartSKControl chartControl = null; // The only KChartSKControl, same as "this", but accessible from static methods
 
         public KChartSKControl() : base() {
-            Label toolTip = App.guiToWin.label_Tooltip;
+            chartControl = this;
+            chartControl.Location = new Point(0, 0);
+            Label toolTip = WinGui.winGui.label_Tooltip;
             toolTip.Visible = false;
             toolTip.BackColor = WinControls.cPanelButtonDeselected;
-            toolTip.Font = App.guiToWin.GetFont(8, true);
+            toolTip.Font = WinGui.winGui.GetFont(8, true);
             toolTip.MouseEnter +=
                 (object sender, EventArgs e) => { UpdateTooltip(new Point(0, 0), ""); };
         }
 
-        // Implement this to draw on the canvas.
-        protected override void OnPaintSurface(SkiaSharp.Views.Desktop.SKPaintSurfaceEventArgs e) {
-            // call the base method
-            base.OnPaintSurface(e);
+        // Static methods, accessing chartControl
 
-            var surface = e.Surface;
-            var canvas = surface.Canvas;
-            int canvasWidth = e.Info.Width;
-            int canvasHeight = e.Info.Height;
-            int canvasX = Location.X;
-            int canvasY = Location.Y;
-
-            // draw on the canvas
-
-            KChartHandler.Draw(new SKChartPainter(canvas), canvasX, canvasY, canvasWidth, canvasHeight);
+        public static void SetSize(Size size) {
+            if (chartControl != null) chartControl.Size = size;
         }
 
-        // See also GuiToWin_KeyDown, GuiToWin_KeyUp
+        public static void InvalidateAndUpdate() {
+            if (chartControl != null) {
+                chartControl.Invalidate();
+                chartControl.Update();
+            }
+        }
+   
+        public static bool shiftKeyDown = false; // See also WinGui_KeyDown, WinGui_KeyUp
+
+        public static void OnShiftKeyDown() {  // called from GuiToWin.GuiToWin_KeyDown form callback
+            shiftKeyDown = true;
+            if (mouseInsideChartControl) {
+                KChartHandler.ShowEndNames(false);
+                chartControl.UpdateTooltip(new Point(0, 0), "");
+                if (!KControls.IsSimulating()) chartControl.Invalidate();
+            }
+        }
+
+        public static void OnShiftKeyUp() {  // called from GuiToWin.GuiToWin_KeyUp form callback
+            shiftKeyDown = false;
+            if (mouseInsideChartControl) {
+                KChartHandler.ShowEndNames(true);
+                if (!KControls.IsSimulating()) chartControl.Invalidate();
+            }
+        }
+
+        // Implement this to draw on the canvas.
+        protected override void OnPaintSurface(SkiaSharp.Views.Desktop.SKPaintSurfaceEventArgs e) {
+            base.OnPaintSurface(e);
+            KChartHandler.Draw(new SKChartPainter(e.Surface.Canvas), Location.X, Location.Y, e.Info.Width, e.Info.Height);
+        }
+
         private DateTime lastTooltipUpdate = DateTime.MinValue;
-        public static bool shiftKeyDown = false;
         public static bool mouseInsideChartControl = false;
 
         protected override void OnMouseMove(MouseEventArgs e) {
@@ -47,47 +68,32 @@ namespace KaemikaWPF {
                 KChartHandler.ShowEndNames(!shiftKeyDown);
                 if (!shiftKeyDown) UpdateTooltip(new Point(e.X, e.Y), KChartHandler.HitListTooltip(new SKPoint(e.X, e.Y), 10));
                 lastTooltipUpdate = DateTime.Now;
-                if (!Exec.IsExecuting()) Invalidate(); // because of ShowEndNames
+                if (!KControls.IsSimulating()) Invalidate(); // because of ShowEndNames
             }
         }
         protected override void OnMouseEnter(EventArgs e) {
             base.OnMouseEnter(e);
             mouseInsideChartControl = true;
             KChartHandler.ShowEndNames(true);
-            if (!Exec.IsExecuting()) Invalidate();
+            if (!KControls.IsSimulating()) Invalidate();
         }
         protected override void OnMouseLeave(EventArgs e) {
             base.OnMouseLeave(e);
             mouseInsideChartControl = false;
             UpdateTooltip(new Point(0, 0), "");
             KChartHandler.ShowEndNames(false);
-            if (!Exec.IsExecuting()) Invalidate();
+            if (!KControls.IsSimulating()) Invalidate();
         }
         protected override void OnMouseClick(MouseEventArgs e) {
             base.OnMouseClick(e);
-            App.guiToWin.kControls.CloseOpenMenu();
-        }
-        public static void OnShiftKeyDown() {  // called from GuiToWin.GuiToWin_KeyDown form callback
-            shiftKeyDown = true;
-            if (mouseInsideChartControl) {
-                KChartHandler.ShowEndNames(false);
-                chartControl.UpdateTooltip(new Point(0, 0), "");
-                if (!Exec.IsExecuting()) chartControl.Invalidate();
-            }
-        }
-        public static void OnShiftKeyUp() {  // called from GuiToWin.GuiToWin_KeyUp form callback
-            shiftKeyDown = false;
-            if (mouseInsideChartControl) {
-                KChartHandler.ShowEndNames(true);
-                if (!Exec.IsExecuting()) chartControl.Invalidate();
-            }
+            KGui.kControls.CloseOpenMenu();
         }
 
         private void UpdateTooltip(Point point, string tip) {
             int off = 6;
             int pointerWidth = 16;
-            Label toolTip = App.guiToWin.label_Tooltip;
-            Panel chart = App.guiToWin.panel_KChart;
+            Label toolTip = WinGui.winGui.label_Tooltip;
+            Panel chart = WinGui.winGui.panel_KChart;
             if (tip == "") {
                 toolTip.Text = "";
                 toolTip.Visible = false;

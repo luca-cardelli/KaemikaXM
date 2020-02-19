@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Collections.Generic;
 using System.Windows.Forms;
 using System.IO;
 using SkiaSharp;
@@ -59,60 +60,59 @@ namespace KaemikaWPF {
         public KFlyoutMenu menuSettings { get; }
         public WinControls() {
             modelsDirectory = Environment.GetFolderPath(defaultUserDataDirectoryPath);
-            RestoreDirectories();
-            onOffStop = MenuButton(App.guiToWin.btnStop);
-            onOffEval = MenuButton(App.guiToWin.btnEval);
-            onOffDevice = MenuButton(App.guiToWin.button_Device);
-            onOffDeviceView = MenuButton(App.guiToWin.button_FlipMicrofluidics);
-            onOffFontSizePlus = MenuButton(App.guiToWin.button_FontSizePlus);
-            onOffFontSizeMinus = MenuButton(App.guiToWin.button_FontSizeMinus);
-            onOffSave = MenuButton(App.guiToWin.button_Source_Copy);
-            onOffLoad = MenuButton(App.guiToWin.button_Source_Paste);
-            menuTutorial = new WinFlyoutMenu(App.guiToWin.button_Tutorial, App.guiToWin.tableLayoutPanel_Tutorial, App.guiToWin.panel1,FlyoutAttachment.RightTop, 9.0F, false, new Padding(4),
+            onOffStop = MenuButton(WinGui.winGui.btnStop);
+            onOffEval = MenuButton(WinGui.winGui.btnEval);
+            onOffDevice = MenuButton(WinGui.winGui.button_Device);
+            onOffDeviceView = MenuButton(WinGui.winGui.button_FlipMicrofluidics);
+            onOffFontSizePlus = MenuButton(WinGui.winGui.button_FontSizePlus);
+            onOffFontSizeMinus = MenuButton(WinGui.winGui.button_FontSizeMinus);
+            onOffSave = MenuButton(WinGui.winGui.button_Source_Copy);
+            onOffLoad = MenuButton(WinGui.winGui.button_Source_Paste);
+            menuTutorial = new WinFlyoutMenu(WinGui.winGui.button_Tutorial, WinGui.winGui.tableLayoutPanel_Tutorial, WinGui.winGui.panel1,FlyoutAttachment.RightTop, 9.0F, false, new Padding(4),
                 cMainButtonText, cMainButtonDeselected, cMainButtonSelected, cMenuButtonText, cMenuButtonDeselected, cMenuButtonSelected);
-            menuNoise = new WinFlyoutMenu(App.guiToWin.button_Noise, App.guiToWin.tableLayoutPanel_Noise, App.guiToWin.panel2, FlyoutAttachment.LeftDown, 10.0F, false, new Padding(1),
+            menuNoise = new WinFlyoutMenu(WinGui.winGui.button_Noise, WinGui.winGui.tableLayoutPanel_Noise, WinGui.winGui.panel2, FlyoutAttachment.LeftDown, 10.0F, false, new Padding(1),
                 cMainButtonText, cMainButtonDeselected, cMainButtonSelected, cMenuButtonText, cMenuButtonDeselected, cMenuButtonSelected);
-            menuOutput = new WinFlyoutMenu(App.guiToWin.button_Output, App.guiToWin.tableLayoutPanel_Output, App.guiToWin.panel2, FlyoutAttachment.LeftDown, 12.0F, false, new Padding(4),
+            menuOutput = new WinFlyoutMenu(WinGui.winGui.button_Output, WinGui.winGui.tableLayoutPanel_Output, WinGui.winGui.panel2, FlyoutAttachment.LeftDown, 12.0F, false, new Padding(4),
                 cMainButtonText, cMainButtonDeselected, cMainButtonSelected, cMenuButtonText, cMenuButtonDeselected, cMenuButtonSelected);
-            menuExport = new WinFlyoutMenu(App.guiToWin.button_Export, App.guiToWin.tableLayoutPanel_Export, App.guiToWin.panel1, FlyoutAttachment.RightDown, 11.0F, false, new Padding(4),
+            menuExport = new WinFlyoutMenu(WinGui.winGui.button_Export, WinGui.winGui.tableLayoutPanel_Export, WinGui.winGui.panel1, FlyoutAttachment.RightDown, 11.0F, false, new Padding(4),
                 cMainButtonText, cMainButtonDeselected, cMainButtonSelected, cMenuButtonText, cMenuButtonDeselected, cMenuButtonSelected);
-            menuMath = new WinFlyoutMenu(App.guiToWin.button_Math, App.guiToWin.tableLayoutPanel_Math, App.guiToWin.panel1, FlyoutAttachment.RightDown, 12.0F, false, new Padding(1),
+            menuMath = new WinFlyoutMenu(WinGui.winGui.button_Math, WinGui.winGui.tableLayoutPanel_Math, WinGui.winGui.panel1, FlyoutAttachment.RightDown, 12.0F, false, new Padding(1),
                 cMainButtonText, cMainButtonDeselected, cMainButtonSelected, cMenuButtonText, cMenuButtonDeselected, cMenuButtonSelected);
-            menuLegend = new WinFlyoutMenu(App.guiToWin.button_EditChart, App.guiToWin.tableLayoutPanel_Legend, App.guiToWin.panel2, FlyoutAttachment.TextOutputRight, 9.0F, false, new Padding(8,0,8,0),
+            menuLegend = new WinFlyoutMenu(WinGui.winGui.button_EditChart, WinGui.winGui.tableLayoutPanel_Legend, WinGui.winGui.panel2, FlyoutAttachment.TextOutputRight, 9.0F, false, new Padding(8,0,8,0),
                 cMainButtonText, cMainButtonDeselected, cMainButtonSelected, cPanelButtonText, cPanelButtonDeselected, cPanelButtonSelected);
-            menuParameters = new WinFlyoutMenu(App.guiToWin.button_Parameters, App.guiToWin.tableLayoutPanel_Parameters, App.guiToWin.panel1, FlyoutAttachment.TextOutputLeft, 9.0F, false, new Padding(4),
+            menuParameters = new WinFlyoutMenu(WinGui.winGui.button_Parameters, WinGui.winGui.tableLayoutPanel_Parameters, WinGui.winGui.panel1, FlyoutAttachment.TextOutputLeft, 9.0F, false, new Padding(4),
                 cMainButtonText, cMainButtonDeselected, cMainButtonSelected, cPanelButtonText, cPanelButtonDeselected, cPanelButtonSelected);
-            menuSettings = new WinFlyoutMenu(App.guiToWin.button_Settings, App.guiToWin.tableLayoutPanel_Settings, App.guiToWin.panel2, FlyoutAttachment.LeftUp, 12.0F, false, new Padding(4),
+            menuSettings = new WinFlyoutMenu(WinGui.winGui.button_Settings, WinGui.winGui.tableLayoutPanel_Settings, WinGui.winGui.panel2, FlyoutAttachment.LeftUp, 12.0F, false, new Padding(4),
                 cMainButtonText, cMainButtonDeselected, cMainButtonSelected, cMenuButtonText, cMenuButtonDeselected, cMenuButtonSelected);
         }
         private KButton MenuButton(Button button) {
             return new WinButton(AutoSizeButton(button), cMainButtonText, cMainButtonDeselected, cMainButtonSelected);
         }
         public bool IsShiftDown() {
-            return App.guiToWin.IsShiftDown();
+            return WinGui.winGui.IsShiftDown();
         }
         public bool IsMicrofluidicsVisible() { 
-            return App.guiToWin.panel_Microfluidics.Visible; 
+            return WinGui.winGui.panel_Microfluidics.Visible; 
         }
         public void MicrosfluidicsVisible(bool on) {
-            App.guiToWin.panel_Microfluidics.Visible = on;
+            WinGui.winGui.panel_Microfluidics.Visible = on;
         }
         public void MicrofluidicsOn() {
-            DeviceSKControl.deviceControl.Size = App.guiToWin.panel_Microfluidics.Size;
-            App.guiToWin.panel_Microfluidics.BringToFront();
-            App.guiToWin.panel_Microfluidics.Visible = true;
+            DeviceSKControl.SetSize(WinGui.winGui.panel_Microfluidics.Size);
+            WinGui.winGui.panel_Microfluidics.BringToFront();
+            WinGui.winGui.panel_Microfluidics.Visible = true;
         }
         public void MicrofluidicsOff() {
-            App.guiToWin.panel_Microfluidics.Visible = false;
+            WinGui.winGui.panel_Microfluidics.Visible = false;
         }
         public void IncrementFont(float pointSize) {
-            SetTextFont(App.guiToWin.txtInput.Font.Size + pointSize, true);
+            SetTextFont(WinGui.winGui.txtInput.Font.Size + pointSize, true);
         }
         public void PrivacyPolicyToClipboard() {
             Clipboard.SetText("http://lucacardelli.name/Artifacts/Kaemika/KaemikaUWP/privacy_policy.html");
         }
         public void SplashOff() {
-            App.guiToWin.panel_Splash.Visible = false;
+            WinGui.winGui.panel_Splash.Visible = false;
         }
         public void Save() {
             using (SaveFileDialog saveFileDialog = new SaveFileDialog()) {
@@ -122,7 +122,7 @@ namespace KaemikaWPF {
                 saveFileDialog.RestoreDirectory = false;
                 if (saveFileDialog.ShowDialog() == DialogResult.OK) {
                     try {
-                        File.WriteAllText(saveFileDialog.FileName, Gui.toGui.InputGetText(), System.Text.Encoding.Unicode);
+                        File.WriteAllText(saveFileDialog.FileName, KGui.gui.GuiInputGetText(), System.Text.Encoding.Unicode);
                     } catch {
                         MessageBox.Show(saveFileDialog.FileName, "Could not write this file:", MessageBoxButtons.OK);
                     }
@@ -137,7 +137,7 @@ namespace KaemikaWPF {
                 openFileDialog.RestoreDirectory = false;
                 if (openFileDialog.ShowDialog() == DialogResult.OK) {
                     try {
-                        Gui.toGui.InputSetText(File.ReadAllText(openFileDialog.FileName, System.Text.Encoding.Unicode));
+                        KGui.gui.GuiInputSetText(File.ReadAllText(openFileDialog.FileName, System.Text.Encoding.Unicode));
                     } catch {
                         MessageBox.Show(openFileDialog.FileName, "Could not read this file:", MessageBoxButtons.OK);
                     }
@@ -152,21 +152,29 @@ namespace KaemikaWPF {
                 if (dialog.ShowDialog() == DialogResult.OK) folderPath = dialog.SelectedPath;
                 if (folderPath != string.Empty)  {
                     modelsDirectory = folderPath;
-                    SaveDirectories();
+                    SavePreferences();
                     MessageBox.Show(folderPath, "Directory set to:", MessageBoxButtons.OK);
                 }
             }
         }
-        public void SaveDirectories() {
+        public void SavePreferences() {
             try {
                 string path2 = CreateKaemikaDataDirectory() + "\\modelsdir.txt";
                 File.WriteAllText(path2, modelsDirectory);
             } catch (Exception) { }
+            try {
+                string path2 = CreateKaemikaDataDirectory() + "\\outputaction.txt";
+                File.WriteAllText(path2, Exec.currentOutputAction.name);
+            } catch (Exception) { }
         }
-        public void RestoreDirectories() {
+        public void RestorePreferences() {
             try {
                 string path2 = CreateKaemikaDataDirectory() + "\\modelsdir.txt";
                 if (File.Exists(path2)) { modelsDirectory = File.ReadAllText(path2); }
+            } catch (Exception) { }
+            try {
+                string path2 = CreateKaemikaDataDirectory() + "\\outputaction.txt";
+                if (File.Exists(path2)) { KGui.kControls.SetOutputSelection(File.ReadAllText(path2)); }
             } catch (Exception) { }
         }
         public static Button AutoSizeButton(Button button) {
@@ -181,10 +189,13 @@ namespace KaemikaWPF {
         }
         public static void SetTextFont(float size, bool fixedWidth) {
             if (size >= 6) {
-                Font font = App.guiToWin.GetFont(size, fixedWidth);
-                App.guiToWin.txtInput.Font = font;
-                App.guiToWin.txtOutput.Font = font;
+                Font font = WinGui.winGui.GetFont(size, fixedWidth);
+                WinGui.winGui.txtInput.Font = font;
+                WinGui.winGui.txtOutput.Font = font;
             }
+        }
+        public void SetSnapshotSize() {
+            WinGui.winGui.SetSnapshotSize();
         }
     }
     
@@ -360,6 +371,7 @@ namespace KaemikaWPF {
     public class WinFlyoutMenu : WinButton, KFlyoutMenu {
         private Panel buttonBar;
         private TableLayoutPanel menu;
+        private Dictionary<string, KButton> namedControls;
         private FlyoutAttachment attachment;
         public bool autoClose { get; set; }
         private float pointSize;
@@ -372,6 +384,7 @@ namespace KaemikaWPF {
                     Color cMainButtonText, Color cMainButtonDeselected, Color cMainButtonSelected, Color cMenuButtonText, Color cMenuButtonDeselected, Color cMenuButtonSelected)
                     : base(button, cMainButtonText, cMainButtonDeselected, cMainButtonSelected) {
             this.menu = menu;
+            this.namedControls = new Dictionary<string, KButton>();
             this.menu.Margin = new Padding(0);
             this.menu.Padding = padding;
             this.buttonBar = buttonBar;
@@ -392,10 +405,16 @@ namespace KaemikaWPF {
         }
         public void ClearMenuItems() {
             this.menu.Controls.Clear();
+            this.namedControls = new Dictionary<string, KButton>();
             this.menu.RowStyles.Clear();    // or it makes equal-height rows
             this.menu.ColumnStyles.Clear(); // or it makes equal-width columns
             this.menu.RowCount = 0;
             this.menu.ColumnCount = 1;
+        }
+        public void SetSelection(string name) {
+            if (!this.namedControls.ContainsKey(name)) return;
+            KButton control = this.namedControls[name];
+            KControls.ItemSelected(this, control);
         }
         private void AddMenuControl(Control control) { // row++, col=1
             this.menu.Controls.Add(control);
@@ -403,7 +422,8 @@ namespace KaemikaWPF {
             this.menu.SetRow(control, this.menu.RowCount - 1);
             this.menu.SetColumn(control, 1);
         }
-        public void AddMenuItem(KControl item) { // to column 1
+        public void AddMenuItem(KControl item, string name = null) { // to column 1
+            if (name != null && item is KButton asKButton) this.namedControls[name] = asKButton;
             AddMenuControl(((WinControl)item).control);
         }
         public void AddMenuItems(KControl[] items) { // to column 1
@@ -449,12 +469,12 @@ namespace KaemikaWPF {
         }
         public KButton NewMenuSection(int level = 1) {
             var sectionButton = new WinButton(new TightButton(false, false), WinControls.cMenuButtonHotText, this.cMenuButtonDeselected, this.cMenuButtonSelected);
-            sectionButton.SetFont(App.guiToWin.GetFont(this.pointSize - (level - 1), this.fixedWidth));
+            sectionButton.SetFont(WinGui.winGui.GetFont(this.pointSize - (level - 1), this.fixedWidth));
             return sectionButton;
         }
         public KButton NewMenuItemButton(bool multiline = false) {
             var itemButton = new WinButton(new TightButton(true, multiline), this.cMenuButtonText, this.cMenuButtonDeselected, this.cMenuButtonSelected);
-            itemButton.SetFont(App.guiToWin.GetFont(this.pointSize, this.fixedWidth));
+            itemButton.SetFont(WinGui.winGui.GetFont(this.pointSize, this.fixedWidth));
             return itemButton;
         }
         public KSlider NewMenuItemTrackBar() {
@@ -474,7 +494,7 @@ namespace KaemikaWPF {
             else if (this.attachment == FlyoutAttachment.RightTop) this.menu.Location = new Point(this.buttonBar.Location.X + this.buttonBar.Size.Width, this.buttonBar.Location.Y);
             else if (this.attachment == FlyoutAttachment.LeftTop) this.menu.Location = new Point(this.buttonBar.Location.X - this.menu.Size.Width, this.buttonBar.Location.Y);
             else if (this.attachment == FlyoutAttachment.TextOutputLeft) this.menu.Location = new Point(0, 0);
-            else if (this.attachment == FlyoutAttachment.TextOutputRight) this.menu.Location = new Point(App.guiToWin.txtOutput.Size.Width - this.menu.Width, 0);
+            else if (this.attachment == FlyoutAttachment.TextOutputRight) this.menu.Location = new Point(WinGui.winGui.txtOutput.Size.Width - this.menu.Width, 0);
         }
         public void Open() {
             Attach();
@@ -540,116 +560,6 @@ namespace KaemikaWPF {
             this.mouseEntered = false; Invalidate();
         }
     }
-
-    //public class WinFlyoutMenuFLP : WinButton, KFlyoutMenu {
-    //    private Panel buttonBar;
-    //    private FlowLayoutPanel menu;
-    //    private FlyoutAttachment attachment;
-    //    public bool autoClose { get; set; }
-    //    private float pointSize;
-    //    private bool fixedWidth;
-    //    private Color cMenuButtonText;
-    //    private Color cMenuButtonDeselected;
-    //    private Color cMenuButtonSelected;
-    //    public KButton selectedItem { get; set; }
-    //    public WinFlyoutMenuFLP(Button button, FlowLayoutPanel menu, Panel buttonBar, FlyoutAttachment attachment, float pointSize, bool fixedWidth, 
-    //                Color cMainButtonText, Color cMainButtonDeselected, Color cMainButtonSelected, Color cMenuButtonText, Color cMenuButtonDeselected, Color cMenuButtonSelected) 
-    //                : base(button, cMainButtonText, cMainButtonDeselected, cMainButtonSelected) {
-    //        this.menu = menu;
-    //        this.buttonBar = buttonBar;
-    //        this.autoClose = false;
-    //        this.attachment = attachment;
-    //        this.pointSize = pointSize;
-    //        this.fixedWidth = fixedWidth;
-    //        this.cMenuButtonText = cMenuButtonText;
-    //        this.cMenuButtonDeselected = cMenuButtonDeselected;
-    //        this.cMenuButtonSelected = cMenuButtonSelected;
-    //        menu.BackColor = cMenuButtonDeselected;
-    //        menu.AutoSize = true;
-    //        menu.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-    //        menu.FlowDirection = FlowDirection.TopDown;
-    //        menu.AutoScroll = false; // or it will flow horizontally and add a scrollbar
-    //        menu.Visible = false;
-    //        menu.BringToFront();
-    //    }
-    //    public void ClearMenuItems() {
-    //        this.menu.Controls.Clear();
-    //    }
-    //    public void AddMenuItem(KControl item) {
-    //        this.menu.Controls.Add(((WinControl)item).control);
-    //    }
-    //    public void AddMenuItems(KControl[] items) {
-    //        AddMenuRow(items);
-    //    }
-    //    public void AddMenuRow(KControl[] items) {
-    //        FlowLayoutPanel rowItems = new FlowLayoutPanel();
-    //        rowItems.FlowDirection = FlowDirection.LeftToRight;
-    //        rowItems.AutoSize = true;
-    //        rowItems.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-    //        rowItems.BorderStyle = BorderStyle.None;
-    //        rowItems.Padding = new Padding(0, 0, 0, 0);
-    //        rowItems.Margin = new Padding(0, 0, 0, 0);
-    //        for (int i = 0; i < items.Length; i++) 
-    //            rowItems.Controls.Add(((WinControl)items[i]).control);
-    //        this.menu.Controls.Add(rowItems);
-    //    }
-    //    public void AddMenuGrid(KControl[,] items) {
-    //        this.menu.AutoSize = false; // this makes them align in columns
-    //        this.menu.AutoScroll = false; // otherwise it reserves space of a hor scrollbar
-    //        foreach (KControl item in items) {
-    //            Control control = ((WinControl)item).control;
-    //            this.menu.Controls.Add(control);
-    //        }
-    //    }
-    //    public void AddSeparator() {
-    //        var label = new Label();
-    //        label.AutoSize = false;
-    //        label.Text = "";
-    //        label.BorderStyle = BorderStyle.Fixed3D; // or FixedSingle then can change BackgroundColor
-    //        label.Height = 2;
-    //        label.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-    //        this.menu.Controls.Add(label);
-    //    }
-    //    public KButton NewMenuSection(int level = 1) {
-    //        var sectionButton = new WinButton(AutoSize(new Button()), cMenuButtonHotText, this.cMenuButtonDeselected, this.cMenuButtonSelected);
-    //        sectionButton.SetFont(App.guiToWin.GetFont(this.pointSize - (level - 1), this.fixedWidth));
-    //        sectionButton.Hover(false);
-    //        return sectionButton;
-    //    }
-    //    public KButton NewMenuItemButton() {
-    //        //var itemButton = new WinButton(FixedSize(new OwnButton()), this.cMenuButtonText, this.cMenuButtonDeselected, this.cMenuButtonSelected);
-    //        var itemButton = new WinButton(AutoSize(new Button()), this.cMenuButtonText, this.cMenuButtonDeselected, this.cMenuButtonSelected);
-    //        itemButton.SetFont(App.guiToWin.GetFont(this.pointSize, this.fixedWidth));
-    //        return itemButton;
-    //    }
-    //    public KSlider NewMenuItemTrackBar() {
-    //        var trackBar = new WinSlider(new TrackBar(), this.cMenuButtonText, this.cMenuButtonDeselected, this.cMenuButtonSelected);
-    //        return trackBar;
-    //    }
-    //    public bool IsOpen() {
-    //        return this.menu.Visible;
-    //    }
-    //    private void Attach() {
-    //        if (this.attachment == FlyoutAttachment.RightDown) this.menu.Location = new Point(this.buttonBar.Location.X + this.buttonBar.Size.Width, this.buttonBar.Location.Y + this.button.Location.Y);
-    //        else if (this.attachment == FlyoutAttachment.LeftDown) this.menu.Location = new Point(this.buttonBar.Location.X - this.menu.Size.Width, this.buttonBar.Location.Y + this.button.Location.Y);
-    //        else if (this.attachment == FlyoutAttachment.RightUp) this.menu.Location = new Point(this.buttonBar.Location.X + this.buttonBar.Size.Width, this.buttonBar.Location.Y + this.button.Location.Y + this.button.Size.Height - this.menu.Size.Height);
-    //        else if (this.attachment == FlyoutAttachment.LeftUp) this.menu.Location = new Point(this.buttonBar.Location.X - this.menu.Size.Width, this.buttonBar.Location.Y + this.button.Location.Y + this.button.Size.Height - this.menu.Size.Height);
-    //        else if (this.attachment == FlyoutAttachment.RightTop) this.menu.Location = new Point(this.buttonBar.Location.X + this.buttonBar.Size.Width, this.buttonBar.Location.Y);
-    //        else if (this.attachment == FlyoutAttachment.LeftTop) this.menu.Location = new Point(this.buttonBar.Location.X - this.menu.Size.Width, this.buttonBar.Location.Y);
-    //        else if (this.attachment == FlyoutAttachment.TextOutputLeft) this.menu.Location = new Point(0, 0);
-    //        else if (this.attachment == FlyoutAttachment.TextOutputRight) this.menu.Location = new Point(App.guiToWin.txtOutput.Size.Width - this.menu.Width, 0);
-    //    }
-    //    public void Open() {
-    //        Attach();
-    //        Selected(true);
-    //        this.menu.Visible = true;
-    //        this.menu.BringToFront();
-    //    }
-    //    public void Close() {
-    //        this.menu.Visible = false;
-    //        Selected(false);
-    //    }
-    //}
 
 }
 

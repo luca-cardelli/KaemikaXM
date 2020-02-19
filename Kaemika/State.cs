@@ -27,6 +27,14 @@ namespace Kaemika {
             }
             return false;
         }
+        public int IndexOf(Symbol species) {
+            int index = 0;
+            foreach (SpeciesValue s in this.species) {
+                if (s.symbol.SameSymbol(species)) return index;
+                index++;
+            }
+            throw new Error("StateMap.IndexOf");
+        }
         public double Molarity(Symbol species, Style style) { // checks if species exists
             if (this.HasSpecies(species, out int index)) return this.state.Mean(index);
             else throw new Error("Uninitialized species '" + species.Format(style) + "' in sample '" + this.sample.Format(style) + "'");
@@ -274,27 +282,27 @@ namespace Kaemika {
             if (s.Length > 0) s = s.Substring(0, s.Length - 2);
             return s;
         }
-        public string FormatReports(List<ReportEntry> reports, SampleValue sample, Func<double, Vector, Vector> flux, double time, Noise noise, string[] series, string[] seriesLNA, Style style) {
-            string s = "";
-            for (int i = 0; i < reports.Count; i++) {
-                if (series[i] != null) { // if a series was actually generated from this report
-                    // generate deterministic series
-                    if ((noise == Noise.None && reports[i].flow.HasDeterministicValue()) ||
-                        (noise != Noise.None && reports[i].flow.HasStochasticMean())) {
-                        double mean = reports[i].flow.ObserveMean(sample, time, this, flux, style);
-                        s += KChartHandler.ChartAddPointAsString(series[i], time, mean, 0.0, Noise.None) + ", ";
-                    }
-                    // generate LNA-dependent series
-                    if (noise != Noise.None && reports[i].flow.HasStochasticVariance() && !reports[i].flow.HasNullVariance()) {
-                        double mean = reports[i].flow.ObserveMean(sample, time, this, flux, style);
-                        double variance = reports[i].flow.ObserveVariance(sample, time, this, style);
-                        s += KChartHandler.ChartAddPointAsString(seriesLNA[i], time, mean, variance, noise) + ", ";
-                    }
-                }
-            }
-            if (s.Length > 0) s = s.Substring(0, s.Length - 2);
-            return s;
-        }
+        //public string FormatReports(List<ReportEntry> reports, SampleValue sample, Func<double, Vector, Vector> flux, double time, Noise noise, string[] series, string[] seriesLNA, Style style) {
+        //    string s = "";
+        //    for (int i = 0; i < reports.Count; i++) {
+        //        if (series[i] != null) { // if a series was actually generated from this report
+        //            // generate deterministic series
+        //            if ((noise == Noise.None && reports[i].flow.HasDeterministicValue()) ||
+        //                (noise != Noise.None && reports[i].flow.HasStochasticMean())) {
+        //                double mean = reports[i].flow.ObserveMean(sample, time, this, flux, style);
+        //                s += KChartHandler.ChartAddPointAsString(series[i], time, mean, 0.0, Noise.None) + ", ";
+        //            }
+        //            // generate LNA-dependent series
+        //            if (noise != Noise.None && reports[i].flow.HasStochasticVariance() && !reports[i].flow.HasNullVariance()) {
+        //                double mean = reports[i].flow.ObserveMean(sample, time, this, flux, style);
+        //                double variance = reports[i].flow.ObserveVariance(sample, time, this, style);
+        //                s += KChartHandler.ChartAddPointAsString(seriesLNA[i], time, mean, variance, noise) + ", ";
+        //            }
+        //        }
+        //    }
+        //    if (s.Length > 0) s = s.Substring(0, s.Length - 2);
+        //    return s;
+        //}
     }
 
 }

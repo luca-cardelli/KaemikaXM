@@ -71,60 +71,59 @@ namespace KaemikaMAC {
         public KFlyoutMenu menuSettings { get; }
         public MacControls() {
             modelsDirectory = Environment.GetFolderPath(defaultUserDataDirectoryPath);
-            RestoreDirectories();
-            onOffStop = MenuButton((NSButtonPlus)MainClass.guiToMac.buttonStop);
-            onOffEval = MenuButton((NSButtonPlus)MainClass.guiToMac.buttonPlay);
-            onOffDevice = MenuButton((NSButtonPlus)MainClass.guiToMac.buttonDevice);
-            onOffDeviceView = MenuButton((NSButtonPlus)MainClass.guiToMac.buttonDeviceView);
-            onOffFontSizePlus = MenuButton((NSButtonPlus)MainClass.guiToMac.buttonFontBigger);
-            onOffFontSizeMinus = MenuButton((NSButtonPlus)MainClass.guiToMac.buttonFontSmaller);
-            onOffSave = MenuButton((NSButtonPlus)MainClass.guiToMac.buttonSave);
-            onOffLoad = MenuButton((NSButtonPlus)MainClass.guiToMac.buttonLoad);
-            menuTutorial = new MacFlyoutMenu((NSButtonPlus)MainClass.guiToMac.buttonTutorial, MainClass.guiToMac.tutorialFlyoutMenu, MainClass.guiToMac.tutorialFlyoutBox, MainClass.guiToMac.leftButtonPanel, FlyoutAttachment.RightTop, 14.0F, false, new CGSize(8,4),
+            onOffStop = MenuButton((NSButtonPlus)MacGui.macGui.buttonStop);
+            onOffEval = MenuButton((NSButtonPlus)MacGui.macGui.buttonPlay);
+            onOffDevice = MenuButton((NSButtonPlus)MacGui.macGui.buttonDevice);
+            onOffDeviceView = MenuButton((NSButtonPlus)MacGui.macGui.buttonDeviceView);
+            onOffFontSizePlus = MenuButton((NSButtonPlus)MacGui.macGui.buttonFontBigger);
+            onOffFontSizeMinus = MenuButton((NSButtonPlus)MacGui.macGui.buttonFontSmaller);
+            onOffSave = MenuButton((NSButtonPlus)MacGui.macGui.buttonSave);
+            onOffLoad = MenuButton((NSButtonPlus)MacGui.macGui.buttonLoad);
+            menuTutorial = new MacFlyoutMenu((NSButtonPlus)MacGui.macGui.buttonTutorial, MacGui.macGui.tutorialFlyoutMenu, MacGui.macGui.tutorialFlyoutBox, MacGui.macGui.leftButtonPanel, FlyoutAttachment.RightTop, 14.0F, false, new CGSize(8,4),
                 nsMainButtonText, nsMainButtonDeselected, nsMainButtonSelected, nsMenuButtonText, nsMenuButtonDeselected, nsMenuButtonSelected);
-            menuNoise = new MacFlyoutMenu((NSButtonPlus)MainClass.guiToMac.buttonNoise, MainClass.guiToMac.noiseFlyoutMenu, MainClass.guiToMac.noiseFlyoutBox, MainClass.guiToMac.rightButtonPanel, FlyoutAttachment.LeftDown, 14.0F, false, new CGSize(1,1),
+            menuNoise = new MacFlyoutMenu((NSButtonPlus)MacGui.macGui.buttonNoise, MacGui.macGui.noiseFlyoutMenu, MacGui.macGui.noiseFlyoutBox, MacGui.macGui.rightButtonPanel, FlyoutAttachment.LeftDown, 14.0F, false, new CGSize(1,1),
                 nsMainButtonText, nsMainButtonDeselected, nsMainButtonSelected, nsMenuButtonText, nsMenuButtonDeselected, nsMenuButtonSelected);
-            menuOutput = new MacFlyoutMenu((NSButtonPlus)MainClass.guiToMac.buttonCompute, MainClass.guiToMac.computeFlyoutMenu, MainClass.guiToMac.computeFlyoutBox, MainClass.guiToMac.rightButtonPanel, FlyoutAttachment.LeftDown, 18.0F, false, new CGSize(8,4),
+            menuOutput = new MacFlyoutMenu((NSButtonPlus)MacGui.macGui.buttonCompute, MacGui.macGui.computeFlyoutMenu, MacGui.macGui.computeFlyoutBox, MacGui.macGui.rightButtonPanel, FlyoutAttachment.LeftDown, 18.0F, false, new CGSize(8,4),
                 nsMainButtonText, nsMainButtonDeselected, nsMainButtonSelected, nsMenuButtonText, nsMenuButtonDeselected, nsMenuButtonSelected);
-            menuExport = new MacFlyoutMenu((NSButtonPlus)MainClass.guiToMac.buttonShare, MainClass.guiToMac.shareFlyoutMenu, MainClass.guiToMac.shareFlyoutBox, MainClass.guiToMac.leftButtonPanel, FlyoutAttachment.RightDown, 18.0F, false, new CGSize(8,4),
+            menuExport = new MacFlyoutMenu((NSButtonPlus)MacGui.macGui.buttonShare, MacGui.macGui.shareFlyoutMenu, MacGui.macGui.shareFlyoutBox, MacGui.macGui.leftButtonPanel, FlyoutAttachment.RightDown, 18.0F, false, new CGSize(8,4),
                 nsMainButtonText, nsMainButtonDeselected, nsMainButtonSelected, nsMenuButtonText, nsMenuButtonDeselected, nsMenuButtonSelected);
-            menuMath = new MacFlyoutMenu((NSButtonPlus)MainClass.guiToMac.buttonKeyboard, MainClass.guiToMac.keyboardFlyoutMenu, MainClass.guiToMac.keyboardFlyoutBox, MainClass.guiToMac.leftButtonPanel, FlyoutAttachment.RightDown, 20.0F, true, new CGSize(1,1),
+            menuMath = new MacFlyoutMenu((NSButtonPlus)MacGui.macGui.buttonKeyboard, MacGui.macGui.keyboardFlyoutMenu, MacGui.macGui.keyboardFlyoutBox, MacGui.macGui.leftButtonPanel, FlyoutAttachment.RightDown, 20.0F, true, new CGSize(1,1),
                 nsMainButtonText, nsMainButtonDeselected, nsMainButtonSelected, nsMenuButtonText, nsMenuButtonDeselected, nsMenuButtonSelected);
-            menuLegend = new MacFlyoutMenu((NSButtonPlus)MainClass.guiToMac.buttonLegend, MainClass.guiToMac.legendFlyoutMenu, MainClass.guiToMac.legendFlyoutBox, MainClass.guiToMac.rightButtonPanel, FlyoutAttachment.TextOutputRight, 12.0F, true, new CGSize(8,4),
+            menuLegend = new MacFlyoutMenu((NSButtonPlus)MacGui.macGui.buttonLegend, MacGui.macGui.legendFlyoutMenu, MacGui.macGui.legendFlyoutBox, MacGui.macGui.rightButtonPanel, FlyoutAttachment.TextOutputRight, 12.0F, true, new CGSize(8,4),
                 nsMainButtonText, nsMainButtonDeselected, nsMainButtonSelected, nsMenuButtonText, nsMenuButtonDeselected, nsMenuButtonSelected);
-            menuParameters = new MacFlyoutMenu((NSButtonPlus)MainClass.guiToMac.buttonParameters, MainClass.guiToMac.parametersFlyoutMenu, MainClass.guiToMac.parameterBox, MainClass.guiToMac.leftButtonPanel, FlyoutAttachment.TextOutputLeft, 12.0F, true, new CGSize(8,4),
+            menuParameters = new MacFlyoutMenu((NSButtonPlus)MacGui.macGui.buttonParameters, MacGui.macGui.parametersFlyoutMenu, MacGui.macGui.parameterBox, MacGui.macGui.leftButtonPanel, FlyoutAttachment.TextOutputLeft, 12.0F, true, new CGSize(8,4),
                 nsMainButtonText, nsMainButtonDeselected, nsMainButtonSelected, nsMenuButtonText, nsMenuButtonDeselected, nsMenuButtonSelected);
-            menuSettings = new MacFlyoutMenu((NSButtonPlus)MainClass.guiToMac.buttonSettings, MainClass.guiToMac.settingsFlyoutMenu, MainClass.guiToMac.settingsFlyoutBox, MainClass.guiToMac.rightButtonPanel, FlyoutAttachment.LeftUp, 14.0F, false, new CGSize(8,4),
+            menuSettings = new MacFlyoutMenu((NSButtonPlus)MacGui.macGui.buttonSettings, MacGui.macGui.settingsFlyoutMenu, MacGui.macGui.settingsFlyoutBox, MacGui.macGui.rightButtonPanel, FlyoutAttachment.LeftUp, 14.0F, false, new CGSize(8,4),
                 nsMainButtonText, nsMainButtonDeselected, nsMainButtonSelected, nsMenuButtonText, nsMenuButtonDeselected, nsMenuButtonSelected);
         }
         private KButton MenuButton(NSButtonPlus button) {
             return new MacButton(button, nsMenuButtonText, nsMainButtonDeselected, nsMainButtonSelected);
         }
         public bool IsShiftDown() {
-            return GuiToMac.IsShiftDown();
+            return MacGui.IsShiftDown();
         }
         public bool IsMicrofluidicsVisible() { 
-            return !MainClass.guiToMac.deviceBox.Hidden; 
+            return !MacGui.macGui.deviceBox.Hidden; 
         }
         public void MicrosfluidicsVisible(bool on) {
-            MainClass.guiToMac.deviceBox.Hidden = !on;
+            MacGui.macGui.deviceBox.Hidden = !on;
         }
         public void MicrofluidicsOn() {
-            MainClass.guiToMac.deviceBox.Hidden = false;
+            MacGui.macGui.deviceBox.Hidden = false;
         }
         public void MicrofluidicsOff() {
-            MainClass.guiToMac.deviceBox.Hidden = true;
+            MacGui.macGui.deviceBox.Hidden = true;
         }
         public void IncrementFont(float pointSize) {
-            var txtInput = MainClass.guiToMac.textInput.DocumentView as AppKit.NSTextView;
+            var txtInput = MacGui.macGui.textInput.DocumentView as AppKit.NSTextView;
             SetTextFont((float)(txtInput.Font.FontDescriptor.PointSize + pointSize));
         }
         public void PrivacyPolicyToClipboard() {
-            MacToGui.ClipboardPasteText("http://lucacardelli.name/Artifacts/Kaemika/KaemikaUWP/privacy_policy.html");
+            MacGui.ClipboardPasteText("http://lucacardelli.name/Artifacts/Kaemika/KaemikaUWP/privacy_policy.html");
         }
         public void SplashOff() {
-            MainClass.guiToMac.splashImageBacking.Hidden = true;
-            MainClass.guiToMac.splashImage.Hidden = true;
+            MacGui.macGui.splashImageBacking.Hidden = true;
+            MacGui.macGui.splashImage.Hidden = true;
         }
         public void Save() {
             var dlg = new NSSavePanel ();
@@ -135,7 +134,7 @@ namespace KaemikaMAC {
                 var path = "";
                 try {
                     path = dlg.Url.Path;
-                    File.WriteAllText(path, Gui.toGui.InputGetText(), System.Text.Encoding.Unicode);
+                    File.WriteAllText(path, KGui.gui.GuiInputGetText(), System.Text.Encoding.Unicode);
                 } catch {
                     var alert = new NSAlert () {
                         AlertStyle = NSAlertStyle.Critical,
@@ -157,7 +156,7 @@ namespace KaemikaMAC {
                 var path = "";
                 try {
                     path = dlg.Urls[0].Path;
-                    Gui.toGui.InputSetText(File.ReadAllText(path, System.Text.Encoding.Unicode));
+                    KGui.gui.GuiInputSetText(File.ReadAllText(path, System.Text.Encoding.Unicode));
                 } catch {
                     var alert = new NSAlert () {
                         AlertStyle = NSAlertStyle.Critical,
@@ -176,31 +175,43 @@ namespace KaemikaMAC {
             if (initialDirectory != string.Empty) dlg.DirectoryUrl = new NSUrl(initialDirectory);
             if (dlg.RunModal () == 1) {
                 modelsDirectory = dlg.Urls[0].Path;
-                SaveDirectories();
+                SavePreferences();
             }
         }
-        public void SaveDirectories() {
+        public void SavePreferences() {
             try {
                 string path2 = CreateKaemikaDataDirectory() + "/modelsdir.txt";
                 File.WriteAllText(path2, modelsDirectory);
             } catch { }
+            try {
+                string path2 = CreateKaemikaDataDirectory() + "/outputaction.txt";
+                File.WriteAllText(path2, Exec.currentOutputAction.name);
+            } catch (Exception) { }
         }
 
-        public void RestoreDirectories() {
+        public void RestorePreferences() {
             try {
                 string path2 = CreateKaemikaDataDirectory() + "/modelsdir.txt";
                 if (File.Exists(path2)) { modelsDirectory = File.ReadAllText(path2); }
             } catch { }
+            try {
+                string path2 = CreateKaemikaDataDirectory() + "/outputaction.txt";
+                if (File.Exists(path2)) { KGui.kControls.SetOutputSelection(File.ReadAllText(path2)); }
+            } catch (Exception) { }
         }
 
         public static void SetTextFont(float size) {
             if (size >= 6){
-                var txtInput = MainClass.guiToMac.textInput.DocumentView as AppKit.NSTextView;
-                var txtOutput = MainClass.guiToMac.textOutput.DocumentView as AppKit.NSTextView;
+                var txtInput = MacGui.macGui.textInput.DocumentView as AppKit.NSTextView;
+                var txtOutput = MacGui.macGui.textOutput.DocumentView as AppKit.NSTextView;
                 var newFont = NSFont.FromFontName(txtInput.Font.FontName, size);
                 txtInput.Font = newFont;
                 txtOutput.Font = newFont;
             }
+        }
+
+        public void SetSnapshotSize() {
+            MacGui.macGui.SetSnapshotSize();
         }
 
 
@@ -210,8 +221,8 @@ namespace KaemikaMAC {
 
         public static void SwitchMode() {
             nsHoverHighlightColor = darkMode ? nsHoverHighlightColorDM : nsHoverHighlightColorLM;
-            MainClass.guiToMac.splashImageBacking.FillColor = darkMode ? NSColor.Black : NSColor.White;
-            MainClass.guiToMac.splashImage.Image = darkMode ? NSImage.ImageNamed("DMSplash.589.DM") : NSImage.ImageNamed("Splash.589");
+            MacGui.macGui.splashImageBacking.FillColor = darkMode ? NSColor.Black : NSColor.White;
+            MacGui.macGui.splashImage.Image = darkMode ? NSImage.ImageNamed("DMSplash.589.DM") : NSImage.ImageNamed("Splash.589");
             foreach (var b in allMacOnOffButtons) b.SwitchMode(darkMode);
             foreach (var b in allMacFlyoutMenus) b.SwitchMode(darkMode);
         }
@@ -309,7 +320,7 @@ namespace KaemikaMAC {
             this.button.Image = nsImage;
         }
         public void SwitchMode(bool darkMode) {
-            if (this.button == MainClass.guiToMac.buttonNoise) SetImage(ImageOfNoise(KControls.SelectNoiseSelectedItem, darkMode));
+            if (this.button == MacGui.macGui.buttonNoise) SetImage(ImageOfNoise(KControls.SelectNoiseSelectedItem, darkMode));
             else SetImage(darkMode ? this.imageDM : this.imageLM);
         }
         public string GetText() {
@@ -416,6 +427,7 @@ namespace KaemikaMAC {
         private NSBox buttonBar;
         private NSBox menuBox;
         private NSGridView menu;
+        private Dictionary<string, KButton> namedControls;
         private FlyoutAttachment attachment;
         public bool autoClose { get; set; }
         private float pointSize;
@@ -429,6 +441,7 @@ namespace KaemikaMAC {
                                 NSColor nsMainButtonText, NSColor nsMainButtonDeselected, NSColor nsMainButtonSelected, NSColor nsMenuButtonText, NSColor nsMenuButtonDeselected, NSColor nsMenuButtonSelected)
                             : base(button, nsMainButtonText, nsMainButtonDeselected, nsMainButtonSelected) {
             this.menu = menu;
+            this.namedControls = new Dictionary<string, KButton>();
             this.menu.RowSpacing = 1;
             this.menu.ColumnSpacing = 6;
             this.menuBox = menuBox;
@@ -449,17 +462,25 @@ namespace KaemikaMAC {
             MacControls.allMacFlyoutMenus.Add(this);
         }
         public void ClearMenuItems() {
+            this.namedControls = new Dictionary<string, KButton>();
             this.menu.Subviews = new NSView[]{ }; // we really need to work hard to clean it up:
             while (this.menu.RowCount > 0) for (int i = 0; i < this.menu.RowCount; i++) {this.menu.RemoveRow(i); }
             while (this.menu.ColumnCount > 0) for (int j = 0; j < this.menu.ColumnCount; j++) {this.menu.RemoveColumn(j); }
         }
-        public void AddMenuItem(KControl item) {
+        public void SetSelection(string name) {
+            if (!this.namedControls.ContainsKey(name)) return;
+            KButton control = this.namedControls[name];
+            KControls.ItemSelected(this, control);
+        }
+        public void AddMenuItem(KControl item, string name = null) {
+            if (name != null && item is KButton asKButton) this.namedControls[name] = asKButton;
             this.menu.AddRow(new NSView[]{ ((MacControl)item).control });
             this.menu.SetFrameOrigin(new CGPoint(0,0)); // w.r.t. the menuBox
         }
         public void AddMenuItems(KControl[] items) {
             NSGridView row = new NSGridView();
             row.ColumnSpacing = 0;
+            row.SetContentHuggingPriorityForOrientation(255, NSLayoutConstraintOrientation.Horizontal);
             for (int i = 0; i < items.Length; i++)
                 row.AddColumn(new NSView[1]{ ((MacControl)items[i]).control });
             this.menu.AddRow(new NSView[1]{ row });
@@ -495,14 +516,14 @@ namespace KaemikaMAC {
         }
         public KButton NewMenuSection(int level = 1) {
             var sectionButton = new MacButton(new NSButtonPlus(), MacControls.nsMenuButtonHotText, this.nsMenuButtonDeselected, this.nsMenuButtonSelected);
-            sectionButton.SetFont(MainClass.guiToMac.GetFont(this.pointSize - (level - 1), this.fixedWidth));
+            sectionButton.SetFont(MacGui.macGui.GetFont(this.pointSize - (level - 1), this.fixedWidth));
             sectionButton.Hover(false); //### should give a hover argument to new NSButtonPlus()
             return sectionButton;
         }
         public KButton NewMenuItemButton(bool multiline = false) {
             // multiline: nothing to worry about in macOS version
             var itemButton = new MacButton(new NSButtonPlus(), this.nsMenuButtonText, this.nsMenuButtonDeselected, this.nsMenuButtonSelected);
-            itemButton.SetFont(MainClass.guiToMac.GetFont(this.pointSize, this.fixedWidth));
+            itemButton.SetFont(MacGui.macGui.GetFont(this.pointSize, this.fixedWidth));
             return itemButton;
         }
         public KSlider NewMenuItemTrackBar() {
@@ -530,10 +551,10 @@ namespace KaemikaMAC {
             else if (this.attachment == FlyoutAttachment.LeftTop) // w.r.t. window
                 this.menuBox.SetFrameOrigin(new CGPoint(this.buttonBar.Frame.X - this.menuBox.Frame.Width, this.buttonBar.Frame.Y + this.buttonBar.Frame.Height - this.menuBox.Frame.Height));
             else if (this.attachment == FlyoutAttachment.TextOutputLeft) { // w.r.t. textOutput
-                var txtOut = MainClass.guiToMac.textOutput;
+                var txtOut = MacGui.macGui.textOutput;
                 this.menuBox.SetFrameOrigin(new CGPoint(0, txtOut.Frame.Height - this.menuBox.Frame.Height));
             } else if (this.attachment == FlyoutAttachment.TextOutputRight) { // w.r.t. textOutput
-                var txtOut = MainClass.guiToMac.textOutput;
+                var txtOut = MacGui.macGui.textOutput;
                 this.menuBox.SetFrameOrigin(new CGPoint(txtOut.Frame.Width - this.menuBox.Frame.Width, txtOut.Frame.Height - this.menuBox.Frame.Height));
             }
             else throw new Error("Attach");
@@ -647,7 +668,7 @@ namespace KaemikaMAC {
         }
         public override void MouseDown(NSEvent theEvent) {
             base.MouseDown(theEvent);
-            MainClass.guiToMac.kControls.CloseOpenMenu();
+            KGui.kControls.CloseOpenMenu();
         }
     }
 
