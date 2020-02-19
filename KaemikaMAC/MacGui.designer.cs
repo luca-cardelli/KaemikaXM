@@ -10,73 +10,73 @@ using System.CodeDom.Compiler;
 namespace KaemikaMAC
 {
     [Register("ViewController")]
-    partial class GuiToMac
+    partial class MacGui
     {
         [Outlet]
-        public AppKit.NSButton buttonCompute { get; set; }
+        public AppKit.NSButton buttonCompute { get; private set; }
 
         [Outlet]
         public AppKit.NSButton buttonDevice { get; private set; }
 
         [Outlet]
-        public AppKit.NSButton buttonDeviceView { get; set; }
+        public AppKit.NSButton buttonDeviceView { get; private set; }
 
         [Outlet]
-        public AppKit.NSButton buttonFontBigger { get; set; }
+        public AppKit.NSButton buttonFontBigger { get; private set; }
 
         [Outlet]
-        public AppKit.NSButton buttonFontSmaller { get; set; }
+        public AppKit.NSButton buttonFontSmaller { get; private set; }
 
         [Outlet]
-        public AppKit.NSButton buttonKeyboard { get; set; }
+        public AppKit.NSButton buttonKeyboard { get; private set; }
 
         [Outlet]
         public AppKit.NSButton buttonLegend { get; private set; }
 
         [Outlet]
-        public AppKit.NSButton buttonLoad { get; set; }
+        public AppKit.NSButton buttonLoad { get; private set; }
 
         [Outlet]
-        public AppKit.NSButton buttonNoise { get; set; }
+        public AppKit.NSButton buttonNoise { get; private set; }
 
         [Outlet]
-        public AppKit.NSButton buttonParameters { get; set; }
+        public AppKit.NSButton buttonParameters { get; private set; }
 
         [Outlet]
         public AppKit.NSButton buttonPlay { get; private set; }
 
         [Outlet]
-        public AppKit.NSButton buttonSave { get; set; }
+        public AppKit.NSButton buttonSave { get; private set; }
 
         [Outlet]
-        public AppKit.NSButton buttonSettings { get; set; }
+        public AppKit.NSButton buttonSettings { get; private set; }
 
         [Outlet]
-        public AppKit.NSButton buttonShare { get; set; }
+        public AppKit.NSButton buttonShare { get; private set; }
 
         [Outlet]
         public AppKit.NSButton buttonStop { get; private set; }
 
         [Outlet]
-        public AppKit.NSButton buttonTutorial { get; set; }
+        public AppKit.NSButton buttonTutorial { get; private set; }
 
         [Outlet]
         public AppKit.NSTextField charTooltip { get; private set; }
 
         [Outlet]
-        public AppKit.NSButton checkboxPrecomputeDrift { get; set; }
+        public AppKit.NSButton checkboxPrecomputeDrift { get; private set; }
 
         [Outlet]
-        public AppKit.NSBox computeFlyoutBox { get; set; }
+        public AppKit.NSBox computeFlyoutBox { get; private set; }
 
         [Outlet]
-        public AppKit.NSGridView computeFlyoutMenu { get; set; }
+        public AppKit.NSGridView computeFlyoutMenu { get; private set; }
 
         [Outlet]
         public AppKit.NSBox deviceBox { get; private set; }
 
         [Outlet]
-        public KaemikaMAC.NSTextViewPlus inputTextView { get; set; }
+        public KaemikaMAC.NSTextViewPlus inputTextView { get; private set; }
 
         [Outlet]
         public KaemikaMAC.NSChartView kaemikaChart { get; private set; }
@@ -85,91 +85,97 @@ namespace KaemikaMAC
         public KaemikaMAC.NSDeviceView kaemikaDevice { get; private set; }
 
         [Outlet]
-        public AppKit.NSBox keyboardFlyoutBox { get; set; }
+        public KaemikaMAC.NSScoreView kaemikaScore { get; set; }
 
         [Outlet]
-        public AppKit.NSGridView keyboardFlyoutMenu { get; set; }
+        public AppKit.NSBox keyboardFlyoutBox { get; private set; }
 
         [Outlet]
-        public AppKit.NSBox leftButtonPanel { get; set; }
+        public AppKit.NSGridView keyboardFlyoutMenu { get; private set; }
 
         [Outlet]
-        public AppKit.NSButton leftPanelClicker { get; set; }
+        public AppKit.NSBox leftButtonPanel { get; private set; }
 
         [Outlet]
-        public AppKit.NSBox legendBox { get; set; }
+        public AppKit.NSButton leftPanelClicker { get; private set; }
 
         [Outlet]
-        public AppKit.NSBox legendBox2 { get; set; }
+        public AppKit.NSBox legendBox { get; private set; }
 
         [Outlet]
-        public AppKit.NSBox legendFlyoutBox { get; set; }
+        public AppKit.NSBox legendBox2 { get; private set; }
 
         [Outlet]
-        public AppKit.NSGridView legendFlyoutMenu { get; set; }
+        public AppKit.NSBox legendFlyoutBox { get; private set; }
 
         [Outlet]
-        public AppKit.NSGridView legendGridView { get; set; }
+        public AppKit.NSGridView legendFlyoutMenu { get; private set; }
 
         [Outlet]
-        public AppKit.NSScrollView legendScrollBox { get; set; }
+        public AppKit.NSGridView legendGridView { get; private set; }
 
         [Outlet]
-        public AppKit.NSScrollView legendScrollBox2 { get; set; }
+        public AppKit.NSScrollView legendScrollBox { get; private set; }
 
         [Outlet]
-        public AppKit.NSStackView legendStackView { get; set; }
+        public AppKit.NSScrollView legendScrollBox2 { get; private set; }
 
         [Outlet]
-        public AppKit.NSStackView legendStackView2 { get; set; }
+        public AppKit.NSStackView legendStackView { get; private set; }
 
         [Outlet]
-        public AppKit.NSBox noiseFlyoutBox { get; set; }
+        public AppKit.NSStackView legendStackView2 { get; private set; }
 
         [Outlet]
-        public AppKit.NSGridView noiseFlyoutMenu { get; set; }
+        public AppKit.NSBox noiseFlyoutBox { get; private set; }
 
         [Outlet]
-        public KaemikaMAC.NSTextViewPlus outputTextView { get; set; }
+        public AppKit.NSGridView noiseFlyoutMenu { get; private set; }
 
         [Outlet]
-        public AppKit.NSBox panelSettings { get; set; }
+        public KaemikaMAC.NSTextViewPlus outputTextView { get; private set; }
 
         [Outlet]
-        public AppKit.NSBox parameterBox { get; set; }
+        public AppKit.NSBox panelSettings { get; private set; }
 
         [Outlet]
-        public AppKit.NSGridView parametersFlyoutMenu { get; set; }
+        public AppKit.NSBox parameterBox { get; private set; }
 
         [Outlet]
-        public AppKit.NSButton radioGearBDF { get; set; }
+        public AppKit.NSGridView parametersFlyoutMenu { get; private set; }
 
         [Outlet]
-        public AppKit.NSButton radioRK547M { get; set; }
+        public AppKit.NSButton radioGearBDF { get; private set; }
 
         [Outlet]
-        public AppKit.NSBox rightButtonPanel { get; set; }
+        public AppKit.NSButton radioRK547M { get; private set; }
 
         [Outlet]
-        public AppKit.NSButton rightPanelClicker { get; set; }
+        public AppKit.NSBox rightButtonPanel { get; private set; }
 
         [Outlet]
-        public AppKit.NSBox settingsFlyoutBox { get; set; }
+        public AppKit.NSButton rightPanelClicker { get; private set; }
 
         [Outlet]
-        public AppKit.NSGridView settingsFlyoutMenu { get; set; }
+        public AppKit.NSBox scoreBox { get; set; }
 
         [Outlet]
-        public AppKit.NSBox shareFlyoutBox { get; set; }
+        public AppKit.NSBox settingsFlyoutBox { get; private set; }
 
         [Outlet]
-        public AppKit.NSGridView shareFlyoutMenu { get; set; }
+        public AppKit.NSGridView settingsFlyoutMenu { get; private set; }
 
         [Outlet]
-        public AppKit.NSImageView splashImage { get; set; }
+        public AppKit.NSBox shareFlyoutBox { get; private set; }
 
         [Outlet]
-        public AppKit.NSBox splashImageBacking { get; set; }
+        public AppKit.NSGridView shareFlyoutMenu { get; private set; }
+
+        [Outlet]
+        public AppKit.NSImageView splashImage { get; private set; }
+
+        [Outlet]
+        public AppKit.NSBox splashImageBacking { get; private set; }
 
         [Outlet]
         public AppKit.NSScrollView textInput { get; private set; }
@@ -178,10 +184,10 @@ namespace KaemikaMAC
         public AppKit.NSScrollView textOutput { get; private set; }
 
         [Outlet]
-        public AppKit.NSBox tutorialFlyoutBox { get; set; }
+        public AppKit.NSBox tutorialFlyoutBox { get; private set; }
 
         [Outlet]
-        public AppKit.NSGridView tutorialFlyoutMenu { get; set; }
+        public AppKit.NSGridView tutorialFlyoutMenu { get; private set; }
 
         [Action("buttonDirectoryForModelFilesAction:")]
         partial void buttonDirectoryForModelFilesAction(Foundation.NSObject sender);
@@ -371,6 +377,12 @@ namespace KaemikaMAC
                 deviceBox = null;
             }
 
+            if (scoreBox != null)
+            {
+                scoreBox.Dispose();
+                scoreBox = null;
+            }
+
             if (inputTextView != null)
             {
                 inputTextView.Dispose();
@@ -387,6 +399,12 @@ namespace KaemikaMAC
             {
                 kaemikaDevice.Dispose();
                 kaemikaDevice = null;
+            }
+
+            if (kaemikaScore != null)
+            {
+                kaemikaScore.Dispose();
+                kaemikaScore = null;
             }
 
             if (keyboardFlyoutBox != null)
@@ -435,12 +453,6 @@ namespace KaemikaMAC
             {
                 legendFlyoutMenu.Dispose();
                 legendFlyoutMenu = null;
-            }
-
-            if (parametersFlyoutMenu != null)
-            {
-                parametersFlyoutMenu.Dispose();
-                parametersFlyoutMenu = null;
             }
 
             if (legendGridView != null)
@@ -501,6 +513,12 @@ namespace KaemikaMAC
             {
                 parameterBox.Dispose();
                 parameterBox = null;
+            }
+
+            if (parametersFlyoutMenu != null)
+            {
+                parametersFlyoutMenu.Dispose();
+                parametersFlyoutMenu = null;
             }
 
             if (radioGearBDF != null)
