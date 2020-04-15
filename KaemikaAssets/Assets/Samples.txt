@@ -50,7 +50,11 @@ species c @ 0M in s
 // activation energy and the gas constant 'R' 
 // by Arrhenius' formula: 2*e^(-5/(R*T))
 
-a + b -> {2, 5} c             
+a + b -> {2, 5} c  
+
+// Report what to plot from s: note "in s"
+
+report a,b,c in s
 
 // Start a simulation. The sample 's' evolves 
 // according to the relevant reactions
@@ -71,9 +75,76 @@ equilibrate s1 = s for 3
 // for 'equilibrate s = s for 3'.
 // 'equilibrate for 3' is an abbreviation 
 // for 'equilibrate vessel = vessel for 3'
-// whenever 'vessel' is so redefined, it 
-// is a different sample with the same name
+// Whenever 'vessel' is so redefined, it 
+// is a different sample with the same name;
 // all the abbreviations described above 
-// then apply to the redefined 'vessel'
+// then apply to the redefined 'vessel'.
 
+//======================================
+// Assigning sample concentration 
+// via Molar Mass
+//======================================
+
+// Species initialization can direcly
+// impose a desired concentration 
+// in M = mol/L to a sample:
+
+/*
+amount NaCl @ 0.5 M in s
+*/
+
+// then NaCl will have concentration 
+// equal to 0.5 M in s.
+
+// Alternatively we can impose a 
+// concentration by specifying moles 
+// of substance (mol):
+
+/*
+amount NaCl @ 0.1 mol in s  
+*/
+
+// then NaCl will have a concentration 
+// of   0.1/observe(volume,s) M   in s
+
+// Altenatively again, we can impose a
+// concentration from weight of matter.
+// This would require some computation.
+// E.g. suppose we place 8 grams of NaCl 
+// in 800 mL: what is the concentration?
+// We need to know the molar mass of NaCl, 
+// which is 58.44 grams/mol, then 8/58.44 mol 
+// in 0.8 L gives 0.1711 mol/L. 
+// We could compute this as follows,
+// where observe(volume,s) is in L units:
+
+/*
+sample s {800mL, 20C}
+species {NaCl, KCl}
+amount NaCl @ (8/58.44)/observe(volume,s) M in s
+amount KCl @ (0.2/74.5513)/observe(volume,s) M in s 
+*/
+
+// RESULT: sample s {800mL, 293.2K} 
+//  {NaCl = 171.1mM, KCl = 3.353mM}
+
+// More directly, we can declare the molar 
+// mass of a species when we introduce it: 
+// NaCl#58.44. Then we can just specify the 
+// grams of NaCl we place in the sample;
+// the relevant volume is implicit in 
+// the sample we are using:
+
+/*
+sample t {800mL, 20C}
+species {NaCl#58.44, KCl#74.5513}
+amount NaCl @ 8g in t
+amount KCl @ 0.2g in t
+*/
+
+// RESULT: sample t {800mL, 293.2K} 
+//   {NaCl#58.44 = 171.1mM, KCl#74.5513 = 3.353mM}
+
+// If the amount of matter is given in grams, 
+// the molar mass must first be declared.
 

@@ -39,7 +39,15 @@ namespace Kaemika {
         }
 
         public string Format(Style style) {
-            return "CRN species = {" + Style.FormatSequence(sample.stateMap.species, ", ", x => x.Format(style)) + "}, reactions = {" + Style.FormatSequence(this.reactions, ", ", x => x.Format(style)) + "}";
+            return
+                "CRN species = {"
+                + Style.FormatSequence(sample.stateMap.species, ", ", x => x.Format(style))
+                + "}, reactions = {"
+                + Style.FormatSequence(this.reactions, ", ", x => x.Format(style)) + "}"
+                + "}, state = {"
+                + sample.FormatContent(style)
+                + "}"
+                ;
         }
 
         public string FormatNice(Style style) {
@@ -209,15 +217,22 @@ namespace Kaemika {
 
         public Flow RateFunction(ReactionValue reaction) {
             Flow monomial = NumberFlow.numberFlowOne;
-            if (reaction.rate is MassActionRateValue) {
-                double rate = ((MassActionRateValue)reaction.rate).Rate(this.temperature);
+            if (reaction.rate is MassActionNumericalRate) {
+                double rate = ((MassActionNumericalRate)reaction.rate).Rate(this.temperature);
                 foreach (SpeciesValue sp in sample.stateMap.species) {
                     int spStoichio = reaction.Stoichiometry(sp.symbol, reaction.reactants);
                     monomial = OpFlow.Op("*", monomial, OpFlow.Op("^", new SpeciesFlow(sp.symbol), new NumberFlow(spStoichio)));
                 }
                 monomial = OpFlow.Op("*", new NumberFlow(rate), monomial);
-            } else if (reaction.rate is GeneralRateValue) {
-                monomial = (reaction.rate as GeneralRateValue).rateFunction;
+            } else if (reaction.rate is MassActionFlowRate) {
+                Flow rate = (reaction.rate as MassActionFlowRate).rateFunction;
+                foreach (SpeciesValue sp in sample.stateMap.species) {
+                    int spStoichio = reaction.Stoichiometry(sp.symbol, reaction.reactants);
+                    monomial = OpFlow.Op("*", monomial, OpFlow.Op("^", new SpeciesFlow(sp.symbol), new NumberFlow(spStoichio)));
+                }
+                monomial = OpFlow.Op("*", rate, monomial);
+            } else if (reaction.rate is GeneralFlowRate) {
+                monomial = (reaction.rate as GeneralFlowRate).rateFunction;
             } else throw new Error("RateFunction");
             return monomial;
         }
@@ -255,20 +270,19 @@ namespace Kaemika {
                     Flow polynomial = NumberFlow.numberFlowZero;
                     foreach (ReactionValue reaction in this.reactions) {
                         int netStoichiometryI = reaction.NetStoichiometry(variableI.symbol);
-                        if ((reaction.rate is MassActionRateValue)) {
+                        if (reaction.rate is MassActionNumericalRate) {
                             int stoichiometryK = reaction.Stoichiometry(variableK.symbol, reaction.reactants);
                             Flow monomial = (netStoichiometryI == 0 || stoichiometryK == 0) ? NumberFlow.numberFlowZero :
                                 OpFlow.Op("*", OpFlow.Op("*", new NumberFlow(netStoichiometryI), new NumberFlow(stoichiometryK)),
                                    OpFlow.Op("/", RateFunction(reaction), new SpeciesFlow(variableK.symbol)));
                             polynomial = OpFlow.Op("+", polynomial, monomial);
-                        } else if ((reaction.rate is GeneralRateValue)) {
+                        } else if (reaction.rate is GeneralFlowRate || reaction.rate is MassActionFlowRate) {
                             Flow monomial = (netStoichiometryI == 0) ? NumberFlow.numberFlowZero :
                                 OpFlow.Op("*", new NumberFlow(netStoichiometryI), 
                                     RateFunction(reaction).Differentiate(variableK.symbol, style));
                             polynomial = OpFlow.Op("+", polynomial, monomial);
                         } else { 
                             throw new Error("Jacobian");
-                            //throw new Error("Symbolic Jacobian requires mass action rate functions");
                         }
                     }
                     // Gui.Log("d " + variableI.Format(style) + "/d" + variableK.Format(style) + " = " + polynomial.Format(style));

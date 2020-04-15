@@ -45,8 +45,9 @@ namespace KaemikaXM.Pages {
             return new List<OutputAction>() {
                 new OutputAction(this, "Reaction Score", OutputKind.Score, ExportAs.ReactionScore),
                 new OutputAction(this, "Reaction Network", OutputKind.Text, ExportAs.CRN),
+                new OutputAction(this, "Evaluation", OutputKind.Text, ExportAs.Evaluation),
+                //new OutputAction(this, "Full Trace", OutputKind.Text, ExportAs.FullTrace),
                 new OutputAction(this, "Chemical Trace", OutputKind.Text, ExportAs.ChemicalTrace),
-                new OutputAction(this, "Computational Trace", OutputKind.Text, ExportAs.ComputationalTrace),
                 //new OutputAction(this, "Reaction Graph", OutputKind.Graph, ExportAs.ReactionGraph),
                 //new OutputAction(this, "Reaction Complex Graph", OutputKind.Graph, ExportAs.ComplexGraph),
                 new OutputAction(this, "Protocol Step Graph", OutputKind.Graph, ExportAs.ProtocolGraph),

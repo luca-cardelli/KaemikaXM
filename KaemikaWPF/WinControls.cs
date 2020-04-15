@@ -174,8 +174,8 @@ namespace KaemikaWPF {
             } catch (Exception) { }
             try {
                 string path2 = CreateKaemikaDataDirectory() + "\\outputaction.txt";
-                if (File.Exists(path2)) { KGui.kControls.SetOutputSelection(File.ReadAllText(path2)); }
-            } catch (Exception) { }
+                KGui.kControls.SetOutputSelection(File.Exists(path2) ? File.ReadAllText(path2) : "");
+            } catch (Exception) { KGui.kControls.SetOutputSelection(""); } // set to default
         }
         public static Button AutoSizeButton(Button button) {
             button.AutoSize = true;

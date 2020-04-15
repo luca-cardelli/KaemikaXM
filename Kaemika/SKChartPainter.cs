@@ -8,7 +8,7 @@ namespace Kaemika
         }
 
         public /*interface ChartPainter*/ void DrawCourse(List<KChartEntry> list,  int seriesIndex, float pointSize, SKColor color, Swipe pinchPan) {
-            if (list.Count == 1) canvas.DrawCircle(list[0].Ypoint[seriesIndex], pinchPan % 8, FillPaint(color));
+            if (list.Count == 1) canvas.DrawCircle(list[0].Ypoint[seriesIndex], pinchPan % 3, FillPaint(color));
             if (list.Count > 1) {
                 using (var paint = LinePaint(pointSize, color)) {
                     var path = new SKPath();
@@ -20,7 +20,7 @@ namespace Kaemika
         }
 
         public /*interface ChartPainter*/ void DrawCourseRange(List<KChartEntry> list, int seriesIndex, SKColor color, Swipe pinchPan) {
-            if (list.Count == 1) canvas.DrawCircle(list[0].Ypoint[seriesIndex], pinchPan % 8, FillPaint(color));
+            if (list.Count == 1) canvas.DrawCircle(list[0].Ypoint[seriesIndex], pinchPan % 3, FillPaint(color));
             if (list.Count > 1) {
                 using (var paint = FillPaint(color)) {
                     var path = new SKPath();

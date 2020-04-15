@@ -77,6 +77,13 @@ namespace Kaemika {
 
         // INPUT
 
+        public /* Interface KGuiControl */ void GuiInputSetEditable(bool editable) {
+            if (MainThread.IsMainThread) {
+                // editability follows a different logic on Android/iOS: models are not editable until the edit button is pressed
+                // MainTabbedPage.theModelEntryPage.SetEditable(editable);
+            } else { _ = BeginInvokeOnMainThreadAsync(() => { GuiInputSetEditable(editable); return ack; }).Result; }
+        }
+
         public /* Interface KGuiControl */ string GuiInputGetText() {
             if (MainThread.IsMainThread) {
                 return MainTabbedPage.theModelEntryPage.GetText();

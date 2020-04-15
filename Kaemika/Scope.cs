@@ -23,20 +23,29 @@ namespace Kaemika {
             foreach (var keypair in swap.Pairs()) name = Replace(name, keypair.Key, keypair.Value);
             return name;
         }
+        public string LowerChars(string s) {
+            return s.Replace('0', '₀').Replace('1', '₁').Replace('2', '₂').Replace('3', '₃').Replace('4', '₄').Replace('5', '₅').Replace('6', '₆').Replace('7', '₇').Replace('8', '₈').Replace('9', '₉');
+        }
+        public string FormatVariant(int variantNo, Style style) {
+            string varchar = style.Varchar();
+            if (varchar == null) return "";
+            return "ˍ" + LowerChars(variantNo.ToString());
+
+        }
         public string Format(Style style) {
             string varchar = style.Varchar();
             if (varchar == null) return this.name;                                           // don't show the variant
             else {
                 string sname = Replace(this.name, style.Swap());
                 AlphaMap map = style.Map();
-                if (map == null) return sname + varchar + this.variant.ToString();           // show the variant, don't remap it
+                if (map == null) return sname + FormatVariant(this.variant, style);          // show the variant, don't remap it
                 else {                                                                       // remap the variant
                     if (!map.ContainsKey(this.variant)) {           // never encountered this variant before: it is name unique?
                         int variantNo = -1;
                         string variantName = "";
                         do {
                             variantNo += 1;
-                            variantName = (variantNo == 0) ? sname : sname + varchar + variantNo.ToString();
+                            variantName = (variantNo == 0) ? sname : sname + FormatVariant(variantNo, style);
                         } while (map.ContainsValue(variantName));
                         map.Assign(this.variant, variantName);            // assign a unique name to this variant
                     }
@@ -88,18 +97,6 @@ namespace Kaemika {
         }
         public override string Format() {
             return "";
-        }
-        private Scope builtIn = null;
-        private Scope CopyBuiltIn(Env builtInEnv) {
-            if (builtInEnv is NullEnv) return new NullScope();
-            else {
-                ValueEnv consEnv = (ValueEnv)builtInEnv;
-                return new ConsScope(consEnv.symbol.Raw(), CopyBuiltIn(consEnv.next));
-            }
-        }
-        public Scope BuiltIn(SampleValue vessel) { //we park this method inside NullScope for convenience
-            if (builtIn == null) builtIn = CopyBuiltIn(new NullEnv().BuiltIn(vessel));
-            return builtIn;
         }
     }
     public class ConsScope : Scope {

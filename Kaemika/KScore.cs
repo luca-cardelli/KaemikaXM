@@ -838,17 +838,19 @@ namespace Kaemika {
                 if (tag.hilite) display = tag;
             }
             if (display != null) Display(painter, display.reaction.FormatNormal(style), new SKPoint(Xstart, canvasOriginY + (0.6f* Yspacing)), paints.reactionText, paints.translucentFill, pinchPan);
-            if (KScoreHandler.showInfluences) {
-                float X = Xstart;
-                X += Display(painter, "Feed", new SKPoint(X, canvasOriginY + (KScoreHandler.SpeciesNo() + 0.5f) * Yspacing), paints.speciesTextHiliteLegend, paints.highlightFillProduct, pinchPan);
-                X += Display(painter, "Drain", new SKPoint(X, canvasOriginY + (KScoreHandler.SpeciesNo() + 0.5f) * Yspacing), paints.speciesTextHiliteLegend, paints.highlightFillReactant, pinchPan);
-                X += Display(painter, "Catalyze", new SKPoint(X, canvasOriginY + (KScoreHandler.SpeciesNo() + 0.5f) * Yspacing), paints.speciesTextHiliteLegend, paints.highlightFillCatPlus, pinchPan);
-                X += Display(painter, "Decatalyze", new SKPoint(X, canvasOriginY + (KScoreHandler.SpeciesNo() + 0.5f) * Yspacing), paints.speciesTextHiliteLegend, paints.highlightFillCatMinus, pinchPan);
-                KScoreHandler.influenceRect = pinchPan % new SKRect(Xstart, KScoreHandler.SpeciesNo() * Yspacing, X, (KScoreHandler.SpeciesNo() + 1) * Yspacing);
-            } else {
-                float X = Xstart;
-                X += Display(painter, "Show influence", new SKPoint(Xstart, canvasOriginY + (KScoreHandler.SpeciesNo() + 0.5f) * Yspacing), paints.speciesTextHiliteLegend, paints.whiteFill, pinchPan);
-                KScoreHandler.influenceRect = pinchPan % new SKRect(Xstart, KScoreHandler.SpeciesNo() * Yspacing, X, (KScoreHandler.SpeciesNo() + 1) * Yspacing);
+            if (speciesNo > 1) {
+                if (KScoreHandler.showInfluences) {
+                    float X = Xstart;
+                    X += Display(painter, "Feed", new SKPoint(X, canvasOriginY + (KScoreHandler.SpeciesNo() + 0.5f) * Yspacing), paints.speciesTextHiliteLegend, paints.highlightFillProduct, pinchPan);
+                    X += Display(painter, "Drain", new SKPoint(X, canvasOriginY + (KScoreHandler.SpeciesNo() + 0.5f) * Yspacing), paints.speciesTextHiliteLegend, paints.highlightFillReactant, pinchPan);
+                    X += Display(painter, "Catalyze", new SKPoint(X, canvasOriginY + (KScoreHandler.SpeciesNo() + 0.5f) * Yspacing), paints.speciesTextHiliteLegend, paints.highlightFillCatPlus, pinchPan);
+                    X += Display(painter, "Decatalyze", new SKPoint(X, canvasOriginY + (KScoreHandler.SpeciesNo() + 0.5f) * Yspacing), paints.speciesTextHiliteLegend, paints.highlightFillCatMinus, pinchPan);
+                    KScoreHandler.influenceRect = pinchPan % new SKRect(Xstart, KScoreHandler.SpeciesNo() * Yspacing, X, (KScoreHandler.SpeciesNo() + 1) * Yspacing);
+                } else {
+                    float X = Xstart;
+                    X += Display(painter, "Show influence", new SKPoint(Xstart, canvasOriginY + (KScoreHandler.SpeciesNo() + 0.5f) * Yspacing), paints.speciesTextHiliteLegend, paints.whiteTranslucentFill, pinchPan);
+                    KScoreHandler.influenceRect = pinchPan % new SKRect(Xstart, KScoreHandler.SpeciesNo() * Yspacing, X, (KScoreHandler.SpeciesNo() + 1) * Yspacing);
+                }
             }
         }
 
@@ -1335,6 +1337,7 @@ namespace Kaemika {
         public SKPaint catalystFill;
         public SKPaint catalystLine;
         public SKPaint whiteFill;
+        public SKPaint whiteTranslucentFill;
         public SKPaint whiteLine;
         public SKPaint highlightFill;
         public SKPaint highlightStrike;
@@ -1382,6 +1385,7 @@ namespace Kaemika {
             catalystFill = painter.FillPaint(Green);
             catalystLine = painter.LinePaint(pinchPan % KScore.lineWeight, Green, SKStrokeCap.Round);
             whiteFill = painter.FillPaint(White);
+            whiteTranslucentFill = painter.FillPaint(new SKColor(255, 255, 255, 100));
             whiteLine = painter.LinePaint(pinchPan % KScore.lineWeight, White, SKStrokeCap.Round);
             highlightFill = painter.FillPaint(new SKColor(255, 127, 0, 127));
             highlightStrike = painter.LinePaint(pinchPan % KScore.lineWeight, new SKColor(255, 127, 0, 127));

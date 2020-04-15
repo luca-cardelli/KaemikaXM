@@ -4,6 +4,75 @@ using System.Linq;
 
 namespace Kaemika {
 
+    // IMMUTABLE LISTS (missed them so much!)
+
+    public abstract class Lst<T> {
+        public static Lst<T> nil = new Nil<T>();
+        public static Lst<T> Singleton(T element) { return new Cons<T>(element, nil); }
+        public abstract Lst<T> Append(Lst<T> rest);
+        public Lst<T> Reverse() { return Reverse(nil); }
+        public abstract Lst<T> Reverse(Lst<T> rest);
+        public abstract Lst<U> Map<U>(Func<T, U> func);
+        public abstract U FoldL<U>(Func<U, T, U> f, U z);
+        public abstract U FoldR<U>(Func<T, U, U> f, U z);
+        public abstract bool Exists(Func<T, bool> p);
+        public abstract bool Forall(Func<T, bool> p);
+        public abstract void Each(Action<T> f);
+        public abstract List<T> ToList();
+    }
+    public class Nil<T> : Lst<T> {
+        public Nil() { }
+        public override Lst<T> Append(Lst<T> rest) { return rest; }
+        public override Lst<T> Reverse(Lst<T> rest) { return rest; }
+        public override Lst<U> Map<U>(Func<T, U> func) { return Lst<U>.nil; }
+        public override U FoldL<U>(Func<U, T, U> f, U z) { return z; }
+        public override U FoldR<U>(Func<T, U, U> f, U z) { return z; }
+        public override bool Exists(Func<T, bool> p) { return false; }
+        public override bool Forall(Func<T, bool> p) { return true; }
+        public override void Each(Action<T> f) { return; }
+        public override List<T> ToList() { return new List<T>(); }
+    }
+    public class Cons<T> : Lst<T> {
+        public T head { get; }
+        public Lst<T> tail { get; }
+        public Cons(T head, Lst<T> tail) {
+            this.head = head;
+            this.tail = tail;
+        }
+        public override Lst<T> Append(Lst<T> rest) {
+            return new Cons<T>(head, tail.Append(rest));
+        }
+        public override Lst<T> Reverse(Lst<T> rest) {
+            return tail.Reverse(new Cons<T>(head, rest));
+        }
+        public override Lst<U> Map<U>(Func<T, U> func) {
+            return new Cons<U>(func(head), tail.Map(func));
+        }
+        public override U FoldL<U>(Func<U, T, U> f, U z) {
+            return tail.FoldL(f, f(z, head));
+        }
+        public override U FoldR<U>(Func<T, U, U> f, U z) {
+            return f(head, tail.FoldR(f, z)); 
+        }
+        public override bool Exists(Func<T, bool> p) { 
+            return p(head) || tail.Exists(p); 
+        }
+        public override bool Forall(Func<T, bool> p) { 
+            return p(head) && tail.Forall(p); 
+        }
+        public override void Each(Action<T> f) { 
+            f(head);
+            tail.Each(f);
+        }
+        public override List<T> ToList() {
+            List<T> list = tail.ToList();
+            list.Insert(0, head);
+            return list;
+        }
+    }
+
+    // STYLE
+
     public enum ExportTarget : int { LBS, CRN, WolframNotebook, Standard };
 
     public class Style {
@@ -19,37 +88,37 @@ namespace Kaemika {
                                                 // "symbol", "header", "full", "operator"
         public ExportTarget exportTarget;       // How to format for external tools
 
-        public bool traceComputational;         // Whether to format for TraceComputational or TraceChemical
+        public bool traceFull;                  // Whether to format for TraceFull or TraceChemical
 
         public bool chartOutput;                // Whether to produce a chart
 
-        public Style(string varchar, SwapMap swap, AlphaMap map, string numberFormat, string dataFormat, ExportTarget exportTarget, bool traceComputational, bool chartOutput) {
+        public Style(string varchar, SwapMap swap, AlphaMap map, string numberFormat, string dataFormat, ExportTarget exportTarget, bool traceFull, bool chartOutput) {
             this.varchar = varchar;
             this.swap = swap;
             this.map = map;
             this.numberFormat = numberFormat;
             this.dataFormat = dataFormat;
             this.exportTarget = exportTarget;
-            this.traceComputational = traceComputational;
+            this.traceFull = traceFull;
             this.chartOutput = chartOutput;
         }
         public Style() : this(null, null, null, null, "full", ExportTarget.Standard, false, true) {
         }
         public static Style nil = new Style();
         public Style RestyleAsDataFormat(string dataFormat) {
-            return new Style(this.varchar, this.swap, this.map, this.numberFormat, dataFormat, this.exportTarget, this.traceComputational, this.chartOutput);
+            return new Style(this.varchar, this.swap, this.map, this.numberFormat, dataFormat, this.exportTarget, this.traceFull, this.chartOutput);
         }
         public Style RestyleAsExportTarget(ExportTarget exportTarget) {
-            return new Style(this.varchar, this.swap, this.map, this.numberFormat, this.dataFormat, exportTarget, this.traceComputational, this.chartOutput);
+            return new Style(this.varchar, this.swap, this.map, this.numberFormat, this.dataFormat, exportTarget, this.traceFull, this.chartOutput);
         }
         public Style RestyleAsNumberFormat(string numberFormat) {
-            return new Style(this.varchar, this.swap, this.map, numberFormat, this.dataFormat, this.exportTarget, this.traceComputational, this.chartOutput);
+            return new Style(this.varchar, this.swap, this.map, numberFormat, this.dataFormat, this.exportTarget, this.traceFull, this.chartOutput);
         }
-        public Style RestyleAsTraceComputational(bool traceComputational) {
-            return new Style(this.varchar, this.swap, this.map, this.numberFormat, this.dataFormat, this.exportTarget, traceComputational, this.chartOutput);
+        public Style RestyleAsTraceFull(bool traceFull) {
+            return new Style(this.varchar, this.swap, this.map, this.numberFormat, this.dataFormat, this.exportTarget, traceFull, this.chartOutput);
         }
         public Style RestyleAsChartOutput(bool chartOutput) {
-            return new Style(this.varchar, this.swap, this.map, this.numberFormat, this.dataFormat, this.exportTarget, this.traceComputational, chartOutput);
+            return new Style(this.varchar, this.swap, this.map, this.numberFormat, this.dataFormat, this.exportTarget, this.traceFull, chartOutput);
         }
         public string Varchar() { return this.varchar; }
         public SwapMap Swap() { return this.swap; }
@@ -103,8 +172,15 @@ namespace Kaemika {
     public abstract class Expression : Tree {
         public abstract void Scope(Scope scope);
         public abstract Value EvalReject(Env env, Netlist netlist, Style style, int s);
-        public abstract Value EvalFlow(Env env, Style style, int s); // does the same as Eval but with restriction so needs no netlist. Used in building Flows, but it returns a Value not a Flow
-        public abstract Flow BuildFlow(Env env, Style style, int s); // builds a Flow, may call EvalFlow to expand funtion invocations and if-then-else into Flows
+        //public abstract Value EvalFlow(Env env, Style style, int s); // does the same as Eval but with restriction so needs no netlist. Used in building Flows, but it returns a Value not a Flow
+        //public abstract Flow BuildFlow(Env env, Style style, int s); // builds a Flow, may call Eval to expand function invocations and if-then-else into Flows
+        public Flow EvalRejectToFlow(Expression source, Env env, Netlist netlist, Style style, int s) {
+            Value v = this.EvalReject(env, netlist, style, s + 1);
+            if (v == Value.REJECT) return Flow.REJECT;
+            Flow flow = v.ToFlow();
+            if (flow == null) throw new Error("Expecting a flow: " + source.Format());
+            return flow;
+        }
     }
 
     public class Variable : Expression {
@@ -120,20 +196,21 @@ namespace Kaemika {
         }
         public override Value EvalReject(Env env, Netlist netlist, Style style, int s) {
             Value value = env.LookupValue(this.name);
-            if (value is ConstantFlow) { throw new ConstantEvaluation((value as ConstantFlow).Format(style)); }
+            if (value is TimecourseFlowUnassigned asTimecourse) { throw new ConstantEvaluation("timecourse " + asTimecourse.Format(style) + " was accessed before being produced by an equilibrate: make sure its 'report' refers to the same sample 'S' as its equilibrate via 'report " + asTimecourse.Format(style) + " = ... in S'"); }
+            else if (value is ConstantFlow asConst) return value; // { throw new ConstantEvaluation(asConst.Format(style)); }
             return value;
         }
-        public override Value EvalFlow(Env env, Style style, int s) {
-            Value value = env.LookupValue(this.name);
-            if (value is ConstantFlow) { throw new ConstantEvaluation((value as ConstantFlow).Format(style)); }
-            return value;
-        }
-        public override Flow BuildFlow(Env env, Style style, int s) {
-            Value value = env.LookupValue(this.name); // we must convert this Value into a Flow
-            Flow flow = value.ToFlow();
-            if (flow == null) throw new Error("Flow expression: Variable '" + this.Format() + "' should denote a flow");
-            return flow;
-        }
+        //public override Value EvalFlow(Env env, Style style, int s) {
+        //    Value value = env.LookupValue(this.name);
+        //    if (value is ConstantFlow) { throw new ConstantEvaluation((value as ConstantFlow).Format(style)); }
+        //    return value;
+        //}
+        //public override Flow BuildFlow(Env env, Style style, int s) {
+        //    Value value = env.LookupValue(this.name); // we must convert this Value into a Flow
+        //    Flow flow = value.ToFlow();
+        //    if (flow == null) throw new Error("Flow expression: Variable '" + this.Format() + "' should denote a flow");
+        //    return flow;
+        //}
     }
 
     public class Constant : Expression { // useful only within flows
@@ -141,9 +218,9 @@ namespace Kaemika {
         public Constant(string name) { this.name = name; }
         public override string Format() { return this.name; }
         public override void Scope(Scope scope) { }
-        public override Value EvalReject(Env env, Netlist netlist, Style style, int s) { throw new Error("Constants cannot be evaluated: " + Format()); }
-        public override Value EvalFlow(Env env, Style style, int s) { throw new Error("Constants cannot be evaluated: " + Format()); }
-        public override Flow BuildFlow(Env env, Style style, int s) { return new ConstantFlow(new Symbol(this.name)); }
+        public override Value EvalReject(Env env, Netlist netlist, Style style, int s) { return new ConstantFlow(new Symbol(this.name)); }//{ throw new Error("Constants cannot be evaluated: " + Format()); }
+        //public override Value EvalFlow(Env env, Style style, int s) { throw new Error("Constants cannot be evaluated: " + Format()); }
+        //public override Flow BuildFlow(Env env, Style style, int s) { return new ConstantFlow(new Symbol(this.name)); }
     }
 
     public class BoolLiteral : Expression {
@@ -152,8 +229,8 @@ namespace Kaemika {
         public override string Format() { if (this.value) return "true"; else return "false"; }
         public override void Scope(Scope scope) { }
         public override Value EvalReject(Env env, Netlist netlist, Style style, int s) { return new BoolValue(this.value); }
-        public override Value EvalFlow(Env env, Style style, int s) { return new BoolValue(this.value); }
-        public override Flow BuildFlow(Env env, Style style, int s) { return new BoolFlow(this.value); }
+        //public override Value EvalFlow(Env env, Style style, int s) { return new BoolValue(this.value); }
+        //public override Flow BuildFlow(Env env, Style style, int s) { return new BoolFlow(this.value); }
     }
 
     public class NumberLiteral : Expression {
@@ -162,8 +239,8 @@ namespace Kaemika {
         public override string Format() { return this.value.ToString(); }
         public override void Scope(Scope scope) { }
         public override Value EvalReject(Env env, Netlist netlist, Style style, int s) { return new NumberValue(this.value); }
-        public override Value EvalFlow(Env env, Style style, int s) { return new NumberValue(this.value); }
-        public override Flow BuildFlow(Env env, Style style, int s) { return new NumberFlow(this.value); }
+        //public override Value EvalFlow(Env env, Style style, int s) { return new NumberValue(this.value); }
+        //public override Flow BuildFlow(Env env, Style style, int s) { return new NumberFlow(this.value); }
     }
 
     public class StringLiteral : Expression {
@@ -172,8 +249,8 @@ namespace Kaemika {
         public override string Format() { return this.value; }
         public override void Scope(Scope scope) { }
         public override Value EvalReject(Env env, Netlist netlist, Style style, int s) { return new StringValue(this.value); }
-        public override Value EvalFlow(Env env, Style style, int s) { return new StringValue(this.value); }
-        public override Flow BuildFlow(Env env, Style style, int s) { return new StringFlow(this.value); }
+        //public override Value EvalFlow(Env env, Style style, int s) { return new StringValue(this.value); }
+        //public override Flow BuildFlow(Env env, Style style, int s) { return new StringFlow(this.value); }
     }
 
     public class ListLiteral : Expression {
@@ -192,14 +269,14 @@ namespace Kaemika {
             }
             return new ListValue<Value>(values);
         }
-        public override Value EvalFlow(Env env, Style style, int s) { StackCheck(s);
-            List<Value> values = new List<Value>();
-            foreach (Expression element in elements.expressions) values.Add(element.EvalFlow(env, style, s + 1));
-            return new ListValue<Value>(values);
-        }
-        public override Flow BuildFlow(Env env, Style style, int s) {
-            throw new Error("Flow expression: a list is not a flow: " + this.Format());
-        }
+        //public override Value EvalFlow(Env env, Style style, int s) { StackCheck(s);
+        //    List<Value> values = new List<Value>();
+        //    foreach (Expression element in elements.expressions) values.Add(element.EvalFlow(env, style, s + 1));
+        //    return new ListValue<Value>(values);
+        //}
+        //public override Flow BuildFlow(Env env, Style style, int s) {
+        //    throw new Error("Flow expression: a list is not a flow: " + this.Format());
+        //}
     }
 
     public class ParameterInfo {
@@ -236,12 +313,12 @@ namespace Kaemika {
         public override Value EvalReject(Env env, Netlist netlist, Style style, int s) {
             return new FunctionValue(null, parameters, body, env);
         }
-        public override Value EvalFlow(Env env, Style style, int s) {
-            return new FunctionValue(null, parameters, body, env);
-        }
-        public override Flow BuildFlow(Env env, Style style, int s) {
-            throw new Error("Flow expression: function abstraction is not a flow: " + this.Format());
-        }
+        //public override Value EvalFlow(Env env, Style style, int s) {
+        //    return new FunctionValue(null, parameters, body, env);
+        //}
+        //public override Flow BuildFlow(Env env, Style style, int s) {
+        //    throw new Error("Flow expression: function abstraction is not a flow: " + this.Format());
+        //}
     }
 
     public class NetworkAbstraction : Expression {
@@ -252,7 +329,7 @@ namespace Kaemika {
             this.body = body;
         }
         public override string Format() {
-            return "net (" + parameters.Format() + ") {" + body.Format() + "}";
+            return "η(" + parameters.Format() + ") {" + body.Format() + "}";
         }
         public override void Scope(Scope scope) {
             body.Scope(scope.Extend(parameters.parameters));
@@ -260,12 +337,12 @@ namespace Kaemika {
         public override Value EvalReject(Env env, Netlist netlist, Style style, int s) {
             return new NetworkValue(null, parameters, body, env);
         }
-        public override Value EvalFlow(Env env, Style style, int s) {
-            throw new Error("Flow expression: network abstractions is not a flow: " + this.Format());
-        }
-        public override Flow BuildFlow(Env env, Style style, int s) {
-            throw new Error("Flow expression: network abstractions is not a flow: " + this.Format());
-        }
+        //public override Value EvalFlow(Env env, Style style, int s) {
+        //    throw new Error("Flow expression: network abstractions is not a flow: " + this.Format());
+        //}
+        //public override Flow BuildFlow(Env env, Style style, int s) {
+        //    throw new Error("Flow expression: network abstractions is not a flow: " + this.Format());
+        //}
     }
 
     public class RandomAbstraction : Expression {
@@ -284,17 +361,17 @@ namespace Kaemika {
         public override Value EvalReject(Env env, Netlist netlist, Style style, int s) { StackCheck(s);
             return new HiDistributionValue(null, null, 
                 (OmegaValue omega, Style dynamicStyle) => {
-                    Env closureEnv = new ValueEnv(omegaName, new Type("omega"), omega, env); // does not emit this bindings into the netlist
+                    Env closureEnv = new ValueEnv(omegaName, Type.Omega, omega, env, noCheck:true); // does not emit this bindings into the netlist
                     return body.EvalReject(closureEnv, netlist, dynamicStyle, s + 1);
                     }
             );
         }
-        public override Value EvalFlow(Env env, Style style, int s) {
-            throw new Error("Flow expression: random variable abstractions is not a flow: " + this.Format());
-        }
-        public override Flow BuildFlow(Env env, Style style, int s) {
-            throw new Error("Flow expression: random variable abstractions is not a flow: " + this.Format());
-        }
+        //public override Value EvalFlow(Env env, Style style, int s) {
+        //    throw new Error("Flow expression: random variable abstractions is not a flow: " + this.Format());
+        //}
+        //public override Flow BuildFlow(Env env, Style style, int s) {
+        //    throw new Error("Flow expression: random variable abstractions is not a flow: " + this.Format());
+        //}
     }
 
     public class BlockExpression : Expression {
@@ -316,18 +393,18 @@ namespace Kaemika {
             if (extEnv == Env.REJECT) return Value.REJECT;
             return this.expression.EvalReject(extEnv, netlist, style, s+1);
         }
-        public override Value EvalFlow(Env env, Style style, int s) {
-            // this should never happen because BuildFlow of a BlockExpression will directly call BuildFlow of the value definition statements and of the final expression
-            throw new Error("BlockExpression EvalFlow " + this.Format());
-        }
-        public override Flow BuildFlow(Env env, Style style, int s) { StackCheck(s);
-            Env extEnv = env;
-            foreach (Statement statement in statements.statements) {
-                if (statement is ValueDefinition) extEnv = ((ValueDefinition)statement).BuildFlow(extEnv, style, s + 1);
-                else throw new Error("Flow expression: function bodies can contain only value definitions (including flow definitions) and a final flow expression; functions with flow parameters to be invoked there can be defined externally: " + Format());
-            }
-            return this.expression.BuildFlow(extEnv, style, s + 1);
-        }
+        //public override Value EvalFlow(Env env, Style style, int s) {
+        //    // this should never happen because BuildFlow of a BlockExpression will directly call BuildFlow of the value definition statements and of the final expression
+        //    throw new Error("BlockExpression EvalFlow " + this.Format());
+        //}
+        //public override Flow BuildFlow(Env env, Style style, int s) { StackCheck(s);
+        //    Env extEnv = env;
+        //    foreach (Statement statement in statements.statements) {
+        //        if (statement is ValueDefinition) extEnv = ((ValueDefinition)statement).BuildFlow(extEnv, style, s + 1);
+        //        else throw new Error("Flow expression: function bodies can contain only value definitions (including flow definitions) and a final flow expression; functions with flow parameters to be invoked there can be defined externally: " + Format());
+        //    }
+        //    return this.expression.BuildFlow(extEnv, style, s + 1);
+        //}
     }
 
     public class FunctionInstance : Expression {
@@ -358,42 +435,49 @@ namespace Kaemika {
             if (value == Value.REJECT) return Value.REJECT;
             if (value is FunctionValue) {
                 FunctionValue closure = (FunctionValue)value;
-                List<Value> arguments = this.arguments.EvalReject(env, netlist, style, s+1);
+                List<Value> arguments = this.arguments.EvalReject(env, netlist, style, s + 1);
                 if (arguments == Expressions.REJECT) return Value.REJECT;
-                string invocation = "";
-                if (false) { //### style.traceComputational) {
-                    Style restyle = style.RestyleAsDataFormat("symbol");
-                    invocation = closure.Format(restyle) + "(" + Style.FormatSequence(arguments, ", ", x => x.Format(restyle)) + ")";
-                    netlist.Emit(new CommentEntry("BEGIN " + invocation));
-                }
+                //string invocation = "";
+                //if (style.traceFull) {
+                //    Style restyle = style.RestyleAsDataFormat("symbol");
+                //    invocation = closure.Format(restyle) + "(" + Style.FormatSequence(arguments, ", ", x => x.Format(restyle)) + ")";
+                //    netlist.Emit(new CommentEntry("BEGIN " + invocation));
+                //}
                 Value result = closure.ApplyReject(arguments, netlist, style, s);
                 if (result == Value.REJECT) return Value.REJECT;
-                if (false) { //### style.traceComputational) 
-                    netlist.Emit(new CommentEntry("END " + invocation));
-                }
+                //if (style.traceFull) 
+                //    netlist.Emit(new CommentEntry("END " + invocation));
+                //}
                 return result;
-            } else if (value is OperatorValue) {
-                OperatorValue oper = (OperatorValue)value;
-                if (oper.name == "if") { // it was surely parsed with 3 arguments
-                    List<Expression> actuals = this.arguments.expressions;
-                    Value cond = actuals[0].EvalReject(env, netlist, style, s+1);
-                    if (cond == Value.REJECT) return Value.REJECT;
-                    if (cond is BoolValue) if (((BoolValue)cond).value) return actuals[1].EvalReject(env, netlist, style, s+1); else return actuals[2].EvalReject(env, netlist, style, s+1);
-                    else throw new Error("'if' predicate should be a bool: " + Format());
-                } else if (oper.name == "observe") {
-                    List<Expression> actuals = this.arguments.expressions;
-                    if (actuals.Count != 1 && actuals.Count != 2) throw new Error("'observe' wrong number of arguments " + Format()); ;
-                    Flow flow = actuals[0].BuildFlow(env, style, s + 1);
-                    Value sample = env.LookupValue("vessel");
-                    if (actuals.Count == 2) sample = actuals[1].EvalReject(env, netlist, style, s + 1);
-                    if (sample == Value.REJECT) return Value.REJECT;
-                    if (!(sample is SampleValue)) throw new Error("'observe' second argument should be a sample: " + Format());
-                    return (sample as SampleValue).Observe(flow, netlist, style);
-                } else {
-                    List<Value> arguments = this.arguments.EvalReject(env, netlist, style, s+1);
-                    if (arguments == Expressions.REJECT) return Value.REJECT;
-                    return oper.Apply(arguments, netlist, style, s);
-                }
+            } else if (value is FunctionOperatorValue asOp) {
+                return asOp.Apply(arguments, infix, env, netlist, style, s);
+            //} else if (value is OperatorValue) {
+            //    OperatorValue oper = (OperatorValue)value;
+            //    if (oper.name == "if") { // it was surely parsed with 3 arguments
+            //        List<Expression> actuals = this.arguments.expressions;
+            //        Value cond = actuals[0].EvalReject(env, netlist, style, s+1);
+            //        if (cond == Value.REJECT) return Value.REJECT;
+            //        if (cond is BoolValue) if (((BoolValue)cond).value) return actuals[1].EvalReject(env, netlist, style, s+1); else return actuals[2].EvalReject(env, netlist, style, s+1);
+            //        else throw new Error("'if' predicate should be a bool: " + Format());
+            //    //} else if (oper.name == "asflow") {
+            //    //    List<Expression> actuals = this.arguments.expressions;
+            //    //    if (actuals.Count != 1) throw new Error("'flow' wrong number of arguments " + Format()); ;
+            //    //    return actuals[0].BuildFlow(env, style, s + 1);
+            //    } else if (oper.name == "observe") {
+            //        List<Expression> actuals = this.arguments.expressions;
+            //        if (actuals.Count != 1 && actuals.Count != 2) throw new Error("'observe' wrong number of arguments " + Format()); ;
+            //        Flow flow = actuals[0].EvalRejectToFlow(this, env, netlist, style, s + 1);
+            //        if (flow == Flow.REJECT) return Value.REJECT;
+            //        Value sample = env.LookupValue("vessel");
+            //        if (actuals.Count == 2) sample = actuals[1].EvalReject(env, netlist, style, s + 1);
+            //        if (sample == Value.REJECT) return Value.REJECT;
+            //        if (!(sample is SampleValue)) throw new Error("'observe' second argument should be a sample: " + Format());
+            //        return (sample as SampleValue).Observe(flow, netlist, style);
+            //    } else {
+            //        List<Value> arguments = this.arguments.EvalReject(env, netlist, style, s+1);
+            //        if (arguments == Expressions.REJECT) return Value.REJECT;
+            //        return oper.Apply(arguments, infix, netlist, style, s);
+            //    }
             } else if (value is ListValue<Value>) {
                 ListValue<Value> list = (ListValue<Value>)value;
                 List<Value> arguments = this.arguments.EvalReject(env, netlist, style, s + 1);
@@ -430,60 +514,71 @@ namespace Kaemika {
                 } else throw new Error("Wrong number of arguments to random variable: " + Format());
             } else throw new Error("Invocation of a non-function, non-list, or non-operator: " + Format());
         }
-        public override Value EvalFlow(Env env, Style style, int s) { StackCheck(s);
-            Value value = this.function.EvalFlow(env, style, s + 1);
-            if (value is FunctionValue) {
-                FunctionValue closure = (FunctionValue)value;
-                List<Value> arguments = this.arguments.EvalFlow(env, style, s + 1);
-                return closure.ApplyFlow(arguments, style, s);
-            } else if (value is OperatorValue) {
-                OperatorValue oper = (OperatorValue)value;
-                if (oper.name == "if") { // it was surely parsed with 3 arguments
-                    List<Expression> actuals = this.arguments.expressions;
-                    Value cond = actuals[0].EvalFlow(env, style, s + 1);
-                    if (cond is BoolValue) if (((BoolValue)cond).value) return actuals[1].EvalFlow(env, style, s + 1); else return actuals[2].EvalFlow(env, style, s + 1);
-                    else throw new Error("Flow expression: 'if' predicate should be a bool: " + Format());
-                } else {
-                    List<Value> arguments = this.arguments.EvalFlow(env, style, s + 1);
-                    return oper.ApplyFlow(arguments, style);
-                }
-            } else if (value is ListValue<Value>) {
-                ListValue<Value> list = (ListValue<Value>)value;
-                List<Value> arguments = this.arguments.EvalFlow(env, style, s + 1);
-                if (arguments.Count == 1) return list.Select(arguments[0], style);
-                else if (arguments.Count == 2) return list.Sublist(arguments[0], arguments[1], style);
-                else throw new Error("Flow expression: Wrong number of parameters to list selection: " + Format());
-            } else throw new Error("Flow expression: Invocation of a non-function, non-list, or non-operator: " + Format());
-        }
-        public override Flow BuildFlow(Env env, Style style, int s) { StackCheck(s);
-            Value value = this.function.EvalFlow(env, style, s + 1);
-            if (value is FunctionValue) {
-                FunctionValue closure = (FunctionValue)value;
-                List<Flow> arguments = this.arguments.BuildFlow(env, style, s + 1); 
-                return closure.BuildFlow(arguments, style, s + 1);
-            } else if (value is OperatorValue) {
-                OperatorValue oper = (OperatorValue)value;
-                if (oper.name == "if") { // it was surely parsed with 3 arguments
-                    List<Expression> actuals = this.arguments.expressions;
-                    Value cond = actuals[0].EvalFlow(env, style, s + 1); // this is a real boolean value, not a flow
-                    if (cond is BoolValue) if (((BoolValue)cond).value) return actuals[1].BuildFlow(env, style, s + 1); else return actuals[2].BuildFlow(env, style, s + 1);
-                    else throw new Error("Flow expression: 'if' predicate should be a bool: " + Format());
-                } else {
-                    List<Flow> arguments = this.arguments.BuildFlow(env, style, s + 1); // operator arguments are Flows that are composed with the operator
-                    return oper.BuildFlow(arguments, style);
-                }
-            } else if (value is ListValue<Value>) {
-                ListValue<Value> list = (ListValue<Value>)value;
-                List<Value> arguments = this.arguments.EvalFlow(env, style, s + 1);
-                Value selection = null; // we must convert this Value into a Flow
-                if (arguments.Count == 1) selection = list.Select(arguments[0], style);
-                else if (arguments.Count == 2) selection = list.Sublist(arguments[0], arguments[1], style);
-                else throw new Error("Flow expression: Wrong number of parameters to list selection: " + Format());
-                Flow flow = selection.ToFlow();
-                if (flow == null) new Error("Flow expression: list selection '" + this.Format() + "' should denote a flow");
-                return flow;
-            } else throw new Error("Flow expression: Invocation of a non-function or non-operator: " + Format());
-        }
+        //public override Value EvalFlow(Env env, Style style, int s) { StackCheck(s);
+        //    Value value = this.function.EvalFlow(env, style, s + 1);
+        //    if (value is FunctionValue) {
+        //        FunctionValue closure = (FunctionValue)value;
+        //        List<Value> arguments = this.arguments.EvalFlow(env, style, s + 1);
+        //        return closure.ApplyFlow(arguments, style, s);
+        //    } else if (value is OperatorValue) {
+        //        OperatorValue oper = (OperatorValue)value;
+        //        if (oper.name == "if") { // it was surely parsed with 3 arguments
+        //            List<Expression> actuals = this.arguments.expressions;
+        //            Value cond = actuals[0].EvalFlow(env, style, s + 1);
+        //            if (cond is BoolValue) if (((BoolValue)cond).value) return actuals[1].EvalFlow(env, style, s + 1); else return actuals[2].EvalFlow(env, style, s + 1);
+        //            else throw new Error("Flow expression: 'if' predicate should be a bool: " + Format());
+        //        } else if (oper.name == "asflow") {
+        //            List<Expression> actuals = this.arguments.expressions;
+        //            if (actuals.Count != 1) throw new Error("'asflow' wrong number of arguments " + Format()); ;
+        //            return actuals[0].BuildFlow(env, style, s + 1);
+        //        } else {
+        //            List<Value> arguments = this.arguments.EvalFlow(env, style, s + 1);
+        //            return oper.ApplyFlow(arguments, style);
+        //        }
+        //    } else if (value is ListValue<Value>) {
+        //        ListValue<Value> list = (ListValue<Value>)value;
+        //        List<Value> arguments = this.arguments.EvalFlow(env, style, s + 1);
+        //        if (arguments.Count == 1) return list.Select(arguments[0], style);
+        //        else if (arguments.Count == 2) return list.Sublist(arguments[0], arguments[1], style);
+        //        else throw new Error("Flow expression: Wrong number of parameters to list selection: " + Format());
+        //    } else throw new Error("Flow expression: Invocation of a non-function, non-list, or non-operator: " + Format());
+        //}
+//        public override Flow BuildFlow(Env env, Style style, int s) { StackCheck(s);
+//            //Value value = this.function.EvalFlow(env, style, s + 1);
+//            Netlist netlist = new Netlist(false);
+//            Value value = this.function.EvalReject(env, netlist, style, s + 1);
+//            if (value == Value.REJECT) return Flow.REJECT;
+//            if (value is FunctionValue) {
+//                FunctionValue closure = (FunctionValue)value;
+//                List<Flow> arguments = this.arguments.BuildFlow(env, style, s + 1); 
+//                return closure.BuildFlow(arguments, style, s + 1);
+//            } else if (value is OperatorValue) {
+//                OperatorValue oper = (OperatorValue)value;
+//                if (oper.name == "if") { // it was surely parsed with 3 arguments
+//                    List<Expression> actuals = this.arguments.expressions;
+////                    Value cond = actuals[0].EvalFlow(env, style, s + 1); // this is a real boolean value, not a flow
+//                    Value cond = actuals[0].EvalReject(env, netlist, style, s + 1); // this is a real boolean value, not a flow
+//                    if (value == Value.REJECT) return Flow.REJECT;
+//                    if (cond is BoolValue) if (((BoolValue)cond).value) return actuals[1].BuildFlow(env, style, s + 1); else return actuals[2].BuildFlow(env, style, s + 1);
+//                    else throw new Error("Flow expression: 'if' predicate should be a bool: " + Format());
+//                } else {
+//                    List<Flow> arguments = this.arguments.BuildFlow(env, style, s + 1); // operator arguments are Flows that are composed with the operator
+//                    return oper.BuildFlow(arguments, style);
+//                }
+//            } else if (value is ListValue<Value>) {
+//                ListValue<Value> list = (ListValue<Value>)value;
+////                List<Value> arguments = this.arguments.EvalFlow(env, style, s + 1);
+//                List<Value> arguments = this.arguments.EvalReject(env, netlist, style, s + 1);
+//                if (arguments == Expressions.REJECT) return Flow.REJECT;
+//                Value selection; // we must convert this Value into a Flow
+//                if (arguments.Count == 1) selection = list.Select(arguments[0], style);
+//                else if (arguments.Count == 2) selection = list.Sublist(arguments[0], arguments[1], style); // this will fail to convert to a flow
+//                else throw new Error("Flow expression: Wrong number of parameters to list selection: " + Format());
+//                Flow flow = selection.ToFlow();
+//                if (flow == null) new Error("Flow expression: list selection '" + this.Format() + "' should denote a flow");
+//                return flow;
+//            } else throw new Error("Flow expression: Invocation of a non-function or non-operator: " + Format());
+//        }
     }
 
     // STATEMENTS
@@ -588,8 +683,11 @@ namespace Kaemika {
             int j = i;
             while ((j < statements.Count) && (statements[j] is FunctionDefinition || statements[j] is NetworkDefinition)) {
                 Statement statement = statements[j];
-                string name = (statement is FunctionDefinition) ? ((FunctionDefinition)statement).Name() : ((NetworkDefinition)statement).Name();
-                recEnv = new ValueEnv(name, null, null, recEnv);
+                if (statement is FunctionDefinition) {
+                    recEnv = new ValueEnv(((FunctionDefinition)statement).Name(), Type.Function, null, recEnv, noCheck: true);
+                } else {
+                    recEnv = new ValueEnv(((NetworkDefinition)statement).Name(), Type.Network, null, recEnv, noCheck: true);
+                }
                 j = j + 1;
             }
             j = i;
@@ -599,13 +697,13 @@ namespace Kaemika {
                     Symbol symbol = recEnv.LookupSymbol(((FunctionDefinition)statement).Name());
                     FunctionValue value = ((FunctionDefinition)statement).FunctionClosure(symbol, recEnv);
                     recEnv.AssignValue(symbol, value);
-                    if (s == 0) netlist.Emit(new FunctionEntry(symbol, value));     // insert the closures in the netlist
+                    if (netlist.EmitComp(style, s)) netlist.Emit(new FunctionEntry(symbol, value));     // insert the closures in the netlist
                 }
                 if (statement is NetworkDefinition) {
                     Symbol symbol = recEnv.LookupSymbol(((NetworkDefinition)statement).Name());
                     NetworkValue value = ((NetworkDefinition)statement).NetworkClosure(symbol, recEnv);
                     recEnv.AssignValue(symbol, value);
-                    if (s == 0) netlist.Emit(new NetworkEntry(symbol, value));     // insert the closures in the netlist
+                    if (netlist.EmitComp(style, s)) netlist.Emit(new NetworkEntry(symbol, value));     // insert the closures in the netlist
                 }
                 j = j + 1;
             }
@@ -630,7 +728,7 @@ namespace Kaemika {
             this.definee = definee;
         }
         public override string Format() {
-            return type.Format() + " " + name + " = " + definee.Format();
+            return Types.Format(type) + " " + name + " = " + definee.Format();
         }
         public override Scope Scope(Scope scope) {
             definee.Scope(scope);
@@ -638,15 +736,16 @@ namespace Kaemika {
         }
         public override Env EvalReject(Env env, Netlist netlist, Style style, int s) { StackCheck(s);
             Symbol symbol = new Symbol(this.name);
-            Value value = (type.Is("flow")) ? definee.BuildFlow(env, style, s + 1) : definee.EvalReject(env, netlist, style, s+1);     // evaluate
+            // Value value = (type == Type.Flow) ? definee.BuildFlow(env, style, s + 1) : definee.EvalReject(env, netlist, style, s + 1);     // evaluate
+            Value value = definee.EvalReject(env, netlist, style, s+1);     // must now use the asflow(-) operator to force a BuildFlow context, while a flow declaration does an Eval and then expects a flow value
             if (value == Value.REJECT) return Env.REJECT;
             if (value is DistributionValue valueAs) valueAs.BindSymbol(symbol);
             return new ValueEnv(symbol, type, value, s==0 ? netlist : null, env);  // make new symbol, check that types match, emit also in the netlist, return extended env
         }
-        public Env BuildFlow(Env env, Style style, int s) {   // special case: only value definitions among all statements support BuildFlow
-            Flow flow = definee.BuildFlow(env, style, s + 1);                              // evaluate
-            return new ValueEnv(this.name, new Type("flow"), flow, env);                   // checks that the ("flow") types match
-        }
+        //public Env BuildFlow(Env env, Style style, int s) {   // special case: only value definitions among all statements support BuildFlow
+        //    Flow flow = definee.BuildFlow(env, style, s + 1);                              // evaluate
+        //    return new ValueEnv(this.name, Type.Flow, flow, env);                   // checks that the ("flow") types match
+        //}
     }
 
     public class PatternDefinition : Statement {
@@ -668,24 +767,22 @@ namespace Kaemika {
             if (value == Value.REJECT) return Env.REJECT;
             return env.ExtendValue<Value>(pattern, value, s == 0 ? netlist : null, pattern.Format(), style, s);
         }
-        public Env BuildFlow(Env env, Style style) {   // special case: only value definitions among all statements support BuildFlow
-            throw new Error("Flow expression: a list definition is not a flow definition: " + this.Format()); // would have to support ListFlow first
-        }
+        //public Env BuildFlow(Env env, Style style) {   // special case: only value definitions among all statements support BuildFlow
+        //    throw new Error("Flow expression: a list definition is not a flow definition: " + this.Format()); // would have to support ListFlow first
+        //}
     }
 
     public class ParameterDefinition : Statement {
         private string name;
         public Type type;
         private Expression definee;
-        private Type numberType;
         public ParameterDefinition(string name, Type type, Expression definee) {
             this.name = name;
             this.type = type;
-            this.numberType = new Type("number");
             this.definee = definee;
         }
         public override string Format() {
-            return "parameter " + numberType.Format() + " " + name + " <- " + definee.Format();
+            return "parameter " + Types.Format(type) + " " + name + " <- " + definee.Format();
         }
         public override Scope Scope(Scope scope) {
             definee.Scope(scope);
@@ -704,15 +801,15 @@ namespace Kaemika {
                     if (v is NumberValue vAs) drawn = vAs;
                     else throw new Error("A parameter must be drawn from a numerical random variable: " + this.Format());
                 }
-                Env extEnv = new ValueEnv(symbol, numberType, drawn, env);
-                netlist.Emit(new ParameterEntry(symbol, numberType, drawn, distribution));
+                Env extEnv = new ValueEnv(symbol, type, drawn, env, noCheck: true);
+                if (netlist.EmitChem(style, s)) netlist.Emit(new ParameterEntry(symbol, type, drawn, distribution));
                 return extEnv;
             }
             else throw new Error("A parameter must be drawn from a random variable: " + this.Format());
         }
-        public Env BuildFlow(Env env, Style style) {
-            throw new Error("A distribution cannot be a flow: " + this.Format());
-        }
+        //public Env BuildFlow(Env env, Style style) {
+        //    throw new Error("A distribution cannot be a flow: " + this.Format());
+        //}
     }
 
     public class SampleDefinition : Statement {
@@ -729,7 +826,7 @@ namespace Kaemika {
             this.temperatureUnit = temperatureUnit;
         }
         public override string Format() {
-            return "sample " + name + " {" + volume.Format() + " " + volumeUnit + ", " + temperature.Format() + " " + temperatureUnit;
+            return "sample " + name + " {" + volume.Format() + " " + volumeUnit + ", " + temperature.Format() + " " + temperatureUnit + "}";
         }
         public override Scope Scope(Scope scope) {
             Scope extScope = new ConsScope(name, scope);
@@ -750,8 +847,8 @@ namespace Kaemika {
             Symbol symbol = new Symbol(name);
             SampleValue sample = Protocol.Sample(symbol, volumeValue, temperatureValue);
             KDeviceHandler.Sample(sample, style);
-            netlist.Emit(new SampleEntry(sample));
-            return new ValueEnv(symbol, null, sample, env);
+            if (netlist.EmitChem(style, s)) netlist.Emit(new SampleEntry(sample));
+            return new ValueEnv(symbol, Type.Sample, sample, env, noCheck: true);
         }
     }
 
@@ -791,8 +888,8 @@ namespace Kaemika {
                     molarmass = -1.0; // molarmass not specified
                 }
                 SpeciesValue species = new SpeciesValue(symbol, molarmass);         // use the new symbol for the uninitialized species value
-                extEnv = new ValueEnv(symbol, null, species, extEnv);               // extend environment
-                netlist.Emit(new SpeciesEntry(species));                            // put the species in the netlist (its initial value goes into a sample)
+                extEnv = new ValueEnv(symbol, Type.Species, species, extEnv, noCheck: true);               // extend environment
+                if (netlist.EmitChem(style, s)) netlist.Emit(new SpeciesEntry(species));   // put the species in the netlist (its initial value goes into a sample)
             }
             Env ignoreEnv = this.statements.EvalReject(extEnv, netlist, style, s + 1);          // eval the statements in the new environment
             if (ignoreEnv == Env.REJECT) return Env.REJECT;
@@ -852,8 +949,8 @@ namespace Kaemika {
         public override Env EvalReject(Env env, Netlist netlist, Style style, int s) { // this and the related Emit are probably never executed because of the separate handing of recursive environments
             Symbol symbol = new Symbol(this.name);                              // create a new symbol from name
             FunctionValue value = this.FunctionClosure(symbol, env);
-            Env extEnv = new ValueEnv(symbol, null, value, env);            // checks that the types match
-            if (s == 0) netlist.Emit(new FunctionEntry(symbol, value));                     // embed the new symbol also in the netlist
+            Env extEnv = new ValueEnv(symbol, Type.Function, value, env, noCheck: true);        
+            if (netlist.EmitComp(style, s)) netlist.Emit(new FunctionEntry(symbol, value));   // embed the new symbol also in the netlist
             return extEnv;                                                      // return the extended environment
         }
     }
@@ -881,8 +978,8 @@ namespace Kaemika {
         public override Env EvalReject(Env env, Netlist netlist, Style style, int s) { // this and the related Emit are probably never executed because of the separate handing of recursive environments
             Symbol symbol = new Symbol(this.name);                              // create a new symbol from name
             NetworkValue value = this.NetworkClosure(symbol, env);
-            Env extEnv = new ValueEnv(symbol, null, value, env);            // checks that the types match
-            if (s == 0) netlist.Emit(new NetworkEntry(symbol, value));                      // embed the new symbol also in the netlist
+            Env extEnv = new ValueEnv(symbol, Type.Network, value, env, noCheck: true);            
+            if (netlist.EmitComp(style, s)) netlist.Emit(new NetworkEntry(symbol, value));   // embed the new symbol also in the netlist
             return extEnv;                                                      // return the extended environment
         }
     }
@@ -909,11 +1006,11 @@ namespace Kaemika {
             Symbol omegaSymbol = new Symbol(this.omegaName);
             DistributionValue value = new HiDistributionValue(symbol, null, 
                 (OmegaValue omega, Style dynamicStyle) => {
-                    Env closureEnv = new ValueEnv(omegaName, new Type("omega"), omega, env); // does not emit this bindings into the netlist
+                    Env closureEnv = new ValueEnv(omegaName, Type.Omega, omega, env, noCheck: true); // does not emit this bindings into the netlist
                     return body.EvalReject(closureEnv, netlist, dynamicStyle, s + 1);
                 });
-            Env extEnv = new ValueEnv(symbol, new Type("random"), value, env); 
-            if (s == 0) netlist.Emit(new RandomEntry(symbol, value)); 
+            Env extEnv = new ValueEnv(symbol, Type.Random, value, env, noCheck: true);
+            if (netlist.EmitComp(style, s)) netlist.Emit(new RandomEntry(symbol, value)); 
             return extEnv;
         }
     }
@@ -970,23 +1067,25 @@ namespace Kaemika {
         public override Env EvalReject(Env env, Netlist netlist, Style style, int s) { StackCheck(s);
             Value value = this.network.EvalReject(env, netlist, style, s+1);
             if (value == Value.REJECT) return Env.REJECT;
-            List<Value> arguments = this.arguments.EvalReject(env, netlist, style, s + 1);
-            if (arguments == Expressions.REJECT) return Env.REJECT;
             if (value is NetworkValue) {
+                List<Value> values = this.arguments.EvalReject(env, netlist, style, s + 1);
+                if (values == Expressions.REJECT) return Env.REJECT;
                 NetworkValue closure = (NetworkValue)value;
-                string invocation = "";
-                if (false) { //### (style.traceComputational) {
-                    Style restyle = style.RestyleAsDataFormat("symbol");
-                    invocation = closure.Format(restyle) + "(" + Style.FormatSequence(arguments, ", ", x => x.Format(restyle)) + ")";
-                    netlist.Emit(new CommentEntry("BEGIN " + invocation));
-                }
-                Env ignoreEnv = closure.ApplyReject(arguments, netlist, style, s);
+                //string invocation = "";
+                //if (style.traceFull) {
+                //    Style restyle = style.RestyleAsDataFormat("symbol");
+                //    invocation = closure.Format(restyle) + "(" + Style.FormatSequence(arguments, ", ", x => x.Format(restyle)) + ")";
+                //    netlist.Emit(new CommentEntry("BEGIN " + invocation));
+                //}
+                Env ignoreEnv = closure.ApplyReject(values, netlist, style, s);
                 if (ignoreEnv == Env.REJECT) return Env.REJECT;
-                if (false) { //### style.traceComputational) {
-                    netlist.Emit(new CommentEntry("END " + invocation));
-                }
+                //if (style.traceFull) {
+                //    netlist.Emit(new CommentEntry("END " + invocation));
+                //}
                 return env;
-            } else throw new Error("Invocation of a network expected, instead of: " + value.type.Format());
+            } else if (value is NetworkOperatorValue asOp) {
+                return asOp.Execute(arguments, env, netlist, style, s);
+            } else throw new Error("Invocation of a network expected, instead of: " + Types.Format(value.type));
         }
     }
 
@@ -1013,26 +1112,26 @@ namespace Kaemika {
             if (reactants == Complex.REJECT) return Env.REJECT;
             List<Symbol> products = this.products.EvalReject(env, netlist, style, s + 1);
             if (products == Complex.REJECT) return Env.REJECT;
-            RateValue rate; try { 
-                rate = this.rate.EvalReject(env, netlist, style, s + 1);
+            //RateValue rate; try {
+                RateValue rate = this.rate.EvalReject(env, netlist, style, s + 1);
                 if (rate == RateValue.REJECT) return Env.REJECT;
-            } catch (ConstantEvaluation e) { rate = ConvertToGeneralRate(e.Message, reactants, env, netlist, style, s); }
+            //} catch (ConstantEvaluation e) { rate = ConvertToGeneralRate(e.Message, reactants, env, netlist, style, s); }
             ReactionValue reaction = new ReactionValue(reactants, products, rate);
-            netlist.Emit(new ReactionEntry(reaction));
+            if (netlist.EmitChem(style, s)) netlist.Emit(new ReactionEntry(reaction));
             return env;
         }
-        // in case we attempt to use a constant inside {...} we try to convert it to a flow with mass action kinetics, as if it had appeared inside {{...}}
-        private RateValue ConvertToGeneralRate(string msg, List<Symbol> reactants, Env env, Netlist netlist, Style style, int s) { StackCheck(s);
-            if (!(rate is MassActionRate)) throw new Error("ConvertToGeneralRate");
-            MassActionRate rateExpr = rate as MassActionRate;
-            string err = "Cannot evaluate a constant '" + msg + "' inside a mass action rate {...}; try using general reaction rates {{...}}";
-            if (!(rateExpr.activationEnergy is NumberLiteral && (rateExpr.activationEnergy as NumberLiteral).value == 0.0)) throw new Error(err);
-            RateValue rateValue = new GeneralRate(rateExpr.collisionFrequency).EvalReject(env, netlist, style, s + 1); // try evaluate the rate as a flow // does not REJECT beacause it is a flow
-            Flow rateFunction = (rateValue as GeneralRateValue).rateFunction; // now build up the mass action kinetics
-            if (!rateFunction.IsNumericConstantExpression()) throw new Error(err); // make sure this is only a combination of constants and numbers, not e.g. species
-            foreach (Symbol reactant in reactants) { rateFunction = OpFlow.Op("*", rateFunction, new SpeciesFlow(reactant)); }
-            return new GeneralRateValue(rateFunction);
-        }
+        //// in case we attempt to use a constant inside {...} we try to convert it to a flow with mass action kinetics, as if it had appeared inside {{...}}
+        //private RateValue ConvertToGeneralRate(string msg, List<Symbol> reactants, Env env, Netlist netlist, Style style, int s) { StackCheck(s);
+        //    if (!(rate is MassActionRate)) throw new Error("ConvertToGeneralRate");
+        //    MassActionRate rateExpr = rate as MassActionRate;
+        //    string err = "Cannot evaluate a constant '" + msg + "' inside a mass action rate {...}; try using general reaction rates {{...}}";
+        //    if (!(rateExpr.activationEnergy is NumberLiteral && (rateExpr.activationEnergy as NumberLiteral).value == 0.0)) throw new Error(err);
+        //    RateValue rateValue = new GeneralRate(rateExpr.collisionFrequency).EvalReject(env, netlist, style, s + 1); // try evaluate the rate as a flow // does not REJECT beacause it is a flow
+        //    Flow rateFunction = (rateValue as GeneralFlowRate).rateFunction; // now build up the mass action kinetics
+        //    if (!rateFunction.IsNumericConstantExpression()) throw new Error(err); // make sure this is only a combination of constants and numbers, not e.g. species
+        //    foreach (Symbol reactant in reactants) { rateFunction = OpFlow.Op("*", rateFunction, new SpeciesFlow(reactant)); }
+        //    return new GeneralFlowRate(rateFunction);
+        //}
     }
 
     public abstract class Rate {
@@ -1054,9 +1153,11 @@ namespace Kaemika {
             rateFunction.Scope(scope);
         }
         public override RateValue EvalReject(Env env, Netlist netlist, Style style, int s) { StackCheck(s);  // never REJECT
-            Flow flow = rateFunction.BuildFlow(env, style, s + 1);  // whether this is a numeric flow is checked later
+            //Flow flow = rateFunction.BuildFlow(env, style, s + 1);  // whether this is a numeric flow is checked later
+            Flow flow = rateFunction.EvalRejectToFlow(rateFunction, env, netlist, style, s + 1);  // whether this is a numeric flow is checked later
+            if (flow == Flow.REJECT) return RateValue.REJECT;
             if (!flow.HasDeterministicValue()) throw new Error("This flow-expression cannot appear in {{ ... }} rate: " + rateFunction.Format());
-            return new GeneralRateValue(flow); 
+            return new GeneralFlowRate(flow); 
         }
     }
 
@@ -1087,13 +1188,18 @@ namespace Kaemika {
             if (cf == Value.REJECT) return RateValue.REJECT;
             Value ae = activationEnergy.EvalReject(env, netlist, style, s+1);
             if (ae == Value.REJECT) return RateValue.REJECT;
+            // if (cf is Flow) throw new ConstantEvaluation(cf.Format(style)); // will try to catch it and ConvertToGeneralRate
+            if (cf is Flow cfAs) {
+                if (ae is NumberValue aeAs && aeAs.value == 0.0) return new MassActionFlowRate(cfAs);
+                else throw new Error("Mass action rate, if it is a flow, must have zero activation energy: " + this.Format());
+            }
             if (!(cf is NumberValue)) throw new Error("Reaction rate collision frequency must be a number: " + collisionFrequency.Format());
             if (!(ae is NumberValue)) throw new Error("Reaction rate activation energy must be a number: " + activationEnergy.Format());
             double cfv = ((NumberValue)cf).value;
             double aev = ((NumberValue)ae).value;
             if (cfv < 0) throw new Error("Reaction rate collision frequency must be non-negative: " + collisionFrequency.Format() + " = " + style.FormatDouble(cfv));
             if (aev < 0) throw new Error("Reaction rate activation energy must be non-negative: " + activationEnergy.Format() + " = " + style.FormatDouble(aev));
-            return new MassActionRateValue(cfv, aev);
+            return new MassActionNumericalRate(cfv, aev);
             }
         }
 
@@ -1136,7 +1242,7 @@ namespace Kaemika {
                 if (!(speciesValue is SpeciesValue)) throw new Error("Amount " + this.FormatVars() + "has a non-species in the list of variables");
                 Protocol.Amount((SampleValue)sampleValue, (SpeciesValue)speciesValue, (NumberValue)initialValue, this.dimension, style);
                 KDeviceHandler.Amount((SampleValue)sampleValue, (SpeciesValue)speciesValue, (NumberValue)initialValue, this.dimension, style);
-                netlist.Emit(new AmountEntry((SpeciesValue)speciesValue, (NumberValue)initialValue, this.dimension, (SampleValue)sampleValue));
+                if (netlist.EmitChem(style, s)) netlist.Emit(new AmountEntry((SpeciesValue)speciesValue, (NumberValue)initialValue, this.dimension, (SampleValue)sampleValue));
             }
             return env;
         }
@@ -1169,8 +1275,8 @@ namespace Kaemika {
             Symbol symbol = new Symbol(name);
             SampleValue sample = Protocol.Mix(symbol, samples, netlist, style);
             KDeviceHandler.Mix(sample, samples, style);
-            netlist.Emit(new MixEntry(sample, samples));
-            return new ValueEnv(symbol, null, sample, env);
+            if (netlist.EmitChem(style, s)) netlist.Emit(new MixEntry(sample, samples));
+            return new ValueEnv(symbol, Type.Sample, sample, env, noCheck: true);
         }
     }
       
@@ -1227,10 +1333,10 @@ namespace Kaemika {
 
             List<SampleValue> samples = Protocol.Split(symbols, fromSample, proportionNumbers, netlist, style);
             KDeviceHandler.Split(samples, fromSample, style);
-            netlist.Emit(new SplitEntry(samples, fromSample, proportionNumbers));
+            if (netlist.EmitChem(style, s)) netlist.Emit(new SplitEntry(samples, fromSample, proportionNumbers));
             Env extEnv = env;
             for (int i = symbols.Count - 1; i >= 0; i--)
-                extEnv = new ValueEnv(symbols[i], null, samples[i], extEnv);
+                extEnv = new ValueEnv(symbols[i], Type.Sample, samples[i], extEnv, noCheck: true);
             return extEnv;
         }
     }
@@ -1258,7 +1364,7 @@ namespace Kaemika {
             }
             Protocol.Dispose(dispSamples, netlist, style);
             KDeviceHandler.Dispose(dispSamples, style);
-            netlist.Emit(new DisposeEntry(dispSamples));
+            if (netlist.EmitChem(style, s)) netlist.Emit(new DisposeEntry(dispSamples));
             return env;
         }
     }
@@ -1303,12 +1409,12 @@ namespace Kaemika {
             if (endcondition is EndConditionSimple) {
                 Protocol.PauseEquilibrate(netlist, style); // Gui pause between successive equilibrate, if enabled
                 List<KDeviceHandler.Place> goBacks = KDeviceHandler.StartEquilibrate(inSamples, forTime, style); // can be null
-                List<SampleValue> outSamples = Protocol.EquilibrateList(outSymbols, inSamples, noise, forTime, netlist, style);
-                if (goBacks != null) KDeviceHandler.EndEquilibrate(goBacks, outSamples, inSamples, forTime, style); 
-                netlist.Emit(new EquilibrateEntry(outSamples, inSamples, forTime));
+                List<SampleValue> outSamples = Protocol.EquilibrateList(env, outSymbols, inSamples, noise, forTime, netlist, style);
+                if (goBacks != null) KDeviceHandler.EndEquilibrate(goBacks, outSamples, inSamples, forTime, style);
+                if (netlist.EmitChem(style, s)) netlist.Emit(new EquilibrateEntry(outSamples, inSamples, forTime));
                 Env extEnv = env;
                 for (int i = outSymbols.Count - 1; i >= 0; i--)
-                    extEnv = new ValueEnv(outSymbols[i], null, outSamples[i], extEnv);
+                    extEnv = new ValueEnv(outSymbols[i], Type.Sample, outSamples[i], extEnv, noCheck:true);
                 return extEnv;
             } else throw new Error("Equilibrate");
         }
@@ -1365,10 +1471,10 @@ namespace Kaemika {
 
             List<SampleValue> outSamples = Protocol.Regulate(outSymbols, temperatureValue, inSamples, netlist, style);
             KDeviceHandler.Regulate(outSamples, inSamples, style);
-            netlist.Emit(new RegulateEntry(outSamples, inSamples, temperatureValue));
+            if (netlist.EmitChem(style, s)) netlist.Emit(new RegulateEntry(outSamples, inSamples, temperatureValue));
             Env extEnv = env;
             for (int i = outSymbols.Count - 1; i >= 0; i--)
-                extEnv = new ValueEnv(outSymbols[i], null, outSamples[i], extEnv);
+                extEnv = new ValueEnv(outSymbols[i], Type.Sample, outSamples[i], extEnv, noCheck: true);
             return extEnv;
         }
     }
@@ -1413,39 +1519,68 @@ namespace Kaemika {
 
             List<SampleValue> outSamples = Protocol.Concentrate(outSymbols, volumeValue, inSamples, netlist, style);
             KDeviceHandler.Concentrate(outSamples, inSamples, style);
-            netlist.Emit(new ConcentrateEntry(outSamples, inSamples, volumeValue));
+            if (netlist.EmitChem(style, s)) netlist.Emit(new ConcentrateEntry(outSamples, inSamples, volumeValue));
             Env extEnv = env;
             for (int i = outSymbols.Count - 1; i >= 0; i--)
-                extEnv = new ValueEnv(outSymbols[i], null, outSamples[i], extEnv);
+                extEnv = new ValueEnv(outSymbols[i], Type.Sample, outSamples[i], extEnv, noCheck: true);
             return extEnv;
         }
     }
 
     public class Report : Statement {
+        public string timecourse;
         public Expression expression;   // just a subset of numerical arithmetic expressions that can be plotted
         public Expression asExpr; // can be null
-        public Report(Expression expression, Expression asExpr) {
+        public Expression inSample; // default is 'vessel'
+        public Report(string timecourse, Expression expression, Expression asExpr, Expression inSample) {
+            this.timecourse = timecourse;
             this.expression = expression;
             this.asExpr = asExpr;
+            this.inSample = inSample;
         }
         public override string Format() {
-            string s = "report " + this.expression.Format();
-            if (asExpr != null) s += " as " + this.asExpr.Format();
+            string s = "report ";
+            if (timecourse != null) s += timecourse + " = ";
+            s += expression.Format();
+            if (asExpr != null) s += " as " + asExpr.Format();
+            s += " in " + inSample.Format();
             return s;
         }
         public override Scope Scope(Scope scope) {
             this.expression.Scope(scope);
             if (this.asExpr != null) this.asExpr.Scope(scope);
+            if (this.timecourse != null) scope = new ConsScope(this.timecourse, scope);
+            this.inSample.Scope(scope);
             return scope;
         }
         public override Env EvalReject(Env env, Netlist netlist, Style style, int s) { StackCheck(s);
+            Symbol id = null;
+            if (this.timecourse != null) id = new Symbol(this.timecourse);
+
+            Flow flow = expression.EvalRejectToFlow(expression, env, netlist, style, s + 1);
+            if (flow == Flow.REJECT) return Env.REJECT;
+
             string asLabel = null;
             if (this.asExpr != null) {
-                Value value = this.asExpr.EvalFlow(env, style, s + 1);
-                if (value is StringValue) asLabel = ((StringValue)value).value; // the raw string contents, unquoted
-                else asLabel = value.Format(style);
+                Value asValue = this.asExpr.EvalReject(env, netlist, style, s + 1);
+                if (asValue == Value.REJECT) return Env.REJECT;
+                if (asValue is StringValue) {
+                    asLabel = ((StringValue)asValue).value; // the raw string contents, unquoted
+                } else asLabel = asValue.Format(style); 
             }
-            netlist.Emit(new ReportEntry(expression.BuildFlow(env, style, s + 1), asLabel));
+
+            Value sample = this.inSample.EvalReject(env, netlist, style, s + 1);
+            if (sample == Value.REJECT) return Env.REJECT;
+            SampleValue sampleValue;
+            if (sample is SampleValue asSampleValue) sampleValue = asSampleValue;
+            else throw new Error("report .. in .. requirese a sample: " + this.Format());
+
+            var entry = new ReportEntry(id, flow, asLabel, sampleValue);
+            asSampleValue.AddReport(entry); // add report to sample
+            if (netlist.EmitChem(style, s)) netlist.Emit(entry);
+            if (id != null) {
+                env = new ValueEnv(id, Type.Flow, new TimecourseFlowUnassigned(id), env, noCheck: true);
+            }
             return env;
         }
     }
@@ -1465,27 +1600,33 @@ namespace Kaemika {
             this.from.Scope(scope);
             return scope;
         }
-        public static (List<DistributionValue> manyRand, List<FunctionValue> manyFun, bool single) ExtractLists(Value from, Func<string> format) {
+        public static (List<DistributionValue> manyRand, List<FunctionValue> manyFun, List<NetworkValue> manyNet, bool single) ExtractLists(Value from, Func<string> format) {
             List<DistributionValue> manyRand = new List<DistributionValue>();
             List<FunctionValue> manyFun = new List<FunctionValue>();
+            List<NetworkValue> manyNet = new List<NetworkValue>();
             bool single = true;
             if (from is DistributionValue singleRand) {
                 manyRand.Add(singleRand);
             } else if (from is FunctionValue singleFun) {
                 manyFun.Add(singleFun);
+            } else if (from is NetworkValue singleNet) {
+                manyNet.Add(singleNet);
             } else if (from is ListValue<Value> list) {
                 single = false;
                 foreach (var item in list.elements) {
                     if (item is DistributionValue oneRand) {
                         manyRand.Add(oneRand);
-                        if (manyFun.Count != 0) throw new Error("draw: uniform list of random variables expected: " + format());
+                        if (manyFun.Count != 0 || manyNet.Count != 0) throw new Error("draw: uniform list of random variables expected: " + format());
                     } else if (item is FunctionValue oneFun) {
                         manyFun.Add(oneFun);
-                        if (manyRand.Count != 0) throw new Error("draw: uniform list of functions expected: " + format());
-                    } else throw new Error("draw: functions or random variables expected: " + format());
+                        if (manyRand.Count != 0 || manyNet.Count != 0) throw new Error("draw: uniform list of functions expected: " + format());
+                    } else if (item is NetworkValue oneNet) {
+                        manyNet.Add(oneNet);
+                        if (manyFun.Count != 0 || manyRand.Count != 0) throw new Error("draw: uniform list of networks expected: " + format());
+                    } else throw new Error("draw: functions, networks, or random variables expected: " + format());
                 }
-            } else throw new Error("draw: functions or random variables expected: " + format());
-            return (manyRand, manyFun, single);
+            } else throw new Error("draw: functions, networks, or random variables expected: " + format());
+            return (manyRand, manyFun, manyNet, single);
         }
         public override Env EvalReject(Env env, Netlist netlist, Style style, int s) { StackCheck(s);
             Value several = this.several.EvalReject(env, netlist, style, s + 1);
@@ -1493,9 +1634,10 @@ namespace Kaemika {
             Value from = this.from.EvalReject(env, netlist, style, s + 1);  
             if (from == Value.REJECT) return Env.REJECT;
             int count = (several is NumberValue severalAs) ? (int)severalAs.value : throw new Error("draw: number expected: " + this.Format());
-            (List<DistributionValue> manyRand, List<FunctionValue> manyFun, bool single) = ExtractLists(from, () => { return this.Format(); });
+            (List<DistributionValue> manyRand, List<FunctionValue> manyFun, List<NetworkValue> manyNet, bool single) = ExtractLists(from, () => { return this.Format(); });
             if (manyRand.Count != 0) DistributionValue.DensityPlot(count, manyRand, style);
             if (manyFun.Count != 0) FunctionValue.Plot(count, manyFun, netlist, style, s); //### CAN REJECT
+            if (manyNet.Count != 0) { Env noEnv = NetworkValue.Enumerate(count, manyNet, single, netlist, style, s); if (noEnv == Env.REJECT) return Env.REJECT; }
             return env;
         }
     }
@@ -1520,17 +1662,18 @@ namespace Kaemika {
             Value from = this.from.EvalReject(env, netlist, style, s + 1);
             if (from == Value.REJECT) return Value.REJECT;
             int count = (several is NumberValue severalAs) ? (int)severalAs.value : throw new Error("draw: number expected: " + this.Format());
-            (List<DistributionValue> manyRand, List<FunctionValue> manyFun, bool single) = DrawFromStatement.ExtractLists(from, () => { return this.Format(); });
+            (List<DistributionValue> manyRand, List<FunctionValue> manyFun, List<NetworkValue> manyNet, bool single) = DrawFromStatement.ExtractLists(from, () => { return this.Format(); });
             if (manyRand.Count != 0) return DistributionValue.Enumerate(count, manyRand, single, style);
             if (manyFun.Count != 0) return FunctionValue.Enumerate(count, manyFun, single, netlist, style, s);
+            if (manyNet.Count != 0) throw new Error("draw-from expression cannot evaluate networks");
             return new ListValue<Value>(new List<Value>());
         }
-        public override Value EvalFlow(Env env, Style style, int s) {
-            throw new Error("Cannot be a flow: " + Format());
-        }
-        public override Flow BuildFlow(Env env, Style style, int s) {
-            throw new Error("Cannot be a flow: " + Format());
-        }
+        //public override Value EvalFlow(Env env, Style style, int s) {
+        //    throw new Error("Cannot be a flow: " + Format());
+        //}
+        //public override Flow BuildFlow(Env env, Style style, int s) {
+        //    throw new Error("Cannot be a flow: " + Format());
+        //}
     }
 
 
@@ -1686,7 +1829,7 @@ namespace Kaemika {
             this.name = id;
         }
         public override string Format() {
-            return this.type.Format() + " " + this.name;
+            return Types.Format(this.type) + " " + this.name;
         }
     }
     public class ListPattern : Pattern {
@@ -1741,24 +1884,24 @@ namespace Kaemika {
             foreach (Expression expression in this.expressions) { expression.Scope(scope); }
         }
         public List<Value> EvalReject(Env env, Netlist netlist, Style style, int s) { StackCheck(s);
-            List<Value> expressions = new List<Value>();
+            List<Value> values = new List<Value>();
             foreach (Expression expression in this.expressions) {
                 Value v = expression.EvalReject(env, netlist, style, s + 1);
                 if (v == Value.REJECT) return Expressions.REJECT;
-                expressions.Add(v); 
+                values.Add(v); 
             }
-            return expressions;
+            return values;
         }
-        public List<Value> EvalFlow(Env env, Style style, int s) { StackCheck(s);
-            List<Value> expressions = new List<Value>();
-            foreach (Expression expression in this.expressions) { expressions.Add(expression.EvalFlow(env, style, s + 1)); }
-            return expressions;
-        }
-        public List<Flow> BuildFlow(Env env, Style style, int s) { StackCheck(s);
-            List<Flow> expressions = new List<Flow>();
-            foreach (Expression expression in this.expressions) { expressions.Add(expression.BuildFlow(env, style, s + 1)); }
-            return expressions;
-        }
+        //public List<Value> EvalFlow(Env env, Style style, int s) { StackCheck(s);
+        //    List<Value> expressions = new List<Value>();
+        //    foreach (Expression expression in this.expressions) { expressions.Add(expression.EvalFlow(env, style, s + 1)); }
+        //    return expressions;
+        //}
+        //public List<Flow> BuildFlow(Env env, Style style, int s) { StackCheck(s);
+        //    List<Flow> expressions = new List<Flow>();
+        //    foreach (Expression expression in this.expressions) { expressions.Add(expression.BuildFlow(env, style, s + 1)); }
+        //    return expressions;
+        //}
     }
 
 }

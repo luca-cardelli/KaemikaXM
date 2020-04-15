@@ -116,6 +116,20 @@ namespace KaemikaWPF {
 
         // ====  KGuiControl INTERFACE =====
 
+        public /* Interface KGuiControl */ void GuiInputSetEditable(bool editable) {
+            if (!this.InvokeRequired) {
+                if (editable) {
+                    this.txtInput.ReadOnly = false;
+                    this.txtInput.WordWrap = false;
+                    this.txtInput.ScrollBars = ScrollBars.Both;
+                } else {
+                    this.txtInput.ReadOnly = true;
+                    this.txtInput.WordWrap = true;
+                    this.txtInput.ScrollBars = ScrollBars.Vertical;
+                }
+            } else this.Invoke((Action)delegate { GuiInputSetEditable(editable); });
+        }
+
         public /* Interface KGuiControl */ string GuiInputGetText() {
             if (!this.InvokeRequired) {
                 return this.txtInput.Text;

@@ -165,6 +165,10 @@ namespace Kaemika {
             if (chart == null) return "";
             return chart.ToCSV();
         }
+        public static TimecourseFlow ToTimecourse(Symbol name, Flow series, Style style) {
+            if (chart == null) return null;
+            return chart.ToTimecourse(name, series, style);
+        }
     }
 
     public class KChart {
@@ -295,6 +299,10 @@ namespace Kaemika {
             return timecourse.ToCSV();
         }
 
+        public TimecourseFlow ToTimecourse(Symbol name, Flow series, Style style) {
+            return timecourse.ToTimecourse(name, series, style);
+        }
+
     }
 
     public enum KLineMode { Line, Range, FillUnder }
@@ -397,7 +405,10 @@ namespace Kaemika {
 
         public string AddSeries(KSeries series) {
             lock (mutex) {
-                if (seriesList.Exists(e => e.name == series.name)) return null;  // give null on duplicate series
+                if (seriesList.Exists(e => e.name == series.name)) {
+                    Gui.Log("Warning: Duplicated series in chart is ignored: " + series.name);
+                    return null;  // give null on duplicate series
+                }
                 seriesList.Add(series);
                 seriesIndex.Clear();
                 for (int i = 0; i < seriesList.Count; i++) seriesIndex.Add(seriesList[i].name, i);
@@ -1018,30 +1029,118 @@ namespace Kaemika {
         }
 
         public string ToCSV() {
+            // in case of stochastic flows, the flow name indicates the meaning of the two data columns: 
+            // their values are mean-sd/var and mean+sd/var, just as they are rendered in the chart
+            // unfortunately Excel does not read Unicode correctly
             lock (mutex) {
-                string csvContent = "";
-                var theSeries = seriesList.ToArray();
-                for (int s = theSeries.Length-1; s >= 0; s--) {
+                KSeries[] theSeries = seriesList.ToArray();
+                string csvContent = "SEP=," + Environment.NewLine; // tell Excel to use ',' as separator: default separator is region dependent!
+                // Column headers
+                csvContent += "time"; 
+                for (int s = theSeries.Length - 1; s >= 0; s--) {
                     if (theSeries[s].visible) {
                         string seriesName = theSeries[s].name;
-                        int pointCount = list.Count;
-                        for (int p = 0; p < pointCount; p++) {
-                            KChartEntry point = list[p];
-                            var csvLine = "";
-                            if (theSeries[s].lineMode == KLineMode.Line) {
-                               csvLine = seriesName + "," + point.X + "," + point.Y[s];
-                            } else if (theSeries[s].lineMode == KLineMode.Range) {
-                               csvLine = seriesName + "," + point.X + "," + (point.Y[s] - point.Yrange[s]) + "," + (point.Y[s] + point.Yrange[s]);
-                            } else if (theSeries[s].lineMode == KLineMode.FillUnder) {
-                                csvLine = seriesName + "," + point.X + "," + point.Y[s];
-                            }
-                            csvContent += csvLine + Environment.NewLine;
+                        seriesName = seriesName.Replace("μ", "mu").Replace("σ", "sd").Replace("²", "^2");
+                        if (theSeries[s].lineMode == KLineMode.Range) {
+                            csvContent += "," + seriesName.Replace("±", "mu - ");
+                            csvContent += "," + seriesName.Replace("±", "mu + ");
+                        } else {
+                            csvContent += "," + seriesName;
                         }
                     }
                 }
+                csvContent += Environment.NewLine;
+
+                int pointCount = list.Count;
+                for (int p = 0; p < pointCount; p++) {
+                    KChartEntry point = list[p];
+                    string csvLine = "" + point.X;
+                    for (int s = theSeries.Length-1; s >= 0; s--) {
+                        if (theSeries[s].visible) {
+                            if (theSeries[s].lineMode == KLineMode.Line) {
+                                csvLine += "," + point.Y[s];
+                            } else if (theSeries[s].lineMode == KLineMode.Range) {
+                                csvLine += "," + (point.Y[s] - point.Yrange[s]) + "," + (point.Y[s] + point.Yrange[s]);
+                            } else if (theSeries[s].lineMode == KLineMode.FillUnder) {
+                                csvLine += "," + point.Y[s];
+                            }
+                        }
+                    }
+                    csvContent += csvLine + Environment.NewLine;
+                }
+
+                //// Output the data sequentially
+                //csvContent += "Flow, Time" + Environment.NewLine; // column heading
+                //KSeries[] theSeries = seriesList.ToArray();
+                //for (int s = theSeries.Length-1; s >= 0; s--) {
+                //    if (theSeries[s].visible) {
+                //        string seriesName = theSeries[s].name;
+                //        seriesName = seriesName.Replace("±", "mu +/- ").Replace("μ", "mu").Replace("σ", "sd").Replace("²", "^2");
+                //        int pointCount = list.Count;
+                //        for (int p = 0; p < pointCount; p++) {
+                //            KChartEntry point = list[p];
+                //            var csvLine = "";
+                //            if (theSeries[s].lineMode == KLineMode.Line) {
+                //               csvLine = seriesName + "," + point.X + "," + point.Y[s];
+                //            } else if (theSeries[s].lineMode == KLineMode.Range) {
+                //               csvLine = seriesName + "," + point.X + "," + (point.Y[s] - point.Yrange[s]) + "," + (point.Y[s] + point.Yrange[s]);
+                //            } else if (theSeries[s].lineMode == KLineMode.FillUnder) {
+                //                csvLine = seriesName + "," + point.X + "," + point.Y[s];
+                //            }
+                //            csvContent += csvLine + Environment.NewLine;
+                //        }
+                //    }
+                //}
                 return csvContent;
             }
         }
+
+        public TimecourseFlow ToTimecourse(Symbol name, Flow series, Style style) {
+            lock (mutex) {
+                KSeries[] kseries = seriesList.ToArray();
+                double[] times = new double[list.Count];
+                double[] values = new double[list.Count];
+                bool found = false;
+                for (int s = kseries.Length-1; s >= 0; s--) {
+                    if (kseries[s].asFlow.EqualFlow(series)) { // with LNA active this will pick the deterministic series from kseries because, going backwards, it finds it before the related stochastic one
+                        found = true;
+                        for (int p = 0; p < list.Count; p++) {
+                            KChartEntry point = list[p];
+                            times[p] = point.X;
+                            values[p] = point.Y[s];
+                        }
+                        break; // we found it
+                    }
+                }
+                if (!found) throw new Error("timecourse " + series.Format(style) + " not found (need to enable LNA?)");
+                return new TimecourseFlow(name, KControls.SelectNoiseSelectedItem, series, times, values); //, ranges);
+            }
+        }
+
+        //public (KSeries[] series, float[] time, float[,] mean, float[,] range) ToFlows() {
+        //    lock (mutex) {
+        //        KSeries[] series = seriesList.ToArray();
+        //        float[] time = new float[list.Count];
+        //        float[,] mean = new float[series.Length, list.Count];
+        //        float[,] range = null;
+        //        for (int s = series.Length-1; s >= 0; s--) {
+        //            for (int p = 0; p < list.Count; p++) {
+        //                KChartEntry point = list[p];
+        //                time[p] = point.X;
+        //                if (series[s].lineMode == KLineMode.Line) {
+        //                    mean[s,p] = point.Y[s];
+        //                } else if (series[s].lineMode == KLineMode.Range) {
+        //                    mean[s,p] = point.Y[s];
+        //                    if (range == null) range = new float[series.Length, list.Count];
+        //                    range[s,p] = point.Yrange[s];
+        //                } else if (series[s].lineMode == KLineMode.FillUnder) {
+        //                    mean[s,p] = point.Y[s];
+        //                }
+        //            }
+        //        }
+        //        return (series, time, mean, range);
+        //    }
+        //}
 
     }
 

@@ -19,6 +19,7 @@ namespace Kaemika {
         void GuiInputSetText(string text);
         void GuiInputInsertText(string text);
         void GuiInputSetErrorSelection(int lineNumber, int columnNumber, int length, string failCategory, string failMessage);
+        void GuiInputSetEditable(bool editable);
 
         void GuiOutputTextShow();
         void GuiOutputTextHide();
@@ -170,7 +171,7 @@ namespace Kaemika {
             guiControls.onOffEval.SetImage("icons8play40");
             guiControls.onOffEval.OnClick(
                 (object sender, EventArgs e) => {
-                    // if (!modelInfo.executable) return;
+                    if (currentModelInfo!=null && !currentModelInfo.executable) return;
                     CloseOpenMenu();
                     StartAction(forkWorker: true, autoContinue: guiControls.IsShiftDown());
                 });
@@ -267,6 +268,8 @@ namespace Kaemika {
             guiControls.onOffLoad.OnClick(
                 (object sender, EventArgs e) => {
                     CloseOpenMenu();
+                    currentModelInfo = null;
+                    KGui.gui.GuiInputSetEditable(true);
                     guiControls.onOffLoad.Selected(true);
                     guiControls.Load();
                     guiControls.onOffLoad.Selected(false);
@@ -376,8 +379,12 @@ namespace Kaemika {
             guiControls.menuTutorial.Enabled(true);
         }
 
+        private static ModelInfo currentModelInfo;
         private void SelectTutorial(KFlyoutMenu menu, KButton menuItem, ModelInfo menuSelection) {
+            currentModelInfo = menuSelection;
+            KGui.gui.GuiInputSetEditable(true);
             KGui.gui.GuiInputSetText(menuSelection.text);
+            KGui.gui.GuiInputSetEditable(menuSelection.executable);
         }
 
         // Export menu
@@ -418,8 +425,6 @@ namespace Kaemika {
 
         // Output menu
 
-        private static KButton showComputationalTraceButton = null;
-
         private void OutputMenu() {
             guiControls.menuOutput.SetImage("Computation_48x48");
             guiControls.menuOutput.OnClick((object s, EventArgs e) => { MenuClicked(guiControls.menuOutput); });
@@ -437,31 +442,20 @@ namespace Kaemika {
                     ExecOutputAction(menuSelection);                               // handle storing the menuSelection value
                 });
                 guiControls.menuOutput.AddMenuItem(menuItem, name: output.name);
-                if (menuSelection.name == "Show reaction score") {                // initialize default selection
-                    ItemSelected(guiControls.menuOutput, menuItem);               // handle the selection graphical feedback
-                    SetOutputAction(menuSelection);                              // handle storing the menuSelection value
-                }
-                if (output.name == "Show computational trace") showComputationalTraceButton = menuItem;
             }
             guiControls.menuOutput.Visible(true);
             guiControls.menuOutput.Enabled(true);
         }
 
-        private static void SetOutputAction(ExportAction menuSelection) {
-            Exec.currentOutputAction = menuSelection;
-        }
         private void ExecOutputAction(ExportAction menuSelection) {
             Exec.currentOutputAction = menuSelection; 
             Exec.currentOutputAction.action();
             guiControls.SavePreferences();
         }
         public void SetOutputSelection(string name) {
-            guiControls.menuOutput.SetSelection(name); // just calls back ItemSelected(menu,menuItem) after recovering the menuItem from the menu by name
-            SetOutputAction(Exec.OutputActionNamed(name));
-        }
-        public void ClickOutputSelection(string name) {
-            guiControls.menuOutput.SetSelection(name); // just calls back ItemSelected(menu,menuItem) after recovering the menuItem from the menu by name
-            ExecOutputAction(Exec.OutputActionNamed(name));
+            ExportAction action = Exec.OutputActionNamed(name);
+            guiControls.menuOutput.SetSelection(action.name); // just calls back ItemSelected(menu,menuItem) after recovering the menuItem from the menu by name
+            Exec.currentOutputAction = action;
         }
 
         // Math menu

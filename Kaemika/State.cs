@@ -5,7 +5,7 @@ using Microsoft.Research.Oslo;
 namespace Kaemika {
 
     public class StateMap { // associate a list of species to a state
-        private Symbol sample; // the sample this stateMap belongs to
+        public Symbol sample; // the sample this stateMap belongs to
         public List<SpeciesValue> species;
         public Dictionary<Symbol, int> index; // reverse indexing of speciesList
         public State state; // indexed compatibly with speciesList. N.B.: a new state is allocated at each AddSpecies

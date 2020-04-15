@@ -94,14 +94,6 @@ namespace Kaemika
                 paletteNo--; if (paletteNo < 0) paletteNo += palette.Length; // decrement out here to keep colors coordinated
             }
 
-            //for (int i = 0; i < reports.Count; i++) {
-            //    if (series[i] != null) { // if a series was actually generated from this report
-            //        ReportEntry entry = reports[i];
-            //        string name = (entry.asLabel != null) ? entry.asLabel : entry.flow.TopFormat(style.RestyleAsNumberFormat("G4"));
-            //        Gui.gui.ChartListboxAddSeries(name);
-            //    }
-            //}
-
             return (series, seriesLNA);
         }
 
@@ -130,6 +122,7 @@ namespace Kaemika
             SampleValue result = new SampleValue(symbol, new StateMap(symbol, new List<SpeciesValue> { }, new State(0, lna: needLna)), volume, temperature, produced: true);
             foreach (SampleValue sample in samples) {
                 result.stateMap.Mix(sample.stateMap, volume.value, sample.Volume(), style); // mix adding the means and covariances, scaled by volume
+                result.AddReports(sample.RelevantReports(style));
             }
             return result;
         }
@@ -142,6 +135,7 @@ namespace Kaemika
                 NumberValue iTemperature = new NumberValue(sample.Temperature());
                 SampleValue iResult = new SampleValue(symbols[i], new StateMap(symbols[i], new List<SpeciesValue> { }, new State(0, lna: sample.stateMap.state.lna)), iVolume, iTemperature, produced: true);
                 iResult.stateMap.Split(sample.stateMap, style);
+                iResult.AddReports(sample.RelevantReports(style));
                 result.Add(iResult);
             }
             return result;
@@ -154,6 +148,7 @@ namespace Kaemika
                 double volume = inSamples[i].Volume();
                 SampleValue outSample = new SampleValue(symbols[i], new StateMap(symbols[i], new List<SpeciesValue> { }, new State(0, lna: inSamples[i].stateMap.state.lna)), new NumberValue(volume), new NumberValue(temperature), produced: true);
                 outSample.stateMap.Mix(inSamples[i].stateMap, volume, volume, style);
+                outSample.AddReports(inSamples[i].RelevantReports(style));
                 outSamples.Add(outSample);
             }
             return outSamples;
@@ -166,6 +161,7 @@ namespace Kaemika
                 double temperature = inSamples[i].Temperature();
                 SampleValue outSample = new SampleValue(symbols[i], new StateMap(symbols[i], new List<SpeciesValue> { }, new State(0, lna: inSamples[i].stateMap.state.lna)), new NumberValue(volume), new NumberValue(temperature), produced: true);
                 outSample.stateMap.Mix(inSamples[i].stateMap, volume, inSamples[i].Volume(), style); // same as Mix, but in this case we can also have volume < inSamples[i].Volume()
+                outSample.AddReports(inSamples[i].RelevantReports(style));
                 outSamples.Add(outSample);
             }
             return outSamples;
@@ -188,14 +184,15 @@ namespace Kaemika
             }
         }
 
-        public static List<SampleValue> EquilibrateList(List<Symbol> outSymbols, List<SampleValue> inSamples, Noise noise, double fortime, Netlist netlist, Style style) {
+        public static List<SampleValue> EquilibrateList(Env env, List<Symbol> outSymbols, List<SampleValue> inSamples, Noise noise, double fortime, Netlist netlist, Style style) {
             List<SampleValue> result = new List<SampleValue> { };
-            for (int i = 0; i < outSymbols.Count; i++)
-                result.Add(Equilibrate(outSymbols[i], inSamples[i], noise, fortime, netlist, style));
+            for (int i = 0; i < outSymbols.Count; i++) {
+                result.Add(Equilibrate(env, outSymbols[i], inSamples[i], noise, fortime, netlist, style));
+            }
             return result;
         }
 
-        public static SampleValue Equilibrate(Symbol outSymbol, SampleValue inSample, Noise noise, double fortime, Netlist netlist, Style style) {
+        public static SampleValue Equilibrate(Env env, Symbol outSymbol, SampleValue inSample, Noise noise, double fortime, Netlist netlist, Style style) {
             inSample.CheckConsumed(style); // we will consume it later, but we need to check now
             double initialTime = 0.0;
             double finalTime = fortime;
@@ -210,7 +207,8 @@ namespace Kaemika
             List<ReactionValue> reactions = inSample.RelevantReactions(netlist, style);
             CRN crn = new CRN(inSample, reactions, precomputeLNA: (noise != Noise.None) && KControls.precomputeLNA);
             KChartHandler.SetMeanFlowDictionary(crn.MeanFlowDictionary(), style);
-            List<ReportEntry> reports = netlist.Reports(inSpecies);
+            // List<ReportEntry> reports = netlist.Reports(inSpecies);
+            List<ReportEntry> reports = inSample.RelevantReports(style) ;
             Exec.lastExecution.lastCRN = crn; KGui.gui.GuiOutputSetText(crn.FormatNice(style));
             Exec.lastExecution.ResetGraphCache();
 
@@ -222,10 +220,11 @@ namespace Kaemika
             else Flux = (t, x) => crn.Flux(t, x, style);
 
             bool nonTrivialSolution =
-                (inSpecies.Count > 0)        // we don't want to run on the empty species list: Oslo crashes
-                && (!crn.Trivial(style))     // we don't want to run trivial ODEs: some Oslo solvers hang on very small stepping
-                && finalTime > 0;            // we don't want to run when fortime==0
+                (inSpecies.Count > 0) &&     // we don't want to run on the empty species list: Oslo crashes
+                (!crn.Trivial(style)) &&    // we don't want to run trivial ODEs: some Oslo solvers hang on very small stepping
+                finalTime > 0;            // we don't want to run when fortime==0
 
+            // INTEGRATE
             (double lastTime, State lastState) =
                 Integrate(Solver, initialState, initialTime, finalTime, Flux, inSample, reports, noise, nonTrivialSolution, style);
 
@@ -233,11 +232,16 @@ namespace Kaemika
             lastState = lastState.Positive();
             List<SpeciesValue> outSpecies = new List<SpeciesValue> { }; foreach (SpeciesValue sp in inSpecies) outSpecies.Add(sp); // the species list may be destructively modified (added to) later in the new sample
             SampleValue outSample = new SampleValue(outSymbol, new StateMap(outSymbol, outSpecies, lastState), new NumberValue(inSample.Volume()), new NumberValue(inSample.Temperature()), produced: true);
+            outSample.AddReports(inSample.RelevantReports(style));
+
+            foreach (ReportEntry report in reports) {
+                // an equilibrate may pick up the reports of a previous equilibrate, so we reassign the report even if it has already been assigned
+                // this does not really affect lexical binding because a second report with the same name will get a new symbol
+                // P.S. this was changed so that an equilibrate no longer picks up reports of previous equilibrate, so the issue should not arise
+                if (report.timecourse != null) env.AssignValue(report.timecourse, KChartHandler.ToTimecourse(report.timecourse, report.flow, style), reassign: true);
+            }
 
             inSample.Consume(reactions, lastTime, lastState, netlist, style);
-
-            //if (style.chartOutput) Exec.lastReport = "======= Last report: time=" + lastTime.ToString() + ", " + lastState.FormatReports(reports, inSample, Flux, lastTime, noise, series, seriesLNA, style);
-            //if (style.chartOutput) Exec.lastState = "======= Last state: total points=" + pointsCounter + ", drawn points=" + renderedCounter + ", time=" + lastTime.ToString() + ", " + lastState.FormatSpecies(inSpecies, style);
             return outSample;
         }
 

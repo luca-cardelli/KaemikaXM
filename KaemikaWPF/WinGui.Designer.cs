@@ -576,7 +576,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(1024, 640);
             this.Name = "GuiToWin";
-            this.Text = "Keamika";
+            this.Text = "Kaemika";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.GuiToWin_FormClosing);
             this.Load += new System.EventHandler(this.GuiToWin_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.GuiToWin_KeyDown);

@@ -1,192 +1,173 @@
-﻿//======================================
-// Building and using Flows 
-//======================================
+﻿========================
+Building and using Flows 
+========================
 
-Flows are a powerful expression language
-for representing time series, used in
-rate expressions and in report
-(plotting) expressions. Flows are also
-exactly the labels that appear in chart 
-legends.
+Flows (in the sense of timeflows) is a powerful language for representing time series, including both synthetic data (mathematical functions of time), and timecourses extracted from simulations. Flow expressions are used in the rates of chemical reactions, especially for representing non-mass-action kinetics, and are used in 'report' instructions to prescribe what data to plot: flows expressions are exactly the labels that appear in chart legends. The result of a simulation 'report' can be recaptured as a data flow and further manipulated to combine it with other flows, plot it in different ways, and export it to files.
 
-A flow is a term (essentially a data
-structure) representing a value at any
-given time t. A flow can be built out of
-a few combinators:
+Constructors
+~~~~~~~~~~~~
 
-- not a variable 
-(a flow is a closed expressions)
-  
-- a boolean literal, true or false
+A flow is a closed term (essentially a data structure) representing a value at any given time t. A flow expression can be built out of a few combinators, each interpreted as a function of time:
 
-- a number literal
+•     a boolean literal (true or false) or a number literal
 
-- a constant
-declared via 'constant k1,...,kn'
-has no value, cannot be evaluated,
-can be usefully used only inside
-rate brackets {...} or {{...}};
-it will inhibit simulation, but will
-be treated as a formal constant in
-exported ODEs, including LNA
+as a constant functions of time
 
-- 'time'
+•     time
+
 the current time
 
-- 'kelvin'
-the current temperature in kelvin
+•     kelvin
+•     celsius
 
-- 'celsius'
-the current temperature in celsius
+the current temperature in kelvin or celsius
 
-- a species
+•     a species
+
 representing its current concentration
 
-- op(f1,...,f2) 
-an operator applied to flows (most 
-arithmetic and boolean operators)
+•     op(f1,...,f2) 
 
-- var(f) 
-variance of a flow (LNA simulation must 
-be active, and f must be a linear 
-combination of species)
+an operator applied to flows (most arithmetic and boolean operators)
 
-- cov(f1,f2) 
-covariance of two flows (LNA simulation 
-must be active, and f1,f2 must be a linear 
-combinations of species)
+•     var(f) 
 
-- poisson(f) 
-a flow representing poisson noise with 
-mean the mean of f (LNA simulation must 
-be active)
+variance of a flow (LNA simulation must be active, and f must be a linear combination of species)
 
-- gauss(f1,f2) 
-a flow representing gaussian noise with 
-mean the mean of f1 and variance the mean 
-of f2 (LNA simulation must be active)
+•     cov(f1,f2) 
 
-- cond(f1,f2,f3) 
-a conditional flow which is either f2 
-or f3 based on f1 being true or false 
-resp. at any given time
+covariance of two flows (LNA simulation must be active, and f1,f2 must be a linear combinations of species)
 
-- observe(f) == observe(f,vessel)
-- observe(f,A)
-observe a flow in another sample A
-(however, time is fixed in A, as it 
-is not being currently simulated)
+•     poisson(f) 
 
+a flow representing poisson noise with mean the mean of f (LNA simulation must be active)
+
+•     gauss(f1,f2)
+
+a flow representing gaussian noise with mean the mean of f1 and variance the mean of f2 (LNA simulation must be active)
+
+•     cond(f1,f2,f3) 
+
+a conditional flow which is either f2 or f3 based on f1 being true or false resp. at any given time
+
+•     a constant
+
+declared via 'constant k1,...,kn': these have no value, cannot be evaluated, and can be usefully used only inside rate brackets {...} or {{...}}. A constant will inhibit simulation, but will be treated as a formal constant in
+exported ODEs, including LNA ODEs.
+
+Observers
+~~~~~~~~~
+
+A flow can be used to inspect a sample and return a value, especially after it has been equilibrated:
+
+•     observe(f)       // = observe(f,vessel)
+•     observe(f,A)
+
+observe the value of a flow in a sample A (however, time is fixed in A to either time 0 or to the last simulation time, as it is not being simulated when observe is reading it).
+
+Examples
+~~~~~~~~
 
 Examples of flows are:
 
-3.14
-// a reference line in a plot
+     3.14
 
-sin(time+1)
-// a reference curve
+a reference line in a plot
 
-2*a - 3*b	
-// linear combination of two species, 
-// this could be used for plotting, or 
-// as a non-mass-action rate law
+     sin(time+1)
 
-poisson(a)
-// poisson noise always centered around 
-// the mean of species a
+a reference curve
 
-a^3/(1+a^3)
-// Hill rate law of order 3
-// for catalyst species a
+     2*a - 3*b	
 
-3.25*exp(-50000/(8.3144598*kelvin))
-// Arrhenius rate law with collision 
-// frequency 3.25 and activation
-// energy 50000
+linear combination of two species, this could be used for plotting, or as a non-mass-action rate law
 
-cond(a<b, a, b)
-// the min of the concentrations 
-// of species a,b
+     poisson(a)
 
+poisson noise always centered around the mean of species a
+
+     a^3/(1+a^3)
+
+Hill rate law of order 3 for catalyst species a
+
+     3.25*exp(-50000/(8.3144598*kelvin))
+
+Arrhenius rate law with collision frequency 3.25 and activation energy 50000
+
+     cond(a<b, a, b)
+
+the min of the concentrations of species a,b
+
+Usage Examples
+~~~~~~~~~~~~~~
 
 Basic example of usage of flows:
 
-species a @ 1M
-a -> Ø   {{ 3 }}          
-// 3 here is a (constant) flow: it  gets 
-// sampled at every time point and 
-// used as a rate
+     species a @ 1M
+     a -> Ø   {{ 3 }}
+     
+3 here is a (constant) flow: it  gets sampled at every time point and used as a rate
 
-report 3
-// 3 here is also a (constant) flow: 
-// it gets sampled at every time point 
-// and used to plot a reference line
+     report 3
 
-equilibrate for 1
-// this causes those flows to be sampled, 
-// '3' is also the label on the chart
+3 here is also a (constant) flow: it gets sampled at every time point and used to plot a reference line
 
+     equilibrate for 1
 
-Although flows are constant expressions,
-we can use variables, functions,
-conditionals, and everything in the
-language to build them.
-This is a two-stage process: a function
-can assemble a flow, then later the flow
-is sampled at time points during
-simulation and plotting.
+this causes those flows to be sampled, '3' is also the label on the chart
 
-species a @ 1M
-number n = 3          
-// there is actually an implicit conversion 
-// later between 'number' 3 and 'flow' 3, 
-// because of the context where 'n' is used.
+We can use variables, functions, conditionals, and everything in the language to build flows. This is a two-stage process: a function can assemble a flow, then later the flow is sampled at time points during simulation and plotting.
 
-a -> Ø   {{n*a}}	
-// degradation reaction with rate 
-// 3*molarity(a), i.e. a mass action rate law 
-// written inside {{..}} general rate brackets
+     species a @ 1M
+     number n = 3          
 
-report a, n*a
-// report the concentration of a, and the
-// instantaneous rate of the reaction; the
-// label on the chart will be '3*a', not 'n*a'.
+there is an implicit conversion next between 'number' 3 and 'flow' 3, because of the context where 'n' is used.
 
-equilibrate for 1
+     a -> Ø   {{n*a}}	
 
-species a @ 1M
-function f(flow n) { n*a }	
-// note that the correct parameter type
-// for n is 'flow', the returned value n*a
-// is also a flow
+this is a degradation reaction with rate 3*molarity(a), i.e. the equialent of a mass action rate law written inside {{..}} general rate brackets
 
-a -> Ø   {{f(3)}}
-// same as before
+     report a, n*a
+     equilibrate for 1
 
-report a, f(3)
-// same as before, the label on the chart 
-// will again be '3*a' because that is the 
-// flow that is built by f
+this reports the concentration of a, and the instantaneous rate of the reaction; the label on the chart will be '3*a', not 'n*a'.
+Next we use a function to build a flow:
 
-equilibrate for 1
+     species a @ 1M
+     function f(flow n) { n*a }	
+     a -> Ø   {{f(3)}}
+
+note that the correct parameter type for n is 'flow'; the returned value n*a is also a flow.
+
+     report a, f(3)
+     equilibrate for 1
+
+same as before, the label on the chart will again be '3*a' because that is the flow that is built by f
 
 
-Flows can also be stochastic, involving
-variances and covariances of (linear
-combinations of) species.
-In order for this to work, LNA
-simulation must be activated.
+Flows can also be stochastic, involving variances and covariances of (linear combinations of) species. In order for this to work, LNA simulation must be activated.
 
-species a,b@1M
-Ø -> a + b;  a -> Ø;  b + b -> Ø		
-// building up some non-trivial 
-// noise on a,b species
+     species a,b@1M
+     Ø -> a + b;  a -> Ø;  b + b -> Ø		
+     report var(a-b), var(a)+var(b)-2*cov(a,b)
+     equilibrate for 3
 
-report var(a-b),
-   var(a)+var(b)-2*cov(a,b)
-// checking that var(a-b) gives the same
-// result as its correct definition
+checking that var(a-b) gives the same result as its correct definition, i.e. overlapping traces.
 
-equilibrate for 3				
-// must first activate LNA/noise plotting 
-// in the graphical user interface
+
+Extracting data from reports
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The first report below is a normal report used to plot f at the next equilibrate. The second report does the same, but also captures the timecourse of f (the entire data) into a new variable y, after the next equilibrate.
+
+     report f
+     report y = f
+
+So for example:
+
+    report y = sin(time)
+    equilibrate for 1
+    report y+1
+    equilibrate for 1
+
+this first equilibrate plots sin(time) and the second one plots sin(time)+1, not from scratch, but using the simulation data from the first sin(time) stored in y. The difference is indicated in the plot lengend by "<sin(time)>+1". In general, the first simulation could take a long time to compute, but the sencond simulation could be a lot quicker by relying on the previous data. In similar ways, multiple flows can be combined (summed, averaged) pointwise into new flows, and finally written to file from the Sharing menu.

@@ -99,21 +99,23 @@ namespace Kaemika {
             } else if ((reduction.Production() == "<Net Instance> ::= Id '(' <Expressions> ')'")) {
                 return new List<Statement> { new NetworkInstance(new Variable(reduction.Terminal(0)), ParseExpressions(reduction.Nonterminal(2))) };
             } else if (reduction.Production() == "<Statement> ::= bool Id '=' <Expression>") {
-                return new List<Statement> { new ValueDefinition(reduction.Terminal(1), new Type("bool"), ParseExpression(reduction.Nonterminal(3))) };
+                return new List<Statement> { new ValueDefinition(reduction.Terminal(1), Type.Bool, ParseExpression(reduction.Nonterminal(3))) };
             } else if (reduction.Production() == "<Statement> ::= number Id '=' <Expression>") {
-                return new List<Statement> { new ValueDefinition(reduction.Terminal(1), new Type("number"), ParseExpression(reduction.Nonterminal(3))) };
+                return new List<Statement> { new ValueDefinition(reduction.Terminal(1), Type.Number, ParseExpression(reduction.Nonterminal(3))) };
+            } else if (reduction.Production() == "<Statement> ::= value Id '=' <Expression>") {
+                return new List<Statement> { new ValueDefinition(reduction.Terminal(1), Type.Number, ParseExpression(reduction.Nonterminal(3))) };
             } else if (reduction.Production() == "<Statement> ::= parameter Id '<-' <Expression>") {
-                return new List<Statement> { new ParameterDefinition(reduction.Terminal(1), new Type("parameter"), ParseExpression(reduction.Nonterminal(3))) };
+                return new List<Statement> { new ParameterDefinition(reduction.Terminal(1), Type.Value, ParseExpression(reduction.Nonterminal(3))) };
             } else if (reduction.Production() == "<Statement> ::= string Id '=' <Expression>") {
-                return new List<Statement> { new ValueDefinition(reduction.Terminal(1), new Type("string"), ParseExpression(reduction.Nonterminal(3))) };
+                return new List<Statement> { new ValueDefinition(reduction.Terminal(1), Type.String, ParseExpression(reduction.Nonterminal(3))) };
             } else if (reduction.Production() == "<Statement> ::= list Id '=' <Expression>") {
-                return new List<Statement> { new ValueDefinition(reduction.Terminal(1), new Type("list"), ParseExpression(reduction.Nonterminal(3))) };
+                return new List<Statement> { new ValueDefinition(reduction.Terminal(1), Type.List, ParseExpression(reduction.Nonterminal(3))) };
             } else if (reduction.Production() == "<Statement> ::= flow Id '=' <Expression>") {
-                return new List<Statement> { new ValueDefinition(reduction.Terminal(1), new Type("flow"), ParseExpression(reduction.Nonterminal(3))) };
+                return new List<Statement> { new ValueDefinition(reduction.Terminal(1), Type.Flow, ParseExpression(reduction.Nonterminal(3))) };
             } else if (reduction.Production() == "<Statement> ::= constant <IdSeq>") {
                 IdSeq ids = ParseIdSeq(reduction.Nonterminal(1));
                 List<Statement> result = new List<Statement> { };
-                foreach (string id in ids.ids) { result.Add(new ValueDefinition(id, new Type("flow"), new Constant(id))); }
+                foreach (string id in ids.ids) { result.Add(new ValueDefinition(id, Type.Flow, new Constant(id))); }
                 return result;
             } else if (reduction.Production() == "<Statement> ::= sample <Sample>") {
                 return new List<Statement> { ParseSample(reduction.Nonterminal(1)) };
@@ -160,8 +162,8 @@ namespace Kaemika {
                 Expressions vars = new Expressions();
                 foreach (string id in ids.ids) vars.Add(new Variable(id));
                 return new List<Statement> { new Concentrate(ids, vars, ParseExpression(reduction.Nonterminal(3)), ParseVolume(reduction.Nonterminal(4))) };
-            } else if ((reduction.Production()               == "<Statement> ::= report <Reports>")) {
-                return ParseReports(reduction.Nonterminal(1));
+            } else if ((reduction.Production()               == "<Statement> ::= report <Reports> <Allocation>")) {
+                return ParseReports(reduction.Nonterminal(1), ParseAllocation(reduction.Nonterminal(2)));
             } else if ((reduction.Production()               == "<Statement> ::= <Draw>")) {
                 return new List<Statement> { ParseDrawStatement(reduction.Nonterminal(0)) };
             } else if ((reduction.Production()               == "<Statement> ::= <Reaction>")) {
@@ -187,7 +189,7 @@ namespace Kaemika {
 
         public static Statement ParseSample(IReduction reduction) {
             if (reduction.Production()                   == "<Sample> ::= Id '=' <Expression>") {
-                return new ValueDefinition(reduction.Terminal(0), new Type("sample"), ParseExpression(reduction.Nonterminal(2)));
+                return new ValueDefinition(reduction.Terminal(0), Type.Sample, ParseExpression(reduction.Nonterminal(2)));
             } else if (reduction.Production()            == "<Sample> ::= <EmptySample>") {
                 ParseEmptySample(reduction.Nonterminal(0), out string name, out Expression volume, out string volumeUnit, out Expression temperature, out string temperatureUnit);
                 return new SampleDefinition(name, volume, volumeUnit, temperature, temperatureUnit);
@@ -225,7 +227,7 @@ namespace Kaemika {
 
         public static Statement ParseSpecies(IReduction reduction) {
             if (reduction.Production()                   == "<Species> ::= Id '=' <Expression>") {
-                return new ValueDefinition(reduction.Terminal(0), new Type("species"), ParseExpression(reduction.Nonterminal(2)));
+                return new ValueDefinition(reduction.Terminal(0), Type.Species, ParseExpression(reduction.Nonterminal(2)));
             } else if (reduction.Production()            == "<Species> ::= '{' <Substances> '}'") {
                 return new SpeciesDefinition(ParseSubstances(reduction.Nonterminal(1)), new Statements());
             } else if (reduction.Production()            == "<Species> ::= <Substances> '@' <Expression> <Quantity> <Allocation>") {
@@ -266,7 +268,7 @@ namespace Kaemika {
      
         public static Statement ParseFunction(IReduction reduction) {
             if (reduction.Production()                   == "<Function> ::= Id '=' <Expression>") {
-                return new ValueDefinition(reduction.Terminal(0), new Type("function"), ParseExpression(reduction.Nonterminal(2)));
+                return new ValueDefinition(reduction.Terminal(0), Type.Function, ParseExpression(reduction.Nonterminal(2)));
             } else if (reduction.Production()            == "<Function> ::= Id <Fun>") {
                 return ParseFunctionDef(reduction.Terminal(0), reduction.Nonterminal(1));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
@@ -282,7 +284,7 @@ namespace Kaemika {
 
         public static Statement ParseNetwork(IReduction reduction) {
             if (reduction.Production()                   == "<Network> ::= Id '=' <Expression>") {
-                return new ValueDefinition(reduction.Terminal(0), new Type("network"), ParseExpression(reduction.Nonterminal(2)));
+                return new ValueDefinition(reduction.Terminal(0), Type.Network, ParseExpression(reduction.Nonterminal(2)));
             } else if (reduction.Production()                   == "<Network> ::= Id <Net>") {
                 return ParseNetworkDef(reduction.Terminal(0), reduction.Nonterminal(1));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
@@ -295,7 +297,7 @@ namespace Kaemika {
 
         public static Statement ParseRandom(IReduction reduction) {
             if (reduction.Production()                   == "<Random> ::= Id '=' <Expression>") {
-                return new ValueDefinition(reduction.Terminal(0), new Type("random"), ParseExpression(reduction.Nonterminal(2)));
+                return new ValueDefinition(reduction.Terminal(0), Type.Random, ParseExpression(reduction.Nonterminal(2)));
             } else if (reduction.Production()            == "<Random> ::= Id <Rand>") {
                 return ParseRandomDef(reduction.Terminal(0), reduction.Nonterminal(1));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
@@ -350,12 +352,14 @@ namespace Kaemika {
                 (reduction.Production() == "<Param> ::= sample <Ids>") ||
                 (reduction.Production() == "<Param> ::= function <Ids>") ||
                 (reduction.Production() == "<Param> ::= network <Ids>")  ||
-                (reduction.Production() == "<Param> ::= random <Ids>")) {
-                string type = reduction.Terminal(0);
+                (reduction.Production() == "<Param> ::= random <Ids>") ||
+                (reduction.Production() == "<Param> ::= value <Ids>")) {
+                    string type = reduction.Terminal(0);
                 Ids ids = ParseIds(reduction.Nonterminal(1));
-                foreach (string id in ids.ids) { parameters.Add(new SinglePattern(new Type(type), id)); }
-            //} else if (reduction.Production() == "<Param> ::= '[' <Params> ']'") {
-            //    parameters.Add(new ListParameter(ParseParams(reduction.Nonterminal(1))));
+                foreach (string id in ids.ids) { parameters.Add(new SinglePattern(Types.Parse(type), id)); }
+            } else if (reduction.Production() == "<Param> ::= <Ids>") {
+                Ids ids = ParseIds(reduction.Nonterminal(0));
+                foreach (string id in ids.ids) { parameters.Add(new SinglePattern(Type.Value, id)); }
             } else if (reduction.Production() == "<Param> ::= <Pattern>") {
                 parameters.Add(ParsePattern(reduction.Nonterminal(0)));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); }
@@ -364,9 +368,9 @@ namespace Kaemika {
             if (reduction.Production() == "<Pattern> ::= '[' <Params> ']'") {
                 return new ListPattern(ParseParams(reduction.Nonterminal(1)));
             } else if (reduction.Production() == "<Pattern> ::= '[' <Params> ']' '++' list Id") {
-                return new HeadConsPattern(ParseParams(reduction.Nonterminal(1)), new SinglePattern(new Type("list"), reduction.Terminal(5)));
+                return new HeadConsPattern(ParseParams(reduction.Nonterminal(1)), new SinglePattern(Type.List, reduction.Terminal(5)));
             } else if (reduction.Production() == "<Pattern> ::= list Id '++' '[' <Params> ']'") {
-                return new TailConsPattern(new SinglePattern(new Type("list"), reduction.Terminal(1)), ParseParams(reduction.Nonterminal(4)));
+                return new TailConsPattern(new SinglePattern(Type.List, reduction.Terminal(1)), ParseParams(reduction.Nonterminal(4)));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }
 
@@ -416,23 +420,27 @@ namespace Kaemika {
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }
 
-        public static List<Statement> ParseReports(IReduction reduction) {
+        public static List<Statement> ParseReports(IReduction reduction, Expression allocation) {
             if (reduction.Production()                   == "<Reports> ::= <Reports> ',' <Report>") {
-                List<Statement> reports = ParseReports(reduction.Nonterminal(0));
-                reports.Add(ParseReport(reduction.Nonterminal(2)));
+                List<Statement> reports = ParseReports(reduction.Nonterminal(0), allocation);
+                reports.Add(ParseReport(reduction.Nonterminal(2), allocation));
                 return reports;
             } else if (reduction.Production()            == "<Reports> ::= <Report>") {
                 List<Statement> reports = new List<Statement>();
-                reports.Add(ParseReport(reduction.Nonterminal(0)));
+                reports.Add(ParseReport(reduction.Nonterminal(0), allocation));
                 return reports;
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }
 
-        public static Report ParseReport(IReduction reduction) {
-            if (reduction.Production()            == "<Report> ::= <Expression> as <Expression>") {
-                return new Report(ParseExpression(reduction.Nonterminal(0)), ParseExpression(reduction.Nonterminal(2)));
+        public static Report ParseReport(IReduction reduction, Expression allocation) {
+            if (reduction.Production()                   == "<Report> ::= Id '=' <Expression> as <Expression>") {
+                return new Report(reduction.Terminal(0), ParseExpression(reduction.Nonterminal(2)), ParseExpression(reduction.Nonterminal(4)), allocation);
+            } else if (reduction.Production()            == "<Report> ::= Id '=' <Expression>") {
+                return new Report(reduction.Terminal(0), ParseExpression(reduction.Nonterminal(2)), null, allocation);
+            } else if (reduction.Production()            == "<Report> ::= <Expression> as <Expression>") {
+                return new Report(null, ParseExpression(reduction.Nonterminal(0)), ParseExpression(reduction.Nonterminal(2)), allocation);
             } else if (reduction.Production()            == "<Report> ::= <Expression>") {
-                return new Report(ParseExpression(reduction.Nonterminal(0)), null);
+                return new Report(null, ParseExpression(reduction.Nonterminal(0)), null, allocation);
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }
 
@@ -560,6 +568,8 @@ namespace Kaemika {
             } else  if (reduction.Production()       == "<Base Exp> ::= λ <Fun>") {
                 return ParseFunctionAbstraction(reduction.Nonterminal(1));
             } else  if (reduction.Production()       == "<Base Exp> ::= net <Net>") {
+                return ParseNetworkAbstraction(reduction.Nonterminal(1));
+            } else  if (reduction.Production()       == "<Base Exp> ::= η <Net>") {
                 return ParseNetworkAbstraction(reduction.Nonterminal(1));
             } else  if (reduction.Production()       == "<Base Exp> ::= rand <Rand>") {
                 return ParseRandomAbstraction(reduction.Nonterminal(1));

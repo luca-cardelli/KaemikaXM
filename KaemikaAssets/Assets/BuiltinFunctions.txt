@@ -1,404 +1,387 @@
-﻿//======================================
-// UNDO text changes
-//======================================
-
-All is well on Win, Mac, iOS.
-Android's "Hacker's Keyboard" (a keyboard 
-alternative from the Play Store that 
-selectably replaces the built-in keyboard) 
-supports undo via Ctrl-Z, as well as 
-Ctrl-X/C/V. There is no other known way 
-to undo text changes on Android.
-
-//======================================
-// Builtin functions and operators
-//======================================
-
-// All numbers are double precision, 
-// illegal operations may produce NAN
-
-// The default sample for species that
-// are not explicitly put in a sample:
-
-vessel
-
-// Literals:
-
-true false (integer) (float) (string) 
-
-// Prefix number and bool operators:
-
--  not
-
-// Infix number and bool operators, 
-// standard math precedence:
-
-+  -  *  /  ^  and  or  =  <>  <=  >=  <  > 
-
-// Infix species operators (eq, not eq):
-
-=  <>
-
-// Infix string operators (concat, eq, not eq):
-
-+  =  <>
-
-// Infix list operators (concat, eq, not eq):
-
-++  =  <>
-
-// All of the following are normally-bound 
-// variables in the initial environment
-// they can be redefined, resulting in 
-// hiding the built-in functions
-
-pos(n)    // if n=NaN or n<0 then 0 else n end
-int(n)    // the integer nearest n
-
-// From the C# Math and Double classes:
-
-pi              // 3.14159265358979323846
-e               // 2.7182818284590452354
-maxNumber
-minNumber
-positiveInfinity
-negativeInfinity
-NaN             // (NaN = NaN) = true
-
-abs(n)
-arccos(n)
-arcsin(n)
-arctan(n)
-arctan2(n,m)
-ceiling(n)
-cos(n)
-cosh(n)
-exp(n)
-floor(n)
-log(n)          // base e
-max(n)
-min(n)
-sign(n)
-sin(n)
-sinh(n)
-sqrt(n)
-tan(n)
-tanh(n)
-
-//======================================
-// List manipulation
-//======================================
-
-list v = ..         list definition
-function f(list v, ..){..} list parameter
-[e1,..,en]          fixed length list
-l1 ++ l2            list concatenation
-l()                 length
-l(n)                indexing, from 0
-l(n,m)              sublist (start,length)
-[t1 v1, .., tn vn] = e
-   fixed length pattern matching
-   ti can be 'number', 'list', etc.
-[..ti vi..] ++ list v = e
-list v ++ [..ti vi..] = e
-   variable length pattern matching
-
-//Examples: constructors/destructors
-list l = [0] ++ [1,2]      // =[0,1,2]
-number first = l(0)        // =0
-list late = l(1, l()-1)    // =[1,2]
-list early = l(0, l()-1)   // =[0,1]
-number last = l(l()-1)     // =2
-//Examples: pattern matching
-[number n0 n1 n2] = l
-[number first] ++ list late = l
-list early ++ [number last] = l
-function f([number n]++list l) {l++[n]}
-list r = f([0,1,2])   // = [1,2,0]
-
-//Iterators - will not stack overflow
-map(f,l) : ((a->b),[a])->[b]
-filter(f,l) : ((a->bool),[a])->[a]
-foldl(f,z,l) : (((b,a)->b),b,[a])->b
-foldr(f,z,l) : (((a,b)->b),b,[a])->b
-foreach(n,l) : (((number,a)->.),[a])->[]
-// foreach takes a network and a list as
-// arguments and returns the empty list;
-// the index is passed as a parameter
-
-//Draw-from expressions:
-draw n from f   
-// = [f(0), ..., f(n-1)]
-draw n from [.. f_i ..] 
-// = [.. draw n from f_i ..]
-
-//Draw-from statements: same syntax
-//but the resulting lists are plotted 
-//instead of returned
-
-//======================================
-// Random Variables
-//======================================
-
-rand(omega w) { ... w(0) ... w(1) ... }
-// is an expression denoting a random variable
-// that accesses the sample space w of type omega.
-// Each w(i) is an orthogonal [0..1) dimension 
-// of the sample space yielding a uniform random
-// number. Separate random variables access 
-// separate subdimensions but w(i) is always 
-// the same number for the same random variable
-// and the same w. (See the Omega language.)
-
-rand(omega w) { w(0) } 
-// is a pure [0..1) random number generator
-
-random X = ...
-// declares a variable X of type random variable
-// and expects a random variable to bind to it.
-// Also, "random" can be used as a parameter type:
-function f(random X) { ... }
-
-random X(omega w) {...}
-// is a declaration of a random variable named X, 
-// on sample space w, equivalent to:
-random X = rand(omega w) {...}
-
-<-X 
-// samples a random variable X (it creates a fresh
-// sample space and passes it to the random variable)
-
-X(w) 
-// samples X from a particular sample space w, e.g.:
-function gtzero(random X) {
-   rand(omega w) { X(w)>0 }
-}
-// returns a boolean random variable based on X>0
-function lift(function f)(random X) {
-  rand(omega w) { f(X(w)) }
-}
-// lifts a function f to a random variable
-
-X | Y
-// a random variable which is X conditioned 
-// on Y = true, e.g.:    
-X | gtzero(X)
-// if sampled this returns only the elements of X that
-// satisfy gtzero(X), i.e. the positive ones.
-// This works by rejection sampling, hence not very
-// efficienty in general, and sampling will loop if the 
-// condition never holds.
-
-draw n from X
-draw n from [X1,...,Xn]
-// statements that draw a number of samples from a 
-// random variable or a list of random variables and 
-// show a density plot of their distributions.
-// When used as expressions, these return the lists
-// of numbers instead of plotting them
-
-parameter n <- X
-// declares a number n and assigns to it a random
-// number drawn from random variable X. 
-// Hence it is equivalent to:
-number n = <-X
-// but in addition, these declared numerical 
-// parameters can be manipulated in the GUI
-
-//======================================
-// Distributions
-//======================================
-
-// Via the above random variables, distributions 
-// are programmable, e.g.:
-function uniform(number a b) {
-   rand(omega w) { w(0)*(b-a)+a }
-}
-// uniform(3,5) returns a random variable with a
-// uniform distribution between 3 and 5.
-
-// Although all distributions are programmable,
-// the following distributions are built-in:
-
-uniform(lo,hi), 
-normal(mean,stdev)        // Gauss
-parabolic(mean,halfwidth) // Epanechnikov
-exponential(lambda)
-bernoulli(p)  // true with prob. p, or false
-
-// Each instance of e.g. uniform(lo,hi) is
-// independent, even when used in a context
-// like rand(omega w) ... uniform(lo,hi)(w) ...
-// because uniform will sample from a subspace
-// of w independent from anybody else's.
-
-//======================================
-// Observation (see Flow-expressions)
-//======================================
-
-observe(f)   // same as observe(f,vessel)
-observe(f,s) // observe a flow f in sample s
-             // returning a number; e.g.:
-observe(kelvin,s) // temperature of s
-observe(volume,s) // volume of s (L)
-observe(a,s) // molarity of a in s (mol/L)
-observe(∂a,s)     // derivative of a
-observe(a+2b^2,s) // combined observations
-observe(var(a),s) // requires LNA active
-observe(time,s) // nonzero only if s was the
- // *input* sample of equilibrate s'=s for t
- // it returns the end time of equilibrate
-
-//======================================
-// Flow-expressions
-//======================================
-
-/* Flow-expressions denote time courses
-and are found in 'observe( ... , S)'
-for samples, in 'report ...' statements 
-for plotting, and in {{ ... }} special
-rate brackets to express arbitrary
-kinetic functions. Flow-expressions are
-a subset of expressions that include
-boolean and numerical operators and
-where species 's' are intepreted as
-molarity(s)(t): the numeric value
-of the concentration of 's' at time 't'.
-Flow expressions have type "flow".
-*/
-
-// Current time:
-
-time
-
-// Current temperature:
-
-kelvin
-celsius
-
-// Derivatives, valid in 'report' 
-// but not in {{...}} rates:
-
-∂ a      // first time derivative
-diff(a)  // same as ∂a
-sdiff(a) // symbolic differentiation
-
-// Noise with mean = mean(a)
-// and variance = mean(a):
-
-poisson(a)    
-
-// Noise with mean = mean(a) 
-// and variance = mean(b):
-
-gauss(a,b)  
-
-// Variance of a linear combination
-// of species:
-
-var(a)
-
-// Covariance of two linear combianations
-// of species:
-
-cov(a,b)
-
-// conditional flow
-// e.g. cond(a<b,a,b) = min(a,b):
-
-cond(a,b,c)
-
-/* More technically, flow-expressions are
-first *evaluated* to produce *flows* 
-(while ordinary expressions are
-evaluated to produce *values*). Flows
-are data structures consisting
-exclusively of numeric and boolean
-operators over booleans, numbers,
-species, and some special entities such
-as 'time'. The  process of producing
-flows can involve ordinary function
-invocation and if-then-else conditional
-execution, but those do not appear in
-resulting flows. At a  later stage,
-flows are *observed*, that is evaluated
-at multiple time points,  during
-plotting or in the evaluation of
-reaction rates during simulations. Flows 
-are exactly the labels that appear in
-chart legends.
-
-When using a defined function inside a
-flow-expession (i.e. in a 'report ...'
-or  '{{ ... }}' context), the body of
-the function is interpreted as a flow-
-expression in that context.
-*/
-
-// Ex.: Arrhenius equation
-// (temperature-dependante rates)
-
-function Arrhenius(flow cf ae) { 
-   cf*exp(-ae/(8.3144598*kelvin)) 
-}
-
-// Use the Arrhenius function for 
-// the rate of a reaction
-
-species a,b @ 1M
-a + b -> Ø  {{ Arrhenius(2,50)*a*b }}
-
-// plot a, b, and the instantanous 
-// rate of their reaction over time
-
-report a, b, Arrhenius(2,50)*a*b     
-equilibrate for 10                        
-
-// If vs. cond flows:
-
-species a @ 1M
-species b @ 0M
-a -> Ø
-Ø -> b
-
-// min is built-in; it plots 
-// min(molarity(a)(t), molarity(b)(t)) 
-// at any time t:
-
-report min(a,b) 
-
-// here is the equivalent conditional flow:
-
-report cond(a<b,a,b)
-
-// unlike 'cond', 'if' is not a flow operator, 
-// so it cannot compare flows:
-
-report if a<b then a else b end // ERROR   
-
-// but 'if' can choose between two flows 
-// a or b based on a (timeless) condition:
-
-report if 3>2 then a else b end    
-
-//======================================
-// Optimization
-//======================================
-
-argmin(f, i, d) // BFGS Optimizer
-//f: list -> [number, list]
-//   input is a list of numbers (the parameters to optimize)
-//   output is a pair of the cost of the input parameters 
-//   and a list of partial gradients for the parameters 
-//   used by BFGS to select the next sample for f
-//i: list of numbers
-//   initial guess for the parameters
-//d: number
-//   numeric tolerance for convergence, e.g. 1e-2
-// If a gradient is a time derivative (of concentrations) 
-// it is possible to use the ∂ operator to obtain it.
-// Otherwise one may try to compute a local gradient by
-// multiple samples. See the "PIDController Optimization"
-// example.
+﻿===============================
+Builtin functions and operators
+===============================
 
+All numbers are double precision, illegal operations may produce NAN.
 
+Literals
+~~~~~~~~
+
+•     true false (integer) (float) (string) vessel
+
+'vessel' is the default sample to contain species that are not explicitly put in a sample.
+
+Prefix number and bool operators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+•     -  not
+
+Infix number and bool operators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+•      +  -  *  /  ^  and  or  =  <>  <=  >=  <  > 
+
+Standard math precedence.
+
+Infix species operators (eq, not eq)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+•      =  <>
+
+Infix string operators (concat, eq, not eq)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+•      +  =  <>
+
+Infix list operators (concat, eq, not eq)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+•      ++  =  <>
+
+Initial environment
+~~~~~~~~~~~~~~~~~~~
+All of the following are normally-bound variables in the initial environment. They can be redefined, resulting in hiding the built-in functions. The last group are from the C# Math and Double calsses.
+
+•      pos(n)          // if n=NaN or n<0 then 0 else n end
+•      int(n)          // the integer nearest n
+
+•      pi              // 3.14159265358979323846
+•      e               // 2.7182818284590452354
+•      maxNumber
+•      minNumber
+•      positiveInfinity
+•      negativeInfinity
+•      NaN             // (NaN = NaN) = true
+
+•      abs(n)
+•      arccos(n)
+•      arcsin(n)
+•      arctan(n)
+•      arctan2(n,m)
+•      ceiling(n)
+•      cos(n)
+•      cosh(n)
+•      exp(n)
+•      floor(n)
+•      log(n)          // base e
+•      max(n)
+•      min(n)
+•      sign(n)
+•      sin(n)
+•      sinh(n)
+•      sqrt(n)
+•      tan(n)
+•      tanh(n)
+
+=================
+List manipulation
+=================
+
+list definition
+
+•      list v = ..
+
+list parameter in a function
+
+•      function f(list v, ..){..}
+
+fixed length list
+
+•      [e1,..,en]
+
+list concatenation
+
+•      l1 ++ l2
+
+length of a list
+
+•      l()
+
+indexing (from 0)
+
+•      l(n)
+
+sublist (start,length)
+
+•      l(n,m)
+
+fixed length pattern matching; ti can be 'number', 'list', etc.
+
+•      [t1 v1, .., tn vn] = e
+
+variable length pattern matching     
+
+•      [..ti vi..] ++ list v = e
+•      list v ++ [..ti vi..] = e
+   
+Examples: constructors/destructors
+     list l = [0] ++ [1,2]      // = [0,1,2]
+     number first = l(0)        // = 0
+     list late = l(1, l()-1)    // = [1,2]
+     list early = l(0, l()-1)   // = [0,1]
+     number last = l(l()-1)     // = 2
+
+Examples: deconstructing a list l by pattern matching
+     [number n0 n1 n2] = l
+     [number first] ++ list late = l
+     list early ++ [number last] = l
+
+pattern matching in fuctions parameters
+     function f([number n]++list l) {l++[n]}
+     list r = f([0,1,2])         // = [1,2,0]
+
+Examples: generators
+     draw 3 from λ(number i){i}  // = [0,1,2]
+
+Iterators - these will not stack overflow
+
+•     draw n from f : (number,number->a)->[a]
+
+•     map(f,l) : ((a->b),[a])->[b]
+
+•     filter(f,l) : ((a->bool),[a])->[a]
+
+•     foldl(f,z,l) : (((b,a)->b),b,[a])->b
+
+•     foldr(f,z,l) : (((a,b)->b),b,[a])->b
+
+•     sort(lesseq,l): ((a,a)->bool,[a])->[a]
+
+•     reverse(l): [a] -> [a]
+
+•     transpose(l) : [[a]]->[[a]]
+
+•     each(n,l) : (((a)->.),[a])->.
+
+'each' is a statement that takes a network and a list as arguments and executes the network over each of the list's elements without returning a value
+
+Note that map can be defined from draw-from:
+     map(f,l) = draw l() from {λ(i) f(l(i))}}
+and that can be easily modified to pass the iteration index to the function f.
+
+Draw-from has several other uses as well:
+
+Draw-from expressions: (they return a value)
+
+•     draw n from F
+
+for F a function (or a list of them), returns (a list of) a list of the function(s) results over the inputs 0..n-1
+
+•     draw n from R
+
+for R a random variable (or a list of them) returns (a list of) a list of n samples from the random variable(s)
+
+Draw-from statements: (they do not return a value)
+
+•     draw n from F
+
+for F a function or a list of them, makes a plot of the functions over inputs 0..n-1
+
+•     draw n from R 
+
+for R a random variable or a list of them, makes a density plot of the random variables
+
+•     draw n from N
+
+for N a network or a list of them, executes the network(s) over inputs 0..n-1
+
+================
+Random Variables
+================
+
+•     rand(omega w) { ... w(0) ... w(1) ... }
+
+This is an expression denoting a random variable (a function from a sample space to some type) that accesses the sample space w of type omega. Each w(i) is an orthogonal [0..1) dimension of the sample space yielding a uniform random number. Separate random variables access separate subdimensions but w(i) is always the same number for the same random variable and the same w. (See the Omega language.)
+      rand(omega w) { w(0) } 
+This is a pure [0..1) random number generator.
+
+•     random X = ...
+
+Declares a variable X of type random variable and expects a random variable to bind to it. Also, "random" can be used as a parameter type:
+     function f(random X) { ... }
+
+•     random X(omega w) {...}
+
+This is a declaration of a random variable named X, on sample space w, equivalent to:
+     random X = rand(omega w) {...}
+
+•     <-X 
+
+Samples a random variable X (it creates a fresh sample space and passes it to the random variable).
+
+•     X(w) 
+
+Samples a random variable X from a particular sample space w, e.g.:
+     function gtzero(random X) { rand(omega w) { X(w)>0 } }
+returns a boolean random variable. Also:
+     function lift(function f)(random X) { rand(omega w) { f(X(w)) } }
+lifts a function f to a random variable.
+
+•     X | Y
+
+A random variable which is X conditioned on Y = true, where Y is a boolean random variable. E.g.:
+     X | gtzero(X)
+when sampled, this returns only elements of X that satisfy gtzero(X), i.e. the positive ones. This works by rejection sampling, hence not very efficienty in general, and sampling will loop if the condition never holds.
+
+•     draw n from X
+•     draw n from [X1,...,Xn]
+
+Statements that draw a number of samples from a random variable or a list of random variables and show a density plot of their distributions. When used as expressions, these return the lists of numbers instead of plotting them
+
+•     parameter n <- X
+
+Declares a number n and assigns to it a random number drawn from random variable X. 
+Hence it is equivalent to:
+     number n = <-X
+but in addition, these declared numerical parameters can be manipulated in the GUI.
+
+=============
+Distributions
+=============
+
+Via the above random variables, distributions are programmable, e.g.:
+
+     function uniform(number a b) {
+        rand(omega w) { w(0)*(b-a)+a }
+     }
+
+uniform(3,5) returns a random variable with a uniform distribution between 3 and 5. Although all distributions are programmable, the following distributions are built-in:
+
+•      uniform(lo,hi), 
+•      normal(mean,stdev)             // Gauss
+•      parabolic(mean,halfwidth)      // Epanechnikov
+•      exponential(lambda)
+•      bernoulli(p)                   // true with probability p, or false
+
+Each instance of e.g. uniform(lo,hi) is independent, even when used in a context like
+     rand(omega w) ... uniform(lo,hi)(w) ...
+because uniform will sample from a subspace of w independent from anybody else's.
+
+===========
+Observation 
+===========
+(see Flow-expressions)
+
+•    observe(f)             
+
+same as observe(f,vessel)
+
+•    observe(f,s)
+
+observe a flow f in sample s returning a number; e.g.:
+
+     observe(kelvin,s)       // temperature of s
+     observe(volume,s)       // volume of s (L)
+     observe(a,s)            // molarity of a in s (mol/L)
+     observe(∂a,s)           // derivative of a
+     observe(a+2b^2,s)       // combined observations
+     observe(var(a),s)       // requires LNA active
+     observe(time,s)         // nonzero only if s was the *input* sample of equilibrate s'=s for t: it returns the end time of equilibrate
+
+================
+Flow-expressions
+================
+
+Flow-expressions denote time courses and are found in 'observe( ... , S)' for samples, in 'report ...' statements for plotting, and in {{ ... }} special rate brackets to express arbitrary kinetic functions. Flow-expressions are a subset of expressions that include boolean and numerical operators and where species 's' are intepreted as molarity(s)(t): the numeric value of the concentration of 's' at time 't'. Flow expressions have type "flow".
+
+•     time
+
+Current time.
+
+•     kelvin
+•     celsius
+
+Current temperature.
+
+•     ∂ a           // first time derivative
+•     diff(a)       // same as ∂a
+•     sdiff(a)      // symbolic differentiation
+
+Derivatives, valid in 'report' but not in {{...}} rates.
+
+•     poisson(a)    
+
+Noise with mean = mean(a) and variance = mean(a).
+
+•     gauss(a,b)  
+
+Noise with mean = mean(a) and variance = mean(b).
+
+•     var(a)
+
+Variance of a linear combination of species.
+
+
+•     cov(a,b)
+
+Covariance of two linear combianations of species.
+
+•     cond(a,b,c)
+
+Conditional flow, e.g. cond(a<b,a,b) = min(a,b).
+
+More technically, flow-expressions are first *evaluated* to produce *flows* (while ordinary expressions are evaluated to produce *values*). Flows are data structures consisting exclusively of numeric and boolean operators over booleans, numbers, species, and some special entities such as 'time'. The  process of producing flows can involve ordinary function invocation and if-then-else conditional execution, but those do not appear in resulting flows. 
+At a  later stage, flows are *observed*, that is evaluated at multiple time points, during plotting or in the evaluation of reaction rates during simulations. Flows  are exactly the labels that appear in chart legends.
+Flows have the same syntax as expression; the evaluationof expressions to flows or to values is context-dependent.
+
+Ex.: Arrhenius equation (temperature-dependante rates):
+
+     function Arrhenius(flow cf ae) { 
+        cf*exp(-ae/(8.3144598*kelvin)) 
+     }
+
+Use the Arrhenius function for the rate of a reaction:
+
+     species a,b @ 1M
+     a + b -> Ø  {{ Arrhenius(2,50)*a*b }}
+
+Plot a, b, and the instantanous rate of their reaction over time:
+
+     report a, b, Arrhenius(2,50)*a*b     
+     equilibrate for 10                        
+
+Difference between 'if' and 'cond' flows:
+
+     species a @ 1M
+     species b @ 0M
+     a -> Ø
+     Ø -> b
+
+min is a built-in flow operator, it plots min(molarity(a)(t), molarity(b)(t)) at any time t:
+
+     report min(a,b) 
+
+here is the equivalent conditional flow:
+
+     report cond(a<b,a,b)
+
+Unlike 'cond', 'if' is not a flow operator, so it cannot compare flows:
+
+     report if a<b then a else b end      // ERROR   
+
+but 'if' can choose between two flows a or b based on a (timeless) condition:
+
+     report if 3>2 then a else b end    
+
+============
+Optimization
+============
+
+•     argmin(f, i, d)         // BFGS Optimizer
+
+where f: list -> [number, list]
+input to f is a list of numbers (the parameters to optimize); output is a pair of the cost of the input parameters, and a list of partial gradients for the parameters used by BFGS to select the next sample for f
+
+where i: list of numbers
+initial guess for the parameters
+
+where d: number
+numeric tolerance for convergence, e.g. 1e-2
+
+If a gradient is a time derivative (of concentrations) it is possible to use the ∂ operator to obtain it. Otherwise one may try to compute a local gradient by multiple samples. See the "PIDController Optimization" example.
+
+=================
+UNDO text changes
+=================
+
+All is well on Win, Mac, iOS. Android's "Hacker's Keyboard" (a keyboard alternative from the Play Store that selectably replaces the built-in keyboard) supports undo via Ctrl-Z, as well as Ctrl-X/C/V. There is no other known way to undo text changes on Android.

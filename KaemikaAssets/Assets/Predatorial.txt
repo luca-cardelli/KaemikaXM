@@ -1,0 +1,24 @@
+﻿//======================================
+// Creates a stack of predator-prey 
+// relationships in Lotka-Volterra style,
+// and returns the apex predator. 
+//======================================
+
+function Predatorial(number n) {
+  if n = 0 then
+    define species prey @ 1 M
+    prey -> 2 prey // prey reproduces
+    report prey
+    yield prey
+  else
+    define species predator @ 1/n M
+    species prey = Predatorial(n-1)
+    prey + predator ->{n} 2 predator // predator eats
+    predator -> Ø // predator dies
+    report predator
+    yield predator
+  end
+}
+
+species apexPredator = Predatorial(5)
+equilibrate for 50

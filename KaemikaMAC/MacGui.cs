@@ -241,6 +241,13 @@ namespace KaemikaMAC {
             return tcs.Task;
         }
 
+        public /* Interface KGuiControl */ void GuiInputSetEditable(bool editable) {
+            if (NSThread.IsMain) {
+                var txtTarget = this.textInput.DocumentView as AppKit.NSTextView;
+                txtTarget.Editable = editable;
+            } else { _ = BeginInvokeOnMainThreadAsync(() => { GuiInputSetEditable(editable); return ack; }).Result; }
+        }
+
         public /* Interface KGuiControl */ string GuiInputGetText() {
             if (NSThread.IsMain) {
                 var txtTarget = this.textInput.DocumentView as AppKit.NSTextView;

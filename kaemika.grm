@@ -60,12 +60,14 @@ Comment Block @= { Nesting = All }
                     | 'number' <Ids>               ! numbers
                     | 'string' <Ids>               ! strings
                     | 'list' <Ids>                 ! lists
-                    | 'flow' <Ids>                 ! for functions parameterized by flows in flow-expressions                   
+                    | 'flow' <Ids>                 ! flows                   
                     | 'species' <Ids>              ! species are values. n.b. individual reactions are not values, but networks are
                     | 'sample' <Ids>               ! samples are containers that have volume and temperature, populated with species that have concentrations
                     | 'function' <Ids>             ! functions can receive and return values, species, functions, and networks  
                     | 'network' <Ids>              ! networks can receive values, species, functions, and networks, and return nothing    
                     | 'random' <Ids>               ! random variables    
+                    | 'value' <Ids>                ! untyped variables    
+                    | <Ids>                        ! same as: 'value' <Ids>
                     | <Pattern>                    ! list pattern matching 
 
 <Pattern>       ::= '[' <Params> ']'                  ! a fixed length list pattern
@@ -78,7 +80,7 @@ Comment Block @= { Nesting = All }
 <IdSeq>         ::= <IdSeq> ',' Id
                     | Id
                                                               
-<Allocation>     ::= 'in' <Expression>     ! allocation of species in a sample
+<Allocation>     ::= 'in' <Expression>     ! allocation of species or reports to a sample
                     |                      ! short for 'in' 'vessel'
 <Substances>     ::= <Substances> ',' <Substance>
                     | <Substance>
@@ -104,9 +106,10 @@ Comment Block @= { Nesting = All }
                     | 'sample' <Sample>                       ! binding a sample to a sample id or sample def
                     | 'function' <Function>                   ! binding a function to a function id or function def
                     | 'network' <Network>                     ! binding a network to a network id or network def
+                    | 'value' Id '=' <Expression>             ! binding any value to an id (useful in polymorphic functions)
                     | <Pattern> '=' <Expression>              ! binding list elements to ids; length and types must match                  
                     | 'amount' <Ids> '@' <Expression> <Quantity> <Allocation>  ! set initial quantity of species in a sample
-                    | 'report' <Reports>                                       ! report species for plotting (can use arithmetic, but restrictions apply)
+                    | 'report' <Reports> <Allocation>                          ! report species for plotting (can use arithmetic, but restrictions apply)
                     | 'if' <Expression> 'then' <Statements> <Else>             ! conditional
                     | <Draw>                                                   ! draw samples from (lists of) functions or random variables and plot them
                     | ';'                                                      ! rarely used optional syntactic noise for same-line multiple statements
@@ -165,7 +168,7 @@ Comment Block @= { Nesting = All }
                     | QuotedString                                          ! double-quoted string literal. use \" and \\ to represent " and \
                     | 'if' <Expression> 'then' <Expression> <Else Exp>      ! no statements allowed inside if-expressions: uses if-statements for that
                     | 'fun' <Fun> | 'λ' <Fun>                               ! function abstraction
-                    | 'net' <Net>                                           ! network abstraction
+                    | 'net' <Net> | 'η' <Net>                               ! network abstraction
                     | 'rand' <Rand>                                         ! random variable abstraction
                     | '(' <Expression> ')'                                  ! parenthesized expression
                     | '[' <Expressions> ']'                                 ! list
@@ -188,8 +191,10 @@ Comment Block @= { Nesting = All }
 <Reports>        ::= <Reports> ',' <Report>
                     | <Report>
                     
-<Report>         ::= <Expression> 'as' <Expression>
-                    | <Expression> 
+<Report>         ::=  Id '=' <Expression> 'as' <Expression> 
+                    | Id '=' <Expression>                                    ! bind a flow-valued timecourse from this report to Id
+                    | <Expression> 'as' <Expression>                         ! use the string after 'as' in legends as the name of this report
+                    | <Expression>                                           ! a flow to plot
 
 <EndCondition>   ::= 'for' <Expression>
                   

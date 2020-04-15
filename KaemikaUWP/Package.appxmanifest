@@ -9,7 +9,7 @@
   <Identity
     Name="39459LucaCardelli.Kaemika"
     Publisher="CN=48C47D4C-B468-4479-990A-111DBC8FF487"
-    Version="1.0.18.0" />
+    Version="1.0.23.0" />
 
   <Properties>
     <DisplayName>Kaemika</DisplayName>

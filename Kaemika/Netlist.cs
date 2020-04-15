@@ -92,11 +92,11 @@ namespace Kaemika
         }
  
         public override string Format(Style style) {
-            if (style.traceComputational) {
+            if (style.traceFull) {
                 if (value is ConstantFlow) {
                     return "constant " + value.Format(style);
                 } else if (value is Flow) {
-                    return type.Format() + " " + symbol.Format(style) + " = "
+                    return Types.Format(type) + " " + symbol.Format(style) + " = "
                         //// DEBUG
                         //+ Environment.NewLine + "[Raw         ] " + value.Format(style.RestyleAsDataFormat("operator"))
                         //+ Environment.NewLine + "[Expand      ] " + (value as Flow).Expand(style).Format(style.RestyleAsDataFormat("operator"))
@@ -105,7 +105,7 @@ namespace Kaemika
                         //+ Environment.NewLine + " == "
                         //// END
                         + (value as Flow).Normalize(style).TopFormat(style);
-                } else return type.Format() + " " + symbol.Format(style) + " = " + value.Format(style);
+                } else return Types.Format(type) + " " + symbol.Format(style) + " = " + value.Format(style);
             } else return "";
         }
     }
@@ -125,7 +125,7 @@ namespace Kaemika
             this.value = value;
         }
         public override string Format(Style style) {
-            if (style.traceComputational) {
+            if (style.traceFull) {
                 return "new function " + symbol.Format(style); //### + " = " + value.Format(style);
             } else return "";
         }
@@ -139,7 +139,7 @@ namespace Kaemika
             this.value = value;
         }
         public override string Format(Style style) {
-            if (style.traceComputational) {
+            if (style.traceFull) {
                 return "new random " + symbol.Format(style); //### + " = " + value.Format(style);
             } else return "";
         }
@@ -153,7 +153,7 @@ namespace Kaemika
             this.value = value;
         }
         public override string Format(Style style) {
-            if (style.traceComputational) {
+            if (style.traceFull) {
                 return "new network " + symbol.Format(style); //### + " = " + value.Format(style);
             } else return "";
         }
@@ -165,7 +165,7 @@ namespace Kaemika
             this.species = species;
         }
         public override string Format(Style style) {
-            if (style.traceComputational) {
+            if (style.traceFull) {
                 return "new species " + species.symbol.Format(style);
             } else return "";
         }
@@ -182,27 +182,34 @@ namespace Kaemika
     }
 
     public class ReportEntry : Entry {
+        public Symbol timecourse; // can be null
         public Flow flow;
         public string asLabel; // can be null
-        public ReportEntry(Flow flow, string asLabel) {
+        public SampleValue sample;
+        public ReportEntry(Symbol timecourse, Flow flow, string asLabel, SampleValue sample) {
+            this.timecourse = timecourse;
             this.flow = flow;
             this.asLabel = asLabel;
+            this.sample = sample;
         }
         public override string Format(Style style) {
-            if (style.traceComputational) {
-                string s = "report " + flow.Format(style);
+            //if (style.traceFull) {
+                string s = "report ";
+                if (timecourse != null) s += timecourse.Format(style) + " = ";
+                s += flow.Format(style);
                 if (asLabel != null) { s += " as '" + asLabel + "'"; }
+                s += " in " + sample.FormatSymbol(style);
                 return s;
-            } else return "";
+            //} else return "";
         }
     }
 
-    public class ReportEntryWithCRNFlows : ReportEntry {
-        public Dictionary<SpeciesValue, Flow> dictionary;
-        public ReportEntryWithCRNFlows(Flow flow, string asLabel, Dictionary<SpeciesValue, Flow> dictionary) : base(flow, asLabel) {
-            this.dictionary = dictionary;
-        }
-    }
+    //public class ReportEntryWithCRNFlows : ReportEntry {
+    //    public Dictionary<SpeciesValue, Flow> dictionary;
+    //    public ReportEntryWithCRNFlows(Flow flow, string asLabel, Dictionary<SpeciesValue, Flow> dictionary) : base(flow, asLabel) {
+    //        this.dictionary = dictionary;
+    //    }
+    //}
 
     public abstract class ProtocolEntry : Entry {
     }
@@ -215,7 +222,7 @@ namespace Kaemika
         public override string Format(Style style) {
             if (style.dataFormat == "symbol") return value.FormatSymbol(style);
             else if (style.dataFormat == "header") return "sample " + value.FormatHeader(style);
-            else if (style.dataFormat == "full") return (style.traceComputational ? "new " : "") + value.Format(style);
+            else if (style.dataFormat == "full") return (style.traceFull ? "new " : "") + value.Format(style);
             else return "unknown format: " + style.dataFormat;
         }
     }
@@ -391,6 +398,12 @@ namespace Kaemika
         public void Emit(Entry entry) {
             this.entries.Add(entry);
         }
+        public bool EmitChem(Style style, int s) {
+            return true;
+        }
+        public bool EmitComp(Style style, int s) {
+            return s == 0; // top level definitions only
+        }
 
         public string Format(Style style) {
             string format = "";
@@ -487,22 +500,26 @@ namespace Kaemika
         //    return reactionList;
         //}
 
-        public List<ReportEntry> Reports(List<SpeciesValue> species) {
-            // return the list of reports in this netlist that involve any of the species in the species list
-            // but include only those reports that are fully covered by those species, just ignore the others
-            List<ReportEntry> reportList = new List<ReportEntry> { };
-            foreach (Entry entry in this.entries) {
-                if (entry is ReportEntry) {
-                    ReportEntry reportEntry = (ReportEntry)entry;
-                    if (reportEntry.flow.CoveredBy(species, out Symbol notCovered)) reportList.Add(reportEntry);
-                }
-            }
-            // if there are no reports, then report all the species
-            if (reportList.Count == 0) { 
-                foreach (SpeciesValue s in species) reportList.Add(new ReportEntry(new SpeciesFlow(s.symbol), null));
-            }
-            return reportList;
-        }
+
+        //public List<ReportEntry> Reports(List<SpeciesValue> species) {
+        //    // return the list of reports in this netlist that involve any of the species in the species list
+        //    // but include only those reports that are fully covered by those species, just ignore the others
+        //    // also ignore the reports that have already be dealt with by previous equilibrate
+        //    List<ReportEntry> reportList = new List<ReportEntry> { };
+        //    foreach (Entry entry in this.entries) {
+        //        if (entry is EquilibrateEntry) {
+        //            reportList = new List<ReportEntry> { }; // reset and continue to find the latest reports
+        //        } else if (entry is ReportEntry) {
+        //            ReportEntry reportEntry = (ReportEntry)entry;
+        //            if (reportEntry.flow.CoveredBy(species, out Symbol notCovered)) reportList.Add(reportEntry);
+        //        }
+        //    }
+        //    // if there are no reports, then report all the species
+        //    if (reportList.Count == 0) { 
+        //        foreach (SpeciesValue s in species) reportList.Add(new ReportEntry(null, new SpeciesFlow(s.symbol), null));
+        //    }
+        //    return reportList;
+        //}
 
         public List<ParameterEntry> Parameters() {
             List<ParameterEntry> parameterList = new List<ParameterEntry> { };

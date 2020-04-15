@@ -171,7 +171,7 @@ namespace Kaemika {
             string final = null;
             string plots = null;
             foreach (ReportEntry report in reportList) {
-                string series = report.Format(style);
+                string series = report.flow.Format(style);
                 plots = (plots == null) ? series : plots + "; " + series;
             }
             string head = "directive simulation deterministic" + Environment.NewLine;
@@ -192,8 +192,8 @@ namespace Kaemika {
             foreach (ReactionValue reaction in reactionList) {
                 List<Symbol> reactants = reaction.reactants;
                 List<Symbol> products = reaction.products;
-                if (!(reaction.rate is MassActionRateValue)) throw new Error("Export LBS/CNR: only mass action reactions are supported");
-                double rate = ((MassActionRateValue)reaction.rate).Rate(0.0); // ignore activation energy of reaction
+                if (!(reaction.rate is MassActionNumericalRate)) throw new Error("Export LBS/CNR: only mass action reactions are supported");
+                double rate = ((MassActionNumericalRate)reaction.rate).Rate(0.0); // ignore activation energy of reaction
                 body = body + tail
                     + Style.FormatSequence(reactants, " + ", x => x.Format(style))
                     + " ->" + "{" + rate.ToString() + "} "

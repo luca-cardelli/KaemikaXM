@@ -78,11 +78,11 @@ namespace Kaemika
             var groups = new List<ModelInfoGroup>();
 
             var group1 = new ModelInfoGroup("Basic Models");
-            foreach (string a in new List<string> { "StartHere", "LotkaVolterra", "RingOscillator", "Reactions", "EnzymeKinetics", "ApproximateMajority", "2AM Oscillator", "Transporters" }) AddAsset(group1, a);
+            foreach (string a in new List<string> { "StartHere", "LotkaVolterra", "Predatorial", "RingOscillator", "Reactions", "EnzymeKinetics", "ApproximateMajority", "2AM Oscillator", "Transporters" }) AddAsset(group1, a);
             groups.Add(group1);
 
             var group3 = new ModelInfoGroup("Protocols");
-            foreach (string a in new List<string> { "Samples", "MolarMass", "Droplets", "MixAndSplit", "PBS", "SerialDilution" }) AddAsset(group3, a);
+            foreach (string a in new List<string> { "Samples", "Droplets", "MixAndSplit", "PBS", "SerialDilution" }) AddAsset(group3, a);
             groups.Add(group3);
 
             var group2a = new ModelInfoGroup("Arithmetic");

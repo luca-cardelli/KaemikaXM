@@ -205,7 +205,7 @@ namespace KaemikaXM.Pages {
 
         string[] subscripts = new string[] { "_", "₊", "₋", "₌", "₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉", "₍", "₎"};
         string[] superscripts = new string[] { "\'", "⁺", "⁻", "⁼", "⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹", "⁽", "⁾"};
-        string[] math = new string[] { "Ø", "λ", "(", ")", "-", "*", "/", "^", ">", "<", ">=", "<=", "<>", "∂", "μ", "pi", "e", "time", "var", "cov", "poisson", "gauss", "true", "false", "not", "and", "or", "abs", "arccos", "arcsin", "arctan", "arctan2", "ceiling", "cos", "cosh", "exp", "floor", "int", "log", "max", "min", "pos", "sign", "sin", "sinh", "sqrt", "tan", "tanh", "map", "filter", "foldl", "foldr" };
+        string[] math = new string[] { "Ø", "λ", "(", ")", "-", "*", "/", "^", ">", "<", ">=", "<=", "<>", "η", "∂", "μ", "pi", "e", "time", "var", "cov", "poisson", "gauss", "true", "false", "not", "and", "or", "abs", "arccos", "arcsin", "arctan", "arctan2", "ceiling", "cos", "cosh", "exp", "floor", "int", "log", "max", "min", "pos", "sign", "sin", "sinh", "sqrt", "tan", "tanh", "map", "filter", "foldl", "foldr" };
         public Picker SymbolPicker(string title, int fontSize, string[] items) {
             Picker symbolPicker = new Picker {
                 Title = title, TitleColor = MainTabbedPage.barColor,
@@ -410,6 +410,10 @@ namespace KaemikaXM.Pages {
         public void KeyboardIsDown() {
             isKeyboardUp = false;
             editItem.IconImageSource = "ShowKeyboard";
+        }
+
+        public void SetEditable(bool editable) {
+            editor.SetEditable(editable);
         }
 
         public string GetText() {

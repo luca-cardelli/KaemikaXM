@@ -45,6 +45,7 @@
     <None Remove="Assets\PIDController.txt" />
     <None Remove="Assets\PosTestSignal Sine.txt" />
     <None Remove="Assets\PosTestSignal Step.txt" />
+    <None Remove="Assets\Predatorial.txt" />
     <None Remove="Assets\productions.txt" />
     <None Remove="Assets\Proportional Block.txt" />
     <None Remove="Assets\Reactions.txt" />
@@ -94,13 +95,13 @@
     <EmbeddedResource Include="Assets\LorenzAttractor.txt" />
     <EmbeddedResource Include="Assets\LotkaVolterra.txt" />
     <EmbeddedResource Include="Assets\MixAndSplit.txt" />
-    <EmbeddedResource Include="Assets\MolarMass.txt" />
     <EmbeddedResource Include="Assets\PBS.txt" />
     <EmbeddedResource Include="Assets\PIDController Block.txt" />
     <EmbeddedResource Include="Assets\PIDController Optimization.txt" />
     <EmbeddedResource Include="Assets\PIDController.txt" />
     <EmbeddedResource Include="Assets\PosTestSignal Sine.txt" />
     <EmbeddedResource Include="Assets\PosTestSignal Step.txt" />
+    <EmbeddedResource Include="Assets\Predatorial.txt" />
     <EmbeddedResource Include="Assets\productions.txt" />
     <EmbeddedResource Include="Assets\Proportional Block.txt" />
     <EmbeddedResource Include="Assets\Reactions.txt" />
