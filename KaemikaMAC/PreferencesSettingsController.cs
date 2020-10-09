@@ -4,6 +4,7 @@ using System;
 
 using Foundation;
 using AppKit;
+using Kaemika;
 
 namespace KaemikaMAC
 {
@@ -12,5 +13,68 @@ namespace KaemikaMAC
 		public PreferencesSettingsController (IntPtr handle) : base (handle)
 		{
 		}
-	}
+
+		// This Controller file was created by selecting the Settings Scene > Settings in XCode
+		// assigning it a new Custom Class "PreferencesSettingsController"
+		// and StoryBoard ID "PreferencesSettings"
+		// and switching back to VisualStudio to create these .cs, .h and .m files
+		// See https://docs.microsoft.com/en-us/xamarin/mac/user-interface/dialog > Writing Preferences to Preference Views
+		// Then we can link Actions to the .h file in XCode
+		// via the Assistant as described in https://docs.microsoft.com/en-us/xamarin/mac/get-started/hello-mac
+		// (The Assistant is now opened from the "script lines" icon menu)
+
+		public override void ViewDidLoad () {
+			base.ViewDidLoad ();
+
+            // initialize GUI state on load
+            PrefsPrecomputeDriftOutlet.State = KControls.precomputeLNA ? NSCellStateValue.On : NSCellStateValue.Off;
+            PrefsScoreMozartOutlet.State = KControls.scoreStyle == "Mozart" ? NSCellStateValue.On : NSCellStateValue.Off;
+            PrefsScoreBachOutlet.State = KControls.scoreStyle == "Bach" ? NSCellStateValue.On : NSCellStateValue.Off;
+            PrefsSolverRK547MOutlet.State = KControls.solver == "RK547M" ? NSCellStateValue.On : NSCellStateValue.Off;
+            PrefsSolverGearBDFOutlet.State = KControls.solver == "GearBDF" ? NSCellStateValue.On : NSCellStateValue.Off;
+        }
+
+        // ==== Preferences Menu ====
+
+        public void SetPrecomputeDrift(bool val)
+        {
+        }
+
+        partial void PrefsUserSettings(NSObject sender)
+        {
+            MacGui.macGui.macControls.SetDirectory();
+        }
+
+        partial void PrefsScoreMozart(NSObject sender)
+        {
+            KControls.scoreStyle = "Mozart";
+            PrefsScoreBachOutlet.State = NSCellStateValue.Off;
+            KScoreHandler.ScoreUpdate();
+        }
+
+        partial void PrefsScoreBach(NSObject sender)
+        {
+            KControls.scoreStyle = "Bach";
+            PrefsScoreMozartOutlet.State = NSCellStateValue.Off;
+            KScoreHandler.ScoreUpdate();
+        }
+
+        partial void PrefsSolverGearBDF(NSObject sender)
+        {
+            KControls.solver = "GearBDF";
+            PrefsSolverRK547MOutlet.State = NSCellStateValue.Off;
+        }
+
+        partial void PrefsSolverRK547M(NSObject sender)
+        {
+            KControls.solver = "RK547M";
+            PrefsSolverGearBDFOutlet.State = NSCellStateValue.Off;
+        }
+
+        partial void PrefsPrecomputeDrift(NSObject sender)
+        {
+            KControls.precomputeLNA = PrefsPrecomputeDriftOutlet.State == NSCellStateValue.On;
+        }
+
+    }
 }

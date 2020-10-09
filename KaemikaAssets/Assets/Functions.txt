@@ -4,7 +4,7 @@ Recursive function definition
 
      function factorial(number n) {
         if n <= 0 then 1 
-        else n * factorial(n-1) 
+        else n · factorial(n-1) 
         end
      }
 
@@ -38,7 +38,7 @@ via self-application
 Non-recursive selffact:
 
      function selffact(function f, number n) {
-        if n <= 0 then 1 else n * f(f, n-1) end
+        if n <= 0 then 1 else n · f(f, n-1) end
      }
 
 Self-application of selffact:
@@ -60,7 +60,7 @@ Call-by-value recursive fixpoint combinator:
 Non-recursive factorial abstraction:
 
      function factabs(function fact)(number n) {
-	    if n <= 0 then 1 else n * fact(n-1) end
+	    if n <= 0 then 1 else n · fact(n-1) end
      }
 
 Fixpoint of factabs:

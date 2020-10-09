@@ -36,6 +36,7 @@ namespace KaemikaXM.Pages {
         public static Color barColor = Color.FromHex("6200ED"); // Electric Indigo: "6F00FF" // standard blue: "2195F3"; https://www.color-hex.com/
         public static Color secondBarColor = Color.FromHex("E8F2FC"); // formerly "61D5ff"; 
         public static Color pickerColor = Color.FromHex("E0F2FC");
+        public static Color almostWhite = Color.FromHex("FEFEFE"); // trying to prevent automatic dark mode substitutions
         public static int buttonHeightRequest = 40;
 
         public static MainTabbedPage theMainTabbedPage;

@@ -4,7 +4,7 @@
 
 // Turn a positive function into a waveform
 network Signal(species X, function f) {
-   Ø ->{{100*f()}} X;   X ->{100} Ø
+   Ø ->{{100·f()}} X;   X ->{100} Ø
 }
 
 species A @ 0 M
@@ -16,10 +16,10 @@ equilibrate for 2
 
 // Hyperbolic Tangent
 //Signal(A, λ(){1+tanh(time-pi)})
-//equilibrate for 2*pi
+//equilibrate for 2·pi
 
 // Logistic Function
-//Signal(A, λ(){1/(1 + e^(2*pi-time))})
+//Signal(A, λ(){1/(1 + e^(2·pi-time))})
 //equilibrate for 4*pi
 
 // Hill Function

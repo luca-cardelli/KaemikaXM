@@ -10,8 +10,8 @@
 // if 'under' > 'over'
 
 network UberPoisson(species A, number mean under over) {
-    Ø -> over * A     {under * mean^under} 
-    under * A -> Ø    {over}
+    Ø -> over · A     {under * mean^under} 
+    under · A -> Ø    {over}
 }
 
 // Poisson noise on A
@@ -25,14 +25,14 @@ network Poisson(species A, number mean) {
 // to A,B in compartment 2
 
 network Symport(number a₁, species A₁, number b₁, species B₁, number a₂, species A₂, number b₂, species B₂, number dir rev) {
-   a₁*A₁ + b₁*B₁ {rev}<->{dir} a₂*A₂ + b₂*B₂
+   a₁·A₁ + b₁·B₁ {rev}<->{dir} a₂·A₂ + b₂·B₂
 }
 
 // Antiporter moving A,B in compartments 1,2
 // to A,B in compartments 2,1 resp.
 
 network Antiport(number a₁, species A₁, number b₁, species B₁, number a₂, species A₂, number b₂, species B₂, number dir rev) {
-   a₁*A₁ + b₂*B₂ {rev}<->{dir} a₂*A₂ + b₁*B₁
+   a₁·A₁ + b₂·B₂ {rev}<->{dir} a₂·A₂ + b₁·B₁
 }
 
 // Coupled transporters:

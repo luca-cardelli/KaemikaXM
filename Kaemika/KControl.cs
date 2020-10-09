@@ -312,7 +312,7 @@ namespace Kaemika {
                 (object sender, EventArgs e) => {
                     CloseOpenMenu();
                     if (guiControls.IsMicrofluidicsVisible()) {
-                        guiControls.MicrosfluidicsVisible(false);
+                        guiControls.MicrofluidicsVisible(false);
                         guiControls.onOffDeviceView.Selected(false);
                     } else {
                         guiControls.MicrofluidicsOn();
@@ -497,19 +497,18 @@ namespace Kaemika {
         public static string scoreStyle = "Bach";
         public static string solver = "RK547M";
         public static bool precomputeLNA = false;
-        public static bool packReactions = false;
+        public static bool packReactions = (Gui.platform == Platform.Android || Gui.platform == Platform.iOS) ? true : false;
 
         private void SettingsMenu() {
             guiControls.menuSettings.SetImage("icons8_settings_384_W_48x48");
-            guiControls.menuSettings.OnClick((object s, EventArgs e) => { MenuClicked(guiControls.menuSettings); });
             guiControls.menuSettings.autoClose = true;
 
             var header = guiControls.menuSettings.NewMenuSection(level: -2); header.SetText("Settings");
             var score = guiControls.menuSettings.NewMenuSection(level: 2); score.SetText("Reaction score");
             var mozart = guiControls.menuSettings.NewMenuItemButton(); mozart.SetText("Mozart"); 
             var bach = guiControls.menuSettings.NewMenuItemButton(); bach.SetText("Bach"); bach.Selected(true);
-            var influence = guiControls.menuSettings.NewMenuItemButton(); influence.SetText("influence");
-            var binpacking = guiControls.menuSettings.NewMenuItemButton(); binpacking.SetText("[pack]");
+            // var influence = guiControls.menuSettings.NewMenuItemButton(); influence.SetText("influence"); // now unused in Settings
+            // var binpacking = guiControls.menuSettings.NewMenuItemButton(); binpacking.SetText("[pack]"); // now unused in Settings
             mozart.OnClick((object s, EventArgs e) => {
                 bach.Selected(false);
                 scoreStyle = "Mozart";
@@ -522,26 +521,26 @@ namespace Kaemika {
                 bach.Selected(true);
                 KScoreHandler.ScoreUpdate();
             });
-            influence.OnClick((object s, EventArgs e) => {
-                if (influence.IsSelected()) {
-                    KScoreHandler.showInfluences = false;
-                    influence.Selected(false);
-                } else {
-                    KScoreHandler.showInfluences = true;
-                    influence.Selected(true);
-                }
-                KScoreHandler.ScoreUpdate();
-            });
-            binpacking.OnClick((object s, EventArgs e) => {
-                if (binpacking.IsSelected()) {
-                    packReactions = false;
-                    binpacking.Selected(false);
-                } else {
-                    packReactions = true;
-                    binpacking.Selected(true);
-                }
-                KScoreHandler.ScoreUpdate();
-            });
+            //influence.OnClick((object s, EventArgs e) => { 
+            //    if (influence.IsSelected()) {
+            //        KScoreHandler.showInfluences = false;
+            //        influence.Selected(false);
+            //    } else {
+            //        KScoreHandler.showInfluences = true;
+            //        influence.Selected(true);
+            //    }
+            //    KScoreHandler.ScoreUpdate();
+            //});
+            //binpacking.OnClick((object s, EventArgs e) => {
+            //    if (binpacking.IsSelected()) {
+            //        packReactions = false;
+            //        binpacking.Selected(false);
+            //    } else {
+            //        packReactions = true;
+            //        binpacking.Selected(true);
+            //    }
+            //    KScoreHandler.ScoreUpdate();
+            //});
             var solvers = guiControls.menuSettings.NewMenuSection(level: 2); solvers.SetText("ODE Solvers");
             var rk547m = guiControls.menuSettings.NewMenuItemButton(); rk547m.SetText("RK547M"); rk547m.Selected(true);
             var gearBDF = guiControls.menuSettings.NewMenuItemButton(); gearBDF.SetText("GearBDF");
@@ -576,15 +575,24 @@ namespace Kaemika {
             policyURL.OnClick((object s, EventArgs e) => {
                 guiControls.PrivacyPolicyToClipboard();
             });
-            var version = guiControls.menuSettings.NewMenuSection(level: 4); version.SetText("Version 6.02214076e23");
+            var version = guiControls.menuSettings.NewMenuSection(level: 4); version.SetText("Version " + Gui.KaemikaVersion); // version.SetText("Version 6.02214076e23");
             version.OnClick((object s, EventArgs e) => { guiControls.SetSnapshotSize(); });
+
+            guiControls.menuSettings.OnClick((object s, EventArgs e) => {
+                mozart.Selected(scoreStyle == "Mozart");
+                bach.Selected(scoreStyle == "Bach");
+                gearBDF.Selected(solver == "GearBDF");
+                rk547m.Selected(solver == "RK547M");
+                drift.Selected(precomputeLNA);
+                MenuClicked(guiControls.menuSettings);
+                });
 
             guiControls.menuSettings.ClearMenuItems();
             guiControls.menuSettings.AddMenuItem(header);
             guiControls.menuSettings.AddSeparator();
             guiControls.menuSettings.AddMenuItem(score);
-            guiControls.menuSettings.AddMenuItems(new KButton[3] { mozart, bach, binpacking });
-            //guiControls.menuSettings.AddMenuItems(new KButton[2] { mozart, bach });
+            guiControls.menuSettings.AddMenuItems(new KButton[2] { mozart, bach });
+            //guiControls.menuSettings.AddMenuItems(new KButton[3] { mozart, bach, binpacking });
             //guiControls.menuSettings.AddMenuItems(new KButton[2] { influence, binpacking });
             guiControls.menuSettings.AddSeparator();
             guiControls.menuSettings.AddMenuItem(solvers);

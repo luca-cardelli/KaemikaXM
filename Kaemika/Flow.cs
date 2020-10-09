@@ -20,8 +20,8 @@ namespace Kaemika {
         public abstract bool Involves(List<SpeciesValue> species);
         public abstract bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered);
         public abstract bool IsOp(string op, int arity);
-        public abstract bool IsNumber(double n);
-        public abstract bool IsNegativeNumber();
+        public bool IsNumber(double n) { return this is NumberFlow num && num.value == n; }
+        public bool IsNegative() { return this is NumberFlow num && num.value < 0.0; }
         public abstract bool IsNumericConstantExpression(); // including 'Constant" flows
 
         public abstract Flow Arg(int i);
@@ -48,6 +48,10 @@ namespace Kaemika {
         public abstract Flow Differentiate(Symbol var, Style style); // symbolic differentiation; var is the partial differentiation variable, or null for time differentiation
         public static Vector nilFlux = new Vector(new double[0]);
 
+        public static Flow zero = new NumberFlow(0.0);
+        public static Flow one = new NumberFlow(1.0);
+        public static Flow minusOne = new NumberFlow(-1.0);
+
         public string FormatAsODE(SpeciesValue headSpecies, Style style, string prefixDiff = "∂", string suffixDiff = "") {
             return prefixDiff + headSpecies.Format(style) + suffixDiff + " = " + this.Normalize(style).TopFormat(style);
         }
@@ -65,8 +69,6 @@ namespace Kaemika {
         public override bool Involves(List<SpeciesValue> species) { return false; }
         public override bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered) { notCovered = null; return true; }
         public override bool IsOp(string op, int arity) { return false; }
-        public override bool IsNumber(double n) { return false; }
-        public override bool IsNegativeNumber() { return false; }
         public override bool IsNumericConstantExpression() { return false; }
         public override Flow Arg(int i) { throw new Error("Arg"); }
         public override string Format(Style style) { if (this.value) return "true"; else return "false"; }
@@ -99,8 +101,6 @@ namespace Kaemika {
         public override bool Involves(List<SpeciesValue> species) { return false; }
         public override bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered) { notCovered = null; return true; }
         public override bool IsOp(string op, int arity) { return false; }
-        public override bool IsNumber(double n) { return value == n; }
-        public override bool IsNegativeNumber() { return value < 0.0; }
         public override bool IsNumericConstantExpression() { return true; }
         public override Flow Arg(int i) { throw new Error("Arg"); }
         public override string Format(Style style) { return style.FormatDouble(this.value); }
@@ -147,8 +147,6 @@ namespace Kaemika {
         public override bool Involves(List<SpeciesValue> species) { return false; }
         public override bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered) { notCovered = null; return true; }
         public override bool IsOp(string op, int arity) { return false; }
-        public override bool IsNumber(double n) { return false; }
-        public override bool IsNegativeNumber() { return false; }
         public override bool IsNumericConstantExpression() { return false; }
         public override Flow Arg(int i) { throw new Error("Arg"); }
         public override string Format(Style style) { 
@@ -217,8 +215,6 @@ namespace Kaemika {
         public override bool Involves(List<SpeciesValue> species) { return false; }
         public override bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered) { notCovered = null; return true; }
         public override bool IsOp(string op, int arity) { return false; }
-        public override bool IsNumber(double n) { return false; }
-        public override bool IsNegativeNumber() { return false; }
         public override bool IsNumericConstantExpression() { return false; }
         public override Flow Arg(int i) { throw new Error("Arg"); }
         public override string Format(Style style) { return Parser.FormatString(this.value); }
@@ -257,8 +253,6 @@ namespace Kaemika {
             return false;
         }
         public override bool IsOp(string op, int arity) { return false; }
-        public override bool IsNumber(double n) { return false; }
-        public override bool IsNegativeNumber() { return false; }
         public override bool IsNumericConstantExpression() { return false; }
         public override Flow Arg(int i) { throw new Error("Arg"); }
         public override string Format(Style style) {
@@ -311,8 +305,6 @@ namespace Kaemika {
         public override bool Involves(List<SpeciesValue> species) { return false; }
         public override bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered) { notCovered = null; return true; }
         public override bool IsOp(string op, int arity) { return false; }
-        public override bool IsNumber(double n) { return false; }
-        public override bool IsNegativeNumber() { return false; }
         public override bool IsNumericConstantExpression() { return false; }
         public override Flow Arg(int i) { throw new Error("Arg"); }
         public override string Format(Style style) { return value.FormatSymbol(style); }
@@ -341,8 +333,6 @@ namespace Kaemika {
         public override bool Involves(List<SpeciesValue> species) { return false; }
         public override bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered) { notCovered = null; return true; }
         public override bool IsOp(string op, int arity) { return false; }
-        public override bool IsNumber(double n) { return false; }
-        public override bool IsNegativeNumber() { return false; }
         public override bool IsNumericConstantExpression() { return true; }
         public override Flow Arg(int i) { throw new Error("Arg"); }
         public override string Format(Style style) { return this.constant.Format(style); }
@@ -390,8 +380,6 @@ namespace Kaemika {
         public override Flow Arg(int i) {
             return this.args[i];
         }
-        public override bool IsNumber(double n) { return false; }
-        public override bool IsNegativeNumber() { return false; }
         public override bool IsNumericConstantExpression() { 
             if (arity == 0) {
                 return false; // "time", "kelvin", "celsius", "volume"
@@ -727,15 +715,15 @@ namespace Kaemika {
                     // improve presentation of unary and binary minus
                     if (op == "*" && args[0] is NumberFlow && (args[0] as NumberFlow).value == -1.0) return Op("-", args[1]).Format(style); // -1*a = -a
                     if (op == "-" && arity == 2 && args[1].IsOp("*", 2) && args[1].Arg(0) is NumberFlow && (args[1].Arg(0) as NumberFlow).value == -1.0) return Op("+", args[0], args[1].Arg(1)).Format(style); // a - -1*b = a + b
-                    if (op == "+" && args[1].IsOp("+", 2) && args[1].Arg(0).IsOp("*",2) && args[1].Arg(0).Arg(0).IsNegativeNumber()) return Op("+", Op("+", args[0], args[1].Arg(0)), args[1].Arg(1)).Format(style); // a + (-n*b + c) = (a + -n*b) + c
-                    if (op == "+" && args[1].IsOp("*",2) && args[1].Arg(0).IsNegativeNumber()) return Op("-", args[0], Op("*", new NumberFlow(-(args[1].Arg(0) as NumberFlow).value), args[1].Arg(1))).Format(style); // a + -n * b = a - n*b
-                    if (op == "+" && args[0].IsOp("*", 2) && args[0].Arg(0).IsNegativeNumber()) return Op("-", args[1], Op("*", new NumberFlow(-(args[0].Arg(0) as NumberFlow).value), args[0].Arg(1))).Format(style); // -n * b + a = a - n*b
+                    if (op == "+" && args[1].IsOp("+", 2) && args[1].Arg(0).IsOp("*",2) && args[1].Arg(0).Arg(0).IsNegative()) return Op("+", Op("+", args[0], args[1].Arg(0)), args[1].Arg(1)).Format(style); // a + (-n*b + c) = (a + -n*b) + c
+                    if (op == "+" && args[1].IsOp("*",2) && args[1].Arg(0).IsNegative()) return Op("-", args[0], Op("*", new NumberFlow(-(args[1].Arg(0) as NumberFlow).value), args[1].Arg(1))).Format(style); // a + -n * b = a - n*b
+                    if (op == "+" && args[0].IsOp("*", 2) && args[0].Arg(0).IsNegative()) return Op("-", args[1], Op("*", new NumberFlow(-(args[0].Arg(0) as NumberFlow).value), args[0].Arg(1))).Format(style); // -n * b + a = a - n*b
                     // end
                     string arg1 = SubFormatLeft(this, args[0], style); // use parens depending on precedence of suboperator
                     string arg2 = SubFormatRight(this, args[1], style); // use parens depending on precedence of suboperator
                     if (style.exportTarget == ExportTarget.LBS && op == "-") return arg1 + " -- " + arg2; // export exceptions
                     if (style.exportTarget == ExportTarget.LBS) return arg1 + " " + op + " " + arg2;      // export exceptions
-                    return "(" + arg1 + " " + op + " " + arg2 + ")";
+                    return "(" + arg1 + " " + (op == "*" ? "·" : op) + " " + arg2 + ")";
                 } else {
                     string arg1 = args[0].TopFormat(style);
                     string arg2 = args[1].TopFormat(style);

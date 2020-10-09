@@ -37,10 +37,11 @@ namespace KaemikaXM.iOS
             var frameBegin = UIKeyboard.FrameBeginFromNotification(notification);
             var frameEnd = UIKeyboard.FrameEndFromNotification(notification);
             var bounds = Element.Bounds;
-            var cover = 2 * MainTabbedPage.buttonHeightRequest + 20; // Height of the two bottom bars plus some random spacing
+            // var cover = 2 * MainTabbedPage.buttonHeightRequest + 20; // Height of the two bottom bars plus some random spacing
             var newBounds = new Rectangle(bounds.Left, bounds.Top, bounds.Width,
                 bounds.Height - frameBegin.Top + frameEnd.Top
-                + cover );
+                // + cover // This causes random loss of the bottom toolbar
+                );
             Element.Layout(newBounds);
         }
 
@@ -50,10 +51,11 @@ namespace KaemikaXM.iOS
             var frameBegin = UIKeyboard.FrameBeginFromNotification(notification);
             var frameEnd = UIKeyboard.FrameEndFromNotification(notification);
             var bounds = Element.Bounds;
-            var cover = 2 * MainTabbedPage.buttonHeightRequest + 20; // Height of the two bottom bars plus some random spacing
+            // var cover = 2 * MainTabbedPage.buttonHeightRequest + 20; // Height of the two bottom bars plus some random spacing
             var newBounds = new Rectangle(bounds.Left, bounds.Top, bounds.Width,
                 bounds.Height - frameBegin.Top + frameEnd.Top
-                - cover );
+                // - cover // This causes random loss of the bottom toolbar
+                );
             Element.Layout(newBounds);
         }
     }

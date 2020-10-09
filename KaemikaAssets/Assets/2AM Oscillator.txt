@@ -7,12 +7,12 @@
 // activated from lo to hi by act, 
 // and inhibited from hi to lo by inh
 
-network Triplet(species lo hi act inh, number rate) {
+network Triplet(species lo hi actv inhb, number rate) {
    species md @ 0M
-   act >> lo -> md    {rate}
-   act >> md -> hi    {rate}
-   inh >> hi -> md    {rate}
-   inh >> md -> lo    {rate}
+   actv >> lo -> md    {rate}
+   actv >> md -> hi    {rate}
+   inhb >> hi -> md    {rate}
+   inhb >> md -> lo    {rate}
 }
 
 // Approximate Majority bistable circuit: 
@@ -41,10 +41,10 @@ network Triplet2(species lo hi act1 inh1 act2 inh2, number rate1 rate2) {
 
 // Approximate Majority bistable switch:
 // like the above AM circuit, but with additional 
-// external switching controls act and ihn
+// external switching controls actv and ihnb
 
-network AM2(species lo hi act inh, number rate1 rate2) {
-   Triplet2(lo, hi, hi, lo, act, inh, rate1, rate2)
+network AM2(species lo hi actv inhb, number rate1 rate2) {
+   Triplet2(lo, hi, hi, lo, actv, inhb, rate1, rate2)
 }
 
 // Two AM2 switches connected in a Trammel of 

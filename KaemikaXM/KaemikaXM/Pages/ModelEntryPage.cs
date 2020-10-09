@@ -55,8 +55,10 @@ namespace KaemikaXM.Pages {
         public ToolbarItem PasteAllItem() {
             return
                 new ToolbarItem("PasteAll", "icons8import96", async () => {
-                    if (Clipboard.HasText) {
+                    if (Clipboard.HasText) { // do a swap with the clipboard, so we can undo by repeating
                         string text = await Clipboard.GetTextAsync();
+                        string backupText = MainTabbedPage.theModelEntryPage.GetText();
+                        if (backupText != "") await Clipboard.SetTextAsync(backupText);
                         MainTabbedPage.theModelEntryPage.SetText(text);
                         SaveEditor(); // otherwise it would not be saved becauese there is no focus change
                     }
@@ -181,13 +183,16 @@ namespace KaemikaXM.Pages {
 
         public Picker NoisePicker() {
             Picker noisePicker = new Picker {
-                Title = "Noise", TitleColor = MainTabbedPage.barColor,
+                Title = "Noise", TitleColor = MainTabbedPage.barColor, // color of the title in popped-up picker - title does not show up on iOS
+                // TextColor = Color.Green, // does not seem to affect the color of text items in popped-up picker on Android nor iOS
+                // BackgroundColor = MainTabbedPage.pickerColor, // does not seem to affect the color of background in popped-up picker on Android nor iOS
                 HorizontalOptions = LayoutOptions.CenterAndExpand,
-                BackgroundColor = MainTabbedPage.pickerColor,
                 FontSize = 14,  
                
             };
             foreach (Noise s in Gui.noise) noisePicker.Items.Add(Gui.StringOfNoise(s));
+            noisePicker.TextColor = MainTabbedPage.barColor; // color of text of current selection in popped-down picker - needed to block darkmode color switch on iOS
+            noisePicker.BackgroundColor = MainTabbedPage.secondBarColor; // color of background of current selection in popped-down picker
             noisePicker.Unfocused += async (object sender, FocusEventArgs e) => {
                 Noise oldSelection = KControls.SelectNoiseSelectedItem;
                 KControls.SelectNoiseSelectedItem = Gui.NoiseOfString(noisePicker.SelectedItem as string);
@@ -205,7 +210,7 @@ namespace KaemikaXM.Pages {
 
         string[] subscripts = new string[] { "_", "₊", "₋", "₌", "₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉", "₍", "₎"};
         string[] superscripts = new string[] { "\'", "⁺", "⁻", "⁼", "⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹", "⁽", "⁾"};
-        string[] math = new string[] { "Ø", "λ", "(", ")", "-", "*", "/", "^", ">", "<", ">=", "<=", "<>", "η", "∂", "μ", "pi", "e", "time", "var", "cov", "poisson", "gauss", "true", "false", "not", "and", "or", "abs", "arccos", "arcsin", "arctan", "arctan2", "ceiling", "cos", "cosh", "exp", "floor", "int", "log", "max", "min", "pos", "sign", "sin", "sinh", "sqrt", "tan", "tanh", "map", "filter", "foldl", "foldr" };
+        string[] math = new string[] { "Ø", "λ", "(", ")", "-", "·", "/", "^", ">", "<", ">=", "<=", "<>", "η", "∂", "μ", "pi", "e", "time", "var", "cov", "poisson", "gauss", "true", "false", "not", "and", "or", "abs", "arccos", "arcsin", "arctan", "arctan2", "ceiling", "cos", "cosh", "exp", "floor", "int", "log", "max", "min", "pos", "sign", "sin", "sinh", "sqrt", "tan", "tanh", "map", "filter", "foldl", "foldr" };
         public Picker SymbolPicker(string title, int fontSize, string[] items) {
             Picker symbolPicker = new Picker {
                 Title = title, TitleColor = MainTabbedPage.barColor,
@@ -405,11 +410,13 @@ namespace KaemikaXM.Pages {
         public void KeyboardIsUp() {
             isKeyboardUp = true;
             editItem.IconImageSource = "HideKeyboard";
+            // this is unreliable, so we show the same icon on both Up and Down
         }
 
         public void KeyboardIsDown() {
             isKeyboardUp = false;
             editItem.IconImageSource = "ShowKeyboard";
+            // this is unreliable, so we show the same icon on both Up and Down
         }
 
         public void SetEditable(bool editable) {

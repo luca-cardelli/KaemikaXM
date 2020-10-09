@@ -250,7 +250,7 @@ namespace Kaemika
                 State initialState,
                 double initialTime, double finalTime,
                 Func<double, Vector, Vector> Flux,
-                bool nonTrivialSolution) {
+                bool nonTrivialSolution, Style style) {
             IEnumerable<SolPoint> solution;
             if (nonTrivialSolution) {
                 try {
@@ -258,7 +258,7 @@ namespace Kaemika
                     solution = OdeHelpers.SolveTo(solver, finalTime);
                 }
                 catch (Error e) { throw new Error(e.Message); }
-                catch (Exception e) { throw new Error("ODE Solver FAILED: " + e.Message); }
+                catch (Exception e) { KChartHandler.ChartUpdate(style, false); throw new Error("ODE Solver FAILED: " + e.Message); }
             } else { // build a dummy point series, in case we want to report and plot just some numerical expressions
                 List<SolPoint> list = new List<SolPoint> { }; // SolPoint constructor was changed to public from internal
                 if (finalTime <= initialTime) list.Add(new SolPoint(initialTime, initialState.ToArray()));
@@ -288,7 +288,7 @@ namespace Kaemika
             KChartHandler.LegendUpdate(style);
             KScoreHandler.ScoreUpdate();
 
-            IEnumerable<SolPoint> solution = SolutionGererator(Solver, initialState, initialTime, finalTime, Flux, nonTrivialSolution);
+            IEnumerable<SolPoint> solution = SolutionGererator(Solver, initialState, initialTime, finalTime, Flux, nonTrivialSolution, style);
 
             // BEGIN foreach (SolPoint solPoint in solution)  -- done by hand to catch exceptions in MoveNext()
 
@@ -306,7 +306,7 @@ namespace Kaemika
                     return (lastTime, lastState); 
                 } 
                 catch (Error e) { throw new Error(e.Message); }
-                catch (Exception e) { throw new Error("ODE Solver FAILED: " + e.Message); }
+                catch (Exception e) { KChartHandler.ChartUpdate(style, false); throw new Error("ODE Solver FAILED: " + e.Message); }
                 pointsCounter++;
 
                 // LOOP BODY of foreach (SolPoint solPoint in solution):

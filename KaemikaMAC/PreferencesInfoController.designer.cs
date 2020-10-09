@@ -12,9 +12,18 @@ namespace KaemikaMAC
 	[Register ("PreferencesInfoController")]
 	partial class PreferencesInfoController
 	{
+		[Outlet]
+		AppKit.NSTextField PrefsVersionNo { get; set; }
+
+		[Action ("PrefsPrivacyPolicy:")]
+		partial void PrefsPrivacyPolicy (Foundation.NSObject sender);
 		
 		void ReleaseDesignerOutlets ()
 		{
+			if (PrefsVersionNo != null) {
+				PrefsVersionNo.Dispose ();
+				PrefsVersionNo = null;
+			}
 		}
 	}
 }

@@ -78,7 +78,7 @@ a reference line in a plot
 
 a reference curve
 
-     2*a - 3*b	
+     2·a - 3·b	
 
 linear combination of two species, this could be used for plotting, or as a non-mass-action rate law
 
@@ -90,7 +90,7 @@ poisson noise always centered around the mean of species a
 
 Hill rate law of order 3 for catalyst species a
 
-     3.25*exp(-50000/(8.3144598*kelvin))
+     3.25·exp(-50000/(8.3144598·kelvin))
 
 Arrhenius rate law with collision frequency 3.25 and activation energy 50000
 
@@ -123,33 +123,33 @@ We can use variables, functions, conditionals, and everything in the language to
 
 there is an implicit conversion next between 'number' 3 and 'flow' 3, because of the context where 'n' is used.
 
-     a -> Ø   {{n*a}}	
+     a -> Ø   {{n·a}}	
 
-this is a degradation reaction with rate 3*molarity(a), i.e. the equialent of a mass action rate law written inside {{..}} general rate brackets
+this is a degradation reaction with rate 3·molarity(a), i.e. the equialent of a mass action rate law written inside {{..}} general rate brackets
 
-     report a, n*a
+     report a, n·a
      equilibrate for 1
 
-this reports the concentration of a, and the instantaneous rate of the reaction; the label on the chart will be '3*a', not 'n*a'.
+this reports the concentration of a, and the instantaneous rate of the reaction; the label on the chart will be '3·a', not 'n·a'.
 Next we use a function to build a flow:
 
      species a @ 1M
-     function f(flow n) { n*a }	
+     function f(flow n) { n·a }	
      a -> Ø   {{f(3)}}
 
-note that the correct parameter type for n is 'flow'; the returned value n*a is also a flow.
+note that the correct parameter type for n is 'flow'; the returned value n·a is also a flow.
 
      report a, f(3)
      equilibrate for 1
 
-same as before, the label on the chart will again be '3*a' because that is the flow that is built by f
+same as before, the label on the chart will again be '3·a' because that is the flow that is built by f
 
 
 Flows can also be stochastic, involving variances and covariances of (linear combinations of) species. In order for this to work, LNA simulation must be activated.
 
      species a,b@1M
      Ø -> a + b;  a -> Ø;  b + b -> Ø		
-     report var(a-b), var(a)+var(b)-2*cov(a,b)
+     report var(a-b), var(a)+var(b)-2·cov(a,b)
      equilibrate for 3
 
 checking that var(a-b) gives the same result as its correct definition, i.e. overlapping traces.

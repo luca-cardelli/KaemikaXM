@@ -147,6 +147,7 @@ Comment Block @= { Nesting = All }
 ! REACTIONS --------------------------------------------
 
 <Reaction>      ::= <Transition> 
+                    | '∂' Id '=' <Expression>                     ! ODE; short for the reaction Ø -> Id {{<Expression>}}
                     | <Complex> '>>' <Transition>                 ! optional catalysis notation, A >> B -> C == A + B -> A + C, etc.
                
 <Transition>    ::= <Complex> '->' <Complex>                                              ! default rate (collision frequncy = 1.0, activation energy = 0.0)
@@ -163,11 +164,21 @@ Comment Block @= { Nesting = All }
 <Complex>       ::= <Complex> '+' <Simplex>
                     | <Simplex>
                 
-<Simplex>       ::= Integer Id                                          ! stoichiometry: '2a' is the same as 'a + a'
-                    | Id '*' Id                                         ! stoichiometry: 'n * a' is the same as 'a + ... + a' n times for integer n>=0
-                    | Id                                                ! a species
+<Simplex>       ::= Integer <Compound>                                  ! stoichiometry: '2a' is the same as 'a + a'
+                    | Id '*' <Compound> | Id '·' <Compound>             ! stoichiometry: 'n * a' is the same as 'a + ... + a' n times for integer n>=0
+                    | <Compound>                                        ! a species
                     | '#' | 'Ø'                                         ! zero species: for creation and degradation
- 
+                    
+<Compound>      ::= Id                                                  ! a mass action substance 'a' has rate contribution 'a'
+                    | Id 'act' <Hill>                                   ! a Hill activator: 'a act(k,n)' has rate contribution 'a^n/(a^n+k^n)' and is catalytic
+                    | Id 'inh' <Hill>                                   ! a Hill inhibitor: 'a act(k,n)' has rate contribution '1/(a^n+k^n)' and is catalytic
+                    | Id 'deg' 'act' <Hill>                             ! a Hill degrading activator: 'a deg act' has rate contribution 'a^n/(a^n+k^n)' and is non catalytic
+                    | Id 'deg' 'inh' <Hill>                             ! a Hill degrading inhibitor: 'a deg inh' has rate contribution '1/(a^n+k^n)' and is non catalytic
+                    
+<Hill>          ::= '(' <Expression> ')'                               ! Hill microscopic dissociation constant k (actually k can be any expression), and Hill default coefficient n = 1
+                    | '(' <Expression> ',' <Expression> ')'             ! Hill microscopic dissociation constant k, and Hill coefficient n
+                    |                                                   ! Hill default microscopic dissociation constant k = 1, and Hill default coefficient n = 1
+
 ! EXPRESSIONS --------------------------------------------
           
 <Expression>    ::=  <Op Exp>                                               ! see below
@@ -183,9 +194,9 @@ Comment Block @= { Nesting = All }
                     | '(' <Expression> ')'                                  ! parenthesized expression
                     | '[' <Expressions> ']'                                 ! list
                     | <Draw>                                                ! draw a list from (lists of) functions or random variables
-                    | 'define' <Statements> 'yield' <Expression>            ! numerous but mild shift-reduce conflicts because no 'end' bracket. 
+                    | 'define' <Statements> 'yield' <Expression>            ! ambigous syntax because of no 'end' bracket. 
                                                                             ! E.g. (define number n = 3 yield n) + 3   vs. define number n = 3 return (n + 3)
-                                                                            ! resolved as the latter
+                                                                            ! is resolved as the latter
                   
 <Fun Instance>      ::= Id                                                  ! built-in math library operators, and pi and e, follow this syntax too
                     | <Fun Instance> '(' <Expressions> ')'                  ! function invocations can use currying             
@@ -201,7 +212,7 @@ Comment Block @= { Nesting = All }
 <Reports>        ::= <Reports> ',' <Report>
                     | <Report>
                     
-<Report>         ::=  Id '=' <Expression> 'as' <Expression> 
+<Report>         ::=  Id '=' <Expression> 'as' <Expression>                  ! use the string after 'as' in legends as the name of this report
                     | Id '=' <Expression>                                    ! bind a flow-valued timecourse from this report to Id
                     | <Expression> 'as' <Expression>                         ! use the string after 'as' in legends as the name of this report
                     | <Expression>                                           ! a flow to plot
@@ -235,6 +246,7 @@ Comment Block @= { Nesting = All }
                     | <Mult Exp> 
 
 <Mult Exp>      ::= <Mult Exp> '*' <Neg Exp> 
+                    | <Mult Exp> '·' <Neg Exp>                 ! alternative to '*'                          
                     | <Mult Exp> '/' <Neg Exp>                                           
                     | <Neg Exp> 
 
@@ -271,7 +283,7 @@ Auto Whitespace     True
 Character Mapping   Windows-1252
 Character Set       Unicode
 Generated By        GOLD Parser Builder 5.2.0.
-Generated Date      2020-03-04 15:40
+Generated Date      2020-04-22 13:35
 
 
 ========================================
@@ -331,117 +343,123 @@ Terminals
  33     '>='
  34     '>>'
  35     '∂'
- 36     amount
- 37     and
- 38     as
- 39     bool
- 40     by
- 41     concentrate
- 42     constant
- 43     define
- 44     dispose
- 45     Double
- 46     draw
- 47     else
- 48     elseif
- 49     end
- 50     equilibrate
- 51     false
- 52     Float
- 53     flow
- 54     for
- 55     from
- 56     fun
- 57     function
- 58     Id
- 59     if
- 60     in
- 61     Integer
- 62     list
- 63     mix
- 64     net
- 65     network
- 66     not
- 67     number
- 68     Ø
- 69     omega
- 70     or
- 71     parameter
- 72     QuotedString
- 73     rand
- 74     random
- 75     regulate
- 76     report
- 77     sample
- 78     species
- 79     split
- 80     string
- 81     then
- 82     to
- 83     true
- 84     value
- 85     yield
- 86     η
- 87     λ
+ 36     '·'
+ 37     act
+ 38     amount
+ 39     and
+ 40     as
+ 41     bool
+ 42     by
+ 43     concentrate
+ 44     constant
+ 45     define
+ 46     deg
+ 47     dispose
+ 48     Double
+ 49     draw
+ 50     else
+ 51     elseif
+ 52     end
+ 53     equilibrate
+ 54     false
+ 55     Float
+ 56     flow
+ 57     for
+ 58     from
+ 59     fun
+ 60     function
+ 61     Id
+ 62     if
+ 63     in
+ 64     inh
+ 65     Integer
+ 66     list
+ 67     mix
+ 68     net
+ 69     network
+ 70     not
+ 71     number
+ 72     Ø
+ 73     omega
+ 74     or
+ 75     parameter
+ 76     QuotedString
+ 77     rand
+ 78     random
+ 79     regulate
+ 80     report
+ 81     sample
+ 82     species
+ 83     split
+ 84     string
+ 85     then
+ 86     to
+ 87     true
+ 88     value
+ 89     yield
+ 90     η
+ 91     λ
 
 
 ========================================
 Nonterminals
 ========================================
 
-88      <Allocation>
-89      <And Exp>
-90      <Base Exp>
-91      <Comp Exp>
-92      <Complex>
-93      <Conc Exp>
-94      <Draw>
-95      <Else>
-96      <Else Exp>
-97      <EmptySample>
-98      <EndCondition>
-99      <Expression>
-100     <Expressions>
-101     <ExpressionSeq>
-102     <Fun>
-103     <Fun Instance>
-104     <Function>
-105     <Header>
-106     <Headers>
-107     <Ids>
-108     <IdSeq>
-109     <Mult Exp>
-110     <Neg Exp>
-111     <Net>
-112     <Net Instance>
-113     <Network>
-114     <Not Exp>
-115     <Op Exp>
-116     <Or Exp>
-117     <Param>
-118     <Params>
-119     <ParamSeq>
-120     <Pattern>
-121     <Powr Exp>
-122     <Quantity>
-123     <Rand>
-124     <Random>
-125     <Rate>
-126     <Reaction>
-127     <Report>
-128     <Reports>
-129     <Sample>
-130     <Simplex>
-131     <Species>
-132     <Statement>
-133     <Statements>
-134     <Substance>
-135     <Substances>
-136     <Sum Exp>
-137     <Temperature>
-138     <Top>
-139     <Transition>
-140     <Volume>
+92      <Allocation>
+93      <And Exp>
+94      <Base Exp>
+95      <Comp Exp>
+96      <Complex>
+97      <Compound>
+98      <Conc Exp>
+99      <Draw>
+100     <Else>
+101     <Else Exp>
+102     <EmptySample>
+103     <EndCondition>
+104     <Expression>
+105     <Expressions>
+106     <ExpressionSeq>
+107     <Fun>
+108     <Fun Instance>
+109     <Function>
+110     <Header>
+111     <Headers>
+112     <Hill>
+113     <Ids>
+114     <IdSeq>
+115     <Mult Exp>
+116     <Neg Exp>
+117     <Net>
+118     <Net Instance>
+119     <Network>
+120     <Not Exp>
+121     <Op Exp>
+122     <Or Exp>
+123     <Param>
+124     <Params>
+125     <ParamSeq>
+126     <Pattern>
+127     <Powr Exp>
+128     <Quantity>
+129     <Rand>
+130     <Random>
+131     <Rate>
+132     <Reaction>
+133     <Report>
+134     <Reports>
+135     <Sample>
+136     <Simplex>
+137     <Species>
+138     <Statement>
+139     <Statements>
+140     <Substance>
+141     <Substances>
+142     <Sum Exp>
+143     <Temperature>
+144     <Top>
+145     <Transition>
+146     <Volume>
 
 
 ========================================
@@ -538,87 +556,98 @@ Rules
 87      <Else> ::= end
 88      <Draw> ::= draw <Expression> from <Expression>
 89      <Reaction> ::= <Transition>
-90      <Reaction> ::= <Complex> '>>' <Transition>
-91      <Transition> ::= <Complex> '->' <Complex>
-92      <Transition> ::= <Complex> '->' '{' <Rate> '}' <Complex>
-93      <Transition> ::= <Complex> '->' <Complex> '{' <Rate> '}'
-94      <Transition> ::= <Complex> '<->' <Complex>
-95      <Transition> ::= <Complex> '{' <Rate> '}' '<->' '{' <Rate> '}' <Complex>
-96      <Transition> ::= <Complex> '<->' <Complex> '{' <Rate> '}' '{' <Rate> '}'
-97      <Rate> ::= <Expression>
-98      <Rate> ::= <Expression> ',' <Expression>
-99      <Rate> ::= '{' <Expression> '}'
-100     <Complex> ::= <Complex> '+' <Simplex>
-101     <Complex> ::= <Simplex>
-102     <Simplex> ::= Integer Id
-103     <Simplex> ::= Id '*' Id
-104     <Simplex> ::= Id
-105     <Simplex> ::= '#'
-106     <Simplex> ::= Ø
-107     <Expression> ::= <Op Exp>
-108     <Base Exp> ::= <Fun Instance>
-109     <Base Exp> ::= true
-110     <Base Exp> ::= false
-111     <Base Exp> ::= Integer
-112     <Base Exp> ::= Float
-113     <Base Exp> ::= Double
-114     <Base Exp> ::= QuotedString
-115     <Base Exp> ::= if <Expression> then <Expression> <Else Exp>
-116     <Base Exp> ::= fun <Fun>
-117     <Base Exp> ::= λ <Fun>
-118     <Base Exp> ::= net <Net>
-119     <Base Exp> ::= η <Net>
-120     <Base Exp> ::= rand <Rand>
-121     <Base Exp> ::= '(' <Expression> ')'
-122     <Base Exp> ::= '[' <Expressions> ']'
-123     <Base Exp> ::= <Draw>
-124     <Base Exp> ::= define <Statements> yield <Expression>
-125     <Fun Instance> ::= Id
-126     <Fun Instance> ::= <Fun Instance> '(' <Expressions> ')'
-127     <Else Exp> ::= elseif <Expression> then <Expression> <Else Exp>
-128     <Else Exp> ::= else <Expression> end
-129     <Expressions> ::= <ExpressionSeq>
-130     <Expressions> ::= 
-131     <ExpressionSeq> ::= <ExpressionSeq> ',' <Expression>
-132     <ExpressionSeq> ::= <Expression>
-133     <Reports> ::= <Reports> ',' <Report>
-134     <Reports> ::= <Report>
-135     <Report> ::= Id '=' <Expression> as <Expression>
-136     <Report> ::= Id '=' <Expression>
-137     <Report> ::= <Expression> as <Expression>
-138     <Report> ::= <Expression>
-139     <EndCondition> ::= for <Expression>
-140     <Op Exp> ::= <Op Exp> '|' <Or Exp>
-141     <Op Exp> ::= <Or Exp>
-142     <Or Exp> ::= <Or Exp> or <And Exp>
-143     <Or Exp> ::= <And Exp>
-144     <And Exp> ::= <And Exp> and <Not Exp>
-145     <And Exp> ::= <Not Exp>
-146     <Not Exp> ::= not <Comp Exp>
-147     <Not Exp> ::= <Comp Exp>
-148     <Comp Exp> ::= <Sum Exp> '=' <Sum Exp>
-149     <Comp Exp> ::= <Sum Exp> '<>' <Sum Exp>
-150     <Comp Exp> ::= <Sum Exp> '<=' <Sum Exp>
-151     <Comp Exp> ::= <Sum Exp> '>=' <Sum Exp>
-152     <Comp Exp> ::= <Sum Exp> '<' <Sum Exp>
-153     <Comp Exp> ::= <Sum Exp> '>' <Sum Exp>
-154     <Comp Exp> ::= <Sum Exp>
-155     <Sum Exp> ::= <Sum Exp> '+' <Mult Exp>
-156     <Sum Exp> ::= <Sum Exp> '-' <Mult Exp>
-157     <Sum Exp> ::= <Mult Exp>
-158     <Mult Exp> ::= <Mult Exp> '*' <Neg Exp>
-159     <Mult Exp> ::= <Mult Exp> '/' <Neg Exp>
-160     <Mult Exp> ::= <Neg Exp>
-161     <Neg Exp> ::= '-' <Conc Exp>
-162     <Neg Exp> ::= '∂' <Conc Exp>
-163     <Neg Exp> ::= '<-' <Conc Exp>
-164     <Neg Exp> ::= <Conc Exp>
-165     <Conc Exp> ::= <Conc Exp> '++' <Powr Exp>
-166     <Conc Exp> ::= <Powr Exp>
-167     <Powr Exp> ::= <Powr Exp> '^' <Base Exp>
-168     <Powr Exp> ::= <Base Exp>
-169     <Volume> ::= Id
-170     <Temperature> ::= Id
-171     <Quantity> ::= Id
+90      <Reaction> ::= '∂' Id '=' <Expression>
+91      <Reaction> ::= <Complex> '>>' <Transition>
+92      <Transition> ::= <Complex> '->' <Complex>
+93      <Transition> ::= <Complex> '->' '{' <Rate> '}' <Complex>
+94      <Transition> ::= <Complex> '->' <Complex> '{' <Rate> '}'
+95      <Transition> ::= <Complex> '<->' <Complex>
+96      <Transition> ::= <Complex> '{' <Rate> '}' '<->' '{' <Rate> '}' <Complex>
+97      <Transition> ::= <Complex> '<->' <Complex> '{' <Rate> '}' '{' <Rate> '}'
+98      <Rate> ::= <Expression>
+99      <Rate> ::= <Expression> ',' <Expression>
+100     <Rate> ::= '{' <Expression> '}'
+101     <Complex> ::= <Complex> '+' <Simplex>
+102     <Complex> ::= <Simplex>
+103     <Simplex> ::= Integer <Compound>
+104     <Simplex> ::= Id '*' <Compound>
+105     <Simplex> ::= Id '·' <Compound>
+106     <Simplex> ::= <Compound>
+107     <Simplex> ::= '#'
+108     <Simplex> ::= Ø
+109     <Compound> ::= Id
+110     <Compound> ::= Id act <Hill>
+111     <Compound> ::= Id inh <Hill>
+112     <Compound> ::= Id deg act <Hill>
+113     <Compound> ::= Id deg inh <Hill>
+114     <Hill> ::= '(' <Expression> ')'
+115     <Hill> ::= '(' <Expression> ',' <Expression> ')'
+116     <Hill> ::= 
+117     <Expression> ::= <Op Exp>
+118     <Base Exp> ::= <Fun Instance>
+119     <Base Exp> ::= true
+120     <Base Exp> ::= false
+121     <Base Exp> ::= Integer
+122     <Base Exp> ::= Float
+123     <Base Exp> ::= Double
+124     <Base Exp> ::= QuotedString
+125     <Base Exp> ::= if <Expression> then <Expression> <Else Exp>
+126     <Base Exp> ::= fun <Fun>
+127     <Base Exp> ::= λ <Fun>
+128     <Base Exp> ::= net <Net>
+129     <Base Exp> ::= η <Net>
+130     <Base Exp> ::= rand <Rand>
+131     <Base Exp> ::= '(' <Expression> ')'
+132     <Base Exp> ::= '[' <Expressions> ']'
+133     <Base Exp> ::= <Draw>
+134     <Base Exp> ::= define <Statements> yield <Expression>
+135     <Fun Instance> ::= Id
+136     <Fun Instance> ::= <Fun Instance> '(' <Expressions> ')'
+137     <Else Exp> ::= elseif <Expression> then <Expression> <Else Exp>
+138     <Else Exp> ::= else <Expression> end
+139     <Expressions> ::= <ExpressionSeq>
+140     <Expressions> ::= 
+141     <ExpressionSeq> ::= <ExpressionSeq> ',' <Expression>
+142     <ExpressionSeq> ::= <Expression>
+143     <Reports> ::= <Reports> ',' <Report>
+144     <Reports> ::= <Report>
+145     <Report> ::= Id '=' <Expression> as <Expression>
+146     <Report> ::= Id '=' <Expression>
+147     <Report> ::= <Expression> as <Expression>
+148     <Report> ::= <Expression>
+149     <EndCondition> ::= for <Expression>
+150     <Op Exp> ::= <Op Exp> '|' <Or Exp>
+151     <Op Exp> ::= <Or Exp>
+152     <Or Exp> ::= <Or Exp> or <And Exp>
+153     <Or Exp> ::= <And Exp>
+154     <And Exp> ::= <And Exp> and <Not Exp>
+155     <And Exp> ::= <Not Exp>
+156     <Not Exp> ::= not <Comp Exp>
+157     <Not Exp> ::= <Comp Exp>
+158     <Comp Exp> ::= <Sum Exp> '=' <Sum Exp>
+159     <Comp Exp> ::= <Sum Exp> '<>' <Sum Exp>
+160     <Comp Exp> ::= <Sum Exp> '<=' <Sum Exp>
+161     <Comp Exp> ::= <Sum Exp> '>=' <Sum Exp>
+162     <Comp Exp> ::= <Sum Exp> '<' <Sum Exp>
+163     <Comp Exp> ::= <Sum Exp> '>' <Sum Exp>
+164     <Comp Exp> ::= <Sum Exp>
+165     <Sum Exp> ::= <Sum Exp> '+' <Mult Exp>
+166     <Sum Exp> ::= <Sum Exp> '-' <Mult Exp>
+167     <Sum Exp> ::= <Mult Exp>
+168     <Mult Exp> ::= <Mult Exp> '*' <Neg Exp>
+169     <Mult Exp> ::= <Mult Exp> '·' <Neg Exp>
+170     <Mult Exp> ::= <Mult Exp> '/' <Neg Exp>
+171     <Mult Exp> ::= <Neg Exp>
+172     <Neg Exp> ::= '-' <Conc Exp>
+173     <Neg Exp> ::= '∂' <Conc Exp>
+174     <Neg Exp> ::= '<-' <Conc Exp>
+175     <Neg Exp> ::= <Conc Exp>
+176     <Conc Exp> ::= <Conc Exp> '++' <Powr Exp>
+177     <Conc Exp> ::= <Powr Exp>
+178     <Powr Exp> ::= <Powr Exp> '^' <Base Exp>
+179     <Powr Exp> ::= <Base Exp>
+180     <Volume> ::= Id
+181     <Temperature> ::= Id
+182     <Quantity> ::= Id
 
 

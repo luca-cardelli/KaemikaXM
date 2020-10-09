@@ -32,7 +32,7 @@ Comment Block @= { Nesting = All }
                     | Id <Net>                                               ! network id definition
 <Net>            ::= <Header> '{' <Statements> '}'                           ! network abstraction (networks are nothing but functions that do not return values)
 
-<Random>         ::= Id '=' <Expression>                                     ! binding a random variable value to a random variabl id
+<Random>         ::= Id '=' <Expression>                                     ! binding a random variable value to a random variable id
                     | Id <Rand>                                              ! random variable id definition
 <Rand>           ::= '(' 'omega' Id ')' '{' <Expression> '}'                 ! random variable abstraction
                   
@@ -137,6 +137,7 @@ Comment Block @= { Nesting = All }
 ! REACTIONS --------------------------------------------
 
 <Reaction>      ::= <Transition> 
+                    | '∂' Id '=' <Expression>                     ! ODE; short for the reaction Ø -> Id {{<Expression>}}
                     | <Complex> '>>' <Transition>                 ! optional catalysis notation, A >> B -> C == A + B -> A + C, etc.
                
 <Transition>    ::= <Complex> '->' <Complex>                                              ! default rate (collision frequncy = 1.0, activation energy = 0.0)
@@ -153,11 +154,21 @@ Comment Block @= { Nesting = All }
 <Complex>       ::= <Complex> '+' <Simplex>
                     | <Simplex>
                 
-<Simplex>       ::= Integer Id                                          ! stoichiometry: '2a' is the same as 'a + a'
-                    | Id '*' Id                                         ! stoichiometry: 'n * a' is the same as 'a + ... + a' n times for integer n>=0
-                    | Id                                                ! a species
+<Simplex>       ::= Integer <Compound>                                  ! stoichiometry: '2a' is the same as 'a + a'
+                    | Id '*' <Compound> | Id '·' <Compound>             ! stoichiometry: 'n * a' is the same as 'a + ... + a' n times for integer n>=0
+                    | <Compound>                                        ! a species
                     | '#' | 'Ø'                                         ! zero species: for creation and degradation
- 
+                    
+<Compound>      ::= Id                                                  ! a mass action substance 'a' has rate contribution 'a'
+                    | Id 'act' <Hill>                                   ! a Hill activator: 'a act(k,n)' has rate contribution 'a^n/(a^n+k^n)' and is catalytic
+                    | Id 'inh' <Hill>                                   ! a Hill inhibitor: 'a inh(k,n)' has rate contribution 'k^n/(a^n+k^n)' and is catalytic
+                    | Id 'deg' 'act' <Hill>                             ! a Hill degrading activator: 'a deg act' has rate contribution 'a^n/(a^n+k^n)' and is non catalytic
+                    | Id 'deg' 'inh' <Hill>                             ! a Hill degrading inhibitor: 'a deg inh' has rate contribution 'k^n/(a^n+k^n)' and is non catalytic
+                    
+<Hill>          ::= '(' <Expression> ')'                                ! Hill microscopic dissociation constant k (actually k can be any expression), and Hill default coefficient n = 1
+                    | '(' <Expression> ',' <Expression> ')'             ! Hill microscopic dissociation constant k, and Hill coefficient n
+                    |                                                   ! Hill default microscopic dissociation constant k = 1, and Hill default coefficient n = 1
+
 ! EXPRESSIONS --------------------------------------------
           
 <Expression>    ::=  <Op Exp>                                               ! see below
@@ -173,9 +184,9 @@ Comment Block @= { Nesting = All }
                     | '(' <Expression> ')'                                  ! parenthesized expression
                     | '[' <Expressions> ']'                                 ! list
                     | <Draw>                                                ! draw a list from (lists of) functions or random variables
-                    | 'define' <Statements> 'yield' <Expression>            ! numerous but mild shift-reduce conflicts because no 'end' bracket. 
-                                                                            ! E.g. (define number n = 3 yield n) + 3   vs. define number n = 3 return (n + 3)
-                                                                            ! resolved as the latter
+                    | 'define' <Statements> 'yield' <Expression>            ! ambigous syntax because of no 'end' bracket. 
+                                                                            ! E.g. (define number n = 3 yield n) + 3   vs. define number n = 3 yield (n + 3)
+                                                                            ! is resolved as the latter
                   
 <Fun Instance>      ::= Id                                                  ! built-in math library operators, and pi and e, follow this syntax too
                     | <Fun Instance> '(' <Expressions> ')'                  ! function invocations can use currying             
@@ -191,7 +202,7 @@ Comment Block @= { Nesting = All }
 <Reports>        ::= <Reports> ',' <Report>
                     | <Report>
                     
-<Report>         ::=  Id '=' <Expression> 'as' <Expression> 
+<Report>         ::=  Id '=' <Expression> 'as' <Expression>                  ! use the string after 'as' in legends as the name of this report
                     | Id '=' <Expression>                                    ! bind a flow-valued timecourse from this report to Id
                     | <Expression> 'as' <Expression>                         ! use the string after 'as' in legends as the name of this report
                     | <Expression>                                           ! a flow to plot
@@ -225,6 +236,7 @@ Comment Block @= { Nesting = All }
                     | <Mult Exp> 
 
 <Mult Exp>      ::= <Mult Exp> '*' <Neg Exp> 
+                    | <Mult Exp> '·' <Neg Exp>                 ! alternative to '*'                          
                     | <Mult Exp> '/' <Neg Exp>                                           
                     | <Neg Exp> 
 

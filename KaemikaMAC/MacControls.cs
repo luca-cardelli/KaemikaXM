@@ -11,6 +11,10 @@ namespace KaemikaMAC {
 
     public class MacControls : GuiControls {
 
+        //  Preferences/Settings dialog in MacOS:
+        //  Used the basic instructions from /https://docs.microsoft.com/en-us/xamarin/mac/user-interface/dialog > Creating a Preferences Dialog
+        //  But followed this to build the tabbed window, instad of the ad-hoc ReplaceViewSeque: https://www.youtube.com/watch?v=raLK95FyQso
+
        // User Directory
 
         public static string modelsDirectory = string.Empty;
@@ -105,7 +109,7 @@ namespace KaemikaMAC {
         public bool IsMicrofluidicsVisible() { 
             return !MacGui.macGui.deviceBox.Hidden; 
         }
-        public void MicrosfluidicsVisible(bool on) {
+        public void MicrofluidicsVisible(bool on) {
             MacGui.macGui.deviceBox.Hidden = !on;
         }
         public void MicrofluidicsOn() {

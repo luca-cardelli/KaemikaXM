@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using SkiaSharp;
 
-namespace Kaemika
-{
+namespace Kaemika {
+
     public enum Platform { Windows, macOS, Android, iOS, NONE }
 
     public enum Noise { None = 0, SigmaRange = 1, Sigma = 2, CV = 3, SigmaSqRange = 4, SigmaSq = 5, Fano = 6 }
@@ -57,10 +57,12 @@ namespace Kaemika
         //### Android/iOS: for the legend, ChartPage.DataTemplate does not set a font for the Label used to display text
         //### Android/iOS: otherwise these font families may be used only on chart axes
         public /*interface Texter*/ string fontFamily {
+            // NO LONGER USED only fixedFontFamily is used, to remove variability of Unicode support
+            // (watch out for GetFont, which has a fixedFont boolean parameter, but only some UI buttons are non-fixedWidth)
             get {
                 return
                     (Gui.platform == Platform.macOS) ? "Helvetica" :               // CGColorer on macOS defers to SKColorer for the fonts
-                    (Gui.platform == Platform.Windows) ? "Lucida Sans Unicode" :
+                    (Gui.platform == Platform.Windows) ? "Lucida Sans Unicode" :   // "Lucida Sans Unicode" is missing the variant marker "ˬ"
                     (Gui.platform == Platform.iOS) ? "Helvetica" :                 // Maybe it is never used and default fonts are used
                     (Gui.platform == Platform.Android) ? "Helvetica" :             // Maybe it is never used and default fonts are used
                     "Helvetica";
@@ -70,8 +72,8 @@ namespace Kaemika
             get {
                 return
                     (Gui.platform == Platform.macOS) ? "Menlo" :                // CGColorer on macOS defers to SKColorer for the fonts
-                    (Gui.platform == Platform.Windows) ? "Consolas" :           // "Lucida Sans Typewriter": unicode math symbols are too small; "Courier New" is too ugly
-                    (Gui.platform == Platform.iOS) ? "Menlo" :                  // Used by DisEditText.
+                    (Gui.platform == Platform.Windows) ? "Consolas" :           // "Consolas" has  variant marker "ˬ"; "Lucida Sans Typewriter": unicode math symbols are too small; "Courier New" is too ugly
+                    (Gui.platform == Platform.iOS) ? "Menlo" :                  // Used by DisEditText. Menlo on iOS seems to lack "ˬ", but only in the Score species names (!?!)
                     (Gui.platform == Platform.Android) ? "DroidSansMono.ttf" :  // Used by DisEditText; this need to be placed in assets. Other option: "CutiveMono-Regular.ttf"
                     "Courier";
             }
@@ -81,6 +83,8 @@ namespace Kaemika
     // ====  PLATFORM-NEUTRAL GUI INTERFACE =====
 
     public class Gui {
+        public static string KaemikaVersion = "1.0.24";
+
         public static Platform platform = Platform.NONE;
 
         public static void Log(string s) {
@@ -138,7 +142,7 @@ namespace Kaemika
         KFlyoutMenu menuSettings { get; }
         bool IsShiftDown();
         bool IsMicrofluidicsVisible();
-        void MicrosfluidicsVisible(bool on);
+        void MicrofluidicsVisible(bool on);
         void MicrofluidicsOn();
         void MicrofluidicsOff();
         void IncrementFont(float pointSize);

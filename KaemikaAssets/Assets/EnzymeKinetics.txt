@@ -1,4 +1,4 @@
-//======================================
+﻿//======================================
 // Enzyme Kinetics
 //======================================
 
@@ -37,7 +37,7 @@ report E as "E (MA)", S as "S (MA)",
 // Michaelis-Menten kinetics is an approximation 
 // based on the following constants:
 
-number Vmax = cat * Etot
+number Vmax = cat · Etot
 number KM = (off+cat)/on
 
 report Vmax as "Vmax", KM as "KM"
@@ -46,7 +46,7 @@ report Vmax as "Vmax", KM as "KM"
 // following function of the concentration of S:
 
 function MM(flow S) { 
-   (Vmax*S)/(KM+S) 
+   (Vmax·S)/(KM+S) 
 }  
 
 // This is a copy of the previous sytem without ES:
@@ -84,8 +84,8 @@ report MM(S) as "MassAction rate"
 // following function of the concentration of S:
 
 function Morrison(flow S) { 
-   (Vmax/2*Etot) * 
-   ((Etot+S+KM) - sqrt((Etot+S+KM)^2 - 4*Etot*S)) 
+   (Vmax/2·Etot) · 
+   ((Etot+S+KM) - sqrt((Etot+S+KM)^2 - 4·Etot·S)) 
 }
 
 // This is another copy of the previous sytem without ES

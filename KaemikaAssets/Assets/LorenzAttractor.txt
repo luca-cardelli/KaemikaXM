@@ -9,71 +9,61 @@
 // x₀ = 1, y₀ = 0, z₀ = 28
 //======================================
 
-/*
-  Its dual rail representation:
-x = x⁺ - x⁻
-y = y⁺ - y⁻
-z = z⁺ - z⁻
-   substitute in the first ODE:
-d(x⁺ - x⁻)/dt = s (y⁺ - y⁻) - s (x⁺ - x⁻)
-   separate the monomials
-dx⁺/dt = s y⁺ + s x⁻
-dx⁻/dt = s y⁻ + s x⁺
-   generate one reaction for each monomial
-y⁺ ->{s} y⁺ + x⁺
-x⁻ ->{s} x⁻ + x⁺
-y⁻ ->{s} y⁻ + x⁻
-x⁺ ->{s} x⁺ + x⁻
-   add some dampening (does not change 
-   the original ODE solution)
-2 x⁺ + 2 x⁻ -> Ø
-
-   initialize x⁺₀ - x⁻₀ = x₀
-   and plot x⁺ - x⁻ over time
-
-   similarly for the other two ODEs
-*/
-
 number s = 10
 number b = 8/3
 number r = 28
+number x₀ = 1
+number y₀ = 0
+number z₀ = 28
 
-species x⁺ @ 1M
-species x⁻ @ 0M
-species y⁺ @ 0M
-species y⁻ @ 0M
-species z⁺ @ 28M
-species z⁻ @ 0M
+sample S
+species x @ x₀ M in S
+species y @ y₀ M in S
+species z @ z₀ M in S
 
-y⁺ ->{s} y⁺ + x⁺
-x⁻ ->{s} x⁻ + x⁺
+∂x = s · y - s · x
+∂y = r · x - x · z - y
+∂z = x · y - b · z
 
-y⁻ ->{s} y⁻ + x⁻
-x⁺ ->{s} x⁺ + x⁻
+sample T = massaction(S)  // convert ODEs to mass action reactions
 
-x⁺ ->{r} x⁺ + y⁺
-x⁺ + z⁻ -> x⁺ + z⁻ + y⁺
-x⁻ + z⁺ -> x⁻ + z⁺ + y⁺
-y⁻ -> y⁻ + y⁺
+equilibrate S for 50    // Click Play to simulate the ODEs
+equilibrate T for 50    // Click Play again simulate the reactions
 
-x⁻ ->{r} x⁻ + y⁻
-x⁺ + z⁺ -> x⁺ + z⁺ + y⁻
-x⁻ + z⁻ -> x⁻ + z⁺ + y⁻
-y⁺ -> y⁺ + y⁻
-
-x⁺ + y⁺ -> x⁺ + y⁺ + z⁺
-x⁻ + y⁻ -> x⁻ + y⁻ + z⁺
-z⁻ ->{b} z⁻ + z⁺
-
-x⁺ + y⁻ -> x⁺ + y⁻ + z⁻
-x⁻ + y⁺ -> x⁻ + y⁺ + z⁻
-z⁺ ->{b} z⁺ + z⁻
-
-2 x⁺ + 2 x⁻ -> Ø
-2 y⁺ + 2 y⁻ -> Ø
-2 z⁺ + 2 z⁻ -> Ø
-
-report y⁺ - y⁻ //, x⁺ - x⁻, z⁺ - z⁻
-
-equilibrate for 50
-
+// ========================================
+// The Mass Action Compiler "massaction(S)" produces reactions from the ODEs.
+// The 3 ODEs are first converted to 6 ODEs among variables that are always positive: x corresponds to (x⁺ - x⁻) etc.
+// 
+// ∂x⁺ = s·y⁺ + s·x⁻
+// ∂x⁻ = s·y⁻ + s·x⁺
+// ∂y⁺ = z⁺·x⁻ + z⁻·x⁺ + r·x⁺ + y⁻
+// ∂y⁻ = z⁻·x⁻ + z⁺·x⁺ + r·x⁻ + y⁺
+// ∂z⁺ = y⁻·x⁻ + y⁺·x⁺ + b·z⁻
+// ∂z⁻ = y⁺·x⁻ + y⁻·x⁺ + b·z⁺
+//
+// Then these are converted to 21 mass action reactions (one for each monomial, plus 3 to dampen exponential growths).
+// These reactions have exactly the ODEs above.
+// 
+// x⁺ + x⁻ -> Ø 
+// y⁺ -> y⁺ + x⁺ {s}
+// x⁻ -> x⁻ + x⁺ {s}
+// y⁻ -> y⁻ + x⁻ {s}
+// x⁺ -> x⁺ + x⁻ {s}
+// y⁺ + y⁻ -> Ø 
+// z⁺ + x⁻ -> z⁺ + x⁻ + y⁺ 
+// z⁻ + x⁺ -> z⁻ + x⁺ + y⁺ 
+// x⁺ -> x⁺ + y⁺ {r}
+// y⁻ -> y⁻ + y⁺ 
+// z⁻ + x⁻ -> z⁻ + x⁻ + y⁻ 
+// z⁺ + x⁺ -> z⁺ + x⁺ + y⁻ 
+// x⁻ -> x⁻ + y⁻ {r}
+// y⁺ -> y⁺ + y⁻ 
+// z⁺ + z⁻ -> Ø 
+// y⁻ + x⁻ -> y⁻ + x⁻ + z⁺ 
+// y⁺ + x⁺ -> y⁺ + x⁺ + z⁺ 
+// z⁻ -> z⁻ + z⁺ {b}
+// y⁺ + x⁻ -> y⁺ + x⁻ + z⁻ 
+// y⁻ + x⁺ -> y⁻ + x⁺ + z⁻ 
+// z⁺ -> z⁺ + z⁻ {b}
+//
+// Because of the chaotic nature of this system, small numerical differences in the simulations cause the trajectories to diverge very visibly, after a time, between the ODEs and the reactions.

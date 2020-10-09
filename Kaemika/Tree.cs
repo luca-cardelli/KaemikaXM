@@ -1098,6 +1098,77 @@ namespace Kaemika {
             this.products = products;
             this.rate = rate;
         }
+        private static Expression Exp(Expression basis, Expression exponent) {
+            return (exponent is NumberLiteral num && num.value == 1.0) ? basis :
+                        new FunctionInstance(new Variable("^"), new Expressions()
+                        .Add(basis)
+                        .Add(exponent), infix: true, arity: 2);
+        }
+        private static Expression HillExp(Expression accum, Variable species, Expression dissociation, Expression coefficient, bool activation) {
+            return new FunctionInstance(new Variable("*"), new Expressions()
+                        .Add(accum)
+                        .Add(new FunctionInstance(new Variable("/"), new Expressions()
+                            .Add(Exp(activation ? (Expression)species : dissociation, coefficient))
+                            .Add(new FunctionInstance(new Variable("+"), new Expressions()
+                                .Add(Exp(dissociation, coefficient))
+                                .Add(Exp(species, coefficient)), infix: true, arity: 2)), infix: true, arity: 2)), infix: true, arity: 2);
+        }
+        public static ReactionDefinition HillReactionDefinition(Complex reactants, Complex products, Rate rate) {
+            (Complex reac, List<Simplex> reacMa, List<Simplex> reacAct, List<Simplex> reacInh, List<Simplex> reacDegAct, List<Simplex> reacDegInh) = DeHill(reactants);
+            (Complex prod, List<Simplex> prodMa, List<Simplex> prodAct, List<Simplex> prodInh, List<Simplex> prodDegAct, List<Simplex> prodDegInh) = DeHill(products);
+            if (prodAct.Count > 0 || prodInh.Count > 0 || prodDegAct.Count > 0 || prodDegInh.Count > 0) throw new Error("Hill modifiers are allowed only in reactants:" + products.Format());
+            if (reacAct.Count == 0 && reacInh.Count == 0 && reacDegAct.Count == 0 && reacDegInh.Count == 0) {
+                return new ReactionDefinition(reactants, products, rate);
+            };
+            if (rate is MassActionRate maRate && maRate.activationEnergy is NumberLiteral ae && ae.value == 0.0) {
+                Expression cf = maRate.collisionFrequency;
+                foreach (Simplex sim in reacAct) {
+                    prod = new SumComplex(prod, new Simplex(null, sim.species, new MassAction()));
+                    cf = HillExp(cf, sim.species, (sim.kinetics as Hill).dissociation, (sim.kinetics as Hill).coefficient, true);
+                }
+                foreach (Simplex sim in reacInh) {
+                    prod = new SumComplex(prod, new Simplex(null, sim.species, new MassAction()));
+                    cf = HillExp(cf, sim.species, (sim.kinetics as Hill).dissociation, (sim.kinetics as Hill).coefficient, false);
+                }
+                foreach (Simplex sim in reacDegAct) {
+                    cf = HillExp(cf, sim.species, (sim.kinetics as Hill).dissociation, (sim.kinetics as Hill).coefficient, true);
+                }
+                foreach (Simplex sim in reacDegInh) {
+                    cf = HillExp(cf, sim.species, (sim.kinetics as Hill).dissociation, (sim.kinetics as Hill).coefficient, false);
+                }
+                foreach (Simplex sim in reacMa) {
+                    cf = new FunctionInstance(new Variable("*"), new Expressions().Add(cf).Add(sim.species), infix: true, arity: 2);
+                }
+                return new ReactionDefinition(reac, prod, new GeneralRate(cf));
+            } else throw new Error("Reactions with Hill modifiers must have simple rates:" + rate.Format());
+        }
+        public static ReactionDefinition MAReactionDefinition(Complex reactants, Complex products, Rate rate) {
+            ReactionDefinition reaction = new ReactionDefinition(reactants, products, rate);
+            if (CheckMA(reactants) && CheckMA(products)) return reaction;
+            else throw new Error("Hill modifier not allowed in this reaction: " + reaction.Format());
+        }
+        private static bool CheckMA(Complex complex) {
+            if (complex is SumComplex sum) {
+                return CheckMA(sum.complex1) && CheckMA(sum.complex2);
+            } else if (complex is Simplex sim) {
+                return sim.kinetics is MassAction;
+            } else throw new Error("CheckMA");
+        }
+        private static (Complex complex, List<Simplex> ma, List<Simplex> act, List<Simplex> inh, List<Simplex> degAct, List<Simplex> degInh) DeHill(Complex hillComplex) {
+            if (hillComplex is SumComplex sum) {
+                (Complex complex1, List<Simplex> ma1, List<Simplex> act1, List<Simplex> inh1, List<Simplex> degAct1, List<Simplex> degInh1) = DeHill(sum.complex1);
+                (Complex complex2, List<Simplex> ma2, List<Simplex> act2, List<Simplex> inh2, List<Simplex> degAct2, List<Simplex> degInh2) = DeHill(sum.complex2);
+                ma1.AddRange(ma2);  act1.AddRange(act2); inh1.AddRange(inh2); degAct1.AddRange(degAct2); degInh1.AddRange(degInh2);
+                return (new SumComplex(complex1, complex2), ma1, act1, inh1, degAct1, degInh1);
+            } else if (hillComplex is Simplex sim) {
+                if (sim.kinetics is MassAction) return (sim, new List<Simplex> { sim }, new List<Simplex> { }, new List<Simplex> { }, new List<Simplex> { }, new List<Simplex> { });
+                else if (sim.kinetics is Hill hilla && hilla.influence == HillEnum.Act) return (new Simplex(sim.stoichiometry, sim.species, new MassAction()), new List<Simplex> { }, new List<Simplex> { sim }, new List<Simplex> { }, new List<Simplex> { }, new List<Simplex> { });
+                else if (sim.kinetics is Hill hilli && hilli.influence == HillEnum.Inh) return (new Simplex(sim.stoichiometry, sim.species, new MassAction()), new List<Simplex> { }, new List<Simplex> { }, new List<Simplex> { sim }, new List<Simplex> { }, new List<Simplex> { });
+                else if (sim.kinetics is Hill hillda && hillda.influence == HillEnum.DegAct) return (new Simplex(sim.stoichiometry, sim.species, new MassAction()), new List<Simplex> { }, new List<Simplex> { }, new List<Simplex> { }, new List<Simplex> { sim }, new List<Simplex> { });
+                else if (sim.kinetics is Hill hilldi && hilldi.influence == HillEnum.DegInh) return (new Simplex(sim.stoichiometry, sim.species, new MassAction()), new List<Simplex> { }, new List<Simplex> { }, new List<Simplex> { }, new List<Simplex> { }, new List<Simplex> { sim });
+                else throw new Error("DeHill");
+            } else throw new Error("DeHill");
+        }
         public override string Format() {
             return this.reactants.Format() + " -> " + this.products.Format() + " {" + this.rate.Format() + "} ";
         }
@@ -1685,18 +1756,46 @@ namespace Kaemika {
         public abstract List<Symbol> EvalReject(Env env, Netlist netlist, Style style, int s);
     }
 
+    public enum HillEnum { Act, Inh, DegAct, DegInh }
+    public abstract class Kinetics {
+        public abstract string Format();
+    }
+    public class MassAction : Kinetics {
+        public MassAction() { }
+        public override string Format() { return ""; }
+    }
+    public class Hill : Kinetics {
+        public HillEnum influence;
+        public Expression dissociation;
+        public Expression coefficient;
+        public Hill(HillEnum influence, Expression dissociation, Expression coefficient) {
+            this.influence = influence;
+            this.dissociation = dissociation;
+            this.coefficient = coefficient;
+        }
+        public override string Format() {
+            if (influence == HillEnum.Act) return " act(" + dissociation.Format() + "," + coefficient.Format() + ")";
+            else if (influence == HillEnum.Inh) return " inh(" + dissociation.Format() + "," + coefficient.Format() + ")";
+            else if (influence == HillEnum.DegAct) return " deg act(" + dissociation.Format() + "," + coefficient.Format() + ")";
+            else if (influence == HillEnum.DegAct) return " deg inh(" + dissociation.Format() + "," + coefficient.Format() + ")";
+            else throw new Error("Hill.Format");
+        }
+    }
+
     public class Simplex : Complex {
-        private Expression stoichiometry; // may be null if stoichiometry is 1
-        private Variable species; // may be null is stoichiometry is 0 OR if species is #
-        public Simplex(Expression stoichiometry, Variable species) {
+        public Expression stoichiometry; // may be null if stoichiometry is 1
+        public Variable species; // may be null is stoichiometry is 0 OR if species is #
+        public Kinetics kinetics; // stored here temporarily, but immediately moved by the parser to the rate expression of the enclosing reaction, so there is no 'scope' and 'eval' for kinetics
+        public Simplex(Expression stoichiometry, Variable species, Kinetics kinetics) {
             this.stoichiometry = stoichiometry;
             this.species = species;
+            this.kinetics = kinetics;
         }
         public override string Format() {
             if (stoichiometry == null && species == null) return "Ø"; // '#'
-            if (stoichiometry != null && species == null) return stoichiometry.Format() + " * Ø"; // " * #"
-            if (stoichiometry == null && species != null) return species.Format();
-            if (stoichiometry != null && species != null) return stoichiometry.Format() + " * " + species.Format();
+            if (stoichiometry != null && species == null) return stoichiometry.Format() + " · Ø"; // " * #"
+            if (stoichiometry == null && species != null) return species.Format() + kinetics.Format();
+            if (stoichiometry != null && species != null) return stoichiometry.Format() + " · " + species.Format() + kinetics.Format();
             return "";
         }
         public override void Scope(Scope scope) {

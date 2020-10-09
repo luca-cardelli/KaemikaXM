@@ -6,13 +6,13 @@
 // activated from lo to hi by act, 
 // and inhibited from hi to lo by inh
 
-network Triplet(species lo hi act inh, number rate) {
+network Triplet(species lo hi actv inhb, number rate) {
    species md @ 0M
    report hi, lo, md, hi+lo+md as "total"
-   act >> lo -> md    {rate}
-   act >> md -> hi    {rate}
-   inh >> hi -> md    {rate}
-   inh >> md -> lo    {rate}
+   actv >> lo -> md    {rate}
+   actv >> md -> hi    {rate}
+   inhb >> hi -> md    {rate}
+   inhb >> md -> lo    {rate}
 }
 
 // Approximate Majority bistable circuit: 

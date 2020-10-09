@@ -106,7 +106,7 @@ namespace Kaemika {
             return UID;
         }
 
-        public static string defaultVarchar = "ˍ"; // "•" "≈" "▪"
+        public static string defaultVarchar = "»"; // "ˍ" "•" "≈" "▪" "ˬ"
         public static ExecutionInstance lastExecution = null;
 
         //public static string lastReport = ""; // the last report of the last simulation, in string form

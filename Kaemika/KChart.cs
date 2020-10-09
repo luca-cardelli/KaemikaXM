@@ -653,7 +653,7 @@ namespace Kaemika {
         }
 
         private void Inner_DrawTitle(ChartPainter painter, string title, SKPoint plotOrigin, SKSize plotSize, float margin, float titleHeight, Swipe pinchPan) {
-            using (var paint = painter.TextPaint(painter.font, pinchPan % titleHeight, SKColors.Black)) {
+            using (var paint = painter.TextPaint(painter.fixedFont, pinchPan % titleHeight, SKColors.Black)) {
                 paint.TextAlign = SKTextAlign.Center;
                 painter.DrawText(title, pinchPan % new SKPoint(plotOrigin.X + plotSize.Width / 2.0f, plotOrigin.Y - margin), paint);
             }
@@ -699,14 +699,14 @@ namespace Kaemika {
 
         private void Inner_DrawXLabel(ChartPainter painter, string text, float X, float Y, float markLength, float pointSize, float textHeight, SKColor theColor, Swipe pinchPan){
            float gap = 6 * pointSize; // between the mark and the label
-           using (var paint = painter.TextPaint(painter.font, pinchPan % textHeight, theColor)) {
+           using (var paint = painter.TextPaint(painter.fixedFont, pinchPan % textHeight, theColor)) {
                 painter.DrawText(text, new SKPoint((pinchPan % new SKPoint(X + gap, 0)).X, Y + textHeight), paint); // Clamped to hor axis
             }
         }
 
         private void Inner_DrawXLabels(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float pointSize, float textHeight, SKColor zeroColor, SKColor color, float minX, float maxX, Swipe pinchPan) {
-            float labelSize = painter.MeasureText("| 0.01 ms___", painter.TextPaint(painter.font, textHeight, SKColors.Red)).Width;
-            float minLabelSize = painter.MeasureText("0.01 ms", painter.TextPaint(painter.font, textHeight, SKColors.Red)).Width;
+            float labelSize = painter.MeasureText("| 0.01 ms___", painter.TextPaint(painter.fixedFont, textHeight, SKColors.Red)).Width;
+            float minLabelSize = painter.MeasureText("0.01 ms", painter.TextPaint(painter.fixedFont, textHeight, SKColors.Red)).Width;
             (float minTickVal, float maxTickVal, float incrTickVal) = MeasureXTicks(minX, maxX, labelSize, plotSize);
 
             if (minX > 0.0f)      
@@ -800,7 +800,7 @@ namespace Kaemika {
 
         private void Inner_DrawYLabel(ChartPainter painter, string text, float X, float Y, float markLength, float pointSize, float textHeight, SKColor theColor, Swipe pinchPan){
            float gap = 6 * pointSize; // between the mark and the label
-            using (var paint = painter.TextPaint(painter.font, pinchPan % textHeight, theColor)) {
+            using (var paint = painter.TextPaint(painter.fixedFont, pinchPan % textHeight, theColor)) {
                 painter.DrawText(text, new SKPoint(X, (pinchPan % new SKPoint(0, Y - gap)).Y), paint); // Clamped to ver axis
             }
         }
@@ -917,7 +917,7 @@ namespace Kaemika {
                 string name = seriesList[seriesIndex].name;
                 float textHightPP = pinchPan % textHeight;
                 float padding = textHightPP / 4.0f;
-                SKPaint textPaint = painter.TextPaint(painter.font, textHightPP, seriesList[seriesIndex].color);
+                SKPaint textPaint = painter.TextPaint(painter.fixedFont, textHightPP, seriesList[seriesIndex].color);
                 SKRect textBounds = painter.MeasureText(name, textPaint);
                 SKSize tagSize = new SKSize(textBounds.Width + 2*padding, textBounds.Height + 2*padding);
                 SKRect position = PositionSeriesTag(seriesList[seriesIndex], new SKPoint(endPoint.X - 2, endPoint.Y), tagSize);
@@ -980,7 +980,7 @@ namespace Kaemika {
             }
         }
 
-        public SKSize MeasureLegend(Colorer colorer, float textHeight) {
+        public SKSize MeasureLegend(Colorer colorer, float textHeight) { // Used to write images to clipboard
             lock (mutex) {
                 SKPoint origin = new SKPoint(0,0);
                 float sizeX = 0.0f;
@@ -992,7 +992,7 @@ namespace Kaemika {
                     var series = seriesList[s];
                     float centerY = origin.Y + header + (this.seriesList.Count - 1 - s) * textHeight + 0.5f * textHeight;
                     float textY = centerY + 0.4f * textHeight;
-                    using (var paint = colorer.TextPaint(colorer.font, textHeight, SKColors.Black)) { 
+                    using (var paint = colorer.TextPaint(colorer.fixedFont, textHeight, SKColors.Black)) { 
                         SKRect r = colorer.MeasureText(seriesList[s].name, paint);
                         sizeX = Math.Max(sizeX, textX + r.Width);
                         sizeY = textY + r.Height;
@@ -1002,7 +1002,7 @@ namespace Kaemika {
             }
         }
 
-        public void DrawLegend(Painter painter, SKPoint origin, SKSize size, float textHeight) {
+        public void DrawLegend(Painter painter, SKPoint origin, SKSize size, float textHeight) { // Used to write images to clipboard
             lock (mutex) {
                 float lineW = 4 * textHeight;
                 float lineX = origin.X;
@@ -1021,7 +1021,7 @@ namespace Kaemika {
                     using (var paint = painter.FillPaint(seriesList[s].color)) {
                         painter.DrawRect(new SKRect(lineX, lineY, lineX + lineW, lineY + lineH), paint);
                     }
-                    using (var paint = painter.TextPaint(painter.font, textHeight, SKColors.Black)) {
+                    using (var paint = painter.TextPaint(painter.fixedFont, textHeight, SKColors.Black)) {
                         painter.DrawText(seriesList[s].name, new SKPoint(textX, textY), paint);
                     }
                 }

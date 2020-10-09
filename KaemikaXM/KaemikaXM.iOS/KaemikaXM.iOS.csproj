@@ -14,7 +14,7 @@
     <AssemblyName>KaemikaXM.iOS</AssemblyName>
     <MtouchEnableSGenConc>true</MtouchEnableSGenConc>
     <MtouchHttpClientHandler>NSUrlSessionHandler</MtouchHttpClientHandler>
-    <ProvisioningType>manual</ProvisioningType>
+    <ProvisioningType>automatic</ProvisioningType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
     <DebugSymbols>true</DebugSymbols>
@@ -28,7 +28,7 @@
     <MtouchArch>x86_64</MtouchArch>
     <MtouchLink>None</MtouchLink>
     <MtouchDebug>true</MtouchDebug>
-    <CodesignKey>iPhone Developer: Luca Cardelli (CS779KFL74)</CodesignKey>
+    <CodesignKey>Apple Development: Luca Cardelli (CS779KFL74)</CodesignKey>
     <CodesignProvision>VS: com.kaemika.KaemikaIOS Development</CodesignProvision>
     <CodesignExtraArgs />
     <CodesignResourceRules />
@@ -57,7 +57,7 @@
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
     <MtouchArch>ARM64</MtouchArch>
-    <CodesignKey>iPhone Developer: Luca Cardelli (CS779KFL74)</CodesignKey>
+    <CodesignKey>Apple Development: Luca Cardelli (CS779KFL74)</CodesignKey>
     <MtouchDebug>true</MtouchDebug>
     <CodesignEntitlements>
     </CodesignEntitlements>

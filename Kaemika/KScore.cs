@@ -11,6 +11,7 @@ namespace Kaemika {
 
         public static bool showInfluences = false;
         public static SKRect influenceRect = new SKRect(0, 0, 0, 0);
+        public static SKRect packRect = new SKRect(0, 0, 0, 0);
 
         public static void Register(KTouchable control) {
             scoreControl = control;
@@ -370,6 +371,10 @@ namespace Kaemika {
             bool rHit = false;
             if (KScoreHandler.influenceRect.Contains(point)) { 
                 KScoreHandler.showInfluences = !KScoreHandler.showInfluences; 
+                KScoreHandler.DoInvalidate(); 
+            }
+            if (KScoreHandler.packRect.Contains(point)) {
+                KControls.packReactions = !KControls.packReactions;
                 KScoreHandler.DoInvalidate(); 
             }
             foreach (ReactionTag tag in this.reactionTags) {
@@ -795,7 +800,7 @@ namespace Kaemika {
             if (draggingSpeciesTag != null) return KScore.pinchPan; // don't rescale while dragging!
             // First measure everything with 1.0 scaling and no translation (translation comes only from KScoreHandler.ManualPinchPan)
             KScore.pinchPan = Swipe.Id();
-            this.speciesTextWidth_scaled = RemeasureSpeciesTags(painter, painter.TextPaint(painter.font, KScore.pinchPan % KScore.textHeight, SKColors.DarkGray));
+            this.speciesTextWidth_scaled = RemeasureSpeciesTags(painter, painter.TextPaint(painter.fixedFont, KScore.pinchPan % KScore.textHeight, SKColors.DarkGray));
             this.scoreWidth = RemeasureReactionTags();
             // Then compute the proper scaling factor given the available canvas size
             SKSize overallSize = OverallSize();
@@ -851,6 +856,15 @@ namespace Kaemika {
                     X += Display(painter, "Show influence", new SKPoint(Xstart, canvasOriginY + (KScoreHandler.SpeciesNo() + 0.5f) * Yspacing), paints.speciesTextHiliteLegend, paints.whiteTranslucentFill, pinchPan);
                     KScoreHandler.influenceRect = pinchPan % new SKRect(Xstart, KScoreHandler.SpeciesNo() * Yspacing, X, (KScoreHandler.SpeciesNo() + 1) * Yspacing);
                 }
+                // set packRect for Pack switching mouse hit
+                float packY = canvasOriginY; // + (KScoreHandler.SpeciesNo() + 0.25f) * Yspacing;
+                KScoreHandler.packRect = pinchPan % new SKRect(canvasOriginX, packY, canvasOriginX + scoreOriginX, packY + Yspacing/2);
+                // draw icons for Pack switching
+                DrawRoundRect(painter, pinchPan % new SKRect(canvasOriginX + KScore.textMargin, packY + Yspacing/6.0f, canvasOriginX + KScore.textMargin + 0.8f * Yspacing / 6.0f, packY + 1.8f * Yspacing/6.0f), 0, 0, 0, 0, paints.speciesTextHiliteLegend);
+                DrawRoundRect(painter, pinchPan % new SKRect(canvasOriginX + KScore.textMargin + Yspacing / 6.0f, packY + Yspacing / 6.0f, canvasOriginX + KScore.textMargin + 1.8f*Yspacing / 6.0f, packY + 2.8f * Yspacing / 6.0f), 0, 0, 0, 0, paints.speciesTextHiliteLegend);
+                if (KControls.packReactions)
+                     DrawRoundRect(painter, pinchPan % new SKRect(canvasOriginX + KScore.textMargin, packY + 2.0f * Yspacing / 6.0f, canvasOriginX + KScore.textMargin + 0.8f * Yspacing / 6.0f, packY + 2.8f * Yspacing / 6.0f), 0, 0, 0, 0, paints.speciesTextHiliteLegend);
+                else DrawRoundRect(painter, pinchPan % new SKRect(canvasOriginX + KScore.textMargin + 2.0f * Yspacing / 6.0f, packY + 2.0f * Yspacing / 6.0f, canvasOriginX + KScore.textMargin + 2.8f * Yspacing / 6.0f, packY + 2.8f * Yspacing / 6.0f), 0, 0, 0, 0, paints.speciesTextHiliteLegend);
             }
         }
 
@@ -1359,15 +1373,15 @@ namespace Kaemika {
             SKColor Orange = SKColors.Orange;
             SKColor Purple = SKColors.Purple;
             SKColor White = SKColors.White; //new SKColor(255,255,255,255);
-            reactionText = painter.TextPaint(painter.font, pinchPan % KScore.textHeight, SKColors.DarkSlateBlue);
-            speciesText = painter.TextPaint(painter.font, pinchPan % KScore.textHeight, SKColors.DarkGray);
-            speciesTextReactant = painter.TextPaint(painter.font, pinchPan % KScore.textHeight, Blue);
-            speciesTextProduct = painter.TextPaint(painter.font, pinchPan % KScore.textHeight, Red);
-            speciesTextCatalyst = painter.TextPaint(painter.font, pinchPan % KScore.textHeight, Green);
-            speciesTextMixed = painter.TextPaint(painter.font, pinchPan % KScore.textHeight, Purple);
-            speciesTextHilite = painter.TextPaint(painter.font, pinchPan % KScore.textHeight, Orange);
-            speciesTextHiliteHot = painter.TextPaint(painter.font, pinchPan % KScore.textHeight, Purple);
-            speciesTextHiliteLegend = painter.TextPaint(painter.font, (pinchPan % KScore.textHeight/3), SKColors.DarkGray);
+            reactionText = painter.TextPaint(painter.fixedFont, pinchPan % KScore.textHeight, SKColors.DarkSlateBlue);
+            speciesText = painter.TextPaint(painter.fixedFont, pinchPan % KScore.textHeight, SKColors.DarkGray);
+            speciesTextReactant = painter.TextPaint(painter.fixedFont, pinchPan % KScore.textHeight, Blue);
+            speciesTextProduct = painter.TextPaint(painter.fixedFont, pinchPan % KScore.textHeight, Red);
+            speciesTextCatalyst = painter.TextPaint(painter.fixedFont, pinchPan % KScore.textHeight, Green);
+            speciesTextMixed = painter.TextPaint(painter.fixedFont, pinchPan % KScore.textHeight, Purple);
+            speciesTextHilite = painter.TextPaint(painter.fixedFont, pinchPan % KScore.textHeight, Orange);
+            speciesTextHiliteHot = painter.TextPaint(painter.fixedFont, pinchPan % KScore.textHeight, Purple);
+            speciesTextHiliteLegend = painter.TextPaint(painter.fixedFont, (pinchPan % KScore.textHeight/3), SKColors.DarkGray);
             speciesLine = painter.LinePaint(pinchPan % KScore.lineWeight, SKColors.DarkGray, SKStrokeCap.Round);
             speciesLineReactant = painter.FillPaint(new SKColor(Blue.Red, Blue.Green, Blue.Blue, 63));
             speciesLineProduct = painter.FillPaint(new SKColor(Red.Red, Red.Green, Red.Blue, 63));

@@ -29,7 +29,7 @@ namespace Kaemika {
         public string FormatVariant(int variantNo, Style style) {
             string varchar = style.Varchar();
             if (varchar == null) return "";
-            return "ˍ" + LowerChars(variantNo.ToString());
+            return varchar + LowerChars(variantNo.ToString());
 
         }
         public string Format(Style style) {

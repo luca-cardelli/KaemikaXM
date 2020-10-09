@@ -33,7 +33,7 @@ namespace KaemikaXM {
 
         private void OnPaintCanvas(object sender, SKPaintSurfaceEventArgs e) {
             Painter painter = new SKPainter(e.Surface.Canvas);
-            KScoreHandler.Draw(painter, 0, 0, e.Info.Width, e.Info.Height, forcePacked: true);
+            KScoreHandler.Draw(painter, 0, 0, e.Info.Width, e.Info.Height, forcePacked: false); // forcePacked is no longer used since we added a button to switch packing also on iOS/Android
             data.DisplayTouchLocation(painter);
         }
 

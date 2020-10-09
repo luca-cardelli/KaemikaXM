@@ -7,14 +7,14 @@ namespace KaemikaXM.Pages {
 
     public class MyDocListCell : TextCell {
         public MyDocListCell() {
-            TextColor = MainTabbedPage.barColor;
+            TextColor = MainTabbedPage.barColor;    // COLOR OF MENU ITEMS IN TUTORIAL PAGE
             // DetailColor = Color.Brown;
         }
     }
 
     public class MyDocListHeaderCell : TextCell {
         public MyDocListHeaderCell() {
-            TextColor = Color.Red; 
+            TextColor = Color.Red;                 // COLOR OF MENU GROUPS IN TUTORIAL PAGE
             // DetailColor = Color.Brown;
         }
     }
@@ -38,6 +38,7 @@ namespace KaemikaXM.Pages {
             ToolbarItems.Add(toolbarSpacer);
 
             listView = CreateGroupedListView();
+            listView.BackgroundColor = MainTabbedPage.almostWhite;  // BACKGROUND COLOR OF MENU ITEMS
 
             AbsoluteLayout layout = new AbsoluteLayout();
             AbsoluteLayout.SetLayoutBounds(listView, new Rectangle(0, 0, 1, 1));

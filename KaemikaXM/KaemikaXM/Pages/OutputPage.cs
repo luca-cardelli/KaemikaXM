@@ -110,9 +110,10 @@ namespace KaemikaXM.Pages {
 
         public Picker OutputPicker() {
             Picker outputPicker = new Picker {
-                Title = "Output and Export", TitleColor = MainTabbedPage.barColor,
+                Title = "Output and Export", TitleColor = MainTabbedPage.barColor, // color of the title after popping up the picker - title does not show up on iOS
+                // TextColor = Color.Green, // does not seem to affect the color of text items in popped-up picker on Android nor iOS
+                // BackgroundColor = MainTabbedPage.pickerColor, // does not seem to affect the color of background in popped-up picker on Android nor iOS
                 HorizontalOptions = LayoutOptions.FillAndExpand,
-                BackgroundColor = MainTabbedPage.pickerColor,
                 FontSize = 14,
             };
 
@@ -123,6 +124,8 @@ namespace KaemikaXM.Pages {
 
             foreach (var kvp in outputActions) outputPicker.Items.Add(kvp.Key);
             outputPicker.SelectedItem = currentOutputAction.name;
+            outputPicker.TextColor = MainTabbedPage.barColor; // color of text of current selection in popped-down picker - needed to block darkmode color switch on iOS
+            outputPicker.BackgroundColor = MainTabbedPage.secondBarColor; // color of background of current selection in popped-down picker
 
             outputPicker.SelectedIndexChanged += async (object sender, System.EventArgs e) => {
                 currentOutputAction = outputActions[outputPicker.SelectedItem as string];

@@ -2,7 +2,7 @@
 Builtin functions and operators
 ===============================
 
-All numbers are double precision, illegal operations may produce NAN.
+All numbers are double precision. Illegal operations may produce NAN.
 
 Literals
 ~~~~~~~~
@@ -19,7 +19,8 @@ Prefix number and bool operators
 Infix number and bool operators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-•      +  -  *  /  ^  and  or  =  <>  <=  >=  <  > 
+•      +  -  ·  /  ^  and  or  =  <>  <=  >=  <  > 
+(* can be used for ·)
 
 Standard math precedence.
 
@@ -40,7 +41,7 @@ Infix list operators (concat, eq, not eq)
 
 Initial environment
 ~~~~~~~~~~~~~~~~~~~
-All of the following are normally-bound variables in the initial environment. They can be redefined, resulting in hiding the built-in functions. The last group are from the C# Math and Double calsses.
+All of the following are normally-bound variables in the initial environment. They can be redefined, resulting in hiding the built-in functions. The last group are from the C# Math and Double classes.
 
 •      pos(n)          // if n=NaN or n<0 then 0 else n end
 •      int(n)          // the integer nearest n
@@ -159,7 +160,8 @@ Note that map can be defined from draw-from:
      map(f,l) = draw l() from {λ(i) f(l(i))}}
 and that can be easily modified to pass the iteration index to the function f.
 
-Draw-from has several other uses as well:
+Draw-from creates a list by calling a function n times (0..n-1).
+It has several other uses as well:
 
 Draw-from expressions: (they return a value)
 
@@ -242,7 +244,7 @@ Distributions
 Via the above random variables, distributions are programmable, e.g.:
 
      function uniform(number a b) {
-        rand(omega w) { w(0)*(b-a)+a }
+        rand(omega w) { w(0)·(b-a)+a }
      }
 
 uniform(3,5) returns a random variable with a uniform distribution between 3 and 5. Although all distributions are programmable, the following distributions are built-in:
@@ -327,17 +329,17 @@ Flows have the same syntax as expression; the evaluationof expressions to flows 
 Ex.: Arrhenius equation (temperature-dependante rates):
 
      function Arrhenius(flow cf ae) { 
-        cf*exp(-ae/(8.3144598*kelvin)) 
+        cf·exp(-ae/(8.3144598·kelvin)) 
      }
 
 Use the Arrhenius function for the rate of a reaction:
 
      species a,b @ 1M
-     a + b -> Ø  {{ Arrhenius(2,50)*a*b }}
+     a + b -> Ø  {{ Arrhenius(2,50)·a·b }}
 
 Plot a, b, and the instantanous rate of their reaction over time:
 
-     report a, b, Arrhenius(2,50)*a*b     
+     report a, b, Arrhenius(2,50)·a·b     
      equilibrate for 10                        
 
 Difference between 'if' and 'cond' flows:
@@ -363,6 +365,65 @@ but 'if' can choose between two flows a or b based on a (timeless) condition:
 
      report if 3>2 then a else b end    
 
+====================
+Mass Action Compiler
+====================
+
+Produces equivalent mass action CRNs out of a broad class of non-mass action CRNs.
+
+•     massaction(S)         // where S is a sample, returning another sample
+
+S can be any sample whose reactions have elementary function kinetics (i.e. reactions with reaction rates of the kind {r} (mass action kinetics) or {{f}} (general kinetics) where f can contain linear arithmetic, powers, fractions, exp, log, sin, cos, etc.)
+The result is a new sample S' with new species and new reactions with mass action kinetics. 
+The new species of S' are either renamed copies x⁰ of the species x in S, or come in pairs x⁺, x⁻ for species x in S, or are additional species. 
+The trajectories of x⁰ in S' are the same as the trajectories of the corresponding x in S, and the trajectories of the differences (x⁺ - x⁻) are the same as the trajectories of the corresponding x.
+The reactions in S' all have simple mass action kinetics (their ODEs are polynomials); the elementary functions from S typically show up only in computing the initial conditions of the variables of S'.
+
+Typical usage:
+
+    sample S
+    species x,y @ 1 M in S
+    x -> y {{x/(x+1)}}
+
+    sample S' = massaction(S)
+
+    equilibrate S for 10     // run a simulation of the reference system S
+    equilibrate S' for 10    // followed by a simulation of S', for comparison
+
+The generated system S' is listed, e.g., in the "Show initial CRN" selection of the Computed Output menu.
+
+    x⁰ = 1 M, 
+    y⁰ = 1 M, 
+    xˍ₁⁰ = 500 mM, 
+    yˍ₁⁰ = 500 mM, 
+
+    xˍ₁⁰ + x⁰ -> xˍ₁⁰ 
+    x⁰ + yˍ₁⁰ -> x⁰ + yˍ₁⁰ + y⁰ 
+    3xˍ₁⁰ + x⁰ -> 4xˍ₁⁰ + x⁰ 
+    2yˍ₁⁰ + xˍ₁⁰ + x⁰ -> 3yˍ₁⁰ + xˍ₁⁰ + x⁰ 
+
+To note that mass action kinetics can be further reduced to bimolecular mass action kinetics (but this is not done here).
+
+Incidentally, the mass action compiler implicitly handles also "generalized" mass action kinetics, provided that stoichiometric coefficients a,b,c are rational numbers:  
+    a·x + b·y ->{r} c·z  (which gives an error if a,b,c are not integers) 
+can be written as  
+    x + y -> y + z {{r·a·x^a·y^b}}
+    x + y -> x + z {{r·b·x^a·y^b}}
+    x + y + z -> x + y {{r·(a+b-c)·x^a·y^b}}
+yielding the odes expected of the reaction above.
+Those 3 reactions can be given to the mass action compiler, which will generate (a large) number of pure mass action reaction.
+
+
+Symbolic compilation.
+Within S, constants can be used instead of numerical values for rates and initial conditions. Constants represent unknown numerical values, and are declared by, e.g.:
+
+    constant k,k1,k2,k3
+
+These can be used in place of numbers, e.g. {{k·x/(x+1)}}; they are handled symbolically by massaction(S), and are reflected in S'. With some caveats:
+- constants are assumed to be nonnegative, and massaction(S) may fail if some expressions (e.g. log(k)) cannot be determined to be nonnegative.
+- in particular {{x^k}} will not work, because polynomizing it requires computing k-1.
+- simulations cannot be carried out when rates or initial conditions involve constants, but S' will be generated nonetheless.
+
 ============
 Optimization
 ============
@@ -379,9 +440,3 @@ where d: number
 numeric tolerance for convergence, e.g. 1e-2
 
 If a gradient is a time derivative (of concentrations) it is possible to use the ∂ operator to obtain it. Otherwise one may try to compute a local gradient by multiple samples. See the "PIDController Optimization" example.
-
-=================
-UNDO text changes
-=================
-
-All is well on Win, Mac, iOS. Android's "Hacker's Keyboard" (a keyboard alternative from the Play Store that selectably replaces the built-in keyboard) supports undo via Ctrl-Z, as well as Ctrl-X/C/V. There is no other known way to undo text changes on Android.

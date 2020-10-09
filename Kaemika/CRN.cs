@@ -54,7 +54,7 @@ namespace Kaemika {
             return
                 (sample.symbol.IsVesselVariant() ? "" : Environment.NewLine + "Sample " + sample.FormatSymbol(style) + Environment.NewLine)
                 + sample.FormatContent(style, true, false, false) + Environment.NewLine + Environment.NewLine
-                + Style.FormatSequence(this.reactions, Environment.NewLine, x => x.Format(style)) + Environment.NewLine + Environment.NewLine
+                + Style.FormatSequence(this.reactions, Environment.NewLine, x => x.FormatNormal(style)) + Environment.NewLine + Environment.NewLine
                 + FormatAsODE(style, "∂ ", "", false) + Environment.NewLine;
         }
         public static string FormatCanonical(List<Symbol> complex, Style style) {
@@ -74,7 +74,7 @@ namespace Kaemika {
         public SKSize Measure(Colorer colorer, float pointSize, Style style) {
             var sizeX = 0.0f;
             var sizeY = 0.0f;
-            using (var paint = colorer.TextPaint(colorer.font, pointSize, SKColors.Black)) {
+            using (var paint = colorer.TextPaint(colorer.fixedFont, pointSize, SKColors.Black)) {
                 foreach (SpeciesValue sp in sample.stateMap.species) {
                     var r = colorer.MeasureText(sp.Format(style) + " = " + Gui.FormatUnit(sample.stateMap.Mean(sp.symbol), " ", "M", style.numberFormat), paint);
                     sizeX = Math.Max(sizeX, r.Width);
@@ -90,7 +90,7 @@ namespace Kaemika {
             return new SKSize(sizeX, sizeY);
         }
         public void Draw(Painter painter, SKPoint origin, SKSize size, float pointSize, Style style) {
-            using (var paint = painter.TextPaint(painter.font, pointSize, SKColors.Black)) {
+            using (var paint = painter.TextPaint(painter.fixedFont, pointSize, SKColors.Black)) {
                 var Y = origin.Y + pointSize;
                 foreach (SpeciesValue sp in sample.stateMap.species) {
                     painter.DrawText(sp.Format(style) + " = " + Gui.FormatUnit(sample.stateMap.Mean(sp.symbol), " ", "M", style.numberFormat), new SKPoint(origin.X, Y), paint);

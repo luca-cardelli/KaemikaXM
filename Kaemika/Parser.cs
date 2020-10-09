@@ -449,32 +449,33 @@ namespace Kaemika {
         public static List<ReactionDefinition> ParseReaction(IReduction reduction) {
             if (reduction.Production()                          == "<Reaction> ::= <Transition>") {
                 return ParseTransition(reduction.Nonterminal(0));
+            } else if (reduction.Production()                   == "<Reaction> ::= '∂' Id '=' <Expression>") {
+                return new List<ReactionDefinition> { ReactionDefinition.MAReactionDefinition(new Simplex(null,null,new MassAction()), new Simplex(null, new Variable(reduction.Terminal(1)), new MassAction()), new GeneralRate(ParseExpression(reduction.Nonterminal(3))))};
             } else if (reduction.Production()                   == "<Reaction> ::= <Complex> '>>' <Transition>") {
                 Complex complex = ParseComplex(reduction.Nonterminal(0));
                 List<ReactionDefinition> reactions = ParseTransition(reduction.Nonterminal(2));
-                // return reactions.Select(r => { return new ReactionDefinition(r.reactants.Add(complex.complex), r.products.Add(complex.complex), r.rate); }).ToList();
-                return reactions.Select(r => { return new ReactionDefinition(new SumComplex(complex, r.reactants), new SumComplex(complex, r.products), r.rate); }).ToList();
+                return reactions.Select(r => { return ReactionDefinition.MAReactionDefinition(new SumComplex(complex, r.reactants), new SumComplex(complex, r.products), r.rate); }).ToList();
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }
 
         public static List<ReactionDefinition> ParseTransition(IReduction reduction) {
             if (reduction.Production()                       == "<Transition> ::= <Complex> '->' <Complex>") {
-                return new List<ReactionDefinition> { new ReactionDefinition(ParseComplex(reduction.Nonterminal(0)), ParseComplex(reduction.Nonterminal(2)), new MassActionRate()) };
+                return new List<ReactionDefinition> {ReactionDefinition.HillReactionDefinition(ParseComplex(reduction.Nonterminal(0)), ParseComplex(reduction.Nonterminal(2)), new MassActionRate()) };
             } else if (reduction.Production()                == "<Transition> ::= <Complex> '->' '{' <Rate> '}' <Complex>") {
-                return new List<ReactionDefinition> { new ReactionDefinition(ParseComplex(reduction.Nonterminal(0)), ParseComplex(reduction.Nonterminal(5)), ParseRate(reduction.Nonterminal(3))) };
+                return new List<ReactionDefinition> {ReactionDefinition.HillReactionDefinition(ParseComplex(reduction.Nonterminal(0)), ParseComplex(reduction.Nonterminal(5)), ParseRate(reduction.Nonterminal(3))) };
             } else if (reduction.Production()                == "<Transition> ::= <Complex> '->' <Complex> '{' <Rate> '}'") {
-                return new List<ReactionDefinition> { new ReactionDefinition(ParseComplex(reduction.Nonterminal(0)), ParseComplex(reduction.Nonterminal(2)), ParseRate(reduction.Nonterminal(4))) };
+                return new List<ReactionDefinition> {ReactionDefinition.HillReactionDefinition(ParseComplex(reduction.Nonterminal(0)), ParseComplex(reduction.Nonterminal(2)), ParseRate(reduction.Nonterminal(4))) };
             } else if (reduction.Production()                == "<Transition> ::= <Complex> '<->' <Complex>") {
                 Complex lhs = ParseComplex(reduction.Nonterminal(0));  Complex rhs = ParseComplex(reduction.Nonterminal(2));
-                return new List<ReactionDefinition> { new ReactionDefinition(lhs, rhs, new MassActionRate()), new ReactionDefinition(rhs, lhs, new MassActionRate()) };
+                return new List<ReactionDefinition> { ReactionDefinition.MAReactionDefinition(lhs, rhs, new MassActionRate()), new ReactionDefinition(rhs, lhs, new MassActionRate()) };
             } else if (reduction.Production()                == "<Transition> ::= <Complex> '{' <Rate> '}' '<->' '{' <Rate> '}' <Complex>") {
                 Complex lhs = ParseComplex(reduction.Nonterminal(0)); Rate lhsRate = ParseRate(reduction.Nonterminal(2));
                 Rate rhsRate = ParseRate(reduction.Nonterminal(6)); Complex rhs = ParseComplex(reduction.Nonterminal(8));
-                return new List<ReactionDefinition> { new ReactionDefinition(lhs, rhs, rhsRate), new ReactionDefinition(rhs, lhs, lhsRate) };
+                return new List<ReactionDefinition> { ReactionDefinition.MAReactionDefinition(lhs, rhs, rhsRate), new ReactionDefinition(rhs, lhs, lhsRate) };
             } else if (reduction.Production()                == "<Transition> ::= <Complex> '<->' <Complex> '{' <Rate> '}' '{' <Rate> '}'") {
                 Complex lhs = ParseComplex(reduction.Nonterminal(0)); Complex rhs = ParseComplex(reduction.Nonterminal(2));
                 Rate lhsRate = ParseRate(reduction.Nonterminal(4)); Rate rhsRate = ParseRate(reduction.Nonterminal(7)); 
-                return new List<ReactionDefinition> { new ReactionDefinition(lhs, rhs, rhsRate), new ReactionDefinition(rhs, lhs, lhsRate) };
+                return new List<ReactionDefinition> { ReactionDefinition.MAReactionDefinition(lhs, rhs, rhsRate), new ReactionDefinition(rhs, lhs, lhsRate) };
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }
 
@@ -497,20 +498,41 @@ namespace Kaemika {
         }
 
         public static Simplex ParseSimplex(IReduction reduction) {
-            if (reduction.Production()                   == "<Simplex> ::= Integer Id") {
-                int n = int.Parse(reduction.Terminal(0));
-                Variable species = new Variable(reduction.Terminal(1));
-                return new Simplex(new NumberLiteral(n), species);
-            } else if (reduction.Production()            == "<Simplex> ::= Id '*' Id") {
-                return new Simplex(new Variable(reduction.Terminal(0)), new Variable(reduction.Terminal(2)));
-            } else if (reduction.Production()            == "<Simplex> ::= Id") {
-                return new Simplex(null, new Variable(reduction.Terminal(0)));
-            } else if (reduction.Production()            == "<Simplex> ::= '#'") {
-                return new Simplex(null, null);
-            } else if (reduction.Production()            == "<Simplex> ::= Ø") {
-                return new Simplex(null, null);
+            if (reduction.Production()                   == "<Simplex> ::= Integer <Compound>") {
+                return ParseCompound(new NumberLiteral(int.Parse(reduction.Terminal(0))), reduction.Nonterminal(1));
+            } else if (reduction.Production()            == "<Simplex> ::= Id '*' <Compound>" || reduction.Production() == "<Simplex> ::= Id '·' <Compound>") {
+                return ParseCompound(new Variable(reduction.Terminal(0)), reduction.Nonterminal(2));
+            } else if (reduction.Production()            == "<Simplex> ::= <Compound>") {
+                return ParseCompound(null, reduction.Nonterminal(0));
+            } else if (reduction.Production()            == "<Simplex> ::= '#'" || reduction.Production() == "<Simplex> ::= Ø") {
+                return new Simplex(null, null, new MassAction());
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }
+
+        public static Simplex ParseCompound(Expression stoichiometry, IReduction reduction) {
+            if (reduction.Production()                   == "<Compound> ::= Id") {
+                return new Simplex(stoichiometry, new Variable(reduction.Terminal(0)), new MassAction());
+            } else if (reduction.Production()            == "<Compound> ::= Id act <Hill>") {
+                return ParseHill(stoichiometry, new Variable(reduction.Terminal(0)), HillEnum.Act, reduction.Nonterminal(2));
+            } else if (reduction.Production()            == "<Compound> ::= Id inh <Hill>") {
+                return ParseHill(stoichiometry, new Variable(reduction.Terminal(0)), HillEnum.Inh, reduction.Nonterminal(2));
+            } else if (reduction.Production()            == "<Compound> ::= Id deg act <Hill>") {
+                return ParseHill(stoichiometry, new Variable(reduction.Terminal(0)), HillEnum.DegAct, reduction.Nonterminal(3));
+            } else if (reduction.Production()            == "<Compound> ::= Id deg inh <Hill>") {
+                return ParseHill(stoichiometry, new Variable(reduction.Terminal(0)), HillEnum.DegInh, reduction.Nonterminal(3));
+            } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
+        }
+
+        public static Simplex ParseHill(Expression stoichiometry, Variable var, HillEnum hill, IReduction reduction) {
+            if (reduction.Production()                   == "<Hill> ::= ") {
+                return new Simplex(stoichiometry, var, new Hill(hill, new NumberLiteral(1.0), new NumberLiteral(1.0)));
+            } else if (reduction.Production()            == "<Hill> ::= '(' <Expression> ')'") {
+                return new Simplex(stoichiometry, var, new Hill(hill, ParseExpression(reduction.Nonterminal(1)), new NumberLiteral(1.0)));
+            } else if (reduction.Production()            == "<Hill> ::= '(' <Expression> ',' <Expression> ')'") {
+                return new Simplex(stoichiometry, var, new Hill(hill, ParseExpression(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(3))));
+            } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
+        }
+
 
         // EXPRESSIONS ---------------------------------------------------------------------------    
 
@@ -548,6 +570,8 @@ namespace Kaemika {
                 (reduction.Production() == "<Conc Exp> ::= <Conc Exp> '++' <Powr Exp>") ||
                 (reduction.Production() == "<Powr Exp> ::= <Powr Exp> '^' <Base Exp>")) {
                 return new FunctionInstance(new Variable(reduction.Terminal(1)), new Expressions().Add(ParseExpression(reduction.Nonterminal(0))).Add(ParseExpression(reduction.Nonterminal(2))), infix: true, arity: 2);
+            } else if (reduction.Production() == "<Mult Exp> ::= <Mult Exp> '·' <Neg Exp>") { // alternative to "*"
+                return new FunctionInstance(new Variable("*"), new Expressions().Add(ParseExpression(reduction.Nonterminal(0))).Add(ParseExpression(reduction.Nonterminal(2))), infix: true, arity: 2); 
             } else  if (reduction.Production()       == "<Base Exp> ::= if <Expression> then <Expression> <Else Exp>") {
                 return new FunctionInstance(new Variable("if"), new Expressions().Add(ParseExpression(reduction.Nonterminal(1))).Add(ParseExpression(reduction.Nonterminal(3))).Add(ParseElseExpression(reduction.Nonterminal(4))), infix: true, arity: 3);
             } else  if (reduction.Production()       == "<Base Exp> ::= <Fun Instance>") {

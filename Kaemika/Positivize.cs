@@ -6,41 +6,24 @@ namespace Kaemika {
 
     public abstract class Positivize {
 
-        // ===== Equations ===== (evaluated version of Polynomize.Equations)
-
-        public class Equation {
-            public SpeciesFlow var;
-            public double value;
-            public Equation(SpeciesFlow var, double value) {
-                this.var = var;
-                this.value = value;
-            }
-            public string Format(Style style) {
-                return var.Format(style) + " = " + style.FormatDouble(this.value);
-            }
-            public static string Format(Lst<Equation> eqs, Style style) {
-                if (eqs is Cons<Equation> cons) {
-                    return cons.head.Format(style) + Environment.NewLine + Format(cons.tail, style);
-                } else return "";
-            }
-        }
-
         // ===== Separate =====
 
-        public static (Lst<Monomial> positive, Lst<Monomial> negative) Separate(Lst<Monomial> monomials) {
+        public static (Lst<Monomial> positive, Lst<Monomial> negative) Separate(Lst<Monomial> monomials, Style style) {
             if (monomials is Cons<Monomial> cons) {
-                (Lst<Monomial> positive, Lst<Monomial> negative) = Separate(cons.tail);
-                if (cons.head.coefficient >= 0) return (Monomial.Cons(cons.head, positive), negative);
-                else return (positive, Monomial.Cons(new Monomial(-cons.head.coefficient, cons.head.factors), negative));
+                (Lst<Monomial> positive, Lst<Monomial> negative) = Separate(cons.tail, style);
+                int decide = Polynomial.DecideNonnegative(cons.head.coefficient, style);
+                if (decide == 1) return (Monomial.Cons(cons.head, positive), negative);
+                else if (decide == -1) return (positive, Monomial.Cons(new Monomial(OpFlow.Op("-", cons.head.coefficient), cons.head.factors, style), negative));
+                else throw new Error("MassActionCompiler: aborted because it cannot determine the sign of this expression: " + cons.head.coefficient.Format(style));
             } else return (Monomial.nil, Monomial.nil);
         }
 
         // ===== Substitute =====
 
         public class Subst {
-            public SpeciesFlow var;
-            public SpeciesFlow plus;
-            public SpeciesFlow minus;
+            public SpeciesFlow var;   // variable to substitute with (plus - minus)
+            public SpeciesFlow plus;  // plus variant of variable
+            public SpeciesFlow minus; // minus variant of variable
             public Subst(SpeciesFlow var, Style style) {
                 this.var = var;
                 this.plus = new SpeciesFlow(new Symbol(var.species.Format(style) + "⁺"));
@@ -65,22 +48,24 @@ namespace Kaemika {
 
         public static Lst<Subst> NecessarySubsts(Lst<Polynomize.PolyODE> odes, Lst<Polynomize.Equation> eqs, Style style) {
             if (odes is Cons<Polynomize.PolyODE> cons) {
-                if (cons.head.Hungarian(cons.head.var) && Polynomize.Equation.Eval(cons.head.var, eqs, style) >= 0) return NecessarySubsts(cons.tail, eqs, style);
-                else return new Cons<Subst>(new Subst(cons.head.var, style), NecessarySubsts(cons.tail, eqs, style));
+                if (cons.head.split != Polynomize.Split.No || // ignore already split odes
+                    (cons.head.Hungarian(cons.head.var, style) && // if the polynomial rhs is all Hungarian
+                     Polynomial.DecideNonnegative(Polynomize.Equation.ToFlow(cons.head.var, eqs, style).Normalize(style),style) == 1)) // and we are sure the initial value is nonnegative
+                    return NecessarySubsts(cons.tail, eqs, style); // then we do not need to split
+                else return new Cons<Subst>(new Subst(cons.head.var, style), NecessarySubsts(cons.tail, eqs, style)); // else we split
             } else return Subst.nil;
         }
 
         // substitute x with (x+ - x-) in a flow that is already in polynomial form as a result of Polynomize
-
         public static Lst<Polynomize.PolyODE> Substitute(Lst<Polynomize.PolyODE> odes, Lst<Subst> substs, Style style) {
             if (odes is Cons<Polynomize.PolyODE> cons) {
                 Polynomize.PolyODE ode = cons.head;
                 Subst subst = Lookup(ode.var, substs);
                 if (subst == null) {
-                    return new Cons<Polynomize.PolyODE>(new Polynomize.PolyODE(ode.var, Substitute(ode.poly, substs, style)),
+                    return new Cons<Polynomize.PolyODE>(new Polynomize.PolyODE(ode.var, Substitute(ode.poly, substs, style), ode.split),
                         Substitute(cons.tail, substs, style));
-                } else {
-                    throw new Error("Polynomize.Substitute"); // this should never happen because we split ODEs in PositivizeODEs
+                } else { // this should never happen because we split ODEs in PositivizeODEs
+                    throw new Error("Polynomize.Substitute"); 
                     //return
                     //     new Cons<Polynomize.PolyODE>(new Polynomize.PolyODE(subst.plus, Substitute(ode.poly, substs, style)),
                     //        new Cons<Polynomize.PolyODE>(new Polynomize.PolyODE(subst.minus, Substitute(ode.poly, substs, style)),
@@ -95,12 +80,12 @@ namespace Kaemika {
 
         public static Lst<Monomial> Substitute(Lst<Monomial> monomials, Lst<Subst> substs, Style style) {
             if (monomials is Cons<Monomial> cons) {
-                return Monomial.Sum(Substitute(cons.head, substs, style), Substitute(cons.tail, substs, style));
+                return Monomial.Sum(Substitute(cons.head, substs, style), Substitute(cons.tail, substs, style), style);
             } else return Monomial.nil;
         }
 
         public static Lst<Monomial> Substitute(Monomial monomial, Lst<Subst> substs, Style style) {
-            return Monomial.Product(new Monomial(monomial.coefficient), Substitute(monomial.factors, substs, style), style);
+            return Monomial.Product(new Monomial(monomial.coefficient, style), Substitute(monomial.factors, substs, style), style);
         }
 
         public static Lst<Monomial> Substitute(Lst<Factor> factors, Lst<Subst> substs, Style style) {
@@ -112,7 +97,7 @@ namespace Kaemika {
         public static Lst<Monomial> Substitute(Factor factor, Lst<Subst> substs, Style style) {
             Subst subst = Lookup(factor.variable, substs);
             if (subst == null) return Monomial.Singleton(new Monomial(factor));
-            else return Monomial.Power(Monomial.Cons(new Monomial(new Factor(subst.plus)), Monomial.Singleton(new Monomial(-1.0, new Factor(subst.minus)))), factor.power, style);
+            else return Monomial.Power(Monomial.Cons(new Monomial(new Factor(subst.plus)), Monomial.Singleton(new Monomial(Flow.minusOne, new Factor(subst.minus), style))), factor.power, style);
         }
 
         public static Lst<Polynomize.Equation> Substitute(Lst<Polynomize.Equation> eqs, Lst<Subst> substs, Style style) {
@@ -127,8 +112,8 @@ namespace Kaemika {
                             Substitute(cons.tail, substs, style));
                 } else {
                     return
-                        new Cons<Polynomize.Equation>(new Polynomize.Equation(subst.plus, eq.op, args, splitOp: "+"),
-                            new Cons<Polynomize.Equation>(new Polynomize.Equation(subst.minus, eq.op, args, splitOp: "-"),
+                        new Cons<Polynomize.Equation>(new Polynomize.Equation(subst.plus, eq.op, args, splitOp: Polynomize.Split.Pos),
+                            new Cons<Polynomize.Equation>(new Polynomize.Equation(subst.minus, eq.op, args, splitOp: Polynomize.Split.Neg),
                                 Substitute(cons.tail, substs, style)));
                 }
             } else return Polynomize.Equation.nil;
@@ -141,29 +126,29 @@ namespace Kaemika {
             Dictionary<Symbol, SpeciesFlow> dict = new Dictionary<Symbol, SpeciesFlow>();
             if (vars is Nil<SpeciesFlow>) return (odes, eqs, dict);
             vars.Each(var => { dict.Add(var.species, new SpeciesFlow(new Symbol(var.species.Format(style) + "⁰"))); });
-            return (Rename(dict, odes), Rename(dict, eqs), dict);
+            return (Rename(dict, odes, style), Rename(dict, eqs, style), dict);
         }
 
-        public static Lst<Polynomize.PolyODE> Rename(Dictionary<Symbol, SpeciesFlow> dict, Lst<Polynomize.PolyODE> odes) {
+        public static Lst<Polynomize.PolyODE> Rename(Dictionary<Symbol, SpeciesFlow> dict, Lst<Polynomize.PolyODE> odes, Style style) {
             if (odes is Cons<Polynomize.PolyODE> cons) {
-                return new Cons<Polynomize.PolyODE>(Rename(dict, cons.head), Rename(dict, cons.tail));
+                return new Cons<Polynomize.PolyODE>(Rename(dict, cons.head, style), Rename(dict, cons.tail, style));
             } else return Polynomize.PolyODE.nil;
         }
 
-        public static Polynomize.PolyODE Rename(Dictionary<Symbol, SpeciesFlow> dict, Polynomize.PolyODE ode) {
+        public static Polynomize.PolyODE Rename(Dictionary<Symbol, SpeciesFlow> dict, Polynomize.PolyODE ode, Style style) {
             return new Polynomize.PolyODE(
                 dict.ContainsKey(ode.var.species) ? dict[ode.var.species] : ode.var,
-                new Polynomial(Rename(dict, ode.poly.monomials))); ;
+                new Polynomial(Rename(dict, ode.poly.monomials, style)), ode.split);
         }
 
-        public static Lst<Monomial> Rename(Dictionary<Symbol, SpeciesFlow> dict, Lst<Monomial> monomials) {
+        public static Lst<Monomial> Rename(Dictionary<Symbol, SpeciesFlow> dict, Lst<Monomial> monomials, Style style) {
             if (monomials is Cons<Monomial> cons) {
-                return Monomial.Cons(Rename(dict, cons.head), Rename(dict, cons.tail));
+                return Monomial.Cons(Rename(dict, cons.head, style), Rename(dict, cons.tail, style));
             } else return Monomial.nil;
         }
 
-        public static Monomial Rename(Dictionary<Symbol, SpeciesFlow> dict, Monomial monomial) {
-            return new Monomial(monomial.coefficient, Rename(dict, monomial.factors));
+        public static Monomial Rename(Dictionary<Symbol, SpeciesFlow> dict, Monomial monomial, Style style) {
+            return new Monomial(monomial.coefficient, Rename(dict, monomial.factors), style);
         }
 
         public static Lst<Factor> Rename(Dictionary<Symbol, SpeciesFlow> dict, Lst<Factor> factors) {
@@ -178,16 +163,16 @@ namespace Kaemika {
                 factor.power);
         }
 
-        public static Lst<Polynomize.Equation> Rename(Dictionary<Symbol, SpeciesFlow> dict, Lst<Polynomize.Equation> eqs) {
+        public static Lst<Polynomize.Equation> Rename(Dictionary<Symbol, SpeciesFlow> dict, Lst<Polynomize.Equation> eqs, Style style) {
             if (eqs is Cons<Polynomize.Equation> cons) {
-                return new Cons<Polynomize.Equation>(Rename(dict, cons.head), Rename(dict, cons.tail));
+                return new Cons<Polynomize.Equation>(Rename(dict, cons.head, style), Rename(dict, cons.tail, style));
             } else return Polynomize.Equation.nil;
         }
 
-        public static Polynomize.Equation Rename(Dictionary<Symbol, SpeciesFlow> dict, Polynomize.Equation eq) {
+        public static Polynomize.Equation Rename(Dictionary<Symbol, SpeciesFlow> dict, Polynomize.Equation eq, Style style) {
             Lst<Monomial>[] args = new Lst<Monomial>[eq.args.Length];
-            for (int i = 0; i < eq.args.Length; i++) args[i] = Rename(dict, eq.args[i]);
-            if (dict.ContainsKey(eq.var.species) && eq.splitOp != "") throw new Error("Positivize.Rename");
+            for (int i = 0; i < eq.args.Length; i++) args[i] = Rename(dict, eq.args[i], style);
+            if (dict.ContainsKey(eq.var.species) && eq.splitOp != Polynomize.Split.No) throw new Error("Positivize.Rename");
             SpeciesFlow newVar = dict.ContainsKey(eq.var.species) ? dict[eq.var.species] : eq.var;
             return new Polynomize.Equation(newVar, eq.op, args, eq.splitOp);
         }
@@ -202,37 +187,40 @@ namespace Kaemika {
             // so they must be split too even if their monomials are Hungarian
             Lst<Polynomize.PolyODE> resOdes = odes;
             Lst<Polynomize.Equation> resEqs = eqs;
-            Lst<Subst> substs = Subst.nil;
+            Lst<Subst> accumulatedSubsts = Subst.nil;
             while (true) {
-                Lst<Subst> newSubsts = NecessarySubsts(resOdes, resEqs, style);
+                Lst<Subst> newSubsts = NecessarySubsts(resOdes, resEqs, style); // it will ignore already split odes
                 //Gui.Log("PolyODEs:" + Environment.NewLine + Polynomize.Format(unsplit.Append(split), style));
                 //Gui.Log("NecessarySubsts:" + Environment.NewLine + Format(substs, style));
                 if (newSubsts is Nil<Subst>) { // we converged
-                    Lst<SpeciesFlow> unsplitVars = UnsplitVars(odes, substs);
+                    Lst<SpeciesFlow> unsplitVars = UnsplitVars(odes, accumulatedSubsts);
                     (Lst<Polynomize.PolyODE> renOdes, Lst<Polynomize.Equation> renEqs, Dictionary<Symbol, SpeciesFlow> dict) = Rename(unsplitVars, resOdes, resEqs, style);
-                    return (renOdes, renEqs, dict, substs);
-                    //return (resOdes, resEqs);
+                    return (renOdes, renEqs, dict, accumulatedSubsts);
                 }
-                substs = newSubsts.Append(substs);
-                resOdes = PositivizeODEs(odes, substs, style);
-                resEqs = Substitute(eqs, substs, style);
+                accumulatedSubsts = newSubsts.Append(accumulatedSubsts);
+                resOdes = PositivizeODEs(odes, accumulatedSubsts, style);
+                resEqs = Substitute(eqs, accumulatedSubsts, style);
             }
         }
 
         public static Lst<Polynomize.PolyODE> PositivizeODEs(Lst<Polynomize.PolyODE> odes, Lst<Subst> substs, Style style) {
+            //const int annihilationOrder = 1; // generation of annihilation reactions has been moved to Hungarize, otherwise two reactions are generated instead of one from the annihilation monomial
             if (odes is Cons<Polynomize.PolyODE> cons) {
                 Lst<Polynomize.PolyODE> tail = PositivizeODEs(cons.tail, substs, style);
                 Polynomize.PolyODE ode = cons.head;
                 Polynomial poly = Substitute(ode.poly, substs, style);
                 Subst subst = Lookup(ode.var, substs);
                 if (subst == null) { // we do not split this ODE
-                    return new Cons<Polynomize.PolyODE>(new Polynomize.PolyODE(ode.var, poly), tail);
+                    return new Cons<Polynomize.PolyODE>(new Polynomize.PolyODE(ode.var, poly, split:Polynomize.Split.No), tail);
                 } else { // we split this ODE
-                    (Lst<Monomial> positive, Lst<Monomial> negative) = Separate(poly.monomials);
-                    Monomial damp = new Monomial(-1.0, Factor.Cons(new Factor(subst.plus, 2), Factor.Singleton(new Factor(subst.minus, 2))));
-                    return new Cons<Polynomize.PolyODE>(new Polynomize.PolyODE(subst.plus, Monomial.Cons(damp, positive)),
-                           new Cons<Polynomize.PolyODE>(new Polynomize.PolyODE(subst.minus, Monomial.Cons(damp, negative)),
+                    (Lst<Monomial> positive, Lst<Monomial> negative) = Separate(poly.monomials, style);
+                    return new Cons<Polynomize.PolyODE>(new Polynomize.PolyODE(subst.plus, positive, split: Polynomize.Split.Pos),
+                           new Cons<Polynomize.PolyODE>(new Polynomize.PolyODE(subst.minus, negative, split: Polynomize.Split.Neg),
                            tail));
+                    //Monomial damp = new Monomial(Flow.minusOne, Factor.Cons(new Factor(subst.plus, annihilationOrder), Factor.Singleton(new Factor(subst.minus, annihilationOrder))), style); // annihilation monomial
+                    //return new Cons<Polynomize.PolyODE>(new Polynomize.PolyODE(subst.plus, Monomial.Cons(damp, positive), split:Polynomize.Split.Pos),
+                    //       new Cons<Polynomize.PolyODE>(new Polynomize.PolyODE(subst.minus, Monomial.Cons(damp, negative), split:Polynomize.Split.Neg),
+                    //       tail));
                 }
             } else return Polynomize.PolyODE.nil;
         }
@@ -245,52 +233,5 @@ namespace Kaemika {
                 else return tail;
             } else return new Nil<SpeciesFlow>();
         }
-
-        //public static (Lst<Polynomize.PolyODE> posOdes, Lst<Polynomize.Equation> posEqs) PositivizeODEs(Lst<Polynomize.PolyODE> odes, Lst<Polynomize.Equation> eqs, Style style) {
-        //    // We could split all variables to be sure, but we try to be clever:
-        //    // Split only those variables that have non-Hungarian monomials.
-        //    // However, substitution of the split variables may introduce new non-Hungarian monomials, so we need to iterate until closure.
-        //    // Moreover, some non-split variables may get initialized to negative values (consider #->x{{log(x)}} with x0=0.9, whose polynomization is Hungarian but log(x0)<0), 
-        //    // so they must be split too even if their monomials are Hungarian
-        //    Lst<Polynomize.PolyODE> unsplit = odes;
-        //    Lst<Polynomize.PolyODE> split = Polynomize.PolyODE.nil;
-        //    Lst<Polynomize.Equation> posEqs = eqs;
-        //    while (true) {
-        //        Lst<Subst> newSubsts = NecessarySubsts(unsplit, posEqs, style);
-        //        //Gui.Log("PolyODEs:" + Environment.NewLine + Polynomize.Format(unsplit.Append(split), style));
-        //        //Gui.Log("NecessarySubsts:" + Environment.NewLine + Format(substs, style));
-        //        if (newSubsts is Nil<Subst>) { // we converged
-        //            Lst<SpeciesFlow> unsplitVars = Polynomize.PolyODE.Variables(unsplit);
-        //            (Lst<Polynomize.PolyODE> renOdes, Lst<Polynomize.Equation> renEqs) = Rename(unsplitVars, unsplit.Append(split), posEqs, style);
-        //            return (renOdes, renEqs);
-        //        }
-        //        (Lst<Polynomize.PolyODE> unsplit1, Lst<Polynomize.PolyODE> split1) = PositivizeODEs(unsplit, newSubsts, style);
-        //        split = Substitute(split, newSubsts, style).Append(split1); // newSubsts should not contain any of the ODE head variables of split
-        //        unsplit = unsplit1;
-        //        posEqs = Substitute(posEqs, newSubsts, style);
-        //    }
-        //}
-
-        //public static (Lst<Polynomize.PolyODE> unsplit, Lst<Polynomize.PolyODE> split) PositivizeODEs(Lst<Polynomize.PolyODE> odes, Lst<Subst> substs, Style style) {
-        //    if (odes is Cons<Polynomize.PolyODE> cons) {
-        //        (Lst<Polynomize.PolyODE> unsplitTail, Lst<Polynomize.PolyODE> splitTail) = PositivizeODEs(cons.tail, substs, style);
-        //        Polynomize.PolyODE ode = cons.head;
-        //        Polynomial poly = Substitute(ode.poly, substs, style);
-        //        Subst subst = Lookup(ode.var, substs);
-        //        if (subst == null) { // we do not split this ODE
-        //            return
-        //                (new Cons<Polynomize.PolyODE>(new Polynomize.PolyODE(ode.var, poly), unsplitTail),
-        //                 splitTail);
-        //        } else { // we split this ODE
-        //            (Polynomial positive, Polynomial negative) = Separate(poly);
-        //            return
-        //                (unsplitTail,
-        //                 new Cons<Polynomize.PolyODE>(new Polynomize.PolyODE(subst.plus, positive),
-        //                    new Cons<Polynomize.PolyODE>(new Polynomize.PolyODE(subst.minus, negative),
-        //                        splitTail)));
-        //        }
-        //    } else return (Polynomize.PolyODE.nil, Polynomize.PolyODE.nil);
-        //}
-
     }
 }

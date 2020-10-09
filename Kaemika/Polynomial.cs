@@ -4,49 +4,6 @@ using System.Text;
 
 namespace Kaemika {
 
-    //public abstract class Coefficient {
-    //    public abstract string Format(Style style);
-    //}
-
-    //public class NumberCoefficient : Coefficient {
-    //    double num;
-    //    public NumberCoefficient(double num) {
-    //        this.num = num;
-    //    }
-    //    public override string Format(Style style) {
-    //        return style.FormatDouble(this.num);
-    //    }
-    //}
-
-    //public class ConstantCoefficient : Coefficient {
-    //    Symbol constant;
-    //    public ConstantCoefficient(Symbol constant) {
-    //        this.constant = constant;
-    //    }
-    //    public override string Format(Style style) {
-    //        return this.constant.Format(style);
-    //    }
-    //}
-
-    //public class SumCoefficient : Coefficient {
-    //    Coefficient arg0;
-    //    Coefficient rht;
-    //    public SumCoefficient(Coefficient lft, Coefficient rht) {
-    //        this.lft = lft;
-    //        this.rht = rht;
-    //    }
-    //    public override string Format(Style style) {
-    //        return lft.Format(style) + "+" + rht.Format(style);
-    //    }
-    //}
-
-    //public class MinusCoefficient : Coefficient {
-    //}
-
-    //public class ProductCoefficient : Coefficient {
-    //}
-
-
     public class Factor {
         public SpeciesFlow variable { get; }
         public int power { get; } // >= 0
@@ -151,13 +108,13 @@ namespace Kaemika {
             } else return Factor.nil;
         }
 
-        public double Eval(Lst<Polynomize.Equation> eqs, Style style) {
-            return Math.Pow(Polynomize.Lookup(this.variable, eqs, style).Eval(eqs, style), this.power);
+        public Flow ToFlow(Lst<Polynomize.Equation> eqs, Style style) {
+            return OpFlow.Op(Polynomize.Lookup(this.variable, eqs, style).ToFlow(eqs, style), "^", new NumberFlow(this.power));
         }
-        public static double Eval(Lst<Factor> factors, Lst<Polynomize.Equation> eqs, Style style) {
+        public static Flow ToFlow(Lst<Factor> factors, Lst<Polynomize.Equation> eqs, Style style) {
             if (factors is Cons<Factor> cons) {
-                return cons.head.Eval(eqs, style) * Eval(cons.tail, eqs, style);
-            } else return 1.0;
+                return OpFlow.Op(cons.head.ToFlow(eqs, style), "*", ToFlow(cons.tail, eqs, style));
+            } else return Flow.one;
         }
 
         public List<Symbol> ToList() { return ToList(new List<Symbol>()); }
@@ -172,39 +129,41 @@ namespace Kaemika {
                 return cons.head.ToList(ToList(cons.tail, rest));
             else return rest;
         }
-
-        //public static Complex ToComplex(Lst<Factor> factors) {
-        //    if (factors is Cons<Factor> cons) {
-        //        return new SumComplex(new Simplex(new NumberLiteral(this.power), new Variable(variable.???)));
-        //    } else return new Simplex(null, null);
-        //}
     }
 
     public class Monomial {
-        public double coefficient { get; }
+        public Flow coefficient { get; } // this is kept in normal form by Flow.Normalize
         public Lst<Factor> factors { get; }
 
         public Monomial(double coefficient) {
-            this.coefficient = coefficient;
+            this.coefficient = new NumberFlow(coefficient);
+            this.factors = Factor.nil;
+        }
+        public Monomial(Flow coefficient, Style style) {
+            this.coefficient = coefficient.Normalize(style);
             this.factors = Factor.nil;
         }
         public Monomial(Factor factor) {
-            this.coefficient = 1.0;
+            this.coefficient = Flow.one;
             this.factors = Factor.Singleton(factor);
         }
         public Monomial(Lst<Factor> factors) {
-            this.coefficient = 1.0;
+            this.coefficient = Flow.one;
             this.factors = factors;
         }
+        public Monomial(Flow coefficient, Factor factor, Style style) {
+            this.coefficient = coefficient.Normalize(style);
+            this.factors = this.coefficient.IsNumber(0.0) ? Factor.nil : Factor.Singleton(factor);
+        }
         public Monomial(double coefficient, Factor factor) {
-            this.coefficient = coefficient;
-            this.factors = (coefficient == 0.0) ? Factor.nil : Factor.Singleton(factor);
+            this.coefficient = new NumberFlow(coefficient);
+            this.factors = this.coefficient.IsNumber(0.0) ? Factor.nil : Factor.Singleton(factor);
         }
-        public Monomial(double coefficient, Lst<Factor> factors) {
-            this.coefficient = coefficient;
-            this.factors = (coefficient == 0.0) ? Factor.nil : factors;
+        public Monomial(Flow coefficient, Lst<Factor> factors, Style style) {
+            this.coefficient = coefficient.Normalize(style);
+            this.factors = this.coefficient.IsNumber(0.0) ? Factor.nil : factors;
         }
-        public bool IsZero() { return coefficient == 0.0; }
+        public bool IsZero() { return coefficient.IsNumber(0.0); } // coefficient is in normal form
         public static Lst<Monomial> nil = new Nil<Monomial>();
         public static Lst<Monomial> Cons(Monomial monomial, Lst<Monomial> monomials) {
             if (monomial.IsZero()) return monomials;
@@ -212,7 +171,7 @@ namespace Kaemika {
         }
         public static Lst<Monomial> Singleton(Monomial m) { return Cons(m, nil); }
         public string Format(Style style) {
-            string coeff = (this.coefficient == 1.0) ? "" : (this.coefficient == -1.0) ? "-" : this.coefficient.ToString();
+            string coeff = this.coefficient.IsNumber(1.0) ? "" : this.coefficient.IsNumber(-1.0) ? "-" : this.coefficient.Format(style);
             string factors = Factor.Format(this.factors, style);
             if (coeff == "" && factors == "1") return "1";
             if (coeff == "-" && factors == "1") return "-1";
@@ -230,76 +189,69 @@ namespace Kaemika {
                 return cons.head.Format(style) + ((cons.tail is Nil<Monomial>) ? "" : " + " + FormatLst(cons.tail, style));
             } else return "";
         }
-        public Flow ToFlow() {
-            if (factors is Nil<Factor>) return new NumberFlow(coefficient);
-            if (coefficient is 1.0) return Factor.ToFlow(factors);
-            return OpFlow.Op(new NumberFlow(coefficient), "*", Factor.ToFlow(factors));
-        }
-        public static Flow ToFlow(Lst<Monomial> monomials) {
-            if (monomials is Cons<Monomial> cons) {
-                return cons.tail is Nil<Monomial> ? cons.head.ToFlow() : OpFlow.Op(cons.head.ToFlow(), "+", ToFlow(cons.tail));
-            } else return new NumberFlow(0.0);
+
+        public bool Hungarian(SpeciesFlow differentiationVariable, Style style) {
+            int decide = Polynomial.DecideNonnegative(this.coefficient, style);
+            if (decide == 1) return true;
+            else if (decide == -1) return Factor.HasFactorVariable(differentiationVariable, this.factors);
+            else throw new Error("MassActionCompiler: aborted because it cannot determine the sign of this expression: " + this.coefficient.Format(style));
         }
 
-        public bool Hungarian(SpeciesFlow differentiationVariable) {
-            if (this.coefficient >= 0) return true;
-            else return Factor.HasFactorVariable(differentiationVariable, this.factors);
-        }
-
-        public static bool Hungarian(SpeciesFlow differentiationVariable, Lst<Monomial> monomials) {
+        public static bool Hungarian(SpeciesFlow differentiationVariable, Lst<Monomial> monomials, Style style) {
             if (monomials is Cons<Monomial> cons) {
-                return cons.head.Hungarian(differentiationVariable) && Hungarian(differentiationVariable, cons.tail);
+                return cons.head.Hungarian(differentiationVariable, style) && Hungarian(differentiationVariable, cons.tail, style);
             } else return true;
         }
 
-        public Monomial Product(double coefficient) {
-            double productCoeff = this.coefficient * coefficient;
-            if (productCoeff == 0.0) return new Monomial(0.0, Factor.nil);
-            else return new Monomial(productCoeff, this.factors);
+        public Monomial Product(Flow coefficient, Style style) {
+            return new Monomial(OpFlow.Op(this.coefficient, "*", coefficient), this.factors, style);
         }
-        public Monomial Product(Factor factor) {
-            return new Monomial(this.coefficient, Factor.Product(factor, this.factors));
+        public Monomial Product(Factor factor, Style style) {
+            return new Monomial(this.coefficient, Factor.Product(factor, this.factors), style);
         }
-        public Monomial Product(Monomial other) {
-            return new Monomial(this.coefficient * other.coefficient, Factor.Product(this.factors, other.factors));
+        public Monomial Product(Monomial other, Style style) {
+            return new Monomial(OpFlow.Op(this.coefficient, "*", other.coefficient), Factor.Product(this.factors, other.factors), style);
         }
         
-        public Monomial Power(int power) {
-            return new Monomial(Math.Pow(this.coefficient, (double)power), Factor.Power(this.factors, power));
+        public Monomial Power(int power, Style style) {
+            return new Monomial(OpFlow.Op(this.coefficient, "^", new NumberFlow(power)), Factor.Power(this.factors, power), style);
         }
 
         public bool SameFactors(Monomial monomial) {
             return Factor.SameFactors(factors, monomial.factors);
         }
 
-        public static Lst<Monomial> Sum(Monomial monomial, Lst<Monomial> monomials) {
+        public static Lst<Monomial> Sum(Monomial monomial, Lst<Monomial> monomials, Style style) {
             if (monomial.IsZero()) return monomials;
             if (monomials is Cons<Monomial> cons) {
                 if (cons.head.SameFactors(monomial)) {
-                    double sumCoeff = cons.head.coefficient + monomial.coefficient;
-                    if (sumCoeff == 0.0) return cons.tail;
-                    else return Monomial.Cons(new Monomial(sumCoeff, monomial.factors), cons.tail);
-                } else return Monomial.Cons(cons.head, Sum(monomial, cons.tail));
+                    Flow sumCoeff = OpFlow.Op(cons.head.coefficient, "+", monomial.coefficient).Normalize(style);
+                    if (sumCoeff.IsNumber(0.0)) return cons.tail;
+                    else return Monomial.Cons(new Monomial(sumCoeff, monomial.factors, style), cons.tail);
+                } else return Monomial.Cons(cons.head, Sum(monomial, cons.tail, style));
             } else return Monomial.Singleton(monomial);
         }
-        public static Lst<Monomial> Sum(Lst<Monomial> monomials1, Lst<Monomial> monomials2) {
+        public static Lst<Monomial> Sum(Lst<Monomial> monomials1, Lst<Monomial> monomials2, Style style) {
             //Gui.Log("IN  Sum(Ms[" + Format(monomials1, Style.nil) + "], Ms[" + Format(monomials2, Style.nil) + "])");
             Lst<Monomial> result = null;
             if (monomials1 is Cons<Monomial> cons) {
-                result = Sum(cons.head, Sum(cons.tail, monomials2));
+                result = Sum(cons.head, Sum(cons.tail, monomials2, style), style);
             } else result = monomials2;
             //Gui.Log("OUT Sum(Ms[" + Format(monomials1, Style.nil) + "], Ms[" + Format(monomials2, Style.nil) + "]) = Ms[" + Format(result, Style.nil) + "]");
             return result;
         }
 
-        public static Lst<Monomial> Negate(Lst<Monomial> monomials) { 
+        public static Lst<Monomial> Negate(Lst<Monomial> monomials, Style style) { 
             if (monomials is Cons<Monomial> cons) {
-                return Monomial.Cons(cons.head.Product(-1.0), Negate(cons.tail));
+                return Monomial.Cons(cons.head.Product(Flow.minusOne, style), Negate(cons.tail, style));
             } else return Monomial.nil;
         }
 
-        public static Lst<Monomial> Product(double coefficient, Lst<Monomial> monomials, Style style)  {
-            return Product(Monomial.Singleton(new Monomial(coefficient)), monomials, style);
+        public static Lst<Monomial> Product(Flow coefficient, Lst<Monomial> monomials, Style style)  {
+            return Product(Monomial.Singleton(new Monomial(coefficient, style)), monomials, style);
+        }
+        public static Lst<Monomial> Product(Factor factor1, Factor factor2, Style style)  {
+            return Product(factor1, Monomial.Singleton(new Monomial(factor2)), style);
         }
         public static Lst<Monomial> Product(Factor factor, Lst<Monomial> monomials, Style style)  {
             return Product(Monomial.Singleton(new Monomial(factor)), monomials, style);
@@ -311,7 +263,7 @@ namespace Kaemika {
             //Gui.Log("IN  Product([" + monomial.Format(style) + "], [" + Format(monomials, style) + "])");
             Lst<Monomial> result;
             if (monomials is Cons<Monomial> cons) {
-               result = Sum(new Monomial(cons.head.coefficient * monomial.coefficient, Factor.Product(cons.head.factors, monomial.factors)), Product(monomial, cons.tail, style));
+               result = Sum(new Monomial(OpFlow.Op(cons.head.coefficient, "*", monomial.coefficient), Factor.Product(cons.head.factors, monomial.factors), style), Product(monomial, cons.tail, style), style);
             } else result = Monomial.nil;
             //Gui.Log("OUT Product([" + monomial.Format(style) + "], [" + Format(monomials, style) + "]) = [" + Format(result, style) + "]");
             return result;
@@ -320,26 +272,26 @@ namespace Kaemika {
             //Gui.Log("IN  Product([" + Format(monomials1, style) + "], [" + Format(monomials2, style) + "])");
             Lst<Monomial> result;
             if (monomials1 is Cons<Monomial> cons) {
-                result = Sum(Product(cons.head, monomials2, style), Product(cons.tail, monomials2, style));
+                result = Sum(Product(cons.head, monomials2, style), Product(cons.tail, monomials2, style), style);
             } else result = Monomial.nil;
             //Gui.Log("OUT Product([" + Format(monomials1, style) + "], [" + Format(monomials2, style) + "]) = [" + Format(result, style) + "]");
             return result;
         }
 
         public static Lst<Monomial> Power(Lst<Monomial> monomials, int power, Style style) {
-            if (power == 0) return Singleton(new Monomial(1.0));
+            if (power == 0) return Singleton(new Monomial(Flow.one, style));
             else if (power == 1) return monomials;
             else return Product(monomials, Power(monomials, power - 1, style), style);
         }
 
-        public double Eval(Lst<Polynomize.Equation> eqs, Style style) {
-            return this.coefficient * Factor.Eval(this.factors, eqs, style);
+        public Flow ToFlow(Lst<Polynomize.Equation> eqs, Style style) {
+            return OpFlow.Op(this.coefficient, "*", Factor.ToFlow(this.factors, eqs, style));
         }
 
-        public static double Eval(Lst<Monomial> monomials, Lst<Polynomize.Equation> eqs, Style style) {
+        public static Flow ToFlow(Lst<Monomial> monomials, Lst<Polynomize.Equation> eqs, Style style) {
             if (monomials is Cons<Monomial> cons) {
-                return cons.head.Eval(eqs, style) + Eval(cons.tail, eqs, style);
-            } else return 0.0;
+                return OpFlow.Op(cons.head.ToFlow(eqs, style), "+", ToFlow(cons.tail, eqs, style));
+            } else return Flow.zero;
         }
     }
 
@@ -355,17 +307,14 @@ namespace Kaemika {
         public string Format(Style style) {
             return Monomial.Format(this.monomials, style);
         }
-        public Flow ToFlow() {
-            return Monomial.ToFlow(this.monomials);
-        }
 
         public static bool IsInt(double r) {
             int n = (int)r;
             return r == n;
         }
 
-        public bool Hungarian(SpeciesFlow differentiationVariable) {
-            return Monomial.Hungarian(differentiationVariable, this.monomials);
+        public bool Hungarian(SpeciesFlow differentiationVariable, Style style) {
+            return Monomial.Hungarian(differentiationVariable, this.monomials, style);
         }
 
         public static Polynomial ToPolynomial(Flow flow, Style style) {
@@ -373,14 +322,14 @@ namespace Kaemika {
         }
 
         public static Lst<Monomial> ToMonomials(Flow flow, Style style) {
-            if (flow is NumberFlow num) return Monomial.Singleton(new Monomial(num.value));
+            if (flow is NumberFlow num) return Monomial.Singleton(new Monomial(new NumberFlow(num.value), style));
             else if (flow is SpeciesFlow species) return Monomial.Singleton(new Monomial(new Factor(species)));
             else if (flow is OpFlow op) {
                 if (op.arity == 1) {
-                    if (op.op == "-") return ToMonomials(op.args[0], style).Map((Monomial m) => m.Product(-1.0));
+                    if (op.op == "-") return ToMonomials(op.args[0], style).Map((Monomial m) => m.Product(Flow.minusOne, style));
                 } else if (op.arity == 2) {
-                    if (op.op == "+") return Monomial.Sum(ToMonomials(op.args[0], style), ToMonomials(op.args[1], style));
-                    else if (op.op == "-") return Monomial.Sum(ToMonomials(op.args[0], style), ToMonomials(op.args[1], style).Map((Monomial m) => m.Product(-1.0)));
+                    if (op.op == "+") return Monomial.Sum(ToMonomials(op.args[0], style), ToMonomials(op.args[1], style), style);
+                    else if (op.op == "-") return Monomial.Sum(ToMonomials(op.args[0], style), ToMonomials(op.args[1], style).Map((Monomial m) => m.Product(Flow.minusOne, style)), style);
                     else if (op.op == "*") return Monomial.Product(ToMonomials(op.args[0], style), ToMonomials(op.args[1], style), style);
                     else if (op.op == "^") 
                         if (op.args[1] is NumberFlow exp && IsInt(exp.value) && (int)exp.value >= 0) 
@@ -390,7 +339,37 @@ namespace Kaemika {
                 }
             } throw new Error("Polynomial.ToMonomials: " + flow.Format(style));
         }
-    }
 
+        // Whether a *normalized* flow denotes a number that is nonnegative provided that constants within it are nonnegative
+        // return 1 : nonnegative is true
+        // return 0 : can't tell if nonnegative
+        // retunr -1: nonnegative is false (negative is true)
+        public static int DecideNonnegative(Flow flow, Style style) { 
+            if (flow is NumberFlow num) return (num.value >= 0) ? 1 : -1;
+            else if (flow is ConstantFlow) return 1;
+            else if (flow is OpFlow op) {
+                if (op.op == "+" && op.arity == 2) {
+                    int d0 = DecideNonnegative(op.args[0], style);
+                    int d1 = DecideNonnegative(op.args[1], style);
+                    return (d0 == 0 || d1 == 0) ? 0 : (d0 == 1 && d1 == 1) ? 1 : (d0 == -1 && d1 == -1) ? -1 : 0;
+                } else if (op.op == "-" && op.arity == 2) {
+                    int d0 = DecideNonnegative(op.args[0], style);
+                    int d1 = DecideNonnegative(op.args[1], style);
+                    return (d0 == 0 || d1 == 0) ? 0 : (d0 == 1 && d1 == -1) ? 1 : (d0 == -1 && d1 == 1) ? -1 : 0;
+                } else if (op.op == "-" && op.arity == 1) {
+                    return -1 * DecideNonnegative(op.args[0], style);
+                } else if ((op.op == "*" || op.op == "/") && op.arity == 2) {
+                    int d0 = DecideNonnegative(op.args[0], style);
+                    int d1 = DecideNonnegative(op.args[1], style);
+                    return (d0 == 0 || d1 == 0) ? 0 : (d0 == d1) ? 1 : -1;
+                }
+                else if (op.op == "^" && op.arity == 2) return DecideNonnegative(op.args[0], style);
+                else if (op.op == "sqrt" && op.arity == 1) return 1;
+                else if (op.op == "exp" && op.arity == 1) return 1;
+                else if (op.op == "pos" && op.arity == 1) return 1;
+                else return 0;
+            } else return 0;
+        }
+    }
 
 }

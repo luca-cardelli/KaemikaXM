@@ -11,7 +11,7 @@ namespace KaemikaXM.Pages {
 
     public class MyModelListCell : TextCell {
         public MyModelListCell() {
-            TextColor = MainTabbedPage.barColor;
+            TextColor = MainTabbedPage.barColor;    // COLOR OF MENU ITEMS IN MY NETWORKS PAGE
             // DetailColor = Color.Brown;
 
             var renameAction = new MenuItem { Text = "Rename" };
@@ -83,6 +83,7 @@ equilibrate for 10
                 }
                 listView.SelectedItem = null; // Deselect item.
             };
+            listView.BackgroundColor = MainTabbedPage.almostWhite;  // BACKGROUND COLOR OF MENU ITEMS
 
             ToolbarItems.Add(
                 new ToolbarItem("Add", "icons8plus32.png",  

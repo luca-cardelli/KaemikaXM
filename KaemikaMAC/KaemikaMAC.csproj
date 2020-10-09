@@ -249,6 +249,14 @@
     <Compile Include="CGPainter.cs" />
     <Compile Include="MacControls.cs" />
     <Compile Include="NSScoreView.cs" />
+    <Compile Include="PreferencesInfoController.cs" />
+    <Compile Include="PreferencesInfoController.designer.cs">
+      <DependentUpon>PreferencesInfoController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PreferencesSettingsController.cs" />
+    <Compile Include="PreferencesSettingsController.designer.cs">
+      <DependentUpon>PreferencesSettingsController.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="Main.storyboard" />

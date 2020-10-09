@@ -94,7 +94,7 @@ namespace KaemikaWPF {
         public bool IsMicrofluidicsVisible() { 
             return WinGui.winGui.panel_Microfluidics.Visible; 
         }
-        public void MicrosfluidicsVisible(bool on) {
+        public void MicrofluidicsVisible(bool on) {
             WinGui.winGui.panel_Microfluidics.Visible = on;
         }
         public void MicrofluidicsOn() {
@@ -214,6 +214,7 @@ namespace KaemikaWPF {
         private Color selectedColor;
         private Color saveMouseOverBackColor;
         private Color saveMouseDownBackColor;
+        private string toolTip;
         public WinButton(Button button, Color textColor, Color backgroundColor, Color selectedColor) {
             this.control = button;
             this.button = button;
@@ -224,6 +225,7 @@ namespace KaemikaWPF {
             this.selectedColor = selectedColor;
             this.saveMouseOverBackColor = button.FlatAppearance.MouseOverBackColor;
             this.saveMouseDownBackColor = button.FlatAppearance.MouseDownBackColor;
+            this.toolTip = "";
         }
         public void SetImage(string imageName) {
             Bitmap image = null;
@@ -284,6 +286,9 @@ namespace KaemikaWPF {
         }
         public void SetFont(Font font) {
             this.button.Font = font;
+        }
+        public void SetToolTip(string toolTip) {
+            this.toolTip = toolTip;
         }
         public bool IsVisible() {
             return this.button.Visible;

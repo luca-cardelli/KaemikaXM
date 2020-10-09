@@ -37,7 +37,7 @@ function MakePBS() {
 
       sample topup {200mL, 20C}  
       mix PBS = PBS,topup
-   yield Autoclave(PBS, 20*60)
+   yield Autoclave(PBS, 20·60)
 }
 
 sample PBS = MakePBS()
