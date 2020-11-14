@@ -83,7 +83,7 @@ namespace Kaemika {
     // ====  PLATFORM-NEUTRAL GUI INTERFACE =====
 
     public class Gui {
-        public static string KaemikaVersion = "1.0.24";
+        public static string KaemikaVersion = "1.0.25";
 
         public static Platform platform = Platform.NONE;
 

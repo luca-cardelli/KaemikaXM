@@ -311,6 +311,28 @@ namespace KaemikaWPF {
         }
 
         // EXPORT
+      
+        public /* Interface KGuiControl */ void GuiModelToSBML() {
+            if (!this.InvokeRequired) {
+                string sbml = "";
+                try { sbml = Export.SBML(); }
+                catch (Error ex) { MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK); return;  }
+                catch (Exception ex) { MessageBox.Show(ex.Message, "Something happened", MessageBoxButtons.OK); return;  }
+
+                SaveFileDialog saveFileDialog = new SaveFileDialog();
+                saveFileDialog.Filter = "XML files (*.xml)|*.xml|All files (*.*)|*.*";
+                saveFileDialog.InitialDirectory = WinControls.modelsDirectory;
+                saveFileDialog.FilterIndex = 1;
+                saveFileDialog.RestoreDirectory = false;
+                if (saveFileDialog.ShowDialog() == DialogResult.OK) {
+                    try {
+                        File.WriteAllText(saveFileDialog.FileName, sbml, System.Text.Encoding.UTF8); // use UTF8, not Unicode for SBML!
+                    } catch {
+                        MessageBox.Show(saveFileDialog.FileName, "Could not write this file:", MessageBoxButtons.OK);
+                    }
+                }
+            } else this.Invoke((Action) delegate { GuiModelToSBML(); });
+        }
 
         public /* Interface KGuiControl */ void GuiChartSnap() {
             if (!this.InvokeRequired) {

@@ -20,7 +20,7 @@ Infix number and bool operators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 •      +  -  ·  /  ^  and  or  =  <>  <=  >=  <  > 
-(* can be used for ·)
+       (* can be used for ·)
 
 Standard math precedence.
 
@@ -73,6 +73,34 @@ All of the following are normally-bound variables in the initial environment. Th
 •      sqrt(n)
 •      tan(n)
 •      tanh(n)
+
+===================
+String manipulation
+===================
+
+string concatenation
+
+•      s1 + s2
+
+length of a list
+
+•      s()
+
+indexing (from 0)
+
+•      s(n)
+
+substring (start,length)
+
+•      s(n,m)
+
+name of a species
+
+•      basename(s)  
+       // The string that is the un-alpha-converted name of species s. 
+       // Useful to create species names as combinations of names of other species that may be function parameters. 
+       // Use the "s as <Expression>" notation on species definition to assign a custom basename to s.
+       // Species names, including synthesized ones, will be alphaconverted as needed, so basename cannot produce name clashes.
 
 =================
 List manipulation
@@ -178,10 +206,12 @@ Draw-from statements: (they do not return a value)
 •     draw n from F
 
 for F a function or a list of them, makes a plot of the functions over inputs 0..n-1
+the functions can each return a single number or a list of n numbers (producing n plot lines)
 
 •     draw n from R 
 
 for R a random variable or a list of them, makes a density plot of the random variables
+the random variables can each produce a number or a list of numbers (i.e. they can be multivariate random variables)
 
 •     draw n from N
 
@@ -295,9 +325,8 @@ Current time.
 
 Current temperature.
 
-•     ∂ a           // first time derivative
-•     diff(a)       // same as ∂a
-•     sdiff(a)      // symbolic differentiation
+•     ∂ a           // differentiation (first time derivative). The argument a is not formally expanded, and the value is numerically computed from the known ∂x of the species x occurring in a. It will appear as ∂a in a legend.
+•     sdiff(a)      // symbolic differentiation. The argument a is formally expanded, e.g., sdiff(x^2) is replaced by 2·x·∂x for a species x. It will appear as 2·x·∂x, not as sdiff(x^2), in a legend.
 
 Derivatives, valid in 'report' but not in {{...}} rates.
 

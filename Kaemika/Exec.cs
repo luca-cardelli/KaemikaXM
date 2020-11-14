@@ -11,7 +11,7 @@ namespace Kaemika {
         ChartSnapToClipboard, ChartSnapToSvg, ChartData, OutputCopy,
         ChemicalTrace, FullTrace, Evaluation,
         ReactionGraph, ComplexGraph,
-        MSRC_LBS, MSRC_CRN, ODE, SteadyState,
+        MSRC_LBS, MSRC_CRN, ODE, SteadyState, SBML,
         Protocol, ProtocolGraph,
         PDMPreactions, PDMPequations, PDMPstoichiometry, // or PDMP_Parallel,
         PDMPGraph, // or PDMPGraph_Parallel,
@@ -149,21 +149,20 @@ namespace Kaemika {
 
         public static List<ExportAction> exportActionsList() {
             return new List<ExportAction>() {
-                new ExportAction("Write images to clipboard", ExportAs.ChartSnapToClipboard, () => { KGui.gui.GuiChartSnap(); }),
-                new ExportAction("Write images to file (SVG)", ExportAs.ChartSnapToSvg, () => { KGui.gui.GuiChartSnapToSvg(); }),
-                new ExportAction("Write visible chart data to file", ExportAs.ChartData, () => { KGui.gui.GuiChartData(); }),
-                new ExportAction("Write output text to clipboard", ExportAs.OutputCopy, () => { KGui.gui.GuiOutputCopy(); }),
+                new ExportAction("Export output text to clipboard", ExportAs.OutputCopy, () => { KGui.gui.GuiOutputCopy(); }),
+                new ExportAction("Export images bitmap to clipboard", ExportAs.ChartSnapToClipboard, () => { KGui.gui.GuiChartSnap(); }),
+                new ExportAction("Export images to SVG (InkScape) file", ExportAs.ChartSnapToSvg, () => { KGui.gui.GuiChartSnapToSvg(); }),
+                new ExportAction("Export visible chart data to CSV (Excel) file", ExportAs.ChartData, () => { KGui.gui.GuiChartData(); }),
+                new ExportAction("Export last sample to SBML (Copasi) file", ExportAs.SBML, () => { KGui.gui.GuiModelToSBML(); }),
+                new ExportAction("Export last sample to ODE (Oscill8) text", ExportAs.ODE, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ODE); }),
+                new ExportAction("Export last sample to LBS/html5 text", ExportAs.MSRC_CRN, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.MSRC_CRN); }),
+                new ExportAction("Export last sample to LBS/silverlight text", ExportAs.MSRC_LBS, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.MSRC_LBS); }),
+                new ExportAction("Export steady state equations (Wolfram) text", ExportAs.SteadyState, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.SteadyState); }),
+                new ExportAction("Export protocol step graph to GraphViz text", ExportAs.ProtocolGraph, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ProtocolGraph); }),
+                new ExportAction("Export protocol state graph to GraphViz text", ExportAs.PDMPGraph, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPGraph); }),
 
                 //new ExportAction("Export reaction graph", ExportAs.ReactionGraph, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ReactionGraph); }),
                 //new ExportAction("Export reaction complex graph", ExportAs.ComplexGraph, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ComplexGraph); }),
-                new ExportAction("Export protocol step graph", ExportAs.ProtocolGraph, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ProtocolGraph); }),
-                new ExportAction("Export protocol state graph", ExportAs.PDMPGraph, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.PDMPGraph); }),
-
-                new ExportAction("Export CRN (LBS silverlight)", ExportAs.MSRC_LBS, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.MSRC_LBS); }),
-                new ExportAction("Export CRN (LBS html5)", ExportAs.MSRC_CRN, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.MSRC_CRN); }),
-                new ExportAction("Export ODE (Oscill8)", ExportAs.ODE, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.ODE); }),
-                new ExportAction("Export equilibrium (Wolfram)", ExportAs.SteadyState, () => { KGui.gui.GuiOutputTextShow(); KScoreHandler.ScoreHide(); KGui.gui.GuiOutputSetText(""); Exec.Execute_Exporter(false, ExportAs.SteadyState); }),
-
                 //new ExportAction("PDMP GraphViz", ExportAs.PDMP_GraphViz, () => { Exec.Execute_Exporter(false, ExportAs.PDMP_GraphViz); }),
                 //new ExportAction("PDMP Parallel", ExportAs.PDMP_Parallel, () => { Exec.Execute_Exporter(false, ExportAs.PDMP_Parallel); }),
                 //new ExportAction("PDMP Parallel GraphViz", ExportAs.PDMP_Parallel_GraphViz, () => { Exec.Execute_Exporter(false, ExportAs.PDMP_Parallel_GraphViz); }),
@@ -294,14 +293,13 @@ namespace Kaemika {
                     string hungarization = "";
                     //####Poliynomize
                     //Hungarize.HungarizeCRN(execution.lastCRN, execution.style);
-
                     KGui.gui.GuiOutputAppendText(execution.netlist.AllComments() + (execution.lastCRN != null ? execution.lastCRN.FormatNice(execution.style) : "") + hungarization + execution.ElapsedTime());
                 } else if (exportAs == ExportAs.Evaluation) {
                     KGui.gui.GuiOutputAppendText(execution.netlist.AllComments() + Env.FormatTopLevel(execution.environment, execution.style) + execution.ElapsedTime());
                 } else if (exportAs == ExportAs.ChemicalTrace) {
                     KGui.gui.GuiOutputAppendText(execution.netlist.Format(execution.style.RestyleAsTraceFull(false)) + execution.ElapsedTime());
-                //} else if (exportAs == ExportAs.FullTrace) {
-                //    KGui.gui.GuiOutputAppendText(execution.netlist.Format(execution.style.RestyleAsTraceFull(true)) + execution.ElapsedTime());
+                    //} else if (exportAs == ExportAs.FullTrace) {
+                    //    KGui.gui.GuiOutputAppendText(execution.netlist.Format(execution.style.RestyleAsTraceFull(true)) + execution.ElapsedTime());
                 } else if (exportAs == ExportAs.PDMPreactions) {
                     KGui.gui.GuiOutputAppendText(execution.netlist.AllComments() + Export.PDMP(execution.netlist, execution.style, sequential: true).HybridSystem(Export.Presentation.Reactions, execution.style));
                 } else if (exportAs == ExportAs.PDMPequations) {
@@ -328,27 +326,25 @@ namespace Kaemika {
                     else execution.graphCache["PDMPGraphSequential"] = Export.PDMPGraph(execution.netlist, execution.style, sequential: true);
                     KGui.gui.GuiProcessGraph("PDMPGraphSequential");
 
-                // Android/iOS only
+                    // Android/iOS only
                 } else if (exportAs == ExportAs.SVG) {
                     KGui.gui.GuiOutputAppendText(Export.SnapToSVG(KGui.gui.GuiChartSize()));
+                }  else if (exportAs == ExportAs.SBML) {
+                    KGui.gui.GuiOutputAppendText(Export.SBML());
 
                 // Windows/Mac only
                 }
-                else if (exportAs == ExportAs.MSRC_LBS) { // export only the vessel
-                    //KGui.gui.GuiOutputAppendText(Export.MSRC_LBS(execution.netlist.Reports(execution.vessel.stateMap.species), execution.vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.LBS, traceFull: false, chartOutput: false)));
-                    KGui.gui.GuiOutputAppendText(Export.MSRC_LBS(execution.vessel.RelevantReports(execution.style), execution.vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.LBS, traceFull: false, chartOutput: false)));
+                else if (exportAs == ExportAs.MSRC_LBS) { 
+                    KGui.gui.GuiOutputAppendText(Export.MSRC_LBS());
                 }
-                else if (exportAs == ExportAs.MSRC_CRN) { // export only the vessel
-                    //KGui.gui.GuiOutputAppendText(Export.MSRC_CRN(execution.netlist.Reports(execution.vessel.stateMap.species), execution.vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.CRN, traceFull: false, chartOutput: false)));
-                    KGui.gui.GuiOutputAppendText(Export.MSRC_CRN(execution.vessel.RelevantReports(execution.style), execution.vessel, new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.CRN, traceFull: false, chartOutput: false)));
+                else if (exportAs == ExportAs.MSRC_CRN) { 
+                    KGui.gui.GuiOutputAppendText(Export.MSRC_CRN());
                 }
-                else if (exportAs == ExportAs.ODE) { // export only the vessel
-                    KGui.gui.GuiOutputAppendText(Export.ODE(execution.vessel, new CRN(execution.vessel, execution.vessel.ReactionsAsConsumed(execution.style), precomputeLNA: false),
-                        new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.Standard, traceFull: false, chartOutput: false)));
+                else if (exportAs == ExportAs.ODE) {
+                    KGui.gui.GuiOutputAppendText(Export.ODE());
                 }
-                else if (exportAs == ExportAs.SteadyState) { // export only the vessel
-                    KGui.gui.GuiOutputAppendText(Export.SteadyState(new CRN(execution.vessel, execution.vessel.ReactionsAsConsumed(execution.style), precomputeLNA: false),
-                        new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.WolframNotebook, traceFull: false, chartOutput: false)));
+                else if (exportAs == ExportAs.SteadyState) {
+                    KGui.gui.GuiOutputAppendText(Export.SteadyState());
                 }
                 else if (exportAs == ExportAs.Protocol) {
                     KGui.gui.GuiOutputAppendText(Export.Protocol(execution.netlist, new Style(varchar: defaultVarchar, new SwapMap(), map: new AlphaMap(), numberFormat: "G4", dataFormat: "symbol", exportTarget: ExportTarget.Standard, traceFull: false, chartOutput: false)));
@@ -366,8 +362,8 @@ namespace Kaemika {
                 }
                 else { };
 
-                lock (exporterMutex) { exporterMutex[exportAs] = false; }
             } catch (Error ex) { KGui.gui.GuiInputSetErrorSelection(-1, -1, 0, "Error", ex.Message); }
+            lock (exporterMutex) { exporterMutex[exportAs] = false; }
         }
 
     }

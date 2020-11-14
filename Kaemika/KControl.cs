@@ -42,6 +42,7 @@ namespace Kaemika {
         void GuiClipboardSetText(string text);
         void GuiChartSnap();
         void GuiChartSnapToSvg();
+        void GuiModelToSBML();
         SKSize GuiChartSize();
         void GuiChartData();
         void GuiOutputCopy();

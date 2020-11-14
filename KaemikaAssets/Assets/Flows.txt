@@ -52,8 +52,7 @@ a conditional flow which is either f2 or f3 based on f1 being true or false resp
 
 •     a constant
 
-declared via 'constant k1,...,kn': these have no value, cannot be evaluated, and can be usefully used only inside rate brackets {...} or {{...}}. A constant will inhibit simulation, but will be treated as a formal constant in
-exported ODEs, including LNA ODEs.
+declared via 'constant k1,...,kn': these have no value, cannot be evaluated, and can be usefully used only inside rate brackets {...} or {{...}}. A constant will inhibit simulation, but will be treated as a formal constant in exported ODEs, including LNA ODEs.
 
 Observers
 ~~~~~~~~~
@@ -125,12 +124,17 @@ there is an implicit conversion next between 'number' 3 and 'flow' 3, because of
 
      a -> Ø   {{n·a}}	
 
-this is a degradation reaction with rate 3·molarity(a), i.e. the equialent of a mass action rate law written inside {{..}} general rate brackets
+this is a degradation reaction with rate 3·molarity(a), i.e. the equivalent of a mass action rate law written inside {{..}} general rate brackets
 
      report a, n·a
      equilibrate for 1
 
-this reports the concentration of a, and the instantaneous rate of the reaction; the label on the chart will be '3·a', not 'n·a'.
+this reports the concentration of a, and the instantaneous rate of the reaction, n·a; the label on the chart will be '3·a', not 'n·a'.
+
+     a -> Ø   {{n·cond(time<1,0,a)}}	
+
+this is a delayed injection of a into the system: before time 1 there is no a, after time 1 there is some a, starting from its given initial concentration.
+
 Next we use a function to build a flow:
 
      species a @ 1M
@@ -152,7 +156,7 @@ Flows can also be stochastic, involving variances and covariances of (linear com
      report var(a-b), var(a)+var(b)-2·cov(a,b)
      equilibrate for 3
 
-checking that var(a-b) gives the same result as its correct definition, i.e. overlapping traces.
+checking that var(a-b) gives the same result as its correct definition, i.e. it overlaps with the trace of var(a)+var(b)-2·cov(a,b).
 
 
 Extracting data from reports

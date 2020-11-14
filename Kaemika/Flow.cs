@@ -19,6 +19,9 @@ namespace Kaemika {
         public abstract Flow ReGroup(Style style);
         public abstract bool Involves(List<SpeciesValue> species);
         public abstract bool CoveredBy(List<SpeciesValue> species, out Symbol notCovered);
+        public abstract void Modifiers(SortedList<string, int> reactants, SortedList<string, int> products, Dictionary<string, bool> modifiers, Style style);
+            // Computes reaction modifiers: adds to the modifiers dictionary those species that occur in the flow but do not occur as reactants or products
+
         public abstract bool IsOp(string op, int arity);
         public bool IsNumber(double n) { return this is NumberFlow num && num.value == n; }
         public bool IsNegative() { return this is NumberFlow num && num.value < 0.0; }
@@ -55,6 +58,51 @@ namespace Kaemika {
         public string FormatAsODE(SpeciesValue headSpecies, Style style, string prefixDiff = "∂", string suffixDiff = "") {
             return prefixDiff + headSpecies.Format(style) + suffixDiff + " = " + this.Normalize(style).TopFormat(style);
         }
+        public string TopFormatAsMathML(Style style, double temperature, double volume) {
+            // Computes reaction modifiers: adds to the modifiers dictionary those species that occur in the rate function but do not occur as reactants or products
+            return
+                 "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">" + Environment.NewLine +
+                this.Normalize(style).FormatAsMathML(style, temperature, volume) + Environment.NewLine +
+                "</math>" + Environment.NewLine;
+        }
+        public abstract string FormatAsMathML(Style style, double temperature, double volume);
+
+        public static Flow NormalizeDimension(SpeciesValue species, Flow value, string dimension, SampleValue sample, Style style) { 
+            // following the pattern of StateMap.NormalizeDimension
+            Flow norm = null;
+            bool found = false;
+            // value had dimension M = mol/L
+            if (dimension == "kM") { norm = OpFlow.Op("*", value, new NumberFlow(1e3)); found = true; }
+            if (dimension == "M") { norm = value; found = true; }
+            if (dimension == "mM") { norm = OpFlow.Op("*", value, new NumberFlow(1e-3)); found = true; }
+            if (dimension == "uM" || dimension == "μM") { norm = OpFlow.Op("*", value, new NumberFlow(1e-6)); found = true; }
+            if (dimension == "nM") { norm = OpFlow.Op("*", value, new NumberFlow(1e-9)); found = true; }
+            if (dimension == "pM") { norm = OpFlow.Op("*", value, new NumberFlow(1e-12)); found = true; }
+            if (found) return norm;
+            // value had dimension mol, convert it to M = mol/L
+            if (dimension == "kmol") { norm = OpFlow.Op("*", value, new NumberFlow(1e3)); found = true; }
+            if (dimension == "mol") { norm = value; found = true; }
+            if (dimension == "mmol") { norm = OpFlow.Op("*", value, new NumberFlow(1e-3)); found = true; }
+            if (dimension == "umol" || dimension == "μmol") { norm = OpFlow.Op("*", value, new NumberFlow(1e-6)); found = true; }
+            if (dimension == "nmol") { norm = OpFlow.Op("*", value, new NumberFlow(1e-9)); found = true; }
+            if (dimension == "pmol") { norm = OpFlow.Op("*", value, new NumberFlow(1e-12)); found = true; }
+            if (found) return OpFlow.Op("/", norm, new NumberFlow(sample.Volume()));
+            // value had dimension g, convert it to M = (g/(g/M))/L
+            if (dimension == "kg") { norm = OpFlow.Op("*", value, new NumberFlow(1e3)); found = true; }
+            if (dimension == "g") { norm = value; found = true; }
+            if (dimension == "mg") { norm = OpFlow.Op("*", value, new NumberFlow(1e-3)); found = true; }
+            if (dimension == "ug" || dimension == "μg") { norm = OpFlow.Op("*", value, new NumberFlow(1e-6)); found = true; }
+            if (dimension == "ng") { norm = OpFlow.Op("*", value, new NumberFlow(1e-9)); found = true; }
+            if (dimension == "pg") { norm = OpFlow.Op("*", value, new NumberFlow(1e-12)); found = true; }
+            if (found) {
+                if (species.HasMolarMass())
+                    return OpFlow.Op("/", OpFlow.Op("/", norm, new NumberFlow(species.MolarMass()), new NumberFlow(sample.Volume())));
+                else throw new Error("Species '" + species.Format(style)
+                        + "' was given no molar mass, hence its amount in sample '" + sample.Format(style)
+                        + "' should have dimension 'M' (concentration) or 'mol' (mole), not '" + dimension + "'");
+            }
+            throw new Error("Invalid dimension '" + dimension + "'");
+        }
     }
 
     public class BoolFlow : Flow {
@@ -72,6 +120,8 @@ namespace Kaemika {
         public override bool IsNumericConstantExpression() { return false; }
         public override Flow Arg(int i) { throw new Error("Arg"); }
         public override string Format(Style style) { if (this.value) return "true"; else return "false"; }
+        public override string FormatAsMathML(Style style, double temperature, double volume) { if (this.value) return "<true/>"; else return "<false/>"; }
+        public override void Modifiers(SortedList<string, int> reactants, SortedList<string, int> products, Dictionary<string, bool> modifiers, Style style) { }
 
         public override bool ObserveBool(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { return this.value; }
         public override double ObserveMean(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new Error("Flow expression: number expected instead of bool: " + Format(style)); }
@@ -104,6 +154,8 @@ namespace Kaemika {
         public override bool IsNumericConstantExpression() { return true; }
         public override Flow Arg(int i) { throw new Error("Arg"); }
         public override string Format(Style style) { return style.FormatDouble(this.value); }
+        public override string FormatAsMathML(Style style, double temperature, double volume) { return "<cn>" + this.Format(style) + "</cn>"; }
+        public override void Modifiers(SortedList<string, int> reactants, SortedList<string, int> products, Dictionary<string, bool> modifiers, Style style) { }
 
         public override bool ObserveBool(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new Error("Flow expression: bool expected instead of number: " + Format(style)); }
         public override double ObserveMean(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { return this.value; }
@@ -158,6 +210,8 @@ namespace Kaemika {
                 //Gui.StringOfNoise(this.noise)
                 ; 
         }
+        public override string FormatAsMathML(Style style, double temperature, double volume) { throw new Error("Cannot format a timecouse as MathML"); }
+        public override void Modifiers(SortedList<string, int> reactants, SortedList<string, int> products, Dictionary<string, bool> modifiers, Style style) { }
 
         public override bool ObserveBool(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new Error("Flow expression: bool expected instead of: " + Format(style)); }
         public override double ObserveMean(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) {
@@ -218,6 +272,8 @@ namespace Kaemika {
         public override bool IsNumericConstantExpression() { return false; }
         public override Flow Arg(int i) { throw new Error("Arg"); }
         public override string Format(Style style) { return Parser.FormatString(this.value); }
+        public override string FormatAsMathML(Style style, double temperature, double volume) { return "<ms>" + this.value + "</ms>"; }
+        public override void Modifiers(SortedList<string, int> reactants, SortedList<string, int> products, Dictionary<string, bool> modifiers, Style style) { }
 
         public override bool ObserveBool(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new Error("Flow expression: bool expected instead of string: " + Format(style)); }
         public override double ObserveMean(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new Error("Flow expression: number expected instead of string: " + Format(style)); }
@@ -257,8 +313,15 @@ namespace Kaemika {
         public override Flow Arg(int i) { throw new Error("Arg"); }
         public override string Format(Style style) {
             string name = this.species.Format(style);
-            if (style.exportTarget == ExportTarget.CRN) name = "[" + name + "]";
+            if (style.exportTarget == ExportTarget.MSRC_CRN) name = "[" + name + "]";
             return name;
+        }
+        public override string FormatAsMathML(Style style, double temperature, double volume) {
+            return "<ci>" + this.Format(style) + "</ci>";
+        }
+        public override void Modifiers(SortedList<string, int> reactants, SortedList<string, int> products, Dictionary<string, bool> modifiers, Style style) {
+            string speciesId = this.Format(style);
+            if ((!reactants.ContainsKey(speciesId)) && (!products.ContainsKey(speciesId))) modifiers[speciesId] = true;
         }
         public override bool ObserveBool(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) {
             throw new Error("Flow expression: bool expected instead of species: " + Format(style));
@@ -308,6 +371,8 @@ namespace Kaemika {
         public override bool IsNumericConstantExpression() { return false; }
         public override Flow Arg(int i) { throw new Error("Arg"); }
         public override string Format(Style style) { return value.FormatSymbol(style); }
+        public override string FormatAsMathML(Style style, double temperature, double volume) { throw new Error("Cannot format a sample as MathML"); }
+        public override void Modifiers(SortedList<string, int> reactants, SortedList<string, int> products, Dictionary<string, bool> modifiers, Style style) { }
 
         public override bool ObserveBool(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new Error("Flow expression: bool expected instead of sample: " + Format(style)); }
         public override double ObserveMean(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new Error("Flow expression: number expected instead of sample: " + Format(style)); }
@@ -336,6 +401,9 @@ namespace Kaemika {
         public override bool IsNumericConstantExpression() { return true; }
         public override Flow Arg(int i) { throw new Error("Arg"); }
         public override string Format(Style style) { return this.constant.Format(style); }
+        public override string FormatAsMathML(Style style, double temperature, double volume) { throw new Error("Cannot format a ConstantFlow as MathML"); }
+        public override void Modifiers(SortedList<string, int> reactants, SortedList<string, int> products, Dictionary<string, bool> modifiers, Style style) { }
+
         public override bool ObserveBool(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new Error("Flow expression: bool expected instead of constant: " + Format(style)); }
         public override double ObserveMean(SampleValue sample, double time, State state, Func<double, Vector, Vector> flux, Style style) { throw new ConstantEvaluation(constant.Format(style)); }
         public override double ObserveVariance(SampleValue sample, double time, State state, Style style) { return 0.0; } // Var(number) = 0
@@ -697,6 +765,90 @@ namespace Kaemika {
                 return true;
             }
         }
+
+        public static string dummyTimeSpecies = "_time_";
+
+        public string MathMLContentSymbol(string op) {
+            // see https://www.w3.org/TR/MathML2/chapter4.html section 4.2.3 and section 4.4 (full list).
+            if (op == "abs") return "<abs/>";
+            if (op == "+") return "<plus/>";
+            if (op == "-") return "<minus/>"; // both unary and binary
+            if (op == "*") return "<times/>";
+            if (op == "/") return "<divide/>"; 
+            if (op == "^") return "<power/>";
+            if (op == "sqrt") return "<root/>";
+            if (op == "floor") return "<floor/>";
+            if (op == "ceiling") return "<ceiling/>";
+            if (op == "not") return "<not/>";
+            if (op == "and") return "<and/>";
+            if (op == "or") return "<or/>";
+            if (op == "arccos") return "<arccos/>";
+            if (op == "arcsin") return "<arcsin/>";
+            if (op == "arctan") return "<arctan/>";
+            if (op == "cos") return "<cos/>";
+            if (op == "cosh") return "<cosh/>";
+            if (op == "exp") return "<exp/>";
+            if (op == "log") return "<ln/>";
+            if (op == "sin") return "<sin/>";
+            if (op == "sinh") return "<sinh/>";
+            if (op == "tan") return "<tan/>";
+            if (op == "tanh") return "<tanh/>";
+            if (op == "<=") return "<leq/>";
+            if (op == "<") return "<lt/>";
+            if (op == ">=") return "<geq/>";
+            if (op == ">") return "<gt/>";
+            if (op == "=") return "<eq/>";
+            if (op == "<>") return "<neq/>";
+            throw new Error("Cannot export this operator to MathML/SBML: " + op);
+        }
+        public override string FormatAsMathML(Style style, double temperature, double volume) {
+            if (op == "time") { // convert time operator to dummy species and adds it as reaction modifier
+                return "<ci>" + dummyTimeSpecies + "</ci>";
+            } else if (op == "kelvin") {
+                return "<cn>" + style.FormatDouble(temperature) + "</cn>";
+            } else if (op == "celsius") {
+                return "<cn>" + style.FormatDouble(temperature - 273.15) + "</cn>";
+            } else if (op == "volume") {
+                return "<cn>" + style.FormatDouble(volume) + "</cn>";
+            } else if (op == "cond") {
+                string arg0 = args[0].FormatAsMathML(style, temperature, volume);
+                string arg1 = args[1].FormatAsMathML(style, temperature, volume);
+                string arg2 = args[2].FormatAsMathML(style, temperature, volume);
+                return "<piecewise> <piece> " + arg1 + " " + arg0 + " </piece> " + "<otherwise> " + arg2 + " </otherwise> </piecewise>";
+            } else if (op == "int") { // but see https://en.wikipedia.org/wiki/Floor_and_ceiling_functions#Rounding, we should use the formula for rounding towards even instead
+                return "<apply> <floor/> <apply> <plus/> <cn>0.5</cn> " + args[0].FormatAsMathML(style, temperature, volume) + " </apply> </apply>";
+            } else if (op == "sign") {
+                string arg0 = args[0].FormatAsMathML(style, temperature, volume);
+                return "<piecewise> <piece> <cn>-1.0</cn> <apply> <lt/> " + arg0 + " <cn>0.0</cn> </apply> </piece> " +
+                    "<piece> <cn>0.0</cn> <apply> <eq/> " + arg0 + " <cn>0.0</cn> </apply> </piece> " + 
+                    "<otherwise> <cn>1.0</cn> </otherwise> </piecewise>";
+            } else if (op == "min") {
+                string arg0 = args[0].FormatAsMathML(style, temperature, volume);
+                string arg1 = args[1].FormatAsMathML(style, temperature, volume);
+                return "<piecewise> <piece> " + arg0 + " <apply> <lt/> " + arg0 + " " + arg1 + " </apply> </piece>" +
+                    "<otherwise> " + arg1 + " </otherwise> </piecewise>";
+            } else if (op == "max") {
+                string arg0 = args[0].FormatAsMathML(style, temperature, volume);
+                string arg1 = args[1].FormatAsMathML(style, temperature, volume);
+                return "<piecewise> <piece> " + arg0 + " <apply> <gt/> " + arg0 + " " + arg1 + " </apply> </piece>" +
+                    "<otherwise> " + arg1 + " </otherwise> </piecewise>";
+            } else if (op == "pos") {
+                string arg0 = args[0].FormatAsMathML(style, temperature, volume);
+                return "<piecewise> <piece> " + arg0 + " <apply> <gt/> " + arg0 + " <cn>0.0</cn> </apply> </piece>" +
+                    "<otherwise> <cn>0.0</cn> </otherwise> </piecewise>";
+            //} else if (op == "arctan2") { // see https://en.wikipedia.org/wiki/Atan2 for the correct formula
+            //    return "<apply> <arctan/> <apply> <divide/> " + args[0].FormatAsMathML(style) + args[1].FormatAsMathML(style) + " </apply> </apply>";
+            } else {
+                string s = "<apply> " + MathMLContentSymbol(this.op);
+                for (int i = 0; i < args.Count(); i++) { s += args[i].FormatAsMathML(style, temperature, volume); }
+                return s + " </apply>";
+            }
+        }
+        public override void Modifiers(SortedList<string, int> reactants, SortedList<string, int> products, Dictionary<string, bool> modifiers, Style style) {
+            if (op == "time") modifiers[dummyTimeSpecies] = true;
+            for (int i = 0; i < args.Count(); i++) { args[i].Modifiers(reactants, products, modifiers, style); }
+        }
+
         public override string Format(Style style) {
             if (style.dataFormat == "operator") { // raw unabbreviated format
                 string s = op + "("; 
@@ -721,8 +873,8 @@ namespace Kaemika {
                     // end
                     string arg1 = SubFormatLeft(this, args[0], style); // use parens depending on precedence of suboperator
                     string arg2 = SubFormatRight(this, args[1], style); // use parens depending on precedence of suboperator
-                    if (style.exportTarget == ExportTarget.LBS && op == "-") return arg1 + " -- " + arg2; // export exceptions
-                    if (style.exportTarget == ExportTarget.LBS) return arg1 + " " + op + " " + arg2;      // export exceptions
+                    if (style.exportTarget == ExportTarget.MSRC_LBS && op == "-") return arg1 + " -- " + arg2; // export exceptions
+                    if (style.exportTarget == ExportTarget.MSRC_LBS) return arg1 + " " + op + " " + arg2;      // export exceptions
                     return "(" + arg1 + " " + (op == "*" ? "·" : op) + " " + arg2 + ")";
                 } else {
                     string arg1 = args[0].TopFormat(style);

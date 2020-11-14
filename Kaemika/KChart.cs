@@ -102,7 +102,11 @@ namespace Kaemika {
             }
             return s;
         }
- 
+        public static void ChartAddPole(string seriesName, double t, KLineStyle lineStyle) {
+            if (chart == null) return;
+            if (seriesName != null) chart.timecourse.AddPole(seriesName, (float)t, lineStyle);
+        }
+
         public static void SetManualPinchPan(Swipe manualPinchPan) {
             if (chart == null) return;
             chart.SetManualPinchPan(manualPinchPan);
@@ -357,6 +361,20 @@ namespace Kaemika {
         }
     }
 
+    public class KChartPole{
+        public string seriesName;
+        public float X;
+        public KLineStyle lineStyle;
+        public SKPoint YpointHi;  // this is where the top of the pole is plotted
+        public SKPoint YpointLo;  // this is where the botton of the pole is plotted
+
+        public KChartPole(string seriesName, float X, KLineStyle lineStyle)  {
+            this.seriesName = seriesName;
+            this.X = X;
+            this.lineStyle = lineStyle;
+        }
+    }
+
     public class KTimecourse {                           // assumes points arrive in time equal or increasing
         private object mutex;
         private string sampleName;
@@ -364,6 +382,7 @@ namespace Kaemika {
         private List<KChartEntry> list;
         private KChartEntry lastEntry;                   // the last entry to accumulate the equal-time points
         private int lastEntryCount;                      // to know when we have completed the last entry
+        private List<KChartPole> poles;
         private Dictionary<string, int> seriesIndex;     // maintaining the connection between seriesList and timecourse
         private Style style;
         public string baseUnitX;
@@ -376,6 +395,7 @@ namespace Kaemika {
             this.baseUnitY = baseUnitY;
             this.seriesList = new List<KSeries>();
             this.list = new List<KChartEntry>();
+            this.poles = new List<KChartPole>();
             this.seriesIndex = new Dictionary<string, int>();
             this.style = style;
             this.lastEntry = null;
@@ -395,6 +415,7 @@ namespace Kaemika {
                 this.list = new List<KChartEntry>();
                 this.lastEntry = null;
                 this.lastEntryCount = 0;
+                this.poles = new List<KChartPole>();
             }
         }
 
@@ -456,6 +477,16 @@ namespace Kaemika {
             }
         }
 
+        public void AddPole(string seriesName, float t, KLineStyle lineStyle) {
+            lock (mutex) {
+                if (float.IsNaN(t)) return;            // these have been converted from double
+                if (seriesIndex.ContainsKey(seriesName)) {  // if not, it may be due to a concurrent invocations of plotting before the previous one has finished
+                    int index = seriesIndex[seriesName];
+                    poles.Add(new KChartPole(seriesName, t, lineStyle));
+                }
+            }
+        }
+
         public (string xValue, string[] yFlows, string[] yValues, string seriesTag) HitList(SKPoint target, float radius) {
             // return the series that are under target within radius (or null)
             // target and radius are in screen plot coordinates, checked agains the precomputed Ypoint and YpointRange
@@ -487,8 +518,9 @@ namespace Kaemika {
                     }
                 }
 
-                // find hits on the species trajectories
                 int speciesNo = seriesList.Count;
+
+                // find hits on the species trajectories
                 // first find the X value of the closest X-Y hit
                 float closestXhit = float.MaxValue;
                 KChartEntry closestEntry = null;
@@ -506,23 +538,40 @@ namespace Kaemika {
                     }
                 }
                 // then for that X value, return the Y values that are hits
-                if (closestEntry == null) return (null, null, null, null);
-                string xValue = "= " + closestEntry.X.ToString("g3");
-                string[] yFlows = new string[speciesNo]; // indexed by (speciesNo - 1 - s) instead of (s), to reverse species list into natural order
-                string[] yValues = new string[speciesNo]; // indexed by (speciesNo - 1 - s)
-                for (int s = 0; s < speciesNo; s++) {
-                    if (seriesList[s].visible) {
-                        SKPoint point = closestEntry.Ypoint[s];
-                        float range = closestEntry.YpointRange[s];
-                        if (((point.Y + range) >= (target.Y - radius)) && ((point.Y - range) <= (target.Y + radius))) {
-                            yFlows[speciesNo - 1 - s] = seriesList[s].name;
-                            yValues[speciesNo - 1 - s] =
-                                "= " + closestEntry.Y[s].ToString("g3")
-                                + ((closestEntry.Yrange[s] > 0.0f) ? " ± " + closestEntry.Yrange[s].ToString("g3") : "");
+                if (closestEntry != null) {
+                    string xValue = "= " + closestEntry.X.ToString("g3");
+                    string[] yFlows = new string[speciesNo]; // indexed by (speciesNo - 1 - s) instead of (s), to reverse species list into natural order
+                    string[] yValues = new string[speciesNo]; // indexed by (speciesNo - 1 - s)
+                    for (int s = 0; s < speciesNo; s++) {
+                        if (seriesList[s].visible) {
+                            SKPoint point = closestEntry.Ypoint[s];
+                            float range = closestEntry.YpointRange[s];
+                            if (((point.Y + range) >= (target.Y - radius)) && ((point.Y - range) <= (target.Y + radius))) {
+                                yFlows[speciesNo - 1 - s] = seriesList[s].name;
+                                yValues[speciesNo - 1 - s] =
+                                    "= " + closestEntry.Y[s].ToString("g3")
+                                    + ((closestEntry.Yrange[s] > 0.0f) ? " ± " + closestEntry.Yrange[s].ToString("g3") : "");
+                            }
+                        }
+                    }
+                    return (xValue, yFlows, yValues, null);
+                }
+
+                // if no trajectory hits, find hits on the poles
+                foreach (KChartPole pole in poles) {
+                    if (seriesIndex.ContainsKey(pole.seriesName)) {
+                        KSeries series = seriesList[seriesIndex[pole.seriesName]];
+                        if (series.visible) {
+                            if ((pole.YpointLo.X >= (target.X - radius)) && (pole.YpointLo.X <= (target.X + radius)) &&
+                                (pole.YpointLo.Y >= target.Y) && (pole.YpointHi.Y <= target.Y)) {
+                                return ("= " + pole.X.ToString("g3"), new string[0], new string[0], null);
+                            }
                         }
                     }
                 }
-                return (xValue, yFlows, yValues, null);
+
+                // no hits
+                return (null, null, null, null);
             }
         }
 
@@ -649,6 +698,12 @@ namespace Kaemika {
                     entry.Ypoint[j] = new SKPoint(x, y);
                     entry.YpointRange[j] = (entry.Yrange[j] == 0) ? 0 : YlocRangeOfYvalRangeInPlotarea(entry.Yrange[j], minY, maxY, plotSize);
                 }
+            }
+            for (int i = 0; i < poles.Count; i++) {
+                KChartPole pole = poles[i];
+                float x = plotOrigin.X + XlocOfXvalInPlotarea(pole.X, minX, maxX, plotSize);
+                pole.YpointLo = new SKPoint(x, plotOrigin.Y + YlocOfYvalInPlotarea(minY, minY, maxY, plotSize));
+                pole.YpointHi = new SKPoint(x, plotOrigin.Y + YlocOfYvalInPlotarea(maxY, minY, maxY, plotSize));
             }
         }
 
@@ -968,6 +1023,21 @@ namespace Kaemika {
             }
         }
 
+        private void Inner_DrawPoles(ChartPainter painter, float pointSize, Swipe pinchPan) {
+            float thinWeigth = 1 * pointSize;
+            float thickWeigth = 3 * pointSize;
+            for (int i = 0; i < poles.Count; i++) {
+                KChartPole pole = poles[i];
+                if (seriesIndex.ContainsKey(pole.seriesName)) {
+                    KSeries series = seriesList[seriesIndex[pole.seriesName]];
+                    if (series.visible)  {
+                        var weight = poles[i].lineStyle == KLineStyle.Thin ? thinWeigth : thickWeigth;
+                        painter.DrawLine(new List<SKPoint> { pinchPan % poles[i].YpointLo, pinchPan % poles[i].YpointHi }, painter.LinePaint(weight, series.color));
+                    }
+                }
+            }
+        }
+
         public void DrawContent(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float pointSize, float margin, float titleHeight, float textHeight, SKColor zeroColor, SKColor axisColor, Swipe pinchPan) {
             lock (mutex) {
                 (float minX, float maxX, float minY, float maxY) = Inner_Bounds();
@@ -976,6 +1046,7 @@ namespace Kaemika {
                 Inner_DrawYLabels(painter, plotOrigin, plotSize, margin, pointSize, textHeight, zeroColor, axisColor, minY, maxY, pinchPan);
                 Inner_CalculatePoints(plotOrigin, plotSize, minX, maxX, minY, maxY);
                 Inner_DrawLines(painter, plotOrigin, plotSize, pointSize, pinchPan);
+                Inner_DrawPoles(painter, pointSize, pinchPan);
                 Inner_DrawSeriesTags(painter, textHeight, margin, pinchPan);
             }
         }

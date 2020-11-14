@@ -27,37 +27,37 @@ namespace Kaemika
         public SwapMap(bool subsup = false) {
             this.map = new Dictionary<string, string>();
             if (subsup) {
-                this.map["'"] = "_";
-                this.map["⁺"] = "_p";
-                this.map["⁻"] = "_n";
-                this.map["⁼"] = "_e";
-                this.map["⁰"] = "_0";
-                this.map["¹"] = "_1";
-                this.map["²"] = "_2";
-                this.map["³"] = "_3";
-                this.map["⁴"] = "_4";
-                this.map["⁵"] = "_5";
-                this.map["⁶"] = "_6";
-                this.map["⁷"] = "_7";
-                this.map["⁸"] = "_8";
-                this.map["⁹"] = "_9";
-                this.map["⁽"] = "_d";
-                this.map["⁾"] = "_b";
-                this.map["₊"] = "__p";
-                this.map["₋"] = "__n";
-                this.map["₌"] = "__e";
-                this.map["₀"] = "__0";
-                this.map["₁"] = "__1";
-                this.map["₂"] = "__2";
-                this.map["₃"] = "__3";
-                this.map["₄"] = "__4";
-                this.map["₅"] = "__5";
-                this.map["₆"] = "__6";
-                this.map["₇"] = "__7";
-                this.map["₈"] = "__8";
-                this.map["₉"] = "__9";
-                this.map["₍"] = "__d";
-                this.map["₎"] = "__b";
+                this.map["'"] = "_q";
+                this.map["⁺"] = "__p";
+                this.map["⁻"] = "__n";
+                this.map["⁼"] = "__e";
+                this.map["⁰"] = "__0";
+                this.map["¹"] = "__1";
+                this.map["²"] = "__2";
+                this.map["³"] = "__3";
+                this.map["⁴"] = "__4";
+                this.map["⁵"] = "__5";
+                this.map["⁶"] = "__6";
+                this.map["⁷"] = "__7";
+                this.map["⁸"] = "__8";
+                this.map["⁹"] = "__9";
+                this.map["⁽"] = "__d";
+                this.map["⁾"] = "__b";
+                this.map["₊"] = "_p";
+                this.map["₋"] = "_n";
+                this.map["₌"] = "_e";
+                this.map["₀"] = "_0";
+                this.map["₁"] = "_1";
+                this.map["₂"] = "_2";
+                this.map["₃"] = "_3";
+                this.map["₄"] = "_4";
+                this.map["₅"] = "_5";
+                this.map["₆"] = "_6";
+                this.map["₇"] = "_7";
+                this.map["₈"] = "_8";
+                this.map["₉"] = "_9";
+                this.map["₍"] = "_d";
+                this.map["₎"] = "_b";
             }
         }
         public Dictionary<string, string> Pairs() { return this.map; }
@@ -65,6 +65,7 @@ namespace Kaemika
         public bool ContainsValue(string value) { return this.map.ContainsValue(value); }
         public SwapMap Assign(string key, string value) { this.map[key] = value; return this; }
         public string Extract(string key) { return (this.map.ContainsKey(key)) ? this.map[key] : null; }
+        public string Map(string key) { return (this.map.ContainsKey(key)) ? this.map[key] : key; }
     }
 
     public abstract class Entry {
@@ -201,6 +202,30 @@ namespace Kaemika
                 s += " in " + sample.FormatSymbol(style);
                 return s;
             //} else return "";
+        }
+    }
+
+    public class TriggerEntry : Entry {
+        public SpeciesValue target;
+        public Flow condition;
+        public Flow assignment;
+        public string dimension;
+        public SampleValue sample;
+        public TriggerEntry(SpeciesValue target, Flow condition, Flow assignment, string dimension, SampleValue sample) {
+            this.target = target;
+            this.condition = condition;
+            this.assignment = assignment;
+            this.dimension = dimension;
+            this.sample = sample;
+        }
+        public override string Format(Style style) {
+            string s = "trigger ";
+            s += target.Format(style) + " @ ";
+            s += assignment.TopFormat(style) + " ";
+            s += dimension + " when ";
+            s += condition.TopFormat(style);
+            s += (sample.symbol.IsVesselVariant() ? "" : " in " + sample.FormatSymbol(style));
+            return s;
         }
     }
 

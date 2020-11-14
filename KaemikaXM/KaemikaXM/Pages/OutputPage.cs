@@ -56,6 +56,7 @@ namespace KaemikaXM.Pages {
                 new OutputAction(this, "System Equations", OutputKind.Text, ExportAs.PDMPequations),
                 new OutputAction(this, "System Stoichiometry", OutputKind.Text, ExportAs.PDMPstoichiometry),
                 new OutputAction(this, "Scalable Vector Graphics", OutputKind.Text, ExportAs.SVG),
+                new OutputAction(this, "SBML", OutputKind.Text, ExportAs.SBML),
                 //new OutputAction(this, "Protocol State Graph (Par.)", OutputKind.Graph, ExportAs.PDMPGraph_Parallel),
             };
         }

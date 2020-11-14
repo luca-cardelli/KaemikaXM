@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\packages\Xamarin.Forms.4.4.0.991640\build\Xamarin.Forms.props" Condition="Exists('..\packages\Xamarin.Forms.4.4.0.991640\build\Xamarin.Forms.props')" />
   <PropertyGroup>
@@ -94,7 +94,7 @@
     <ImageAsset Include="Assets.xcassets\AppIcon.appiconset\AppIcon-512.png" />
     <ImageAsset Include="Assets.xcassets\AppIcon.appiconset\AppIcon-512%402x.png" />
     <ImageAsset Include="Assets.xcassets\Contents.json" />
-    <ImageAsset Include="Resources\Assets.xcassets\.DS_Store" />
+
     <ImageAsset Include="Resources\Assets.xcassets\icons8text.48x48.imageset\icons8text.48x48.png" />
     <ImageAsset Include="Resources\Assets.xcassets\icons8text.48x48.imageset\Contents.json" />
     <ImageAsset Include="Resources\Assets.xcassets\icons8-keyboard-96.W.48x48.imageset\icons8-keyboard-96.W.48x48.png" />
@@ -261,9 +261,7 @@
   <ItemGroup>
     <InterfaceDefinition Include="Main.storyboard" />
   </ItemGroup>
-  <ItemGroup>
-    <BundleResource Include="Resources\.DS_Store" />
-  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Kaemika\Kaemika.csproj">
       <Project>{9FA75239-1D60-4AEB-9BDB-2D500558F16F}</Project>

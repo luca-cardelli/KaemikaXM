@@ -47,6 +47,7 @@ namespace Kaemika {
                 + "}, state = {"
                 + sample.FormatContent(style)
                 + "}"
+                + (sample.Triggers(style).Count==0 ?  "" : ", triggers = {" + Style.FormatSequence(sample.Triggers(style), ", ", x => x.Format(style)) + "}")
                 ;
         }
 
@@ -55,7 +56,8 @@ namespace Kaemika {
                 (sample.symbol.IsVesselVariant() ? "" : Environment.NewLine + "Sample " + sample.FormatSymbol(style) + Environment.NewLine)
                 + sample.FormatContent(style, true, false, false) + Environment.NewLine + Environment.NewLine
                 + Style.FormatSequence(this.reactions, Environment.NewLine, x => x.FormatNormal(style)) + Environment.NewLine + Environment.NewLine
-                + FormatAsODE(style, "∂ ", "", false) + Environment.NewLine;
+                + FormatAsODE(style, "∂ ", "", false) + Environment.NewLine
+                + (sample.Triggers(style).Count == 0 ? "" : Style.FormatSequence(sample.Triggers(style), Environment.NewLine, x => x.Format(style)) + Environment.NewLine + Environment.NewLine);
         }
         public static string FormatCanonical(List<Symbol> complex, Style style) {
             SortedList<string, int> l = CanonicalComplex(complex, style);

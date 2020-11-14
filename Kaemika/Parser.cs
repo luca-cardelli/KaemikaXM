@@ -131,6 +131,8 @@ namespace Kaemika {
                 return new List<Statement> { new PatternDefinition(ParsePattern(reduction.Nonterminal(0)), ParseExpression(reduction.Nonterminal(2))) };            
             } else if ((reduction.Production() == "<Statement> ::= amount <Ids> '@' <Expression> <Quantity> <Allocation>")) {
                 return new List<Statement> { new Amount(ParseIds(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(3)), ParseQuantity(reduction.Nonterminal(4)), ParseAllocation(reduction.Nonterminal(5))) };
+            } else if ((reduction.Production() == "<Statement> ::= trigger <Ids> '@' <Expression> <Quantity> when <Expression> <Allocation>")) {
+                return new List<Statement> { new Trigger(ParseIds(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(3)), ParseQuantity(reduction.Nonterminal(4)), ParseExpression(reduction.Nonterminal(6)), ParseAllocation(reduction.Nonterminal(7))) };
             } else if ((reduction.Production() == "<Statement> ::= mix Id '=' <ExpressionSeq>")) {
                 return new List<Statement> { new Mix(reduction.Terminal(1), ParseExpressionSeq(reduction.Nonterminal(3))) };
             } else if ((reduction.Production()               == "<Statement> ::= split <IdSeq> '=' <Expression> by <ExpressionSeq>")) {
@@ -251,10 +253,14 @@ namespace Kaemika {
         }  
 
         public static Substance ParseSubstance(IReduction reduction) {
-            if (reduction.Production() == "<Substance> ::= Id '#' <Expression>") {
-                return new SubstanceMolarmass(reduction.Terminal(0), ParseExpression(reduction.Nonterminal(2)));
-            } else if (reduction.Production()            == "<Substance> ::= Id") {
+            if (reduction.Production() == "<Substance> ::= Id") {
                 return new SubstanceConcentration(reduction.Terminal(0));
+            } else if (reduction.Production() == "<Substance> ::= Id '#' <Expression>") {
+                return new SubstanceMolarmass(reduction.Terminal(0), ParseExpression(reduction.Nonterminal(2)));
+            } else if (reduction.Production() == "<Substance> ::= Id as <Expression>") {
+                return new SubstanceConcentration(reduction.Terminal(0), ParseExpression(reduction.Nonterminal(2)));
+            } else if (reduction.Production() == "<Substance> ::= Id '#' <Expression> as <Expression>") {
+                return new SubstanceMolarmass(reduction.Terminal(0), ParseExpression(reduction.Nonterminal(2)), ParseExpression(reduction.Nonterminal(4)));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
         }  
 

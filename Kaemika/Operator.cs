@@ -359,12 +359,12 @@ namespace Kaemika {
         }
     }
 
-    public class Op_DiffAlso : OperatorUnary {
-        public Op_DiffAlso() : base("diff") { }
-        public override Value Apply1(Value arg1, bool infix, Style style) {
-            return OpFlow1(arg1, infix, style);
-        }
-    }
+    //public class Op_DiffAlso : OperatorUnary {
+    //    public Op_DiffAlso() : base("diff") { }
+    //    public override Value Apply1(Value arg1, bool infix, Style style) {
+    //        return OpFlow1(arg1, infix, style);
+    //    }
+    //}
 
     public class Op_Sdiff : OperatorUnary { 
         public Op_Sdiff() : base("sdiff") { }
@@ -413,6 +413,13 @@ namespace Kaemika {
         public Op_Bernoulli() : base("bernoulli") { }
         public override Value Apply1(Value arg1, bool infix, Style style) {
             if (arg1 is NumberValue as1) return LoDistributionValue.Bernoulli(as1.value, style); else return Bad(arg1, style);
+        }
+    }
+
+    public class Op_Basename : OperatorUnary {
+        public Op_Basename() : base("basename") { }
+        public override Value Apply1(Value arg1, bool infix, Style style) {
+            if (arg1 is SpeciesValue as1) return new StringValue(as1.symbol.Raw()); else return Bad(arg1, style);
         }
     }
 

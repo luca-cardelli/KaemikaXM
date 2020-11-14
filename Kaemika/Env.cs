@@ -149,7 +149,7 @@ namespace Kaemika {
             AddOp(new Op_GreatEq());
             AddOp(new Op_Great());
             AddOp(new Op_Diff());
-            AddOp(new Op_DiffAlso());
+            //AddOp(new Op_DiffAlso());
             AddOp(new Op_Sdiff());
             AddOp(new Op_Abs());
             AddOp(new Op_Arccos());
@@ -188,6 +188,7 @@ namespace Kaemika {
             AddOp(new Op_Exponential());
             AddOp(new Op_Parabolic());
             AddOp(new Op_Bernoulli());
+            AddOp(new Op_Basename());
             AddOp(new Op_Drawsample());
             AddOp(new Op_Map());
             AddOp(new Op_Filter());

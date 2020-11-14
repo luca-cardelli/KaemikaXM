@@ -54,7 +54,7 @@ namespace Kaemika {
                 this.species.Add(species);
                 RecomputeIndex();
                 this.state = this.state.Extend(1);
-                this.state.SumMean(this.state.size-1, Normalize(species, molarity, dimension, volume, style));
+                this.state.SumMean(this.state.size-1, NormalizeDimension(species, molarity, dimension, volume, style));
             }
         }
         public void SumMean(Symbol species, double x) {
@@ -128,7 +128,7 @@ namespace Kaemika {
         //        }
         //    }
         //}
-        public double Normalize(SpeciesValue species, double value, string dimension, double volume, Style style) {
+        public double NormalizeDimension(SpeciesValue species, double value, string dimension, double volume, Style style) {
             if (double.IsNaN(value)) return value;
             double normal;
             normal = Protocol.NormalizeMolarity(value, dimension);

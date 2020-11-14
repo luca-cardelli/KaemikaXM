@@ -23,6 +23,8 @@ namespace KaemikaXM.Pages {
 
         public static List<ModelInfoGroup> docs;
         private ListView listView;
+        private ToolbarItem kaemikaLogo;
+        private bool kaemikaLogoToggle = true;
 
         public DocListPage() {
             Title = "Tutorial";
@@ -30,12 +32,15 @@ namespace KaemikaXM.Pages {
 
             // in iOS>Resource the images of the TitleBar buttons must be size 40, otherwise they will scale but still take the horizontal space of the original
 
-            ToolbarItem kaemikaLogo = new ToolbarItem("Logo", "kaemikaLogoWhite.png", async () => { });
+            kaemikaLogo = new ToolbarItem("Logo", "kaemikaLogoWhite.png", async () => {
+                if (kaemikaLogoToggle) { kaemikaLogo.IconImageSource = null; kaemikaLogo.Text = Gui.KaemikaVersion; } else kaemikaLogo.IconImageSource = "kaemikaLogoWhite.png";
+                kaemikaLogoToggle = !kaemikaLogoToggle;
+            });
             kaemikaLogo.IsEnabled = true;
             ToolbarItems.Add(kaemikaLogo);
-            ToolbarItem toolbarSpacer = new ToolbarItem("", null, async () => { });
-            toolbarSpacer.IsEnabled = false;
-            ToolbarItems.Add(toolbarSpacer);
+            //ToolbarItem toolbarSpacer = new ToolbarItem("", null, async () => { });
+            //toolbarSpacer.IsEnabled = false;
+            //ToolbarItems.Add(toolbarSpacer);
 
             listView = CreateGroupedListView();
             listView.BackgroundColor = MainTabbedPage.almostWhite;  // BACKGROUND COLOR OF MENU ITEMS

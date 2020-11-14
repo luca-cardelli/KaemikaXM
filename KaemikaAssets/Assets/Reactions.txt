@@ -51,6 +51,27 @@ a -> b
 
 equilibrate for 1     
 
+//======================================
+// Events
+//======================================
+
+// triggers cause events to happen when a condition becomes true
+// but only once: the first time that the condition goes from false to true (or at time 0 if true)
+
+trigger a @ 5 mM when time > 1
+
+// species a is set to 5 mM when time exceeds 1
+
+sample S
+trigger a @ a + 0.001 M when a < 0.0005 in S
+
+// adds 1 mM to the existing amount of a, when a < 0.5mM.
+// Note that when computing with species concentrations ('a + 0.001') the unit of 'a' is always 'M'. Hence, it is best to use 'M' as the unit for the computation 'a + 0.001 M', because 'a + 1 mM' would not be the same.
+// If "in S" is specified, the trigger is applied inside sample S (see Samples docs).
+// Any flow expression can be used as the trigger condition and as the reassignment value (see Flows docs).
+
+// Events are correctly handled by SMBL export.
+// Events do not modify the current variance of the species that are affected.
 
 //======================================
 // Advanced examples: Overriding the 

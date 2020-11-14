@@ -23,14 +23,13 @@ namespace Kaemika {
             foreach (var keypair in swap.Pairs()) name = Replace(name, keypair.Key, keypair.Value);
             return name;
         }
-        public string LowerChars(string s) {
-            return s.Replace('0', '₀').Replace('1', '₁').Replace('2', '₂').Replace('3', '₃').Replace('4', '₄').Replace('5', '₅').Replace('6', '₆').Replace('7', '₇').Replace('8', '₈').Replace('9', '₉');
+        public string LowerChars(string s, SwapMap swap) {
+            return s.Replace("0", swap.Map("₀")).Replace("1", swap.Map("₁")).Replace("2", swap.Map("₂")).Replace("3", swap.Map("₃")).Replace("4", swap.Map("₄")).Replace("5", swap.Map("₅")).Replace("6", swap.Map("₆")).Replace("7", swap.Map("₇")).Replace("8", swap.Map("₈")).Replace("9", swap.Map("₉"));
         }
         public string FormatVariant(int variantNo, Style style) {
             string varchar = style.Varchar();
             if (varchar == null) return "";
-            return varchar + LowerChars(variantNo.ToString());
-
+            return varchar + LowerChars(variantNo.ToString(), style.Swap());
         }
         public string Format(Style style) {
             string varchar = style.Varchar();

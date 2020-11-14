@@ -73,7 +73,7 @@ namespace Kaemika {
 
     // STYLE
 
-    public enum ExportTarget : int { LBS, CRN, WolframNotebook, Standard };
+    public enum ExportTarget : int { MSRC_LBS, MSRC_CRN, WolframNotebook, Standard };
 
     public class Style {
         private string varchar;                 // The non-inputable character used to distinguish symbol variants
@@ -486,6 +486,14 @@ namespace Kaemika {
                 else if (arguments.Count == 1) return list.Select(arguments[0], style);
                 else if (arguments.Count == 2) return list.Sublist(arguments[0], arguments[1], style);
                 else throw new Error("Wrong number of arguments to list selection: " + Format());
+            } else if (value is StringValue) {
+                StringValue str = (StringValue)value;
+                List<Value> arguments = this.arguments.EvalReject(env, netlist, style, s + 1);
+                if (arguments == Expressions.REJECT) return Value.REJECT;
+                if (arguments.Count == 0) return new NumberValue(str.value.Length);
+                else if (arguments.Count == 1) return str.Select(arguments[0], style);
+                else if (arguments.Count == 2) return str.Substring(arguments[0], arguments[1], style);
+                else throw new Error("Wrong number of arguments to string selection: " + Format());
             } else if (value is OmegaValue) {
                 OmegaValue omega = value as OmegaValue;
                 List<Value> arguments = this.arguments.EvalReject(env, netlist, style, s + 1);
@@ -867,7 +875,8 @@ namespace Kaemika {
         public override Scope Scope(Scope scope) {
             Scope extScope = scope;
             foreach (Substance substance in substances) {
-                if (substance is SubstanceMolarmass asMolarmass) asMolarmass.Scope(scope);
+                if (substance is SubstanceMolarmass asMolarmass) asMolarmass.molarmass.Scope(scope);
+                if (substance.basename != null) substance.basename.Scope(scope);
                 extScope = new ConsScope(substance.name, extScope);
             }
             statements.Scope(extScope);
@@ -876,10 +885,10 @@ namespace Kaemika {
         public override Env EvalReject(Env env, Netlist netlist, Style style, int s) { StackCheck(s);
             Env extEnv = env;
             foreach (Substance substance in this.substances) {
-                Symbol symbol = new Symbol(substance.name);                         // create a new symbol from name
+                Symbol symbol = new Symbol(substance.name); // create a new symbol for the species-variable
                 double molarmass;
                 if (substance is SubstanceMolarmass asMolarmass) {
-                    Value molarmassValue = asMolarmass.EvalReject(env, netlist, style, s+1);    // eval molarmass, returns a bool for absence of molarmass
+                    Value molarmassValue = asMolarmass.molarmass.EvalReject(env, netlist, style, s+1);    // eval molarmass, returns a bool for absence of molarmass
                     if (molarmassValue == Value.REJECT) return Env.REJECT;
                     if (molarmassValue is NumberValue asNumber) molarmass = asNumber.value;
                     else throw new Error("Molar mass must be a number, for species: " + substance.name);
@@ -887,42 +896,56 @@ namespace Kaemika {
                 } else { // substance is SubstanceConcentration
                     molarmass = -1.0; // molarmass not specified
                 }
-                SpeciesValue species = new SpeciesValue(symbol, molarmass);         // use the new symbol for the uninitialized species value
-                extEnv = new ValueEnv(symbol, Type.Species, species, extEnv, noCheck: true);               // extend environment
-                if (netlist.EmitChem(style, s)) netlist.Emit(new SpeciesEntry(species));   // put the species in the netlist (its initial value goes into a sample)
+                Symbol basesymbol; // create a new symbol for the species-basename, or use the default one
+                if (substance.basename == null) basesymbol = symbol;
+                else {
+                    Value basevalue = substance.basename.EvalReject(env, netlist, style, s + 1);
+                    if (basevalue == Value.REJECT) return Env.REJECT;
+                    if (basevalue is StringValue asString) basesymbol = new Symbol(asString.value);
+                    else throw new Error("basename " + basevalue.Format(style) + " must be a string, for species: " + substance.name);
+                    if (!LegalId(asString.value)) throw new Error("basename '" + asString.value + "' must be a legal Id, for species: " + substance.name);
+                }
+                SpeciesValue species = new SpeciesValue(basesymbol, molarmass);               // use the baesesymbol for the uninitialized species value
+                extEnv = new ValueEnv(symbol, Type.Species, species, extEnv, noCheck: true);  // extend environment with symbol
+                if (netlist.EmitChem(style, s)) netlist.Emit(new SpeciesEntry(species));      // put the species in the netlist (its initial value goes into a sample)
             }
             Env ignoreEnv = this.statements.EvalReject(extEnv, netlist, style, s + 1);          // eval the statements in the new environment
             if (ignoreEnv == Env.REJECT) return Env.REJECT;
             return extEnv;                                                         // return the environment with the new species definitions (only)
         }
+        public static bool LegalId(string basename) {
+            // Should match GOLD lexical Id from Kaemika grammar
+            System.Text.RegularExpressions.Regex r = new System.Text.RegularExpressions.Regex("^[a-zA-ZͰ-Ͽ][_'a-zA-Z0-9Ͱ-Ͽ⁰-ₔ]*$");
+            // range Ͱ-Ͽ = &0370 .. &03FF is GOLD "Greek and Coptic" predefined character set
+            // range ⁰-ₔ = &2070 .. &2094 is GOLD "Superscripts and Subscripts" predefined character set (actually goes to .. &209F)
+            // Use windows Character Map app to find the characters
+            return r.IsMatch(basename);
+        }
     }
 
     public abstract class Substance {
         public string name;
+        public Expression basename;
         public abstract string Format();
     }
     public class SubstanceConcentration : Substance {
-        public SubstanceConcentration(string name) {
+        public SubstanceConcentration(string name, Expression basename = null) {
             this.name = name;
+            this.basename = basename;
         }
         public override string Format() {
-            return name;
+            return name + ((basename == null) ? "" : " as " + basename.Format());
         }
     }
     public class SubstanceMolarmass : Substance {
         public Expression molarmass;
-        public SubstanceMolarmass(string name, Expression molarmass) {
+        public SubstanceMolarmass(string name, Expression molarmass, Expression basename = null) {
             this.name = name;
+            this.basename = basename;
             this.molarmass = molarmass;
         }
         public override string Format() {
-            return name + " # " + molarmass.Format();
-        }
-        public void Scope(Scope scope) {
-            molarmass.Scope(scope);
-        }
-        public Value EvalReject(Env env, Netlist netlist, Style style, int s) {
-            return molarmass.EvalReject(env, netlist, style, s+1);
+            return name + " # " + molarmass.Format() + ((basename == null) ? "" : " as " + basename.Format());
         }
     }
 
@@ -1318,7 +1341,56 @@ namespace Kaemika {
             return env;
         }
     }
-       
+
+    public class Trigger : Statement {
+        private List<Variable> vars;
+        private Expression assignment;
+        private string dimension; // Mass unit, or concentration unit
+        private Expression condition;
+        private Expression sample;
+        public Trigger(Ids names, Expression assignment, string dimension, Expression condition, Expression sample) {
+            this.vars = new List<Variable> { };
+            foreach (string name in names.ids) this.vars.Add(new Variable(name));
+            this.assignment = assignment;
+            this.dimension = dimension;
+            this.condition = condition;
+            this.sample = sample;
+        }
+        private string FormatVars() {
+            string ids = "";
+            foreach (Variable var in this.vars) ids = ids + " " + var.Format();
+            return ids;
+        }
+        public override string Format() {       
+            return "trigger" + this.FormatVars() + " @ " + assignment.Format() + " " + dimension + " when " + condition.Format() + " in " + sample.Format();
+        }
+        public override Scope Scope(Scope scope) {
+            foreach (Variable var in this.vars) var.Scope(scope);
+            assignment.Scope(scope);
+            condition.Scope(scope);
+            sample.Scope(scope);
+            return scope;
+        }
+        public override Env EvalReject(Env env, Netlist netlist, Style style, int s) { StackCheck(s);
+            Flow assignmentValue = this.assignment.EvalRejectToFlow(this.assignment, env, netlist, style,  s+ 1);
+            if (assignmentValue == Flow.REJECT) return Env.REJECT;
+            Flow conditionValue = this.condition.EvalRejectToFlow(this.condition, env, netlist, style, s + 1);
+            if (conditionValue == Flow.REJECT) return Env.REJECT;
+            Value sampleValue = this.sample.EvalReject(env, netlist, style, s + 1);
+            if (sampleValue == Value.REJECT) return Env.REJECT;
+            if (!(sampleValue is SampleValue)) throw new Error("Trigger " + this.FormatVars() + " requires a sample value");
+            foreach (Variable var in this.vars) {
+                Value speciesValue = var.EvalReject(env, netlist, style, s + 1);
+                if (speciesValue == Value.REJECT) return Env.REJECT;
+                if (!(speciesValue is SpeciesValue)) throw new Error("Trigger " + this.FormatVars() + "has a non-species in the list of variables");
+                TriggerEntry triggerEntry = new TriggerEntry((SpeciesValue)speciesValue, conditionValue, assignmentValue, this.dimension, (SampleValue)sampleValue);
+                Protocol.Trigger((SampleValue)sampleValue, triggerEntry, style);
+                if (netlist.EmitChem(style, s)) netlist.Emit(triggerEntry);
+            }
+            return env;
+        }
+    }       
+
     public class Mix : Statement {
         private string name;
         private Expressions expressions;

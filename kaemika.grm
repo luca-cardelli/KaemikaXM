@@ -84,8 +84,11 @@ Comment Block @= { Nesting = All }
                     |                      ! short for 'in' 'vessel'
 <Substances>     ::= <Substances> ',' <Substance>
                     | <Substance>
-<Substance>      ::= Id '#' <Expression>
-                    | Id
+                                                             ! a species-basename is a string that is a legal Id, alpha-converted to avoid conflicts
+<Substance>      ::= Id                                      ! same as: Id 'as' "Id" (species-basename "Id" is taken from variable-name Id)
+                    | Id 'as' <Expression>                   ! variable-name 'as' species-basename (to adopt a non-default basename)
+                    | Id '#' <Expression>                    ! same as: Id "#" <Expression> 'as' "Id"
+                    | Id '#' <Expression> 'as' <Expression>  ! variable-name Id with molar mass 'as' species-basename
                   
 ! STATEMENTS --------------------------------------------
 
@@ -109,6 +112,7 @@ Comment Block @= { Nesting = All }
                     | 'value' Id '=' <Expression>             ! binding any value to an id (useful in polymorphic functions)
                     | <Pattern> '=' <Expression>              ! binding list elements to ids; length and types must match                  
                     | 'amount' <Ids> '@' <Expression> <Quantity> <Allocation>  ! set initial quantity of species in a sample
+                    | 'trigger' <Ids> '@' <Expression> <Quantity> 'when' <Expression> <Allocation>  ! trigger event the first time that condition becomes true
                     | 'report' <Reports> <Allocation>                          ! report species for plotting (can use arithmetic, but restrictions apply)
                     | 'if' <Expression> 'then' <Statements> <Else>             ! conditional
                     | <Draw>                                                   ! draw samples from (lists of) functions or random variables and plot them
@@ -256,3 +260,4 @@ Comment Block @= { Nesting = All }
 <Volume>        ::= Id     ! 'L' | 'mL' | 'uL' | 'μL' | 'nL'  | 'pL' | 'ml' | 'ul' | 'μl' | 'nl' | 'pl'
 <Temperature>   ::= Id     ! 'K' | 'Kelvin' | 'C' | 'Celsius'
 <Quantity>      ::= Id     ! 'kg' | 'g' | 'mg' | 'ug' | 'μg' | 'ng' | 'pg' | 'kM' | 'M' | 'mM' | 'uM' | 'μM' | 'nM' | 'pM' | 'kmol' | 'mol' | 'mmol' | 'umol' | 'μmol' | 'nmol' | 'pmol'
+

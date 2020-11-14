@@ -11,7 +11,9 @@
 // Create a new empty sample 's' with 
 // given volume and temperature:
 
-sample s {1mL, 20C}           
+sample s {1mL, 20C}
+
+// if '{..}' is omitted, those are the defaults
 
 // Declare two new species, but do not 
 // initialize them: they can be used

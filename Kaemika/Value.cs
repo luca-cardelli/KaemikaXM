@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Drawing;
 using Microsoft.Research.Oslo;
+using QuickGraph;
+using MathNet.Numerics.Statistics;
 
 namespace Kaemika {
 
@@ -106,6 +108,7 @@ namespace Kaemika {
         private double timeAsConsumed;
         private State stateAsConsumed;
         private List<ReportEntry> reports; // reports to generate when this sample is simulated
+        private List<TriggerEntry> triggers; // triggers (events) to compute when this sample is simulated
         public SampleValue(Symbol symbol, StateMap stateMap, NumberValue volume, NumberValue temperature, bool produced) {
             this.type = Type.Sample;
             this.symbol = symbol;
@@ -118,6 +121,7 @@ namespace Kaemika {
             this.timeAsConsumed = 0.0;
             this.stateAsConsumed = null;
             this.reports = new List<ReportEntry>();
+            this.triggers = new List<TriggerEntry>();
         }
         public int Count() {
             return stateMap.species.Count;
@@ -271,6 +275,12 @@ namespace Kaemika {
             }
             return reportList;
         }
+        public List<TriggerEntry> Triggers(Style style) {
+            return this.triggers;
+        }
+        public void AddTrigger(TriggerEntry trigger) {
+            this.triggers.Add(trigger);
+        }
 
     }
 
@@ -335,6 +345,19 @@ namespace Kaemika {
         }
         public override string Format(Style style) {
             return Parser.FormatString(this.value);
+        }
+        public StringValue Select(Value arg, Style style) {
+            if (!(arg is NumberValue)) throw new Error("String index is not a number: " + this.Format(style) + "(" + arg.Format(style) + ")");
+            int n = Convert.ToInt32((arg as NumberValue).value);
+            if (n < 0 || n >= value.Length) throw new Error("String index out of range: " + this.Format(style) + "(" + arg.Format(style) + ")");
+            return new StringValue(value.Substring(n,1));
+        }
+        public StringValue Substring(Value arg1, Value arg2, Style style) {
+            if (!(arg1 is NumberValue) || !(arg2 is NumberValue)) throw new Error("String index is not a number: " + this.Format(style) + "(" + arg1.Format(style) + ", " + arg2.Format(style) + ")");
+            int n = Convert.ToInt32((arg1 as NumberValue).value);
+            int m = Convert.ToInt32((arg2 as NumberValue).value);
+            if (n < 0 || m < 0 || n + m > value.Length) throw new Error("String index out of range: " + this.Format(style) + "(" + arg1.Format(style) + ", " + arg2.Format(style) + ")");
+            return new StringValue(value.Substring(n, m));
         }
     }
 
@@ -511,61 +534,135 @@ namespace Kaemika {
 
         protected virtual (int rej, double sample) DrawBool(Style style) { return (0, double.NaN); }
         protected virtual (int rej, double sample) DrawNumber(Style style) { return (0, double.NaN); }
+        protected virtual (int rej, double[] sample) DrawNumberList(Style style) { return (0, new double[0]); }
 
         private static DateTime lastUpdate = DateTime.MinValue;
         private static int paletteNo = 0;
-        private static void DensityPlotUpdate(double lo, double hi, int listCount, string[] series, int samplesNo, double[][] samples, Style style, bool incremental) {
-            if (!style.chartOutput) return; // should be redundant
-            if (TimeLib.Precedes(lastUpdate, DateTime.Now.AddSeconds(-0.2))) {
-                KChartHandler.ChartClearData(style); // but not the series
-                if (hi == lo) { hi = hi + 1; lo = lo - 1; } // deal with single-point density plots
-                double scan = lo;
-                double step = (hi - lo) / 100.0;
-                if (step > 0)
-                    while (scan <= hi) {
-                        for (int d = 0; d < listCount; d++) {
-                            if (series[d] != null) { // may be null if there were duplicate series names
-                                double est = MathNet.Numerics.Statistics.KernelDensity.EstimateGaussian(scan, 3 * step, samples[d]);
-                                KChartHandler.ChartAddPoint(series[d], scan, est, 0.0, Noise.None);
-                            }
-                        }
-                        scan += step;
-                    }
-                KChartHandler.ChartUpdate(style, incremental);
-                lastUpdate = DateTime.Now; 
-            }
-        }
+
+        // ### version where each random number in the list can produce a number but not a list of numbers
+        //public static void DensityPlot(int samplesNo, List<DistributionValue> list, Style style) {
+        //    if (!style.chartOutput) return;
+        //    if (samplesNo > 0 && list.Count > 0) {
+        //        KChartHandler.ChartClear("", "", "", style);
+        //        lastUpdate = DateTime.MinValue;
+        //        string[] series = new string[list.Count];
+        //        paletteNo = list.Count - 1;
+        //        for (int d = list.Count-1; d >= 0; d--) {
+        //            string firstName = list[d].Format(style);
+        //            string name = firstName; int i = 0;
+        //            while (Array.Exists(series, (e => e == name))) { name = firstName + Exec.defaultVarchar + i; i++; }
+        //            series[d] = name;
+        //            KChartHandler.ChartAddSeries(series[d], null, Palette.GetColor(paletteNo), KLineMode.FillUnder, KLineStyle.Thick);
+        //            paletteNo--;
+        //        }
+        //        KChartHandler.LegendUpdate(style);
+        //        double[][] samples = new double[list.Count][];
+        //        for (int d = 0; d < list.Count; d++) samples[d] = new double[samplesNo];
+        //        double hi = double.MinValue;
+        //        double lo = double.MaxValue;
+        //        for (int i = 0; i < samplesNo; i++) {
+        //            for (int d = 0; d < list.Count; d++) {
+        //                (int rej, double sample) = list[d].DrawNumber(style.RestyleAsChartOutput(false)); // suppress chart output during evaluation of sample 
+        //                hi = Math.Max(hi, sample);
+        //                lo = Math.Min(lo, sample);
+        //                samples[d][i] = sample;
+        //            }
+        //            DensityPlotUpdate(lo, hi, list.Count, series, samplesNo, samples, style, true);
+        //        }
+        //        lastUpdate = DateTime.MinValue;
+        //        DensityPlotUpdate(lo, hi, list.Count, series, samplesNo, samples, style, false);
+        //    }
+        //}
+
         public static void DensityPlot(int samplesNo, List<DistributionValue> list, Style style) {
             if (!style.chartOutput) return;
             if (samplesNo > 0 && list.Count > 0) {
                 KChartHandler.ChartClear("", "", "", style);
                 lastUpdate = DateTime.MinValue;
-                string[] series = new string[list.Count];
-                paletteNo = list.Count - 1;
-                for (int d = list.Count-1; d >= 0; d--) {
-                    string firstName = list[d].Format(style);
-                    string name = firstName; int i = 0;
-                    while (Array.Exists(series, (e => e == name))) { name = firstName + Exec.defaultVarchar + i; i++; }
-                    series[d] = name;
-                    KChartHandler.ChartAddSeries(series[d], null, Palette.GetColor(paletteNo), KLineMode.FillUnder, KLineStyle.Thick);
-                    paletteNo--;
-                }
-                KChartHandler.LegendUpdate(style);
-                double[][] samples = new double[list.Count][];
-                for (int d = 0; d < list.Count; d++) samples[d] = new double[samplesNo];
+
+                int[] arity = new int[list.Count]; for (int d = 0; d < list.Count; d++) arity[d] = -1; // output arity of each function in the list (they can return a number or a list)
+                int totalArity = 0;
+                string[] series = null;
+                double[][] samples = null;
+                double[][][] valueSamples = new double[list.Count][][]; for (int d = 0; d < list.Count; d++) valueSamples[d] = new double[samplesNo][];
+
                 double hi = double.MinValue;
                 double lo = double.MaxValue;
                 for (int i = 0; i < samplesNo; i++) {
                     for (int d = 0; d < list.Count; d++) {
-                        (int rej, double sample) = list[d].DrawNumber(style.RestyleAsChartOutput(false)); // suppress chart output during evaluation of sample 
-                        hi = Math.Max(hi, sample);
-                        lo = Math.Min(lo, sample);
-                        samples[d][i] = sample;
+                        (int rej, double[] sampleList) = list[d].DrawNumberList(style.RestyleAsChartOutput(false)); // suppress chart output during evaluation of sample 
+                        if (arity[d] == -1) arity[d] = sampleList.Length; else if (arity[d] != sampleList.Length) throw new Error("draw-from: arities of samples do not match");
+                        valueSamples[d][i] = sampleList;
+                        if (samples == null) totalArity += arity[d];
                     }
-                    DensityPlotUpdate(lo, hi, list.Count, series, samplesNo, samples, style, true);
+
+                    if (samples == null) {
+                        series = new string[totalArity];
+                        samples = new double[totalArity][]; for (int k = 0; k < totalArity; k++) samples[k] = new double[samplesNo];
+                    }
+                    int nd = 0;
+                    paletteNo = totalArity - 1;
+                    for (int d = list.Count - 1; d >= 0; d--) {
+                        if (valueSamples[d][i].Length == 1) {
+                            if (series[nd] == null) {
+                                string firstName = list[d].Format(style);
+                                string name = firstName; int v = 0; while (Array.Exists(series, (e => e == name))) { name = firstName + Exec.defaultVarchar + v; v++; }
+                                series[nd] = name;
+                                KChartHandler.ChartAddSeries(series[nd], null, Palette.GetColor(paletteNo), KLineMode.FillUnder, KLineStyle.Thick); paletteNo--;
+                                KChartHandler.LegendUpdate(style);
+                            }
+                            double sample = valueSamples[d][i][0];
+                            hi = Math.Max(hi, sample);
+                            lo = Math.Min(lo, sample);
+                            samples[nd][i] = sample; nd++; 
+                        } else {
+                            for (int j = valueSamples[d][i].Length - 1; j >= 0; j--) {
+                                if (series[nd] == null) {
+                                    string firstName = list[d].Format(style) + "[" + j.ToString() + "]";
+                                    string name = firstName; int v = 0; while (Array.Exists(series, (e => e == name))) { name = firstName + Exec.defaultVarchar + v; v++; }
+                                    series[nd] = name;
+                                    KChartHandler.ChartAddSeries(series[nd], null, Palette.GetColor(paletteNo), KLineMode.FillUnder, KLineStyle.Thick); paletteNo--;
+                                    KChartHandler.LegendUpdate(style);
+                                }
+                                double sample = valueSamples[d][i][j];
+                                hi = Math.Max(hi, sample);
+                                lo = Math.Min(lo, sample);
+                                samples[nd][i] = sample; nd++;
+                            }
+                        }
+                    }
+                    DensityPlotUpdate(lo, hi, totalArity, series, i+1, samples, style, false);
                 }
                 lastUpdate = DateTime.MinValue;
-                DensityPlotUpdate(lo, hi, list.Count, series, samplesNo, samples, style, false);
+                DensityPlotUpdate(lo, hi, totalArity, series, samplesNo, samples, style, false);
+            }
+        }
+
+        private static void DensityPlotUpdate(double lo, double hi, int listCount, string[] series, int nonZeroSamples, double[][] samples, Style style, bool incremental) {
+            if (!style.chartOutput) return; // should be redundant
+            if (TimeLib.Precedes(lastUpdate, DateTime.Now.AddSeconds(-0.3))) {
+                KChartHandler.ChartClearData(style); // but not the series
+                if (hi == lo) { hi = hi + 1; lo = lo - 1; } // deal with single-point density plots
+                double scan = lo;
+                double step = (hi - lo) / 200.0;
+                if (step > 0)
+                    while (scan <= hi) {
+                        for (int d = 0; d < listCount; d++) {
+                            if (series[d] != null) { // may be null if there were duplicate series names
+                                double est = MathNet.Numerics.Statistics.KernelDensity.EstimateGaussian(scan, 2 * step, samples[d]);
+                                KChartHandler.ChartAddPoint(series[d], scan, est, 0.0, Noise.None);
+                            }
+                        }
+                        scan += step;
+                    }
+                for (int d = 0; d < listCount; d++) {
+                    Tuple<double, double> msd = samples[d].Take(nonZeroSamples).MeanStandardDeviation();
+                    KChartHandler.ChartAddPole(series[d], msd.Item1, KLineStyle.Thick);
+                    KChartHandler.ChartAddPole(series[d], msd.Item1 + msd.Item2, KLineStyle.Thin);
+                    KChartHandler.ChartAddPole(series[d], msd.Item1 - msd.Item2, KLineStyle.Thin);
+                }
+                KChartHandler.ChartUpdate(style, incremental);
+                lastUpdate = DateTime.Now; 
             }
         }
 
@@ -614,14 +711,32 @@ namespace Kaemika {
         protected override (int rej, double sample) DrawBool(Style style) { // does not return NaN = reject
             (int rej, Value v) = DrawHiValue(style);
             if (v is BoolValue vAs) return (rej, vAs.value ? double.PositiveInfinity : double.NegativeInfinity);
-            else throw new Error("draw: expecting a boolean");
+            else throw new Error("draw-from: expecting a boolean");
         }
         protected override (int rej, double sample) DrawNumber(Style style) { // does not return NaN = reject
             (int rej, Value v) = DrawHiValue(style);
             if (v is BoolValue vAsB) return (rej, vAsB.value == false ? 0 : 1); // bool as 0/1
             else if (v is NumberValue vAs) return (rej, vAs.value);
-            else throw new Error("draw: expecting a number");
+            else throw new Error("draw-from: expecting a number");
         }
+        protected override (int rej, double[] sample) DrawNumberList(Style style) {
+            (int rej, Value v) = DrawHiValue(style);
+            if (v is BoolValue vAsB) return (rej, new double[1] { vAsB.value == false ? 0 : 1 }); // bool as 0/1
+            else if (v is NumberValue vAsN) return (rej, new double[1] { vAsN.value });
+            else if (v is ListValue<Value> vAs) {
+                double[] list = new double[vAs.elements.Count];
+                for (int i = 0; i < vAs.elements.Count; i++) {
+                    Value e = vAs.elements[i];
+                    double d;
+                    if (e is BoolValue eAsB) d = (eAsB.value == false ? 0 : 1); // bool as 0/1
+                    else if (e is NumberValue eAs) d = eAs.value;
+                    else throw new Error("draw-from: expecting a number");
+                    list[i] = d;
+                }
+                return (rej, list);
+            } else throw new Error("draw-from: expecting a number or list");
+        }
+
         public override DistributionValue ConditionOn(DistributionValue condition, Style style) {
             return new HiDistributionValue(null, null,
                 (OmegaValue omega, Style dynamicStyle) => {
@@ -712,6 +827,10 @@ namespace Kaemika {
             else if (double.IsPositiveInfinity(sample)) return (rej, 1); // true as 1
             else if (!double.IsInfinity(sample)) return (rej, sample); 
             else throw new Error("DrawNumber: expecting a number instead of a boolean");
+        }
+        protected override (int rej, double[] sample) DrawNumberList(Style style) {
+            (int rej, double sample) = DrawNumber(style);
+            return (rej, new double[1] { sample });
         }
 
         public override DistributionValue ConditionOn(DistributionValue condition, Style style) {
@@ -1101,37 +1220,106 @@ namespace Kaemika {
 
         private static DateTime lastUpdate = DateTime.MinValue;
         private static int paletteNo = 0;
+
+        // ### version where each function in the list can return a number but not a list of numbers
+        //public static void Plot(int samplesNo, List<FunctionValue> list, Netlist netlist, Style style, int s) {
+        //    if (!style.chartOutput) return;
+        //    if (samplesNo > 0 && list.Count > 0) {
+        //        KChartHandler.ChartClear("", "", "", style);
+        //        lastUpdate = DateTime.MinValue;
+        //        string[] series = new string[list.Count];
+        //        paletteNo = list.Count - 1;
+        //        for (int d = list.Count-1; d >= 0; d--) {
+        //            string firstName = list[d].Format(style.RestyleAsDataFormat("symbol"));
+        //            string name = firstName; int i = 0;
+        //            while (Array.Exists(series, (e => e == name))) { name = firstName + Exec.defaultVarchar + i; i++; }
+        //            series[d] = name;
+        //            KChartHandler.ChartAddSeries(series[d], null, Palette.GetColor(paletteNo), KLineMode.FillUnder, KLineStyle.Thick);
+        //            paletteNo--;
+        //        }
+        //        KChartHandler.LegendUpdate(style);
+        //        double[][] samples = new double[list.Count][];
+        //        for (int d = 0; d < list.Count; d++) samples[d] = new double[samplesNo];
+        //        for (int i = 0; i < samplesNo; i++) {
+        //            for (int d = 0; d < list.Count; d++) {
+        //                Value sample = list[d].ApplyReject(new List<Value>() { new NumberValue(i) }, netlist, style.RestyleAsChartOutput(false), s); // suppress chart output during evaluation of function
+        //                if (sample != Value.REJECT && sample is NumberValue sampleAs) {
+        //                    samples[d][i] = sampleAs.value;
+        //                } else {
+        //                    samples[d][i] = double.NaN;
+        //                }
+        //            }
+        //            PlotUpdate(list.Count, series, samplesNo, samples, style, true);
+        //        }
+        //        lastUpdate = DateTime.MinValue;
+        //        PlotUpdate(list.Count, series, samplesNo, samples, style, false);
+        //    }
+        //}
+
         public static void Plot(int samplesNo, List<FunctionValue> list, Netlist netlist, Style style, int s) {
             if (!style.chartOutput) return;
             if (samplesNo > 0 && list.Count > 0) {
                 KChartHandler.ChartClear("", "", "", style);
                 lastUpdate = DateTime.MinValue;
-                string[] series = new string[list.Count];
-                paletteNo = list.Count - 1;
-                for (int d = list.Count-1; d >= 0; d--) {
-                    string firstName = list[d].Format(style.RestyleAsDataFormat("symbol"));
-                    string name = firstName; int i = 0;
-                    while (Array.Exists(series, (e => e == name))) { name = firstName + Exec.defaultVarchar + i; i++; }
-                    series[d] = name;
-                    KChartHandler.ChartAddSeries(series[d], null, Palette.GetColor(paletteNo), KLineMode.FillUnder, KLineStyle.Thick);
-                    paletteNo--;
-                }
-                KChartHandler.LegendUpdate(style);
-                double[][] samples = new double[list.Count][];
-                for (int d = 0; d < list.Count; d++) samples[d] = new double[samplesNo];
+
+                int[] arity = new int[list.Count]; for (int d = 0; d < list.Count; d++) arity[d] = -1; // output arity of each function in the list (they can return a number or a list)
+                int totalArity = 0;
+                string[] series = null;
+                double[][] samples = null;
+                Value[][] valueSamples = new Value[list.Count][]; for (int d = 0; d < list.Count; d++) valueSamples[d] = new Value[samplesNo];
+
                 for (int i = 0; i < samplesNo; i++) {
                     for (int d = 0; d < list.Count; d++) {
                         Value sample = list[d].ApplyReject(new List<Value>() { new NumberValue(i) }, netlist, style.RestyleAsChartOutput(false), s); // suppress chart output during evaluation of function
                         if (sample != Value.REJECT && sample is NumberValue sampleAs) {
-                            samples[d][i] = sampleAs.value;
+                            if (arity[d] == -1) arity[d] = 1; else if (arity[d] != 1) throw new Error("draw-from: arities of samples do not match");
+                            valueSamples[d][i] = sampleAs;
+                        } else if (sample != Value.REJECT && sample is ListValue<Value> sampleAsList) {
+                            List<Value> valueList = sampleAsList.elements;
+                            if (arity[d] == -1) arity[d] = valueList.Count; else if (arity[d] != valueList.Count) throw new Error("draw-from: arities of samples do not match");
+                            if (valueList.Count == 1) valueSamples[d][i] = sampleAsList.elements[0];
+                            else valueSamples[d][i] = sampleAsList;
                         } else {
-                            samples[d][i] = double.NaN;
+                            throw new Error("draw-from: number or list of numbers expected");
+                        }
+                        if (samples == null) totalArity += arity[d];
+                    }
+
+                    if (samples == null) {
+                        series = new string[totalArity];
+                        samples = new double[totalArity][]; for (int k = 0; k < totalArity; k++) samples[k] = new double[samplesNo];
+                    }
+                    int nd = 0;
+                    paletteNo = totalArity - 1;
+                    for (int d = list.Count - 1; d >= 0; d--) {
+                        if (valueSamples[d][i] is NumberValue sampleAsN) {
+                            if (series[nd] == null) {
+                                string firstName = list[d].Format(style.RestyleAsDataFormat("symbol"));
+                                string name = firstName; int v = 0; while (Array.Exists(series, (e => e == name))) { name = firstName + Exec.defaultVarchar + v; v++; }
+                                series[nd] = name;
+                                KChartHandler.ChartAddSeries(series[nd], null, Palette.GetColor(paletteNo), KLineMode.FillUnder, KLineStyle.Thick); paletteNo--;
+                                KChartHandler.LegendUpdate(style);
+                            }
+                            samples[nd][i] = sampleAsN.value; nd++; 
+                        } else if (valueSamples[d][i] is ListValue<Value> sampleAsList) { 
+                            for (int j = sampleAsList.elements.Count - 1; j >= 0; j--) {
+                                if (series[nd] == null) {
+                                    string firstName = list[d].Format(style.RestyleAsDataFormat("symbol")) + "[" + j.ToString() + "]";
+                                    string name = firstName; int v = 0; while (Array.Exists(series, (e => e == name))) { name = firstName + Exec.defaultVarchar + v; v++; }
+                                    series[nd] = name;
+                                    KChartHandler.ChartAddSeries(series[nd], null, Palette.GetColor(paletteNo), KLineMode.FillUnder, KLineStyle.Thick); paletteNo--;
+                                    KChartHandler.LegendUpdate(style);
+                                }
+                                Value element = sampleAsList.elements[j];
+                                if (element is NumberValue elemAs) { samples[nd][i] = elemAs.value; nd++; }
+                                else throw new Error("draw-from: number expected");
+                            }
                         }
                     }
-                    PlotUpdate(list.Count, series, samplesNo, samples, style, true);
+                    PlotUpdate(totalArity, series, samplesNo, samples, style, true);
                 }
                 lastUpdate = DateTime.MinValue;
-                PlotUpdate(list.Count, series, samplesNo, samples, style, false);
+                PlotUpdate(totalArity, series, samplesNo, samples, style, false);
             }
         }
         private static void PlotUpdate(int listCount, string[] series, int samplesNo, double[][] samples, Style style, bool incremental) {

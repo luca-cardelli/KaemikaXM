@@ -27,7 +27,7 @@
 	<key>CFBundleIdentifier</key>
 	<string>com.kaemika.KaemikaIOS</string>
 	<key>CFBundleVersion</key>
-	<string>1.5</string>
+	<string>1.7</string>
 	<key>CFBundleName</key>
 	<string>KaemikaXM</string>
 	<key>XSAppIconAssets</key>

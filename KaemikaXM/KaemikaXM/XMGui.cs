@@ -184,6 +184,8 @@ namespace Kaemika {
 
         public /* Interface KGuiControl */ void GuiChartSnapToSvg() { }
 
+        public /* Interface KGuiControl */ void GuiModelToSBML() { }
+
         public /* Interface KGuiControl */ SKSize GuiChartSize() {
             if (MainThread.IsMainThread) {
                 return MainTabbedPage.theChartPage.ChartSize();

@@ -23,7 +23,7 @@ namespace KaemikaMAC
 
 		public override void ViewDidLoad () {
 			base.ViewDidLoad ();
-			PrefsVersionNo.StringValue = "1.0.24";
+			PrefsVersionNo.StringValue = "1.0.25";  // copy from Gui.KaemikaVersion
 		}
 
 		partial void PrefsPrivacyPolicy (Foundation.NSObject sender) {

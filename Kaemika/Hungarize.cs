@@ -26,6 +26,7 @@ namespace Kaemika {
                 + "Initial:" + Environment.NewLine + Polynomize.Equation.Format(posEqs, style));
 
             SampleValue outSample = new SampleValue(outSymbol, new StateMap(outSymbol, new List<SpeciesValue> { }, new State(0, lna: inSample.stateMap.state.lna)), new NumberValue(inSample.Volume()), new NumberValue(inSample.Temperature()), produced: true);
+            netlist.Emit(new SampleEntry(outSample));
             posOdes.Each(ode => {
                 Flow initFlow = Polynomize.Equation.ToFlow(ode.var, posEqs, style).Normalize(style);
                 double init; if (initFlow is NumberFlow num) init = num.value; else throw new Error("Cannot generate a simulatable sample because initial values contain constants (but the symbolic version has been generated assuming constants are nonnegative).");

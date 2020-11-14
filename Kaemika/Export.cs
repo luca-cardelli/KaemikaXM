@@ -164,9 +164,14 @@ namespace Kaemika {
 
         // Export for LBS Tool
 
-        public static string MSRC_LBS(List<ReportEntry> reportList, SampleValue sample, Style style) {
-            return MSRC_LBShead(reportList, sample, style) + MSRC_LBSbody(sample, style);
+        public static string MSRC_LBS() {
+            if (Exec.lastExecution.lastCRN == null) throw new Error("At least one sample must be equilibrated so that it can be exported.");
+            SampleValue sample = Exec.lastExecution.lastCRN.sample;
+            List<ReportEntry> reportList = sample.RelevantReports(Exec.lastExecution.style);
+            Style MSRC_LBS_style = new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.MSRC_LBS, traceFull: false, chartOutput: false);
+            return MSRC_LBShead(reportList, sample, MSRC_LBS_style) + MSRC_LBSbody(sample, MSRC_LBS_style);
         }
+
         private static string MSRC_LBShead(List<ReportEntry> reportList, SampleValue sample, Style style) {
             string final = null;
             string plots = null;
@@ -192,7 +197,7 @@ namespace Kaemika {
             foreach (ReactionValue reaction in reactionList) {
                 List<Symbol> reactants = reaction.reactants;
                 List<Symbol> products = reaction.products;
-                if (!(reaction.rate is MassActionNumericalRate)) throw new Error("Export LBS/CNR: only mass action reactions are supported");
+                if (!(reaction.rate is MassActionNumericalRate)) throw new Error("Export LBS/CNR: only mass action reactions are supported: " + reaction.Format(style));
                 double rate = ((MassActionNumericalRate)reaction.rate).Rate(0.0); // ignore activation energy of reaction
                 body = body + tail
                     + Style.FormatSequence(reactants, " + ", x => x.Format(style))
@@ -205,10 +210,15 @@ namespace Kaemika {
 
         // Export for CRN Tool
 
-        public static string MSRC_CRN(List<ReportEntry> reportList, SampleValue sample, Style style) {
-            return Export_CRNhead(reportList, sample, style) + MSRC_LBSbody(sample, style);
+        public static string MSRC_CRN() {
+            if (Exec.lastExecution.lastCRN == null) throw new Error("At least one sample must be equilibrated so that it can be exported.");
+            SampleValue sample = Exec.lastExecution.lastCRN.sample;
+            List<ReportEntry> reportList = sample.RelevantReports(Exec.lastExecution.style);
+            Style MSRC_CRN_style = new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.MSRC_CRN, traceFull: false, chartOutput: false);
+            return MSRC_CRNhead(reportList, sample, MSRC_CRN_style) + MSRC_LBSbody(sample, MSRC_CRN_style);
         }
-        private static string Export_CRNhead(List<ReportEntry> reportList, SampleValue sample, Style style) {
+
+        private static string MSRC_CRNhead(List<ReportEntry> reportList, SampleValue sample, Style style) {
             string final = null;
             string plots = null;
             foreach (ReportEntry report in reportList) {
@@ -223,6 +233,185 @@ namespace Kaemika {
             return head;
         }
 
+        // Export for SBML (COPASI)
+
+        public static string SBML() {
+            if (Exec.lastExecution.lastCRN == null) throw new Error("At least one sample must be equilibrated so that it can be exported.");
+            Style SMBLstyle = new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.Standard, traceFull: false, chartOutput: false);
+            return 
+                SBMLhead(Exec.lastExecution.lastCRN, SMBLstyle) + 
+                SBMLbody(Exec.lastExecution.lastCRN, SMBLstyle) +
+                SBMLtail();
+        }
+
+        private static string SBMLhead(CRN crn, Style style) {
+            string modelName = crn.sample.FormatSymbol(style);
+            return
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + Environment.NewLine +
+                "<sbml version = \"4\" level = \"2\" xmlns = \"http://www.sbml.org/sbml/level2/version4\">" + Environment.NewLine +
+                   //"<sbml version = \"2\" level = \"3\" xmlns = \"http://www.sbml.org/sbml/level3/version2/core\">" + Environment.NewLine +
+                   "<model name = \"Model_" + modelName + "\" id = \"Model_" + modelName + "\">" + Environment.NewLine +
+
+    @"<listOfUnitDefinitions>
+      <unitDefinition id=""length"" name=""length"">
+        <listOfUnits>
+          <unit kind=""metre"" exponent=""1"" scale=""0"" multiplier=""1""/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id=""area"" name=""area"">
+        <listOfUnits>
+          <unit kind=""metre"" exponent=""2"" scale=""0"" multiplier=""1""/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id=""volume"" name=""volume"">
+        <listOfUnits>
+          <unit kind=""litre"" exponent=""1"" scale=""0"" multiplier=""1""/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id=""time"" name=""time"">
+        <listOfUnits>
+          <unit kind=""second"" exponent=""1"" scale=""0"" multiplier=""1""/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id=""substance"" name=""substance"">
+        <listOfUnits>
+          <unit kind=""mole"" exponent=""1"" scale=""0"" multiplier=""1""/>
+        </listOfUnits>
+      </unitDefinition>
+    </listOfUnitDefinitions>" +
+
+                      "<listOfCompartments> <compartment name = \"" + modelName + "\" id = \"" + modelName + "\" constant = \"true\" size = \"1\" spatialDimensions = \"3\"/> </listOfCompartments> " + Environment.NewLine;
+        }
+        private static string SBMLtail() {
+            return
+                   "</model>" + Environment.NewLine +
+                "</sbml> " + Environment.NewLine;
+        }
+
+        private static string SBMLbody(CRN crn, Style style) {
+            string modelName = crn.sample.FormatSymbol(style);
+            List<SpeciesValue> speciesList = crn.sample.stateMap.species;
+            List<ReactionValue> reactionList = crn.reactions;
+
+            string theSpecies = "";
+            foreach (SpeciesValue species in speciesList) {
+                string speciesName = species.Format(style);
+                string speciesInit = style.FormatDouble(crn.sample.stateMap.Molarity(species.symbol, style));
+                theSpecies += "<species name=\"" + speciesName + "\" id=\"" + speciesName + "\" constant=\"false\" boundaryCondition=\"false\" compartment=\"" + modelName + "\" initialConcentration=\"" + speciesInit + "\" hasOnlySubstanceUnits=\"false\">";
+                theSpecies += "</species>" + Environment.NewLine;
+            }
+
+            string theReactions = "";
+            int reactionNo = 1;
+            bool someoneUsesTime = false;
+            foreach (ReactionValue reaction in reactionList) {
+                string reactionName = "R" + reactionNo.ToString();
+                theReactions += "<reaction name=\""+ reactionName + "\" id=\"" + reactionName + "\" reversible=\"false\">" + Environment.NewLine;
+
+                SortedList<string, int> canonReactants = CRN.CanonicalComplex(reaction.reactants, style);
+                SortedList<string, int> canonProducts = CRN.CanonicalComplex(reaction.products, style);
+
+                Dictionary<string, bool> modifiersDict = new Dictionary<string, bool>();
+                Flow rateFun = crn.RateFunction(reaction);
+                rateFun.Modifiers(canonReactants, canonProducts, modifiersDict, style);
+                string rateFunction = rateFun.TopFormatAsMathML(style, crn.sample.Temperature(), crn.sample.Volume());
+                someoneUsesTime = someoneUsesTime | modifiersDict.ContainsKey(OpFlow.dummyTimeSpecies);
+
+                string reactants = "";
+                foreach (var reactant in canonReactants) {
+                    // reactants += "<speciesReference stoichiometry=\"" + reactant.Value + "\" constant=\"true\" species=\"" + reactant.Key + "\"/>" + Environment.NewLine; // SBML L3V2
+                    reactants += "<speciesReference stoichiometry=\"" + reactant.Value + "\" species=\"" + reactant.Key + "\"/>" + Environment.NewLine; // SBML L2V4
+                }
+                if (reactants != "") reactants = "<listOfReactants>" + Environment.NewLine + reactants + "</listOfReactants>" + Environment.NewLine;
+                theReactions += reactants;
+
+                string products = "";
+                foreach (var product in canonProducts) {
+                    // products += "<speciesReference stoichiometry=\"" + product.Value + "\" constant=\"true\" species=\"" + product.Key + "\"/>" + Environment.NewLine; // SBML L3V2
+                    products += "<speciesReference stoichiometry=\"" + product.Value + "\" species=\"" + product.Key + "\"/>" + Environment.NewLine; // SBML L2V4
+                }
+                if (products != "") products = "<listOfProducts>" + Environment.NewLine + products + "</listOfProducts>" + Environment.NewLine;
+                theReactions += products;
+
+                string modifiers = "";
+                if (modifiersDict.Count > 0) {
+                    modifiers += "<listOfModifiers>" + Environment.NewLine;
+                    foreach (var modifierSpecies in modifiersDict)
+                        modifiers += "<modifierSpeciesReference species=\"" + modifierSpecies.Key + "\"/>" + Environment.NewLine;
+                    modifiers += "</listOfModifiers>" + Environment.NewLine;
+                }
+                theReactions += modifiers;
+
+                theReactions += "<kineticLaw>" + Environment.NewLine;
+                theReactions += rateFunction;
+                theReactions += "</kineticLaw>" + Environment.NewLine;
+
+                theReactions += "</reaction>" + Environment.NewLine;
+                reactionNo++;
+            }
+
+            string theEvents = "";
+            int eventNo = 1;
+
+            //#### List<TriggerEntry> triggers = new List<TriggerEntry>(); //### this will be a new parameter to Integrate
+            //#### triggers.Add(new TriggerEntry(crn.sample.stateMap.species[0].symbol, new OpFlow(">", true, new List<Flow> { new OpFlow("time", false), new NumberFlow(1.0) }), new NumberFlow(7.0))); //####
+            //#### foreach (TriggerEntry trigger in triggers) {
+
+            Dictionary<string, bool> timeDict = new Dictionary<string, bool>(); // just looking for uses of "time"
+            SortedList<string, int> noSpecies = new SortedList<string, int>();
+
+            foreach (TriggerEntry trigger in crn.sample.Triggers(style)) {
+                trigger.condition.Modifiers(noSpecies, noSpecies, timeDict, style); // just looking for uses of "time"
+                trigger.assignment.Modifiers(noSpecies, noSpecies, timeDict, style); // just looking for uses of "time"
+                string eventName = "E" + eventNo.ToString();
+                theEvents += "<event name=\"" + eventName + "\" id = \"" + eventName + "\">" + Environment.NewLine;
+                theEvents += "<trigger>" +Environment.NewLine;
+                theEvents += trigger.condition.TopFormatAsMathML(style, crn.sample.Temperature(), crn.sample.Volume());
+                theEvents += "</trigger>" + Environment.NewLine;
+                theEvents += "<listOfEventAssignments>" + Environment.NewLine;
+                theEvents += "<eventAssignment variable=\"" + trigger.target.Format(style) + "\">" + Environment.NewLine;
+                theEvents += Flow.NormalizeDimension(trigger.target, trigger.assignment, trigger.dimension, trigger.sample, style).TopFormatAsMathML(style, trigger.sample.Temperature(), trigger.sample.Volume());
+                theEvents += "</eventAssignment>" + Environment.NewLine;
+                theEvents += "</listOfEventAssignments>" + Environment.NewLine;
+                theEvents += "</event>" + Environment.NewLine;
+                eventNo++;
+            }
+            someoneUsesTime = someoneUsesTime | timeDict.ContainsKey(OpFlow.dummyTimeSpecies);
+
+            if (someoneUsesTime) {
+                // SBML does not support the flow rate operator 'time': we replace it with a dummy species that grows linearly from zero, AND add it as a modifier to the reactions that use 'time' in the rate function");
+                // add dummy time species:
+                theSpecies += "<species name=\"" + OpFlow.dummyTimeSpecies + "\" id=\"" + OpFlow.dummyTimeSpecies + "\" constant=\"false\" boundaryCondition=\"false\" compartment=\"" + modelName + "\" initialConcentration=\"" + "0" + "\" hasOnlySubstanceUnits=\"false\">";
+                theSpecies += "</species>" + Environment.NewLine;
+                // add dummy reaction '#->time' for the dummy time species:
+                string reactionName = "R" + reactionNo.ToString(); reactionNo++;
+                theReactions += "<reaction name=\"" + reactionName + "\" id=\"" + reactionName + "\" reversible=\"false\">" + Environment.NewLine;
+                // string dummyTime = "<speciesReference stoichiometry=\"1\" constant=\"true\" species=\"" + OpFlow.dummyTimeSpecies + "\"/>" + Environment.NewLine; // SBML L3V2
+                string dummyTime = "<speciesReference stoichiometry=\"1\" species=\"" + OpFlow.dummyTimeSpecies + "\"/>" + Environment.NewLine; // SBML L2V4
+                theReactions += "<listOfProducts>" + Environment.NewLine + dummyTime + "</listOfProducts>" + Environment.NewLine;
+                theReactions += "<kineticLaw> " + "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"> " + "<cn>1</cn>" + " </math>" + " </kineticLaw>" + Environment.NewLine;
+                theReactions += "</reaction>" + Environment.NewLine;
+            }
+
+            string body = "";
+            if (theSpecies != "") {
+                body += "<listOfSpecies>" + Environment.NewLine;
+                body += theSpecies;
+                body += "</listOfSpecies>" + Environment.NewLine;
+            }
+            if (theReactions != "") {
+                body += "<listOfReactions>" + Environment.NewLine;
+                body += theReactions;
+                body += "</listOfReactions>" + Environment.NewLine;
+            }
+            if (theEvents != "") {
+                body += "<listOfEvents>" + Environment.NewLine;
+                body += theEvents;
+                body += "</listOfEvents>" + Environment.NewLine;
+            }
+            return body;
+        }
+
         // Export Protocol steps as TEXT
 
         public static string Protocol(Netlist netlist, Style style) {
@@ -234,19 +423,29 @@ namespace Kaemika {
 
         // Export ODEs and LNA ODEs for Wolfram Notebook
 
-        public static string SteadyState(CRN crn, Style style) {
-            return crn.FormatAsODE(style)
-                + Environment.NewLine;
+        public static string SteadyState() {
+            if (Exec.lastExecution.lastCRN == null) throw new Error("At least one sample must be equilibrated so that it can be exported.");
+            Style Wolfram_style = new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.WolframNotebook, traceFull: false, chartOutput: false);
+            return Exec.lastExecution.lastCRN.FormatAsODE(Wolfram_style) + Environment.NewLine;
         }
 
         // Export ODEs for OSCILL8
 
-        public static string ODE(SampleValue sample, CRN crn, Style style) {
-            return ODE_Header(sample, style) 
-                + crn.FormatAsODE(style, prefixDiff: "", suffixDiff: "'")
+        public static string ODE() {
+            if (Exec.lastExecution.lastCRN == null) throw new Error("At least one sample must be equilibrated so that it can be exported.");
+            Style style = new Style(varchar: "_", new SwapMap(subsup: true), map: new AlphaMap(), numberFormat: null, dataFormat: "full", exportTarget: ExportTarget.Standard, traceFull: false, chartOutput: false);
+            return ODE_Header(Exec.lastExecution.lastCRN.sample, style)
+                + Exec.lastExecution.lastCRN.FormatAsODE(style, prefixDiff: "", suffixDiff: "'")
                 + Environment.NewLine
-                + ODE_Initializations(sample, style);
+                + ODE_Initializations(Exec.lastExecution.lastCRN.sample, style);
         }
+
+        //public static string ODE(SampleValue sample, CRN crn, Style style) {
+        //    return ODE_Header(sample, style) 
+        //        + crn.FormatAsODE(style, prefixDiff: "", suffixDiff: "'")
+        //        + Environment.NewLine
+        //        + ODE_Initializations(sample, style);
+        //}
         private static string ODE_Header(SampleValue sample, Style style) {
             //string plots = "";
             //foreach (Entry entry in this.entries) {
