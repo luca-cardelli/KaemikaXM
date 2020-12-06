@@ -40,6 +40,7 @@ namespace Kaemika
         public static SKRect operator %(Swipe w, SKRect r) { return new SKRect(r.Left * w.scale + w.translate.X, r.Top * w.scale + w.translate.Y, r.Right * w.scale + w.translate.X, r.Bottom * w.scale + w.translate.Y); }
         // Inverse transformations
         public static SKPoint Inverse(SKPoint p, Swipe w) { return new SKPoint((p.X - w.translate.X) / w.scale, (p.Y - w.translate.Y) / w.scale); }
+        public static SKRect Inverse(SKRect r, Swipe w) { return new SKRect((r.Left - w.translate.X) / w.scale, (r.Top - w.translate.Y) / w.scale, (r.Right - w.translate.X) / w.scale, (r.Bottom - w.translate.Y) / w.scale); }
         // Modify a transformation
         public static Swipe operator *(float f, Swipe w) { return new Swipe(f * w.scale, w.translate); }
         public static Swipe operator +(SKPoint p, Swipe w) { return new Swipe(w.scale, new SKPoint(p.X+w.translate.X, p.Y + w.translate.Y)); }

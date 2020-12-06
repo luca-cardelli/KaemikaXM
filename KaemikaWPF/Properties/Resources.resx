@@ -232,4 +232,97 @@
   <data name="Noise_None_G_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\noise_none.g.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="titlebarCloseControl" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\titlebarclosecontrol.10x10.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="titlebarMaximizeControl" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\titlebarmaximizecontrol.10x10.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="titlebarMinimizeControl" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\titlebarminimizecontrol.10x10.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="titlebarResizeControlBL" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\titlebarresizecontrolbl.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="titlebarResizeControlBR" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\titlebarresizecontrolbr.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="titlebarRestoreControl" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\titlebarrestorecontrol.10x10.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Computation_B_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Computation.B.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="deviceBorder_B_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\deviceBorder.B.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="FileLoad_B_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\FileLoad.B.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="FileSave_B_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\FileSave.B.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="FontSizeMinus_B_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\FontSizeMinus.B.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="FontSizePlus_B_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\FontSizePlus.B.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="icons8combochart96_B_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\icons8combochart96.B.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="icons8text_B_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\icons8text.B.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="icons8_keyboard_96_B_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\icons8-keyboard-96.B.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="icons8_settings_384_B_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\icons8-settings-384.B.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="icons8_share_384_B_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\icons8-share-384.B.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Noise_CV_B_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Noise_CV.B.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Noise_Fano_B_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Noise_Fano.B.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Noise_None_B_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Noise_None.B.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Noise_SigmaRange_B_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Noise_SigmaRange.B.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Noise_SigmaSqRange_B_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Noise_SigmaSqRange.B.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Noise_SigmaSq_B_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Noise_SigmaSq.B.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Noise_Sigma_B_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Noise_Sigma.B.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Parameters_B_48x48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Parameters.B.48x48.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="titlebarCloseControl_B_10x10" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\titlebarCloseControl.B.10x10.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="titlebarMaximizeControl_B_10x10" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\titlebarMaximizeControl.B.10x10.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="titlebarMinimizeControl_B_10x10" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\titlebarMinimizeControl.B.10x10.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="titlebarResizeControlBL_B" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\titlebarResizeControlBL.B.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="titlebarResizeControlBR_B" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\titlebarResizeControlBR.B.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="titlebarRestoreControl_B_10x10" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\titlebarRestoreControl.B.10x10.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>

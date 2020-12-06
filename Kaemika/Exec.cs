@@ -208,16 +208,19 @@ namespace Kaemika {
                if (doParse) root.DrawReductionTree();
                 else {
                     Netlist netlist = new Netlist(autoContinue);
-                    try {
+                    try
+                    {
                         Statements statements = Parser.ParseTop(root);
                         if (doAST) KGui.gui.GuiOutputAppendText(statements.Format());
-                        else {
-                            SampleValue vessel = Vessel();
+                        else
+                        {
+                            SampleValue vessel = Vessel(KControls.SelectNoiseSelectedItem != Noise.None);
                             Env initialEnv = new ValueEnv("vessel", Type.Sample, vessel, new BuiltinEnv(new NullEnv()));
                             Scope initialScope = initialEnv.ToScope();
                             Scope scope = statements.Scope(initialScope);
                             if (doScope) KGui.gui.GuiOutputAppendText(scope.Format());
-                            else {
+                            else
+                            {
                                 Style style = new Style(varchar: scopeVariants ? defaultVarchar : null, new SwapMap(),
                                                         map: remapVariants ? new AlphaMap() : null, numberFormat: "G4", dataFormat: "full",  // we want it full for samples, but maybe only headers for functions/networks?
                                                         exportTarget: ExportTarget.Standard, traceFull: false, chartOutput: chartOutput);
@@ -235,7 +238,8 @@ namespace Kaemika {
                                 if (lastExecution.environment == null) throw new Error("Top level reject");
                                 lastExecution.EndTime();
 
-                                if (style.chartOutput) {
+                                if (style.chartOutput)
+                                {
                                     foreach (ParameterEntry parameter in netlist.Parameters())
                                         KControls.AddParameter(parameter.symbol.Format(style), (parameter.value as NumberValue).value, parameter.distribution, style);
                                     KGui.gui.GuiParametersUpdate(); // calls back KControls.ParametersUpdate, but only on Win/Mac
@@ -248,8 +252,8 @@ namespace Kaemika {
                     catch (ExecutionEnded) { lastExecution.EndTime(); KGui.gui.GuiOutputAppendText(lastExecution.ElapsedTime()); }
                     catch (ConstantEvaluation ex) { string cat = "Does not have a value: "; netlist.Emit(new CommentEntry(cat + ": " + ex.Message)); KGui.gui.GuiInputSetErrorSelection(-1, -1, 0, cat, ex.Message); }
                     catch (Error ex) { netlist.Emit(new CommentEntry(ex.Message)); KGui.gui.GuiInputSetErrorSelection(-1, -1, 0, "Error", ex.Message); try { KGui.gui.GuiProcessOutput(); } catch { }; }
-                    catch (StackOverflowException ex) { netlist.Emit(new CommentEntry(ex.Message)); KGui.gui.GuiInputSetErrorSelection(-1, -1, 0, "Stack Overflow", ex.Message); } 
-                    catch (Exception ex) { string cat = "Something happened"; netlist.Emit(new CommentEntry(cat + ": " + ex.Message)); KGui.gui.GuiInputSetErrorSelection(-1, -1, 0, cat, ex.Message); } 
+                    catch (StackOverflowException ex) { netlist.Emit(new CommentEntry(ex.Message)); KGui.gui.GuiInputSetErrorSelection(-1, -1, 0, "Stack Overflow", ex.Message); }
+                    catch (Exception ex) { string cat = "Something happened"; netlist.Emit(new CommentEntry(cat + ": " + ex.Message)); KGui.gui.GuiInputSetErrorSelection(-1, -1, 0, cat, ex.Message); }
                 }
             } else {
                 KGui.gui.GuiInputSetErrorSelection(TheParser.Parser().FailLineNumber(), TheParser.Parser().FailColumnNumber(), TheParser.Parser().FailLength(), TheParser.Parser().FailCategory(), TheParser.Parser().FailMessage());
@@ -257,9 +261,9 @@ namespace Kaemika {
             EndingExecution();
         }
 
-        public static SampleValue Vessel() {
+        public static SampleValue Vessel(bool lna) {
             Symbol vessel = new Symbol("vessel");
-            return new SampleValue(vessel, new StateMap(vessel, new List<SpeciesValue> { }, new State(0, lna:false)), new NumberValue(1.0), new NumberValue(293.15), produced: false);
+            return new SampleValue(vessel, new StateMap(vessel, new List<SpeciesValue> { }, new State(0, lna)), new NumberValue(1.0), new NumberValue(293.15), produced: false);
         }
         public static bool IsVesselVariant(SampleValue sample) {
             return sample.symbol.IsVesselVariant();

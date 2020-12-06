@@ -66,6 +66,9 @@
     <Reference Include="OpenTK.GLControl, Version=3.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
       <HintPath>..\packages\OpenTK.GLControl.3.1.0\lib\net20\OpenTK.GLControl.dll</HintPath>
     </Reference>
+    <Reference Include="ScintillaNET, Version=3.6.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\jacobslusser.ScintillaNET.3.6.3\lib\net40\ScintillaNET.dll</HintPath>
+    </Reference>
     <Reference Include="SkiaSharp, Version=1.68.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
       <HintPath>..\packages\SkiaSharp.1.68.1.1\lib\net45\SkiaSharp.dll</HintPath>
     </Reference>
@@ -303,6 +306,99 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\icons8play40.G.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\titlebarMinimizeControl.10x10.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\titlebarMaximizeControl.10x10.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\titlebarCloseControl.10x10.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\titlebarRestoreControl.10x10.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\titlebarResizeControlBL.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\titlebarResizeControlBR.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Noise_None.B.48x48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Noise_SigmaRange.B.48x48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Noise_Sigma.B.48x48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Noise_CV.B.48x48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Noise_SigmaSq.B.48x48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Noise_Fano.B.48x48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Computation.B.48x48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\deviceBorder.B.48x48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\FontSizePlus.B.48x48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\FontSizeMinus.B.48x48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\FileSave.B.48x48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\FileLoad.B.48x48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8combochart96.B.48x48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-share-384.B.48x48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-keyboard-96.B.48x48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-settings-384.B.48x48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8text.B.48x48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Parameters.B.48x48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Noise_SigmaSqRange.B.48x48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\titlebarCloseControl.B.10x10.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\titlebarMaximizeControl.B.10x10.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\titlebarMinimizeControl.B.10x10.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\titlebarResizeControlBL.B.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\titlebarResizeControlBR.B.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\titlebarRestoreControl.B.10x10.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\SkiaSharp.1.68.1.1\build\net45\SkiaSharp.targets" Condition="Exists('..\packages\SkiaSharp.1.68.1.1\build\net45\SkiaSharp.targets')" />

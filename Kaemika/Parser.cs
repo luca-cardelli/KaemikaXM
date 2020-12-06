@@ -103,7 +103,7 @@ namespace Kaemika {
             } else if (reduction.Production() == "<Statement> ::= number Id '=' <Expression>") {
                 return new List<Statement> { new ValueDefinition(reduction.Terminal(1), Type.Number, ParseExpression(reduction.Nonterminal(3))) };
             } else if (reduction.Production() == "<Statement> ::= value Id '=' <Expression>") {
-                return new List<Statement> { new ValueDefinition(reduction.Terminal(1), Type.Number, ParseExpression(reduction.Nonterminal(3))) };
+                return new List<Statement> { new ValueDefinition(reduction.Terminal(1), Type.Value, ParseExpression(reduction.Nonterminal(3))) };
             } else if (reduction.Production() == "<Statement> ::= parameter Id '<-' <Expression>") {
                 return new List<Statement> { new ParameterDefinition(reduction.Terminal(1), Type.Value, ParseExpression(reduction.Nonterminal(3))) };
             } else if (reduction.Production() == "<Statement> ::= string Id '=' <Expression>") {
@@ -129,10 +129,17 @@ namespace Kaemika {
                 return new List<Statement> { ParseRandom(reduction.Nonterminal(1)) };
             } else if ((reduction.Production() == "<Statement> ::= <Pattern> '=' <Expression>")) {
                 return new List<Statement> { new PatternDefinition(ParsePattern(reduction.Nonterminal(0)), ParseExpression(reduction.Nonterminal(2))) };            
-            } else if ((reduction.Production() == "<Statement> ::= amount <Ids> '@' <Expression> <Quantity> <Allocation>")) {
-                return new List<Statement> { new Amount(ParseIds(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(3)), ParseQuantity(reduction.Nonterminal(4)), ParseAllocation(reduction.Nonterminal(5))) };
-            } else if ((reduction.Production() == "<Statement> ::= trigger <Ids> '@' <Expression> <Quantity> when <Expression> <Allocation>")) {
-                return new List<Statement> { new Trigger(ParseIds(reduction.Nonterminal(1)), ParseExpression(reduction.Nonterminal(3)), ParseQuantity(reduction.Nonterminal(4)), ParseExpression(reduction.Nonterminal(6)), ParseAllocation(reduction.Nonterminal(7))) };
+            } else if ((reduction.Production() == "<Statement> ::= amount <Ids> <Amount> <Allocation>")) {
+                Ids ids = ParseIds(reduction.Nonterminal(1));
+                (Expression mean, Expression variance, string quantity) = ParseAmount(reduction.Nonterminal(2));
+                Expression allocation = ParseAllocation(reduction.Nonterminal(3));
+                return new List<Statement> { new Amount(ids, mean, variance, quantity, allocation) };
+            } else if ((reduction.Production() == "<Statement> ::= trigger <Ids> <Amount> when <Expression> <Allocation>")) {
+                Ids ids = ParseIds(reduction.Nonterminal(1));
+                (Expression mean, Expression variance, string quantity) = ParseAmount(reduction.Nonterminal(2));
+                Expression condition = ParseExpression(reduction.Nonterminal(4));
+                Expression allocation = ParseAllocation(reduction.Nonterminal(5));
+                return new List<Statement> { new Trigger(ids, mean, variance, quantity, condition, allocation) };
             } else if ((reduction.Production() == "<Statement> ::= mix Id '=' <ExpressionSeq>")) {
                 return new List<Statement> { new Mix(reduction.Terminal(1), ParseExpressionSeq(reduction.Nonterminal(3))) };
             } else if ((reduction.Production()               == "<Statement> ::= split <IdSeq> '=' <Expression> by <ExpressionSeq>")) {
@@ -232,14 +239,26 @@ namespace Kaemika {
                 return new ValueDefinition(reduction.Terminal(0), Type.Species, ParseExpression(reduction.Nonterminal(2)));
             } else if (reduction.Production()            == "<Species> ::= '{' <Substances> '}'") {
                 return new SpeciesDefinition(ParseSubstances(reduction.Nonterminal(1)), new Statements());
-            } else if (reduction.Production()            == "<Species> ::= <Substances> '@' <Expression> <Quantity> <Allocation>") {
+            } else if (reduction.Production()            == "<Species> ::= <Substances> <Amount> <Allocation>") {
                 List<Substance> substances = ParseSubstances(reduction.Nonterminal(0));
                 Ids ids = new Ids(); foreach (Substance substance in substances) { ids.Add(substance.name); };
-                Expression initial = ParseExpression(reduction.Nonterminal(2));
-                string quantity = ParseQuantity(reduction.Nonterminal(3));
-                Expression allocation = ParseAllocation(reduction.Nonterminal(4));
-                return new SpeciesDefinition(substances, new Statements().Add(new Amount(ids, initial, quantity, allocation)));
+                (Expression mean, Expression variance, string quantity) = ParseAmount(reduction.Nonterminal(1));
+                Expression allocation = ParseAllocation(reduction.Nonterminal(2));
+                return new SpeciesDefinition(substances, new Statements().Add(new Amount(ids, mean, variance, quantity, allocation)));
             } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return null; }
+        }
+
+        public static (Expression mean, Expression variance, string quantity) ParseAmount(IReduction reduction) {
+            if (reduction.Production()                   == "<Amount> ::= '@' <Expression> <Quantity>") {
+                Expression mean = ParseExpression(reduction.Nonterminal(1));
+                string quantity = ParseQuantity(reduction.Nonterminal(2));
+                return (mean, null, quantity);
+            } else if (reduction.Production()                   == "<Amount> ::= '@' <Expression> '±' <Expression> <Quantity>") {
+                Expression mean = ParseExpression(reduction.Nonterminal(1));
+                Expression variance = ParseExpression(reduction.Nonterminal(3));
+                string quantity = ParseQuantity(reduction.Nonterminal(4));
+                return (mean, variance, quantity);
+            } else { Gui.Log("UNKNOWN Production " + reduction.Production()); return (null, null, null); }
         }
 
         public static List<Substance> ParseSubstances(IReduction reduction) {

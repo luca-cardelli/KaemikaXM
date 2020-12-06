@@ -54,6 +54,8 @@ namespace Kaemika {
         void GuiChartUpdate();
         void GuiLegendUpdate();
         void GuiParametersUpdate();
+
+        void GuiScoreUpdate();
     }
 
     // ====  COMMON WIN/MAC BUTTONS =====
@@ -107,6 +109,7 @@ namespace Kaemika {
         bool IsOpen();
         void Open();
         void Close();
+        void Invalidate();
     }
 
     // ====  COMMON WIN/MAC CONTROLS =====
@@ -703,6 +706,10 @@ namespace Kaemika {
             guiControls.menuLegend.Open();
         }
 
+        public void InvalidateLegend() {
+            guiControls.menuLegend.Invalidate();
+        }
+
         // ======== PARAMETERS ========= //
 
         // Parameters menu (parameters panel)
@@ -772,6 +779,10 @@ namespace Kaemika {
                 guiControls.menuParameters.AddMenuItem(chkbox);
                 guiControls.menuParameters.AddMenuItem(trackbar);
             }
+        }
+
+        public void InvalidateParameters() {
+            guiControls.menuParameters.Invalidate();
         }
 
         // Parameter Logic (GUI-free)

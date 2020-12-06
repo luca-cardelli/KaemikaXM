@@ -13,6 +13,9 @@ namespace KaemikaMAC
 	{
 		[Action ("AppBarFileOpen:")]
 		partial void AppBarFileOpen (Foundation.NSObject sender);
+
+		[Action ("AppBarFileSaveAs:")]
+		partial void AppBarFileSaveAs (Foundation.NSObject sender);
 		
 		void ReleaseDesignerOutlets ()
 		{

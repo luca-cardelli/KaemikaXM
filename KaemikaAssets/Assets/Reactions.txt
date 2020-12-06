@@ -70,8 +70,10 @@ trigger a @ a + 0.001 M when a < 0.0005 in S
 // If "in S" is specified, the trigger is applied inside sample S (see Samples docs).
 // Any flow expression can be used as the trigger condition and as the reassignment value (see Flows docs).
 
-// Events are correctly handled by SMBL export.
-// Events do not modify the current variance of the species that are affected.
+// 'species a @ 1.0 ± 1.0 M' initializes both the mean and variance of 'a' (default initial variance is zero).
+// 'trigger a @ 1.0 ± 1.0 M' resets both then mean and variance of 'a' (default is 'var(a)', i.e. the variance of 'a' is not changed by a trigger if not otherwise specified).
+// Events are correctly handled by SMBL export, but variance initializations and modifications are ignored.
+
 
 //======================================
 // Advanced examples: Overriding the 

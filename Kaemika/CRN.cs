@@ -88,6 +88,12 @@ namespace Kaemika {
                     sizeX = Math.Max(sizeX, r.Width);
                     sizeY += pointSize;
                 }
+                sizeY += pointSize;
+                foreach (var trigger in this.sample.Triggers(style)) {
+                    var r = colorer.MeasureText(trigger.Format(style), paint);
+                    sizeX = Math.Max(sizeX, r.Width);
+                    sizeY += pointSize;
+                }
             }
             return new SKSize(sizeX, sizeY);
         }
@@ -101,6 +107,11 @@ namespace Kaemika {
                 Y += pointSize;
                 foreach (var reaction in this.reactions) {
                     painter.DrawText(reaction.TopFormat(style), new SKPoint(origin.X, Y), paint);
+                    Y += pointSize;
+                }
+                Y += pointSize;
+                foreach (var trigger in this.sample.Triggers(style)) {
+                    painter.DrawText(trigger.Format(style), new SKPoint(origin.X, Y), paint);
                     Y += pointSize;
                 }
             }

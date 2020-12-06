@@ -43,8 +43,8 @@ Comment Block @= { Nesting = All }
 
 <Species>        ::= Id '=' <Expression>                                     ! binding a species value to a species id
                     | '{' <Substances> '}'                                   ! declaration of multiple species (unallocated)
-                    | <Substances> '@' <Expression> <Quantity> <Allocation>  ! allocation of multiple <Ids> species to a sample, 
-                                                                             !     short for '{'<Substances>'}' ';' 'amount' <Ids> '@' <Expression> <Quantity> <Allocation>
+                    | <Substances> <Amount> <Allocation>                     ! allocation of multiple <Ids> species to a sample, 
+                                                                             !     short for '{'<Substances>'}' ';' 'amount' <Ids> <Amount> <Allocation>
 
 <Headers>        ::= <Headers> <Header>
                     | <Header>
@@ -89,6 +89,9 @@ Comment Block @= { Nesting = All }
                     | Id 'as' <Expression>                   ! variable-name 'as' species-basename (to adopt a non-default basename)
                     | Id '#' <Expression>                    ! same as: Id "#" <Expression> 'as' "Id"
                     | Id '#' <Expression> 'as' <Expression>  ! variable-name Id with molar mass 'as' species-basename
+                    
+<Amount>         ::= '@' <Expression> <Quantity>                    ! mean concentration
+                    | '@' <Expression> '±' <Expression> <Quantity>  ! mean ± standard-deviation concentration
                   
 ! STATEMENTS --------------------------------------------
 
@@ -111,8 +114,8 @@ Comment Block @= { Nesting = All }
                     | 'network' <Network>                     ! binding a network to a network id or network def
                     | 'value' Id '=' <Expression>             ! binding any value to an id (useful in polymorphic functions)
                     | <Pattern> '=' <Expression>              ! binding list elements to ids; length and types must match                  
-                    | 'amount' <Ids> '@' <Expression> <Quantity> <Allocation>  ! set initial quantity of species in a sample
-                    | 'trigger' <Ids> '@' <Expression> <Quantity> 'when' <Expression> <Allocation>  ! trigger event the first time that condition becomes true
+                    | 'amount' <Ids> <Amount> <Allocation>    ! set initial quantity of species in a sample
+                    | 'trigger' <Ids> <Amount> 'when' <Expression> <Allocation>! trigger event the first time that a condition becomes true
                     | 'report' <Reports> <Allocation>                          ! report species for plotting (can use arithmetic, but restrictions apply)
                     | 'if' <Expression> 'then' <Statements> <Else>             ! conditional
                     | <Draw>                                                   ! draw samples from (lists of) functions or random variables and plot them

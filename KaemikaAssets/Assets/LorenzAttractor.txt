@@ -28,7 +28,7 @@ species z @ z₀ M in S
 sample T = massaction(S)  // convert ODEs to mass action reactions
 
 equilibrate S for 50    // Click Play to simulate the ODEs
-equilibrate T for 50    // Click Play again simulate the reactions
+equilibrate T for 50    // Click Play again to simulate the reactions
 
 // ========================================
 // The Mass Action Compiler "massaction(S)" produces reactions from the ODEs.

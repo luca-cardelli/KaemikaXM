@@ -97,14 +97,14 @@ namespace Kaemika
             return (series, seriesLNA);
         }
 
-        public static SampleValue Sample(Symbol symbol, double volumeValue, double temperatureValue) {
+        public static SampleValue Sample(Symbol symbol, double volumeValue, double temperatureValue, bool lna) {
             return new SampleValue(symbol,
-                new StateMap(symbol, new List<SpeciesValue> { }, new State(0, false)),
+                new StateMap(symbol, new List<SpeciesValue> { }, new State(0, lna)),
                 new NumberValue(volumeValue), new NumberValue(temperatureValue), produced: false);
         }
 
-        public static void Amount(SampleValue sample, SpeciesValue species, NumberValue initial, string dimension, Style style) {
-            sample.stateMap.AddDimensionedSpecies((SpeciesValue)species, ((NumberValue)initial).value, dimension, sample.Volume(), style);
+        public static void Amount(SampleValue sample, AmountEntry amountEntry, Style style) {
+            sample.stateMap.AddDimensionedSpecies(amountEntry.species, amountEntry.initial.value, amountEntry.initialVariance.value, amountEntry.dimension, sample.Volume(), style);
         }
 
         public static void Trigger(SampleValue sample, TriggerEntry triggerEntry, Style style) {
@@ -301,27 +301,32 @@ namespace Kaemika
             SolPoint solPoint = new SolPoint(initialTime, initialState.Clone().ToArray());
             bool hasSolPoint = false;
             var enumerator = solution.GetEnumerator();
-            do
-            {
-                // Handle trigger first, they can apply to the initial state
+            do {
+                // Handle triggers first, they can apply to the initial state
                 if (triggers.Count > 0) {
                     State state = null; // allocated on need from solPoint
-                    double[] modifiedState = null; // allocated on need from state
+                    State modifiedState = null; // allocated on need from state
                     for (int i = 0; i < triggers.Count; i++) {
                         if (triggered[i] == false) {
                             TriggerEntry trigger = triggers[i];
                             if (state == null) state = new State(sample.Count(), lna: noise != Noise.None).InitAll(solPoint.X);
                             if (trigger.condition.ObserveBool(sample, solPoint.T, state, Flux, style)) {
-                                if (modifiedState == null) modifiedState = state.Clone().ToArray();
+                                if (modifiedState == null) modifiedState = state.Clone();
                                 double rawValue = trigger.assignment.ObserveMean(sample, solPoint.T, state, Flux, style);
                                 double assignment = trigger.sample.stateMap.NormalizeDimension(trigger.target, rawValue, trigger.dimension, trigger.sample.Volume(), style);
-                                modifiedState[sample.stateMap.IndexOf(trigger.target.symbol)] = assignment; //lna variances are not modified!
+                                int index = sample.stateMap.IndexOf(trigger.target.symbol);
+                                modifiedState.SetMean(index, assignment);
+                                if (noise != Noise.None && trigger.assignmentVariance != null) {
+                                    double rawValueVariance = trigger.assignmentVariance.ObserveMean(sample, solPoint.T, state, Flux, style);
+                                    double assignmentVariance = trigger.sample.stateMap.NormalizeDimension(trigger.target, rawValueVariance, trigger.dimension, trigger.sample.Volume(), style);
+                                    modifiedState.SetCovar(index, index, assignmentVariance);
+                                }
                                 triggered[i] = true;
                             }
                         }
                     }
                     if (modifiedState != null) { //restart the solver
-                        State newState = new State(sample.Count(), lna: noise != Noise.None).InitAll(modifiedState); 
+                        State newState = modifiedState; // new State(sample.Count(), lna: noise != Noise.None).InitAll(modifiedState.ToArray()); 
                         solution = SolutionGererator(Solver, newState, solPoint.T, finalTime, Flux, nonTrivialSolution, style);
                         enumerator = solution.GetEnumerator();
                     }

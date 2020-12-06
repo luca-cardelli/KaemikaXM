@@ -42,7 +42,7 @@ namespace KaemikaMAC {
         public static NSColor nsMainButtonSelected = NSColor.TertiaryLabelColor; // AutoDarkMode
         public static NSColor nsMainButtonText = NSColor.ControlText; // AutoDarkMode
 
-        public static NSColor nsMenuButtonDeselected = NSColor.WindowBackground; // AutoDarkmode
+        public static NSColor nsMenuButtonDeselected = NSColor.UnemphasizedSelectedContentBackgroundColor; // AutoDarkmode
         public static NSColor nsMenuButtonSelected = NSColor.TertiaryLabelColor; // AutoDarkMode
         public static NSColor nsMenuButtonText = NSColor.ControlText; // AutoDarkMode
         public static NSColor nsMenuButtonHotText = NSColor.SystemBlueColor; //NSColor.FromRgba(59,142,249,255); // Ok for dark mode
@@ -120,7 +120,9 @@ namespace KaemikaMAC {
         }
         public void IncrementFont(float pointSize) {
             var txtInput = MacGui.macGui.textInput.DocumentView as AppKit.NSTextView;
-            SetTextFont((float)(txtInput.Font.FontDescriptor.PointSize + pointSize));
+            //SetTextFont((float)(txtInput.Font.FontDescriptor.PointSize + pointSize));
+            SetTextFont(currentFontSize + pointSize);
+            SavePreferences();
         }
         public void PrivacyPolicyToClipboard() {
             MacGui.ClipboardPasteText("http://lucacardelli.name/Artifacts/Kaemika/KaemikaUWP/privacy_policy.html");
@@ -191,6 +193,10 @@ namespace KaemikaMAC {
                 string path2 = CreateKaemikaDataDirectory() + "/outputaction.txt";
                 File.WriteAllText(path2, Exec.currentOutputAction.name);
             } catch (Exception) { }
+            try {
+                string path2 = CreateKaemikaDataDirectory() + "\\fontsize.txt";
+                File.WriteAllText(path2, currentFontSize.ToString());
+            } catch (Exception) { }
         }
 
         public void RestorePreferences() {
@@ -202,10 +208,16 @@ namespace KaemikaMAC {
                 string path2 = CreateKaemikaDataDirectory() + "/outputaction.txt";
                 KGui.kControls.SetOutputSelection(File.Exists(path2) ? File.ReadAllText(path2) : "");
             } catch (Exception) { KGui.kControls.SetOutputSelection(""); } // set to default
+            try {
+                string path2 = CreateKaemikaDataDirectory() + "\\fontsize.txt";
+                if (File.Exists(path2)) { SetTextFont(float.Parse(File.ReadAllText(path2))); }
+            } catch (Exception) { }
         }
 
+        public static float currentFontSize = 10; // initial font size
         public static void SetTextFont(float size) {
             if (size >= 6){
+                currentFontSize = size;
                 var txtInput = MacGui.macGui.textInput.DocumentView as AppKit.NSTextView;
                 var txtOutput = MacGui.macGui.textOutput.DocumentView as AppKit.NSTextView;
                 var newFont = NSFont.FromFontName(txtInput.Font.FontName, size);
@@ -580,6 +592,9 @@ namespace KaemikaMAC {
             this.menuBox.Hidden = true;
             Selected(false);
             if (this.autoClose) MacControls.disableIBeamCursor = false;
+        }
+        public void Invalidate() {
+            this.menuBox.NeedsDisplay = true;
         }
     }
 

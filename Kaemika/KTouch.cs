@@ -46,10 +46,10 @@ namespace Kaemika {
         void OnTouchDoubletapOrMouseClick(Action<SKPoint> action);          // Activate Item
         void OnTouchSwipeOrMouseDrag(Action<SKPoint, SKPoint> action);      // Drag Item
         void OnTouchSwipeOrMouseDragEnd(Action<SKPoint, SKPoint> action);   // Drag Item End 
-        //void OnTouchTwofingerswipe(Action<SKPoint, SKPoint> action);      // Pan            - automatically handled by platforms
-        //void OnTouchTwofingerswipeEnd(Action<SKPoint, SKPoint> action);   // Pan            - automatically handled by platforms
-        //void OnTouchPinchOrMouseZoom(Action<float> action);               // Zoom           - automatically handled by platforms    (MouseZoom = scroll wheel)
-        //void onTouchTwofingertapOrMouseDoublelick(Action<SKPoint> action);// Pan/Zoom Reset - automatically handled by platforms
+        //void OnTouchTwofingerswipe(Action<SKPoint, SKPoint> action);      // Pan            - automatically handled by touch platforms
+        //void OnTouchTwofingerswipeEnd(Action<SKPoint, SKPoint> action);   // Pan            - automatically handled by touch platforms
+        void OnTouchPinchOrMouseZoom(Action<SKPoint, float> action);        // Zoom           - automatically handled by touch platforms    (MouseZoom = scroll wheel)
+        //void onTouchTwofingertapOrMouseDoublelick(Action<SKPoint> action);// Pan/Zoom Reset - automatically handled by touch platforms
         //void OnTouchHoldOrMouseAltclick(Action<SKPoint> action);          // Menu/Info (Altclick = Rightclick or Shiftclick) unimplemented
         // TapandpushOrClickandpress
         // TapandswipeOrClickanddrag
@@ -60,12 +60,14 @@ namespace Kaemika {
 
     // variables used by KTouchServer.OnTouchEffectAction, but allocated per-client
     public class KTouchClientData {
+        public Action reset { get; private set; } // action to clear internal state
         public Action invalidateSurface { get; private set; } // action to  invalidate client surface
         public Action<Swipe> setManualPinchPan { get; private set; } // action to set the client-stored pinchPan transform used by its own drawing
         public Action<SKPoint> onTouchTapOrMouseMove { get; set; } // client registered (via KTouchable) callback
         public Action<SKPoint> onTouchDoubletapOrMouseClick { get; set; } // client registered (via KTouchable) callback
         public Action<SKPoint, SKPoint> onTouchSwipeOrMouseDrag { get; set; } // client registered (via KTouchable) callback
         public Action<SKPoint, SKPoint> onTouchSwipeOrMouseDragEnd { get; set; } // client registered (via KTouchable) callback
+        public Action<SKPoint, float> onTouchPinchOrMouseZoom { get; set; } // client registered (via KTouchable) callback
         public KTouchServer.Fingers fingers; // private data for KTouchServer
         public Swipe incrementalTranslation; // private data for KTouchServer
         public Swipe incrementalScaling; // private data for KTouchServer
@@ -83,8 +85,13 @@ namespace Kaemika {
             this.onTouchDoubletapOrMouseClick = null;
             this.onTouchSwipeOrMouseDrag = null;
             this.onTouchSwipeOrMouseDragEnd = null;
+            this.onTouchPinchOrMouseZoom = null;                           // Zoom           - automatically handled by touch platforms    (MouseZoom = scroll wheel)
 
             this.fingers = new KTouchServer.Fingers();
+            Reset();
+        }
+
+        public void Reset()  {
             this.incrementalTranslation = Swipe.Id();
             this.incrementalScaling = Swipe.Id();
             this.lastPinchPan = Swipe.Id();
@@ -92,6 +99,7 @@ namespace Kaemika {
             this.swiping = false;
             this.displayPinchOrigin = false;
             this.pinchOrigin = new SKPoint(0, 0);
+            this.setManualPinchPan(Swipe.Id());
         }
 
         public void DisplayTouchLocation(Painter painter) { // display a dot where the fingers are touching, via the client's painter

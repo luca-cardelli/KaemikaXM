@@ -83,7 +83,7 @@ namespace Kaemika {
     // ====  PLATFORM-NEUTRAL GUI INTERFACE =====
 
     public class Gui {
-        public static string KaemikaVersion = "1.0.25";
+        public static string KaemikaVersion = "1.0.28"; // copy to PreferencesInfoController.cs for macOS
 
         public static Platform platform = Platform.NONE;
 
@@ -116,6 +116,9 @@ namespace Kaemika {
             else                                  return (value * 1e-15).ToString(numberFormat) + spacer + "P" + baseUnit;
         }
         public static string FormatUnit(float value, string spacer, string baseUnit, string numberFormat) {
+            return FormatUnit((double)value, spacer, baseUnit, numberFormat);
+        }
+        public static string FormatUnit(decimal value, string spacer, string baseUnit, string numberFormat) {
             return FormatUnit((double)value, spacer, baseUnit, numberFormat);
         }
     }

@@ -853,7 +853,8 @@ namespace Kaemika {
             if (volumeValue <= 0) throw new Error("Sample volume must be positive: " + this.name);
             if (temperatureValue < 0) throw new Error("Sample temperature must be non-negative: " + this.name);
             Symbol symbol = new Symbol(name);
-            SampleValue sample = Protocol.Sample(symbol, volumeValue, temperatureValue);
+            Noise noise = KControls.SelectNoiseSelectedItem;
+            SampleValue sample = Protocol.Sample(symbol, volumeValue, temperatureValue, noise != Noise.None);
             KDeviceHandler.Sample(sample, style);
             if (netlist.EmitChem(style, s)) netlist.Emit(new SampleEntry(sample));
             return new ValueEnv(symbol, Type.Sample, sample, env, noCheck: true);
@@ -1300,12 +1301,14 @@ namespace Kaemika {
         public class Amount : Statement {
         private List<Variable> vars;
         private Expression initial;
+        private Expression initialVariance; // can be null
         private string dimension; // Mass unit, or concentration unit
         private Expression sample;
-        public Amount(Ids names, Expression initial, string dimension, Expression sample) {
+        public Amount(Ids names, Expression initial, Expression initialVariance, string dimension, Expression sample) {
             this.vars = new List<Variable> { };
             foreach (string name in names.ids) this.vars.Add(new Variable(name));
             this.initial = initial;
+            this.initialVariance = initialVariance;
             this.dimension = dimension;
             this.sample = sample;
         }
@@ -1315,11 +1318,12 @@ namespace Kaemika {
             return ids;
         }
         public override string Format() {       
-            return "amount" + this.FormatVars() + " @ " + initial.Format() + " " + dimension + " in " + sample.Format();
+            return "amount" + this.FormatVars() + " @ " + initial.Format() + ((initialVariance == null) ? "" : " ± " + initialVariance.Format()) + " " + dimension + " in " + sample.Format();
         }
         public override Scope Scope(Scope scope) {
             foreach (Variable var in this.vars) var.Scope(scope);
             initial.Scope(scope);
+            if (initialVariance != null) initialVariance.Scope(scope);
             sample.Scope(scope);
             return scope;
         }
@@ -1327,6 +1331,9 @@ namespace Kaemika {
             Value initialValue = this.initial.EvalReject(env, netlist, style, s+1);
             if (initialValue == Value.REJECT) return Env.REJECT;
             if (!(initialValue is NumberValue)) throw new Error("Amount " + this.FormatVars() + " requires a number value for concentration");
+            Value initialVarianceValue = (this.initialVariance == null) ? new NumberValue(0.0) : this.initialVariance.EvalReject(env, netlist, style, s + 1);
+            if (initialVarianceValue == Value.REJECT) return Env.REJECT;
+            if (!(initialVarianceValue is NumberValue)) throw new Error("Amount " + this.FormatVars() + " requires a number value for concentration standard deviation");
             Value sampleValue = this.sample.EvalReject(env, netlist, style, s + 1);
             if (sampleValue == Value.REJECT) return Env.REJECT;
             if (!(sampleValue is SampleValue)) throw new Error("Amount " + this.FormatVars() + " requires a sample value");
@@ -1334,9 +1341,10 @@ namespace Kaemika {
                 Value speciesValue = var.EvalReject(env, netlist, style, s + 1);
                 if (speciesValue == Value.REJECT) return Env.REJECT;
                 if (!(speciesValue is SpeciesValue)) throw new Error("Amount " + this.FormatVars() + "has a non-species in the list of variables");
-                Protocol.Amount((SampleValue)sampleValue, (SpeciesValue)speciesValue, (NumberValue)initialValue, this.dimension, style);
-                KDeviceHandler.Amount((SampleValue)sampleValue, (SpeciesValue)speciesValue, (NumberValue)initialValue, this.dimension, style);
-                if (netlist.EmitChem(style, s)) netlist.Emit(new AmountEntry((SpeciesValue)speciesValue, (NumberValue)initialValue, this.dimension, (SampleValue)sampleValue));
+                AmountEntry amountEntry = new AmountEntry((SpeciesValue)speciesValue, (NumberValue)initialValue, (NumberValue)initialVarianceValue, this.dimension, (SampleValue)sampleValue);
+                Protocol.Amount((SampleValue)sampleValue, amountEntry, style);
+                KDeviceHandler.Amount((SampleValue)sampleValue, amountEntry, style);
+                if (netlist.EmitChem(style, s)) netlist.Emit(amountEntry);
             }
             return env;
         }
@@ -1345,13 +1353,15 @@ namespace Kaemika {
     public class Trigger : Statement {
         private List<Variable> vars;
         private Expression assignment;
+        private Expression assignmentVariance; // can be null
         private string dimension; // Mass unit, or concentration unit
         private Expression condition;
         private Expression sample;
-        public Trigger(Ids names, Expression assignment, string dimension, Expression condition, Expression sample) {
+        public Trigger(Ids names, Expression assignment, Expression assignmentVariance, string dimension, Expression condition, Expression sample) {
             this.vars = new List<Variable> { };
             foreach (string name in names.ids) this.vars.Add(new Variable(name));
             this.assignment = assignment;
+            this.assignmentVariance = assignmentVariance;
             this.dimension = dimension;
             this.condition = condition;
             this.sample = sample;
@@ -1362,11 +1372,12 @@ namespace Kaemika {
             return ids;
         }
         public override string Format() {       
-            return "trigger" + this.FormatVars() + " @ " + assignment.Format() + " " + dimension + " when " + condition.Format() + " in " + sample.Format();
+            return "trigger" + this.FormatVars() + " @ " + assignment.Format() + ((assignmentVariance == null) ? "" : " ± " + assignmentVariance.Format()) + " " + dimension + " when " + condition.Format() + " in " + sample.Format();
         }
         public override Scope Scope(Scope scope) {
             foreach (Variable var in this.vars) var.Scope(scope);
             assignment.Scope(scope);
+            if (assignmentVariance != null) assignmentVariance.Scope(scope);
             condition.Scope(scope);
             sample.Scope(scope);
             return scope;
@@ -1374,6 +1385,11 @@ namespace Kaemika {
         public override Env EvalReject(Env env, Netlist netlist, Style style, int s) { StackCheck(s);
             Flow assignmentValue = this.assignment.EvalRejectToFlow(this.assignment, env, netlist, style,  s+ 1);
             if (assignmentValue == Flow.REJECT) return Env.REJECT;
+            Flow assignmentVarianceValue = null;
+            if (assignmentVariance != null) {
+                assignmentVarianceValue = this.assignmentVariance.EvalRejectToFlow(this.assignmentVariance, env, netlist, style, s + 1);
+                if (assignmentVarianceValue == Flow.REJECT) return Env.REJECT;
+            }
             Flow conditionValue = this.condition.EvalRejectToFlow(this.condition, env, netlist, style, s + 1);
             if (conditionValue == Flow.REJECT) return Env.REJECT;
             Value sampleValue = this.sample.EvalReject(env, netlist, style, s + 1);
@@ -1383,7 +1399,7 @@ namespace Kaemika {
                 Value speciesValue = var.EvalReject(env, netlist, style, s + 1);
                 if (speciesValue == Value.REJECT) return Env.REJECT;
                 if (!(speciesValue is SpeciesValue)) throw new Error("Trigger " + this.FormatVars() + "has a non-species in the list of variables");
-                TriggerEntry triggerEntry = new TriggerEntry((SpeciesValue)speciesValue, conditionValue, assignmentValue, this.dimension, (SampleValue)sampleValue);
+                TriggerEntry triggerEntry = new TriggerEntry((SpeciesValue)speciesValue, conditionValue, assignmentValue, assignmentVarianceValue, this.dimension, (SampleValue)sampleValue);
                 Protocol.Trigger((SampleValue)sampleValue, triggerEntry, style);
                 if (netlist.EmitChem(style, s)) netlist.Emit(triggerEntry);
             }

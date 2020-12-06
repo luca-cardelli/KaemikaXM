@@ -9,13 +9,13 @@ namespace Kaemika {
 
         private static KTouchable scoreControl;               // <<============== the only score GUI panel, registered from platforms when the GUI loads
 
-        public static bool showInfluences = false;
-        public static SKRect influenceRect = new SKRect(0, 0, 0, 0);
-        public static SKRect packRect = new SKRect(0, 0, 0, 0);
-
         public static void Register(KTouchable control) {
             scoreControl = control;
         }
+
+        public static bool showInfluences = false;
+        public static SKRect influenceRect = new SKRect(0, 0, 0, 0);
+        public static SKRect packRect = new SKRect(0, 0, 0, 0);
 
         // scoreControl handling
 
@@ -74,10 +74,10 @@ namespace Kaemika {
         }
 
         public static void DrawOver(Painter painter, int originX, int originY, int width, int height) {
-            if (visible) {
+            //if (visible) {
                 if (score == null) return;
                 score.DrawOver(painter, originX, originY, width, height);
-            }
+            //}
         }
 
         private static Swipe manualPinchPan = Swipe.Id();

@@ -15,7 +15,7 @@ namespace KaemikaWPF {
 
         public static string modelsDirectory = string.Empty;
         private static Environment.SpecialFolder defaultUserDataDirectoryPath = Environment.SpecialFolder.MyDocuments;
-        private static Environment.SpecialFolder defaultKaemikaDataDirectoryPath = Environment.SpecialFolder.ApplicationData;
+        private static Environment.SpecialFolder defaultKaemikaDataDirectoryPath = Environment.SpecialFolder.ApplicationData; // C:\Users\lucac\AppData\Roaming\Kaemika
         private static string defaultUserDataDirectory = Environment.GetFolderPath(defaultUserDataDirectoryPath);
         private static string defaultKaemikaDataDirectory = Environment.GetFolderPath(defaultKaemikaDataDirectoryPath) + "\\Kaemika";
         public static string CreateKaemikaDataDirectory() {
@@ -26,19 +26,55 @@ namespace KaemikaWPF {
         }
 
         // Colors
+        // Color picker:  https://www.google.com/search?q=hex+color+picker&sa=X&ved=2ahUKEwiAwq_J-JTtAhUQQEEAHWn0AlsQ1QIoAHoECBEQAQ&biw=954&bih=455&dpr=1.33
 
-        public static Color cMainButtonDeselected = Color.FromArgb(255, 0, 122, 204);
-        public static Color cMainButtonSelected = Color.FromArgb(255, 104, 33, 122);
-        public static Color cMainButtonText = Color.White;
+        public enum Theme { Light, Dark, Blue }
+        public static Theme theme = Theme.Light; // this field is read by static initilizers for gui element, so changing it a runtime (e.g. as a preference read from disk) will not work
 
-        public static Color cMenuButtonDeselected = cMainButtonSelected;
-        public static Color cMenuButtonSelected = Color.FromArgb(255, 148, 46, 175);
-        public static Color cMenuButtonText = cMainButtonText;
-        public static Color cMenuButtonHotText = Color.HotPink;
+        public static Color cMainButtonDeselected = // main borders background
+            theme == Theme.Dark ? Color.FromArgb(255, 162, 162, 162) :  //1.0.26
+            theme == Theme.Light ? Color.FromArgb(255, 215, 215, 215) : //1.0.27
+         /* theme == Theme.Blue */ Color.FromArgb(255, 0, 122, 204);    //1.0.25
 
-        public static Color cPanelButtonDeselected = Color.FromArgb(255, 250, 232, 255);
-        public static Color cPanelButtonSelected = Color.FromArgb(255, 255, 190, 239);
-        public static Color cPanelButtonText = Color.Black;
+        public static Color cMainButtonSelected = 
+            theme == Theme.Dark ? Color.FromArgb(255, 128, 128, 128) :  //1.0.26
+            theme == Theme.Light ? Color.FromArgb(255, 240, 240, 240) : //1.0.27
+         /* theme == Theme.Blue */ Color.FromArgb(255, 104, 33, 122);   //1.0.25
+           
+        public static Color cMainButtonText = // = cMenuButtonText, menu text
+            theme == Theme.Dark? Color.White :  //1.0.26
+            theme == Theme.Light? Color.FromArgb(255, 64, 64, 64) : //1.0.27
+         /* theme == Theme.Blue */ Color.White;    //1.0.25
+
+        public static Color cMenuButtonDeselected = 
+            cMainButtonSelected;
+
+        public static Color cMenuButtonSelected = // sticky menu selections hightlight
+            theme == Theme.Dark ? Color.FromArgb(255, 195, 150, 150) :  //1.0.26
+            theme == Theme.Light ? Color.FromArgb(255, 210, 210, 210) : //1.0.27
+         /* theme == Theme.Blue */ Color.FromArgb(255, 148, 46, 175);   //1.0.25
+
+        public static Color cMenuButtonHotText = // menu headings
+            theme == Theme.Dark ? Color.FromArgb(255, 245, 190, 190) :  //1.0.26
+            theme == Theme.Light ? Color.FromArgb(255, 146, 57, 34) :   //1.0.27
+         /* theme == Theme.Blue */ Color.HotPink;                       //1.0.25
+
+        public static Color cMenuButtonText = // menu text
+            cMainButtonText;
+
+        public static Color cPanelButtonDeselected =
+            theme == Theme.Dark? Color.FromArgb(255, 240, 240, 240) :   //1.0.27 //1.0.26 Color.FromArgb(255, 250, 232, 255)
+            theme == Theme.Light? Color.FromArgb(255, 240, 240, 240) :  //1.0.27
+         /* theme == Theme.Blue */ Color.FromArgb(255, 250, 232, 255);  //1.0.25
+
+        public static Color cPanelButtonSelected = 
+            theme == Theme.Dark? cMenuButtonSelected :                  //1.0.27 //1.0.26 Color.FromArgb(255, 255, 190, 239)
+            theme == Theme.Light? cMenuButtonSelected :                 //1.0.27
+         /* theme == Theme.Blue */ Color.FromArgb(255, 255, 190, 239);  //1.0.25
+
+        public static Color cPanelButtonText = Color.Black;  
+
+        public const int hilightIntensity = 8; // for TightButtons
 
         // Controls
 
@@ -106,7 +142,8 @@ namespace KaemikaWPF {
             WinGui.winGui.panel_Microfluidics.Visible = false;
         }
         public void IncrementFont(float pointSize) {
-            SetTextFont(WinGui.winGui.txtInput.Font.Size + pointSize, true);
+            SetTextFont(currentFontSize + pointSize, true);
+            SavePreferences();
         }
         public void PrivacyPolicyToClipboard() {
             Clipboard.SetText("http://lucacardelli.name/Artifacts/Kaemika/KaemikaUWP/privacy_policy.html");
@@ -166,6 +203,10 @@ namespace KaemikaWPF {
                 string path2 = CreateKaemikaDataDirectory() + "\\outputaction.txt";
                 File.WriteAllText(path2, Exec.currentOutputAction.name);
             } catch (Exception) { }
+            try {
+                string path2 = CreateKaemikaDataDirectory() + "\\fontsize.txt";
+                File.WriteAllText(path2, currentFontSize.ToString());
+            } catch (Exception) { }
         }
         public void RestorePreferences() {
             try {
@@ -176,6 +217,10 @@ namespace KaemikaWPF {
                 string path2 = CreateKaemikaDataDirectory() + "\\outputaction.txt";
                 KGui.kControls.SetOutputSelection(File.Exists(path2) ? File.ReadAllText(path2) : "");
             } catch (Exception) { KGui.kControls.SetOutputSelection(""); } // set to default
+            try {
+                string path2 = CreateKaemikaDataDirectory() + "\\fontsize.txt";
+                if (File.Exists(path2)) { SetTextFont(float.Parse(File.ReadAllText(path2)), true); }
+            } catch (Exception) { }
         }
         public static Button AutoSizeButton(Button button) {
             button.AutoSize = true;
@@ -187,11 +232,74 @@ namespace KaemikaWPF {
             button.Margin = new Padding(0);
             return button;
         }
+        public static float currentFontSize = 10; // initial font size
         public static void SetTextFont(float size, bool fixedWidth) {
             if (size >= 6) {
+                currentFontSize = size;
                 Font font = WinGui.winGui.GetFont(size, fixedWidth);
-                WinGui.winGui.txtInput.Font = font;
                 WinGui.winGui.txtOutput.Font = font;
+                ////EDITOR TextBox
+                //WinGui.winGui.txtInput.Font = font;
+                //EDITOR Scintilla
+                WinGui.winGui.txtInput.Font = font;
+                SetScintillaStyle();
+            }
+        }
+        public static void SetEditable(bool editable) {
+            ////EDITOR TextBox
+            //if (editable) {
+            //    WinGui.winGui.txtInput.ReadOnly = false;
+            //    WinGui.winGui.txtInput.WordWrap = false;
+            //    WinGui.winGui.txtInput.ScrollBars = ScrollBars.Both;
+            //} else {
+            //    WinGui.winGui.txtInput.ReadOnly = true;
+            //    WinGui.winGui.txtInput.WordWrap = true;
+            //    WinGui.winGui.txtInput.ScrollBars = ScrollBars.Vertical;
+            //}
+
+            //EDITOR Scintilla
+            WinGui.winGui.txtInput.ReadOnly = !editable;
+            SetScintillaStyle(); 
+        }
+        private static void SetScintillaStyle() {
+            bool editable = !WinGui.winGui.txtInput.ReadOnly;
+            Font font = WinGui.winGui.txtInput.Font;
+            string fontName = font.Name;
+            float fontSize = currentFontSize;
+            if (editable) {
+                // Configure the default style. This style is used to define properties that all styles receive when calling StyleClearAll
+                WinGui.winGui.txtInput.Zoom = 1; // in case the zoom was changed by scrolling the mouse wheel
+                WinGui.winGui.txtInput.StyleResetDefault();
+                WinGui.winGui.txtInput.Styles[ScintillaNET.Style.Default].Font = fontName;
+                WinGui.winGui.txtInput.Styles[ScintillaNET.Style.Default].Size = (int)fontSize;
+                WinGui.winGui.txtInput.Styles[ScintillaNET.Style.Default].BackColor = Color.White;
+                WinGui.winGui.txtInput.Styles[ScintillaNET.Style.Default].ForeColor = Color.DarkSlateBlue;
+                WinGui.winGui.txtInput.StyleClearAll();
+                // Configure the CPP (C#) lexer styles
+                var x = WinGui.winGui.txtInput.Styles[ScintillaNET.Style.Cpp.Comment];
+                WinGui.winGui.txtInput.Styles[ScintillaNET.Style.Cpp.Comment].ForeColor = Color.DarkGreen;
+                WinGui.winGui.txtInput.Styles[ScintillaNET.Style.Cpp.CommentLine].ForeColor = Color.DarkGreen;
+                WinGui.winGui.txtInput.Styles[ScintillaNET.Style.Cpp.CommentDoc].ForeColor = Color.DarkGreen;
+                WinGui.winGui.txtInput.Styles[ScintillaNET.Style.Cpp.CommentLineDoc].ForeColor = Color.DarkGreen;
+                WinGui.winGui.txtInput.Styles[ScintillaNET.Style.Cpp.Identifier].ForeColor = Color.DarkRed;
+                WinGui.winGui.txtInput.Styles[ScintillaNET.Style.Cpp.Preprocessor].ForeColor = Color.DarkRed; // unfortunately # in first column is the preprocessor character and paints the whole line
+                WinGui.winGui.txtInput.Styles[ScintillaNET.Style.Cpp.Number].ForeColor = Color.DarkRed; // would have to write a new lexer to distinguish numbers properly
+                WinGui.winGui.txtInput.Styles[ScintillaNET.Style.Cpp.String].ForeColor = Color.DarkRed;
+                WinGui.winGui.txtInput.Styles[ScintillaNET.Style.Cpp.Character].ForeColor = Color.DarkRed;
+                WinGui.winGui.txtInput.Lexer = ScintillaNET.Lexer.Cpp;
+                WinGui.winGui.txtInput.SetKeywords(0, "sample in species amount trigger @ # Ø ∂ · ± true false or and not bool number constant parameter string list flow network net η function fun λ random rand value report as if then else elseif end define yield omega mix split by dispose regulate to concentrate equilibrate for draw from act inh deg");
+            }
+            else {
+                // Configure the default style. This style is used to define properties that all styles receive when calling StyleClearAll
+                WinGui.winGui.txtInput.Zoom = 1; // in case the zoom was changed by scrolling the mouse wheel
+                WinGui.winGui.txtInput.StyleResetDefault();
+                WinGui.winGui.txtInput.Styles[ScintillaNET.Style.Default].Font = fontName;
+                WinGui.winGui.txtInput.Styles[ScintillaNET.Style.Default].Size = (int)fontSize;
+                WinGui.winGui.txtInput.Styles[ScintillaNET.Style.Default].BackColor = Color.LightYellow;
+                WinGui.winGui.txtInput.Styles[ScintillaNET.Style.Default].ForeColor = Color.DarkSlateBlue;
+                WinGui.winGui.txtInput.StyleClearAll();
+                // Configure the Null lexer styles
+                WinGui.winGui.txtInput.Lexer = ScintillaNET.Lexer.Null;
             }
         }
         public void SetSnapshotSize() {
@@ -231,28 +339,51 @@ namespace KaemikaWPF {
             Bitmap image = null;
             if (imageName == "icons8stop40") image = Properties.Resources.icons8stop40;
             if (imageName == "icons8play40") image = Properties.Resources.icons8play40;
-            if (imageName == "Noise_None_W_48x48") image = Properties.Resources.Noise_None_W_48x48;
-            if (imageName == "Noise_SigmaRange_W_48x48") image = Properties.Resources.Noise_SigmaRange_W_48x48;
-            if (imageName == "Noise_Sigma_W_48x48") image = Properties.Resources.Noise_Sigma_W_48x48;
-            if (imageName == "Noise_CV_W_48x48") image = Properties.Resources.Noise_CV_W_48x48;
-            if (imageName == "Noise_SigmaSqRange_W_48x48") image = Properties.Resources.Noise_SigmaSqRange_W_48x48;
-            if (imageName == "Noise_SigmaSq_W_48x48") image = Properties.Resources.Noise_SigmaSq_W_48x48;
-            if (imageName == "Noise_Fano_W_48x48") image = Properties.Resources.Noise_Fano_W_48x48;
-            if (imageName == "Computation_48x48") image = Properties.Resources.Computation_48x48;
+            if (imageName == "icons8pauseplay40") image = Properties.Resources.icons8pauseplay40;
             if (imageName == "icons8device_OFF_48x48") image = Properties.Resources.icons8device_OFF_48x48;
             if (imageName == "icons8device_ON_48x48") image = Properties.Resources.icons8device_ON_48x48;
-            if (imageName == "deviceBorder_W_48x48") image = Properties.Resources.deviceBorder_W_48x48;
-            if (imageName == "FontSizePlus_W_48x48") image = Properties.Resources.FontSizePlus_W_48x48;
-            if (imageName == "FontSizeMinus_W_48x48") image = Properties.Resources.FontSizeMinus_W_48x48;
-            if (imageName == "FileSave_48x48") image = Properties.Resources.FileSave_48x48;
-            if (imageName == "FileLoad_48x48") image = Properties.Resources.FileLoad_48x48;
-            if (imageName == "icons8pauseplay40") image = Properties.Resources.icons8pauseplay40;
-            if (imageName == "icons8combochart96_W_48x48") image = Properties.Resources.icons8combochart96_W_48x48;
-            if (imageName == "icons8_share_384_W_48x48") image = Properties.Resources.icons8_share_384_W_48x48;
-            if (imageName == "icons8_keyboard_96_W_48x48") image = Properties.Resources.icons8_keyboard_96_W_48x48;
-            if (imageName == "icons8_settings_384_W_48x48") image = Properties.Resources.icons8_settings_384_W_48x48;
-            if (imageName == "icons8text_48x48") image = Properties.Resources.icons8text_48x48;
-            if (imageName == "Parameters_W_48x48") image = Properties.Resources.Parameters_W_48x48;
+            if (WinControls.theme == WinControls.Theme.Light) {
+                if (imageName == "Noise_None_W_48x48") image = Properties.Resources.Noise_None_B_48x48;
+                if (imageName == "Noise_SigmaRange_W_48x48") image = Properties.Resources.Noise_SigmaRange_B_48x48;
+                if (imageName == "Noise_Sigma_W_48x48") image = Properties.Resources.Noise_Sigma_B_48x48;
+                if (imageName == "Noise_CV_W_48x48") image = Properties.Resources.Noise_CV_B_48x48;
+                if (imageName == "Noise_SigmaSqRange_W_48x48") image = Properties.Resources.Noise_SigmaSqRange_B_48x48;
+                if (imageName == "Noise_SigmaSq_W_48x48") image = Properties.Resources.Noise_SigmaSq_B_48x48;
+                if (imageName == "Noise_Fano_W_48x48") image = Properties.Resources.Noise_Fano_B_48x48;
+                if (imageName == "Computation_48x48") image = Properties.Resources.Computation_B_48x48;
+                if (imageName == "deviceBorder_W_48x48") image = Properties.Resources.deviceBorder_B_48x48;
+                if (imageName == "FontSizePlus_W_48x48") image = Properties.Resources.FontSizePlus_B_48x48;
+                if (imageName == "FontSizeMinus_W_48x48") image = Properties.Resources.FontSizeMinus_B_48x48;
+                if (imageName == "FileSave_48x48") image = Properties.Resources.FileSave_B_48x48;
+                if (imageName == "FileLoad_48x48") image = Properties.Resources.FileLoad_B_48x48;
+                if (imageName == "icons8combochart96_W_48x48") image = Properties.Resources.icons8combochart96_B_48x48;
+                if (imageName == "icons8_share_384_W_48x48") image = Properties.Resources.icons8_share_384_B_48x48;
+                if (imageName == "icons8_keyboard_96_W_48x48") image = Properties.Resources.icons8_keyboard_96_B_48x48;
+                if (imageName == "icons8_settings_384_W_48x48") image = Properties.Resources.icons8_settings_384_B_48x48;
+                if (imageName == "icons8text_48x48") image = Properties.Resources.icons8text_B_48x48;
+                if (imageName == "Parameters_W_48x48") image = Properties.Resources.Parameters_B_48x48;
+            } else { // WinControls.theme == WinControls.Theme.Dark | WinControls.Theme.Blue
+                if (imageName == "Noise_None_W_48x48") image = Properties.Resources.Noise_None_W_48x48;
+                if (imageName == "Noise_SigmaRange_W_48x48") image = Properties.Resources.Noise_SigmaRange_W_48x48;
+                if (imageName == "Noise_Sigma_W_48x48") image = Properties.Resources.Noise_Sigma_W_48x48;
+                if (imageName == "Noise_CV_W_48x48") image = Properties.Resources.Noise_CV_W_48x48;
+                if (imageName == "Noise_SigmaSqRange_W_48x48") image = Properties.Resources.Noise_SigmaSqRange_W_48x48;
+                if (imageName == "Noise_SigmaSq_W_48x48") image = Properties.Resources.Noise_SigmaSq_W_48x48;
+                if (imageName == "Noise_Fano_W_48x48") image = Properties.Resources.Noise_Fano_W_48x48;
+                if (imageName == "Computation_48x48") image = Properties.Resources.Computation_48x48;
+                if (imageName == "deviceBorder_W_48x48") image = Properties.Resources.deviceBorder_W_48x48;
+                if (imageName == "FontSizePlus_W_48x48") image = Properties.Resources.FontSizePlus_W_48x48;
+                if (imageName == "FontSizeMinus_W_48x48") image = Properties.Resources.FontSizeMinus_W_48x48;
+                if (imageName == "FileSave_48x48") image = Properties.Resources.FileSave_48x48;
+                if (imageName == "FileLoad_48x48") image = Properties.Resources.FileLoad_48x48;
+                if (imageName == "icons8pauseplay40") image = Properties.Resources.icons8pauseplay40;
+                if (imageName == "icons8combochart96_W_48x48") image = Properties.Resources.icons8combochart96_W_48x48;
+                if (imageName == "icons8_share_384_W_48x48") image = Properties.Resources.icons8_share_384_W_48x48;
+                if (imageName == "icons8_keyboard_96_W_48x48") image = Properties.Resources.icons8_keyboard_96_W_48x48;
+                if (imageName == "icons8_settings_384_W_48x48") image = Properties.Resources.icons8_settings_384_W_48x48;
+                if (imageName == "icons8text_48x48") image = Properties.Resources.icons8text_48x48;
+                if (imageName == "Parameters_W_48x48") image = Properties.Resources.Parameters_W_48x48;
+            }
             if (image == null) throw new Error("SetImage");
             this.button.Image = image;
         }
@@ -492,12 +623,13 @@ namespace KaemikaWPF {
             return this.menu.Visible;
         }
         private void Attach() {
-            if (this.attachment == FlyoutAttachment.RightDown) this.menu.Location = new Point(this.buttonBar.Location.X + this.buttonBar.Size.Width, this.buttonBar.Location.Y + this.button.Location.Y);
-            else if (this.attachment == FlyoutAttachment.LeftDown) this.menu.Location = new Point(this.buttonBar.Location.X - this.menu.Size.Width, this.buttonBar.Location.Y + this.button.Location.Y);
-            else if (this.attachment == FlyoutAttachment.RightUp) this.menu.Location = new Point(this.buttonBar.Location.X + this.buttonBar.Size.Width, this.buttonBar.Location.Y + this.button.Location.Y + this.button.Size.Height - this.menu.Size.Height);
-            else if (this.attachment == FlyoutAttachment.LeftUp) this.menu.Location = new Point(this.buttonBar.Location.X - this.menu.Size.Width, this.buttonBar.Location.Y + this.button.Location.Y + this.button.Size.Height - this.menu.Size.Height);
-            else if (this.attachment == FlyoutAttachment.RightTop) this.menu.Location = new Point(this.buttonBar.Location.X + this.buttonBar.Size.Width, this.buttonBar.Location.Y);
-            else if (this.attachment == FlyoutAttachment.LeftTop) this.menu.Location = new Point(this.buttonBar.Location.X - this.menu.Size.Width, this.buttonBar.Location.Y);
+            const int buttonBarBorder = 1;
+            if (this.attachment == FlyoutAttachment.RightDown) this.menu.Location = new Point(this.buttonBar.Location.X + this.buttonBar.Size.Width, this.buttonBar.Location.Y + buttonBarBorder + this.button.Location.Y);
+            else if (this.attachment == FlyoutAttachment.LeftDown) this.menu.Location = new Point(this.buttonBar.Location.X - this.menu.Size.Width, this.buttonBar.Location.Y + buttonBarBorder + this.button.Location.Y);
+            else if (this.attachment == FlyoutAttachment.RightUp) this.menu.Location = new Point(this.buttonBar.Location.X + this.buttonBar.Size.Width, this.buttonBar.Location.Y + buttonBarBorder + this.button.Location.Y + this.button.Size.Height - this.menu.Size.Height);
+            else if (this.attachment == FlyoutAttachment.LeftUp) this.menu.Location = new Point(this.buttonBar.Location.X - this.menu.Size.Width, this.buttonBar.Location.Y + buttonBarBorder + this.button.Location.Y + this.button.Size.Height - this.menu.Size.Height);
+            else if (this.attachment == FlyoutAttachment.RightTop) this.menu.Location = new Point(this.buttonBar.Location.X + this.buttonBar.Size.Width, this.buttonBar.Location.Y + buttonBarBorder);
+            else if (this.attachment == FlyoutAttachment.LeftTop) this.menu.Location = new Point(this.buttonBar.Location.X - this.menu.Size.Width, this.buttonBar.Location.Y + buttonBarBorder);
             else if (this.attachment == FlyoutAttachment.TextOutputLeft) this.menu.Location = new Point(0, 0);
             else if (this.attachment == FlyoutAttachment.TextOutputRight) this.menu.Location = new Point(WinGui.winGui.txtOutput.Size.Width - this.menu.Width, 0);
         }
@@ -510,6 +642,9 @@ namespace KaemikaWPF {
         public void Close() {
             this.menu.Visible = false;
             Selected(false);
+        }
+        public void Invalidate() {
+            this.menu.Invalidate();
         }
     }
 
@@ -540,7 +675,7 @@ namespace KaemikaWPF {
             } 
         }
         private Color HiLi(Color c) {
-            int r = 8;
+            int r = WinControls.hilightIntensity;
             if (c.R + c.G + c.B > 382)
                 return Color.FromArgb(255, c.R - c.R / r, c.G - c.G / r, c.B - c.B / r);
             else return Color.FromArgb(255, c.R + (255-c.R)/r, c.G + (255 - c.G) / r, c.B + (255 - c.B) /r);

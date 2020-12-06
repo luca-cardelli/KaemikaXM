@@ -74,7 +74,7 @@ namespace KaemikaMAC {
                 Invalidate();
             } else { _ = MacGui.BeginInvokeOnMainThreadAsync(() => { DoInvalidate(); return MacGui.ack; }).Result; }
         }
-        private void Invalidate() {
+        public void Invalidate() {
             NeedsDisplay = true;
         }
 
@@ -107,15 +107,16 @@ namespace KaemikaMAC {
         private Action<SKPoint, SKPoint> onTouchSwipeOrMouseDrag;
         private Action<SKPoint, SKPoint> onTouchSwipeOrMouseDragEnd;
 
-        public /*KScoreContol Interface */ void OnTouchTapOrMouseMove(Action<SKPoint> action) { this.onTouchTapOrMouseMove = action; }
-        public /*KScoreContol Interface */ void OnTouchDoubletapOrMouseClick(Action<SKPoint> action) { this.onTouchDoubletapOrMouseClick = action; }
-        public /*KScoreContol Interface */ void OnTouchSwipeOrMouseDrag(Action<SKPoint, SKPoint> action) { this.onTouchSwipeOrMouseDrag = action; }
-        public /*KScoreContol Interface */ void OnTouchSwipeOrMouseDragEnd(Action<SKPoint, SKPoint> action) { this.onTouchSwipeOrMouseDragEnd = action; }
+        public /*Interface KTouchable*/ void OnTouchTapOrMouseMove(Action<SKPoint> action) { this.onTouchTapOrMouseMove = action; }
+        public /*Interface KTouchable*/ void OnTouchDoubletapOrMouseClick(Action<SKPoint> action) { this.onTouchDoubletapOrMouseClick = action; }
+        public /*Interface KTouchable*/ void OnTouchSwipeOrMouseDrag(Action<SKPoint, SKPoint> action) { this.onTouchSwipeOrMouseDrag = action; }
+        public /*Interface KTouchable*/ void OnTouchSwipeOrMouseDragEnd(Action<SKPoint, SKPoint> action) { this.onTouchSwipeOrMouseDragEnd = action; }
+        public /*Interface KTouchable*/ void OnTouchPinchOrMouseZoom(Action<SKPoint, float> action) { } // unused
 
         private static SKPoint mouseDownPoint;
-        private static SKPoint mouseMovePoint;
-        private static bool mouseDown = false;
-        private static bool dragging = false;
+        //private static SKPoint mouseMovePoint;
+        //private static bool mouseDown = false;
+        //private static bool dragging = false;
 
         public override void MouseDown(NSEvent e) {
             base.MouseDown(e);

@@ -20,9 +20,23 @@ namespace Kaemika {
 
     public abstract class KChartHandler {
 
+        //private static KTouchable chartControl;          // <<============== the only chart GUI panel, registered from platforms when the GUI loads
+
+        //public static void Register(KTouchable control) {
+        //    chartControl = control;
+        //}
+
         private static KChart chart = null;             // <<============== the only chart
         private static Dictionary<string, Dictionary<string, bool>> visibilityCache =  // a visibility cache for each Chart.model
             new Dictionary<string, Dictionary<string, bool>>();
+
+        private static KTouchClientData touch = null;
+        public static void RegisterKTouchClientData(KTouchClientData data) {
+            touch = data;
+        }
+        public static void KTouchClientDataReset() {
+            if (touch != null) touch.Reset();
+        }
 
         private static DateTime lastUpdate = DateTime.MinValue;
         // make sure to do a final non-incremental update after incremental updates
@@ -45,6 +59,7 @@ namespace Kaemika {
             if (!style.chartOutput) return;
             lastUpdate = DateTime.MinValue;
             chart = new KChart(sampleName, baseUnitX, baseUnitY, style);
+            KChartHandler.KTouchClientDataReset();
             ChartUpdate(style);
         }
         public static void ChartClearData(Style style) {
@@ -107,6 +122,10 @@ namespace Kaemika {
             if (seriesName != null) chart.timecourse.AddPole(seriesName, (float)t, lineStyle);
         }
 
+        public static Swipe GetManualPinchPan() {
+            if (chart == null) return Swipe.Id();
+            return chart.GetManualPinchPan();
+        }
         public static void SetManualPinchPan(Swipe manualPinchPan) {
             if (chart == null) return;
             chart.SetManualPinchPan(manualPinchPan);
@@ -214,10 +233,13 @@ namespace Kaemika {
             return timecourse.IsClear();
         }
 
-        public Swipe pinchPan = Swipe.Id(); // updated by ChartView from KaemikaXM
+        private Swipe pinchPan = Swipe.Id(); // updated by ChartView from KaemikaXM and SKChartView from KaemikaWPF
         public bool displayPinchOrigin = false;
         public SKPoint pinchOrigin;
 
+        public Swipe GetManualPinchPan() {
+            return pinchPan;
+        }
         public void SetManualPinchPan(Swipe manualPinchPan) {
             pinchPan = manualPinchPan;
         }
@@ -653,57 +675,99 @@ namespace Kaemika {
             }
         }
 
-        private (float minX, float maxX, float minY, float maxY) Inner_Bounds() {
+        public const decimal maxDecimal = decimal.MaxValue/2 - 1; // need to be careful to avoid decimal overflow when computing spans of maxValue-minValue and other computations
+        public const decimal minDecimal = decimal.MinValue/2 + 1;
+        public static decimal ToDecimal(float x) {
+            if (x > (float)maxDecimal) return maxDecimal;
+            if (x < (float)minDecimal) return minDecimal;
+            if (float.IsNaN(x)) return 0;
+            return (decimal)x;
+        }
+        public static decimal ToDecimal(double x) {
+            if (x > (double)maxDecimal) return maxDecimal;
+            if (x < (double)minDecimal) return minDecimal;
+            if (double.IsNaN(x)) return 0;
+            return (decimal)x;
+        }
+        public static decimal ToDecimal(decimal x) {
+            if (x > maxDecimal) return maxDecimal;
+            if (x < minDecimal) return minDecimal;
+            return (decimal)x;
+        }
+        public bool NotDecimal(double x) {
+            return double.IsNaN(x) || x < (double)minDecimal || x > (double)maxDecimal;
+        }
+
+        // use decimal instead of float to prevent rounding error when computing axis tick marks
+        private (decimal minX, decimal maxX, decimal minY, decimal maxY) Inner_Bounds() {
             if (list.Count == 0) { return(0,0,0,0); }
-            float minX = float.MaxValue;
-            float maxX = float.MinValue;
-            float minY = float.MaxValue;
-            float maxY = float.MinValue;
+            decimal minX = maxDecimal;
+            decimal maxX = minDecimal;
+            decimal minY = maxDecimal;
+            decimal maxY = minDecimal;
             for (int i = 0; i < list.Count; i++) {
-                minX = Math.Min(minX, list[i].X);
-                maxX = Math.Max(maxX, list[i].X);
-                minY = Math.Min(minY, list[i].MinY(seriesList));
-                maxY = Math.Max(maxY, list[i].MaxY(seriesList));
+                minX = Math.Min(minX, ToDecimal(list[i].X));
+                maxX = Math.Max(maxX, ToDecimal(list[i].X));
+                minY = Math.Min(minY, ToDecimal(list[i].MinY(seriesList)));
+                maxY = Math.Max(maxY, ToDecimal(list[i].MaxY(seriesList)));
             }
+            if (minX == maxDecimal && maxX == minDecimal) { minX = minDecimal; maxX = maxDecimal; };
+            if (minY == maxDecimal && maxY == minDecimal) { minY = minDecimal; maxY = maxDecimal; };
             return (minX, maxX, minY, maxY);
         }
 
-        private float XlocOfXvalInPlotarea(float Xval, float minX, float maxX, SKSize plotSize) {
-            if (minX == maxX) return 0.0f;
-            return ((Xval - minX) * plotSize.Width) / (maxX - minX);
+        private decimal XlocOfXvalInPlotarea(decimal Xval, decimal minX, decimal maxX, SKSize plotSize) {
+            if (minX == maxX) return 0;
+            if (minX == minDecimal || maxX == maxDecimal) return minDecimal;
+            double inaccurate = ((double)Xval - (double)minX) / ((double)maxX - (double)minX) * plotSize.Width; // protect against decimal overflow
+            if (NotDecimal(inaccurate)) return ToDecimal(inaccurate);
+            return ((Xval - minX) / (maxX - minX)) * ToDecimal(plotSize.Width); 
+            //return ((Xval - minX) * ToDecimal(plotSize.Width)) / (maxX - minX); // decimal overflow possible
+            //return ToDecimal((((float)Xval - (float)minX) * plotSize.Width) / ((float)maxX - (float)minX));
         }
-        private float XvalOfXlocInPlotarea(float Xloc, float minX, float maxX, SKSize plotSize) {
-            if (plotSize.Width == 0) return 0.0f;
-            return minX + (Xloc * (maxX - minX)) / plotSize.Width;
+        private decimal XvalOfXlocInPlotarea(decimal Xloc, decimal minX, decimal maxX, SKSize plotSize) {
+            if (plotSize.Width == 0) return 0;
+            if (minX == minDecimal || maxX == maxDecimal) return minDecimal;
+            return minX + (Xloc * (maxX - minX)) / ToDecimal(plotSize.Width); // decimal overflow?
         }
-        private float YlocOfYvalInPlotarea(float Yval, float minY, float maxY, SKSize plotSize) {  // the Y axis is flipped
-            if (minY == maxY) return plotSize.Height;
-            return ((maxY - Yval) * plotSize.Height) / (maxY - minY);
+        private decimal YlocOfYvalInPlotarea(decimal Yval, decimal minY, decimal maxY, SKSize plotSize) {  // the Y axis is flipped
+            if (minY == maxY || minY == minDecimal || maxY == maxDecimal) return ToDecimal(plotSize.Height);
+            double inaccurate = (((double)maxY - (double)Yval) / ((double)maxY - (double)minY)) * plotSize.Height; // protect against decimal overflow
+            if (NotDecimal(inaccurate)) return ToDecimal(inaccurate);
+            return ((maxY - Yval)  / (maxY - minY)) * ToDecimal(plotSize.Height);
+            // return ((maxY - Yval) * ToDecimal(plotSize.Height)) / (maxY - minY); // decimal overflow possible
+            // return ToDecimal((((float)maxY - (float)Yval) * plotSize.Height) / ((float)maxY - (float)minY));
         }
-        private float YvalOfYlocInPlotarea(float Yloc, float minY, float maxY, SKSize plotSize) {  // the Y axis is flipped
-            if (plotSize.Height == 0.0f) return 0.0f;
-            return maxY - (Yloc * (maxY - minY)) / plotSize.Height;
+        private decimal YvalOfYlocInPlotarea(decimal Yloc, decimal minY, decimal maxY, SKSize plotSize) {  // the Y axis is flipped
+            if (plotSize.Height == 0.0f) return 0;
+            if (minY == minDecimal || maxY == maxDecimal) return minDecimal;
+            return maxY - (Yloc * (maxY - minY)) / ToDecimal(plotSize.Height); // decimal overflow?
         }
-        private float YlocRangeOfYvalRangeInPlotarea(float YvalRange, float minY, float maxY, SKSize plotSize) {
-            if (minY == maxY) return 0.0f;
-            return (YvalRange * plotSize.Height) / (maxY - minY);
+        private decimal YlocRangeOfYvalRangeInPlotarea(decimal YvalRange, decimal minY, decimal maxY, SKSize plotSize) {
+            if (minY == maxY) return 0;
+            if (minY == minDecimal || maxY == maxDecimal) return minDecimal;
+            double inaccurate = ((double)YvalRange / ((double)maxY - (double)minY)) * plotSize.Height; // protect against decimal overflow
+            if (NotDecimal(inaccurate)) return ToDecimal(inaccurate);
+            return (YvalRange / (maxY - minY)) * ToDecimal(plotSize.Height);
+            // return (YvalRange * ToDecimal(plotSize.Height)) / (maxY - minY); // decimal overflow possible
+            // return ToDecimal((((float)YvalRange * plotSize.Height)) / ((float)maxY - (float)minY));
         }
-       
-        private void Inner_CalculatePoints(SKPoint plotOrigin, SKSize plotSize, float minX, float maxX, float minY, float maxY) {
+
+        private void Inner_CalculatePoints(SKPoint plotOrigin, SKSize plotSize, decimal minX, decimal maxX, decimal minY, decimal maxY) {
             for (int i = 0; i < list.Count; i++) {
                 KChartEntry entry = list[i];
-                float x = plotOrigin.X + XlocOfXvalInPlotarea(entry.X, minX, maxX, plotSize);
+                float x = plotOrigin.X + (float)XlocOfXvalInPlotarea(ToDecimal(entry.X), minX, maxX, plotSize);
                 for (int j = 0; j < entry.Y.Length; j++) {
-                    var y = plotOrigin.Y + YlocOfYvalInPlotarea(entry.Y[j], minY, maxY, plotSize);
+                    float y = plotOrigin.Y + (float)YlocOfYvalInPlotarea(ToDecimal(entry.Y[j]), minY, maxY, plotSize);
                     entry.Ypoint[j] = new SKPoint(x, y);
-                    entry.YpointRange[j] = (entry.Yrange[j] == 0) ? 0 : YlocRangeOfYvalRangeInPlotarea(entry.Yrange[j], minY, maxY, plotSize);
+                    entry.YpointRange[j] = (entry.Yrange[j] == 0) ? 0 : (float)YlocRangeOfYvalRangeInPlotarea(ToDecimal(entry.Yrange[j]), minY, maxY, plotSize);
                 }
             }
             for (int i = 0; i < poles.Count; i++) {
                 KChartPole pole = poles[i];
-                float x = plotOrigin.X + XlocOfXvalInPlotarea(pole.X, minX, maxX, plotSize);
-                pole.YpointLo = new SKPoint(x, plotOrigin.Y + YlocOfYvalInPlotarea(minY, minY, maxY, plotSize));
-                pole.YpointHi = new SKPoint(x, plotOrigin.Y + YlocOfYvalInPlotarea(maxY, minY, maxY, plotSize));
+                float x = plotOrigin.X + (float)XlocOfXvalInPlotarea(ToDecimal(pole.X), minX, maxX, plotSize);
+                pole.YpointLo = new SKPoint(x, plotOrigin.Y + (float)YlocOfYvalInPlotarea(minY, minY, maxY, plotSize));
+                pole.YpointHi = new SKPoint(x, plotOrigin.Y + (float)YlocOfYvalInPlotarea(maxY, minY, maxY, plotSize));
             }
         }
 
@@ -725,188 +789,248 @@ namespace Kaemika {
             return scale * Math.Truncate(d / scale);
         }
 
-        private (float minS, float maxS) Smooth(float min, float max) {
-            float minEqui = (float)RoundToSignificantDigits((double)min, 1);
-            float maxEqui = (float)RoundToSignificantDigits((double)max, 1);
-            if (minEqui == maxEqui) {
-                minEqui = (float)RoundToSignificantDigits((double)min, 2);
-                maxEqui = (float)RoundToSignificantDigits((double)max, 2);
-            }
-            if (minEqui == maxEqui) {
-                minEqui = (float)RoundToSignificantDigits((double)min, 3);
-                maxEqui = (float)RoundToSignificantDigits((double)max, 3);
-            }
-            if (minEqui == maxEqui) {
-                minEqui = (float)RoundToSignificantDigits((double)min, 4);
-                maxEqui = (float)RoundToSignificantDigits((double)max, 4);
-            }
-            //int maxMagn = (int)Math.Ceiling(Math.Log10((double)Math.Abs(max)));
-            //minEqui = (Math.Abs(minEqui) < Math.Pow(10, maxMagn - 3)) ? 0.0f : minEqui;
-            return (minEqui, maxEqui);
+        //// instead of Smooth, we now use (decimal) instead of (float): that seems to have solved rounding problems when using Ceiling and Floor
+        //private (float minS, float maxS) Smooth(float min, float max) {
+        //    // make sure that when formatting a number via 'g3' we end up with e.g. 1 mSec instead of 1e3 uSec because of numbers being slightly off
+        //    float minEqui = (float)RoundToSignificantDigits((double)min, 1);
+        //    float maxEqui = (float)RoundToSignificantDigits((double)max, 1);
+        //    if (minEqui == maxEqui) {
+        //        minEqui = (float)RoundToSignificantDigits((double)min, 2);
+        //        maxEqui = (float)RoundToSignificantDigits((double)max, 2);
+        //    }
+        //    if (minEqui == maxEqui) {
+        //        minEqui = (float)RoundToSignificantDigits((double)min, 3);
+        //        maxEqui = (float)RoundToSignificantDigits((double)max, 3);
+        //    }
+        //    if (minEqui == maxEqui) {
+        //        minEqui = (float)RoundToSignificantDigits((double)min, 4);
+        //        maxEqui = (float)RoundToSignificantDigits((double)max, 4);
+        //    }
+        //    //int maxMagn = (int)Math.Ceiling(Math.Log10((double)Math.Abs(max)));
+        //    //minEqui = (Math.Abs(minEqui) < Math.Pow(10, maxMagn - 3)) ? 0.0f : minEqui;
+        //    return (minEqui, maxEqui);
+        //}
+
+        private (decimal adjustedMin, decimal adjustedMax, decimal divisions) TrySubdivide(decimal min, decimal max, decimal magnitudeTenths, int subdivisions) {
+            // subdivide interval [min..max] into subdivisions
+            decimal subdivisionSize = (max - min) / subdivisions;
+            // adjust the subdivision size to fit well with magnitudeTenths
+            decimal adjustedSubdivisionsSize = magnitudeTenths * Math.Ceiling(subdivisionSize / magnitudeTenths);
+            // compute the new [adjustedMin..adjustedMax] interval
+            decimal adjustedMin = ToDecimal(adjustedSubdivisionsSize * Math.Floor(min / adjustedSubdivisionsSize));
+            decimal adjustedMax = ToDecimal(adjustedSubdivisionsSize * Math.Ceiling(max / adjustedSubdivisionsSize));
+            // compute the resulting number of subdivisions
+            decimal divisions = (adjustedMax - adjustedMin) / adjustedSubdivisionsSize;
+            return (adjustedMin, adjustedMax, divisions);
+        }
+
+        private (decimal minBound, decimal maxBound, decimal divisions) Subdivide(decimal min, decimal max) {
+            if (min == minDecimal && max == maxDecimal) return (min, max, 0); // do not compute max - min or it will overflow 
+            decimal span = max - min;
+            if (span == 0) return (min, max, 1);
+
+            // compute magnitude of the interval, so we can work at all magnitudes
+            decimal magnitude = ToDecimal(Math.Pow(10, Math.Floor(Math.Log10(Math.Abs((double)span)))));
+            // our tick scale will be based on tenths of the magnitude
+            decimal magnitudeTenths = magnitude / 10.0M;
+
+            // try several subdivisions 
+            (decimal adjMin4, decimal adjMax4, decimal divisions4) = TrySubdivide(min, max, magnitudeTenths, 4);
+            (decimal adjMin5, decimal adjMax5, decimal divisions5) = TrySubdivide(min, max, magnitudeTenths, 5);
+            (decimal adjMin6, decimal adjMax6, decimal divisions6) = TrySubdivide(min, max, magnitudeTenths, 6);
+            (decimal adjMin7, decimal adjMax7, decimal divisions7) = TrySubdivide(min, max, magnitudeTenths, 7);
+            (decimal adjMin8, decimal adjMax8, decimal divisions8) = TrySubdivide(min, max, magnitudeTenths, 8);
+
+            // choose the ones that works best in terms of the adjusted interval being tight w.r.t. the initial interval (the slack will end up off-screen)
+            // within those, chose the ones with the most subdivisions
+            decimal slackBest = maxDecimal; decimal adjMinBest = 0; decimal adjMaxBest = 0; decimal divisionsBest = 0;
+            decimal slack8 = (adjMax8 - adjMin8) - span; if (slack8 < slackBest) { slackBest = slack8; adjMinBest = adjMin8; adjMaxBest = adjMax8; divisionsBest = divisions8; }
+            decimal slack7 = (adjMax7 - adjMin7) - span; if (slack7 < slackBest) { slackBest = slack7; adjMinBest = adjMin7; adjMaxBest = adjMax7; divisionsBest = divisions7; }
+            decimal slack6 = (adjMax6 - adjMin6) - span; if (slack6 < slackBest) { slackBest = slack6; adjMinBest = adjMin6; adjMaxBest = adjMax6; divisionsBest = divisions6; }
+            decimal slack5 = (adjMax5 - adjMin5) - span; if (slack5 < slackBest) { slackBest = slack5; adjMinBest = adjMin5; adjMaxBest = adjMax5; divisionsBest = divisions5; }
+            decimal slack4 = (adjMax4 - adjMin4) - span; if (slack4 < slackBest) { slackBest = slack4; adjMinBest = adjMin4; adjMaxBest = adjMax4; divisionsBest = divisions4; }
+
+            // once we have determined the adjusted span and number of divisions, we will draw them up from zero and down from zero, so a tick for zero will always be included (if within the span)
+            return (adjMinBest, adjMaxBest, divisionsBest);
         }
 
         private void Inner_DrawXMark(ChartPainter painter, float X, float Y, float markLength, SKColor theColor, Swipe pinchPan) {
             var r = pinchPan % new SKRect(X - 1, Y, X + 1, Y + markLength);
+            var p = pinchPan % new SKPoint(X, Y);
+            r.Top = Math.Max(r.Top, r.Bottom - markLength);
+            r.Left = Math.Max(r.Left, p.X - 1);
+            r.Right = Math.Min(r.Right, p.X + 1);
             using (var paint = painter.FillPaint(theColor)) {
                 painter.DrawRect(new SKRect(r.Left, Y + markLength - r.Height, r.Right, Y + markLength), paint); // Clamped to bottom of hor axis
             }
         }
 
+        //private void Inner_DrawXLabel(ChartPainter painter, string text, float X, float Y, float markLength, float pointSize, float textHeight, SKColor theColor, Swipe pinchPan){
+        //   float gap = 6 * pointSize; // between the mark and the label
+        //   using (var paint = painter.TextPaint(painter.fixedFont, pinchPan % textHeight, theColor)) {
+        //        painter.DrawText(text, new SKPoint((pinchPan % new SKPoint(X + gap, 0)).X, Y + textHeight), paint); // Clamped to hor axis
+        //    }
+        //}
+
         private void Inner_DrawXLabel(ChartPainter painter, string text, float X, float Y, float markLength, float pointSize, float textHeight, SKColor theColor, Swipe pinchPan){
-           float gap = 6 * pointSize; // between the mark and the label
-           using (var paint = painter.TextPaint(painter.fixedFont, pinchPan % textHeight, theColor)) {
-                painter.DrawText(text, new SKPoint((pinchPan % new SKPoint(X + gap, 0)).X, Y + textHeight), paint); // Clamped to hor axis
+            float h = pinchPan % textHeight;
+            float gap = pinchPan % (6 * pointSize); // between the mark and the label
+            SKPoint p = pinchPan % new SKPoint(X, Y);
+            h = Math.Min(h, textHeight);
+            gap = Math.Min(gap, 6 * pointSize);
+            using (var paint = painter.TextPaint(painter.fixedFont, h, theColor)) {
+                painter.DrawText(text, new SKPoint(p.X + gap, Y + textHeight), paint); // Clamped to hor axis
             }
         }
 
-        private void Inner_DrawXLabels(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float pointSize, float textHeight, SKColor zeroColor, SKColor color, float minX, float maxX, Swipe pinchPan) {
-            float labelSize = painter.MeasureText("| 0.01 ms___", painter.TextPaint(painter.fixedFont, textHeight, SKColors.Red)).Width;
-            float minLabelSize = painter.MeasureText("0.01 ms", painter.TextPaint(painter.fixedFont, textHeight, SKColors.Red)).Width;
-            (float minTickVal, float maxTickVal, float incrTickVal) = MeasureXTicks(minX, maxX, labelSize, plotSize);
+        private void Inner_DrawXLabels(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float pointSize, float textHeight, SKColor zeroColor, SKColor color, decimal minX, decimal maxX, Swipe pinchPan) {
+            float minLabelSize = painter.MeasureText("0.01 ms_", painter.TextPaint(painter.fixedFont, textHeight, SKColors.Red)).Width;
+            (decimal minTickVal, decimal maxTickVal, decimal incrTickVal) = MeasureXTicks(minX, maxX, plotSize);
 
-            if (minX > 0.0f)      
+            if (minX > 0.0M)      
                 Inner_DrawXLabelsUpward  (painter, plotOrigin, plotSize, margin, pointSize, minLabelSize, textHeight, zeroColor, color, minX, maxX, pinchPan,
                                           minTickVal, maxTickVal, incrTickVal, true);
-            else if (maxX < 0.0f) 
-                Inner_DrawXLabelsDownward(painter, plotOrigin, plotSize, margin, pointSize, textHeight, zeroColor, color, minX, maxX, pinchPan,
+            else if (maxX < 0.0M) 
+                Inner_DrawXLabelsDownward(painter, plotOrigin, plotSize, margin, pointSize, minLabelSize, textHeight, zeroColor, color, minX, maxX, pinchPan,
                                           minTickVal, maxTickVal, incrTickVal, true);
             else {
                 bool paintedZero =
-                Inner_DrawXLabelsDownward(painter, plotOrigin, plotSize, margin, pointSize, textHeight, zeroColor, color, minX, maxX, pinchPan,
-                                          minTickVal, 0.0f, incrTickVal, true);
+                Inner_DrawXLabelsDownward(painter, plotOrigin, plotSize, margin, pointSize, minLabelSize, textHeight, zeroColor, color, minX, maxX, pinchPan,
+                                          minTickVal, 0, incrTickVal, true);
                 Inner_DrawXLabelsUpward  (painter, plotOrigin, plotSize, margin, pointSize, minLabelSize, textHeight, zeroColor, color, minX, maxX, pinchPan,
-                                          0.0f, maxTickVal, incrTickVal, !paintedZero);
+                                          0, maxTickVal, incrTickVal, !paintedZero);
             }
         }
 
-        private (float minTickVal, float maxTickVal, float incrTickVal) MeasureXTicks(float min, float max, float labelSize, SKSize plotSize) {
-            (float minTickVal, float maxTickVal) = Smooth(min, max);
-
-            float minTickLoc = XlocOfXvalInPlotarea(minTickVal, min, max, plotSize);
-            float maxTickLoc = XlocOfXvalInPlotarea(maxTickVal, min, max, plotSize);
-            float labelVal = (plotSize.Width == 0) ? 0.0f : (maxTickVal - minTickVal) / plotSize.Width * labelSize;
-            int numOfTicks = (int)((maxTickLoc - minTickLoc) / labelSize);
-
-            int multiple = 1; while (multiple * 4 < numOfTicks) multiple++;
-            if (numOfTicks == 3) numOfTicks = 2;
-            else if (numOfTicks > 4) numOfTicks = (multiple - 1) * 4; // set numOfTicks to the biggest multiple of 4 less than numOfTicks
-
-            float incrTickVal = (numOfTicks == 0) ? 0.0f : (maxTickVal - minTickVal) / numOfTicks;
-            incrTickVal = Math.Max(incrTickVal, labelVal);
+        private (decimal minTickVal, decimal maxTickVal, decimal incrTickVal) MeasureXTicks(decimal min, decimal max, SKSize plotSize) {
+            (decimal minTickVal, decimal maxTickVal, decimal divisions) = Subdivide(min, max);
+            if (minTickVal == minDecimal || maxTickVal == maxDecimal) return (0, 0, 0);
+            decimal incrTickVal = (divisions == 0) ? 0 : (maxTickVal - minTickVal) / divisions;
             return (minTickVal, maxTickVal, incrTickVal);
         }
 
-        private bool Inner_DrawXLabelsUpward(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float pointSize, float labelSize, float textHeight, SKColor zeroColor, SKColor color, float min, float max, Swipe pinchPan,
-                                             float minTickVal, float maxTickVal, float incrTickVal, bool paintZero) {
+        private bool Inner_DrawXLabelsUpward(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float pointSize, float labelSize, float textHeight, SKColor zeroColor, SKColor color, decimal min, decimal max, Swipe pinchPan,
+                                             decimal minTickVal, decimal maxTickVal, decimal incrTickVal, bool paintZero) {
             float locEpsilon = 2; // pixels
             float gap = 2 * pointSize; // between the mark and the label
             bool paintedZero = false;
-            float iTickVal = minTickVal;
-            float iTickLoc;
+            decimal iTickVal = minTickVal;
+            float iTickLoc; 
+            float lastTickLoc = paintZero ? float.MinValue : (float)XlocOfXvalInPlotarea(0, min, max, plotSize);
             int limit = 100;
             do {
-                iTickLoc = XlocOfXvalInPlotarea(iTickVal, min, max, plotSize);
-                bool isZero = iTickVal == 0.0f;
+                if ((double)iTickVal + (double)incrTickVal > (double)maxDecimal || max == maxDecimal || min == minDecimal) { return paintedZero; } // protect against decimal overflow, and don't draw silly positions
+                iTickLoc = (float)XlocOfXvalInPlotarea(iTickVal, min, max, plotSize);
+                bool isZero = iTickVal == 0;
                 if (iTickLoc >= -locEpsilon && iTickLoc <= plotSize.Width + locEpsilon && (paintZero || !isZero)) { //### minus labelSize for labels
                     if (isZero) paintedZero = true;
                     var X = plotOrigin.X + iTickLoc;
                     var Y = plotOrigin.Y + plotSize.Height;
                     SKColor theColor = isZero ? zeroColor : color;
-                    Inner_DrawXMark(painter, X, Y, margin, theColor, pinchPan);
-                    if (iTickLoc <= plotSize.Width - labelSize + locEpsilon) Inner_DrawXLabel(painter, Kaemika.Gui.FormatUnit(iTickVal, " ", this.baseUnitX, "g3"), X, Y - gap, margin, pointSize, textHeight, theColor, pinchPan);
+                    if (lastTickLoc + labelSize < iTickLoc) { // skips ticks and labels that do not fit
+                        Inner_DrawXMark(painter, X, Y, margin, theColor, pinchPan);
+                        if (iTickLoc <= plotSize.Width - labelSize + locEpsilon) { // skips the last label to the right 
+                            Inner_DrawXLabel(painter, Kaemika.Gui.FormatUnit(iTickVal, " ", this.baseUnitX, "g3"), X, Y - gap, margin, pointSize, textHeight, theColor, pinchPan);
+                        }
+                        lastTickLoc = iTickLoc;
+                    }
                 }
                 iTickVal += incrTickVal; limit--;
-                if (incrTickVal == 0.0f) { if (iTickVal == maxTickVal) return paintedZero; iTickVal = maxTickVal; }
+                if (incrTickVal == 0.0M) { if (iTickVal == maxTickVal) return paintedZero; iTickVal = maxTickVal; }
             } while (iTickLoc <= plotSize.Width + locEpsilon && limit > 0);
             return paintedZero;
         }
 
-        private bool Inner_DrawXLabelsDownward(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float pointSize, float textHeight, SKColor zeroColor, SKColor color, float min, float max, Swipe pinchPan,
-                                               float minTickVal, float maxTickVal, float incrTickVal, bool paintZero) {
+        private bool Inner_DrawXLabelsDownward(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float pointSize, float labelSize, float textHeight, SKColor zeroColor, SKColor color, decimal min, decimal max, Swipe pinchPan,
+                                               decimal minTickVal, decimal maxTickVal, decimal incrTickVal, bool paintZero) {
             float locEpsilon = 2; // pixels
             float gap = 2 * pointSize; // between the mark and the label
             bool paintedZero = false;
-            float iTickVal = maxTickVal;
+            decimal iTickVal = maxTickVal;
             float iTickLoc;
+            float lastTickLoc = float.MaxValue;
             int limit = 100;
             do {
-                iTickLoc = XlocOfXvalInPlotarea(iTickVal, min, max, plotSize);
-                bool isZero = iTickVal == 0.0f;
+                if ((double)iTickVal - (double)incrTickVal < (double)minDecimal || max == maxDecimal || min == minDecimal) { return paintedZero; } // protect against decimal overflow, and don't draw silly positions
+                iTickLoc = (float)XlocOfXvalInPlotarea(iTickVal, min, max, plotSize);
+                bool isZero = iTickVal == 0;
                 if (iTickLoc >= -locEpsilon && iTickLoc <= plotSize.Width + locEpsilon && (paintZero || !isZero)) { 
                     if (isZero) paintedZero = true;
                     var X = plotOrigin.X + iTickLoc;
                     var Y = plotOrigin.Y + plotSize.Height;
                     SKColor theColor = isZero ? zeroColor : color;
-                    Inner_DrawXMark(painter, X, Y, margin, theColor, pinchPan);
-                    Inner_DrawXLabel(painter, Kaemika.Gui.FormatUnit(iTickVal, " ", this.baseUnitX, "g3"), X, Y - gap, margin, pointSize, textHeight, theColor, pinchPan);
+                    if (lastTickLoc - labelSize > iTickLoc) { // skips ticks and labels that do not fit
+                        Inner_DrawXMark(painter, X, Y, margin, theColor, pinchPan);
+                        Inner_DrawXLabel(painter, Kaemika.Gui.FormatUnit(iTickVal, " ", this.baseUnitX, "g3"), X, Y - gap, margin, pointSize, textHeight, theColor, pinchPan);
+                        lastTickLoc = iTickLoc;
+                    }
                 }
                 iTickVal -= incrTickVal; limit--;
-                if (incrTickVal == 0.0f) { if (iTickVal == minTickVal) return paintedZero; iTickVal = minTickVal; }
+                if (incrTickVal == 0) { if (iTickVal == minTickVal) return paintedZero; iTickVal = minTickVal; }
             } while (iTickLoc >= -locEpsilon && limit > 0); //margin?
             return paintedZero;
         }
 
         private void Inner_DrawYMark(ChartPainter painter, float X, float Y, float markLength, SKColor theColor, Swipe pinchPan) {
             var r = pinchPan % new SKRect(X, Y - 1, X + markLength, Y + 1);
+            var p = pinchPan % new SKPoint(X, Y);
+            r.Right = Math.Min(r.Right, r.Left + markLength);
+            r.Top = Math.Max(r.Top, p.Y - 1);
+            r.Bottom = Math.Min(r.Bottom, p.Y + 1);
             using (var paint = painter.FillPaint(theColor)) {
                 painter.DrawRect(new SKRect(X, r.Top, X + r.Width, r.Bottom), paint); // Clamped to left of ver axis
             }
         }
 
         private void Inner_DrawYLabel(ChartPainter painter, string text, float X, float Y, float markLength, float pointSize, float textHeight, SKColor theColor, Swipe pinchPan){
-           float gap = 6 * pointSize; // between the mark and the label
-            using (var paint = painter.TextPaint(painter.fixedFont, pinchPan % textHeight, theColor)) {
-                painter.DrawText(text, new SKPoint(X, (pinchPan % new SKPoint(0, Y - gap)).Y), paint); // Clamped to ver axis
+            float h = pinchPan % textHeight;
+            float gap = pinchPan % (6 * pointSize); // between the mark and the label
+            SKPoint p = pinchPan % new SKPoint(X, Y);
+            h = Math.Min(h, textHeight);
+            gap = Math.Min(gap, 6 * pointSize);
+            using (var paint = painter.TextPaint(painter.fixedFont, h, theColor)) {
+                painter.DrawText(text, new SKPoint(X, p.Y - gap), paint); // Clamped to ver axis
             }
         }
 
-        private void Inner_DrawYLabels(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float pointSize, float textHeight, SKColor zeroColor, SKColor color, float minY, float maxY, Swipe pinchPan) {
-            float labelSize = 3 * textHeight;
-            (float minTickVal, float maxTickVal, float incrTickVal) = MeasureYTicks(minY, maxY, labelSize, plotSize);
+        private void Inner_DrawYLabels(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float pointSize, float textHeight, SKColor zeroColor, SKColor color, decimal minY, decimal maxY, Swipe pinchPan) {
+            // float labelSize = 3 * textHeight;
+            (decimal minTickVal, decimal maxTickVal, decimal incrTickVal) = MeasureYTicks(minY, maxY, plotSize);
 
-            if (minY > 0.0f)      
+            if (minY > 0)      
                 Inner_DrawYLabelsUpward  (painter, plotOrigin, plotSize, margin, pointSize, textHeight, zeroColor, color, minY, maxY, pinchPan,
                                           minTickVal, maxTickVal, incrTickVal, true);
-            else if (maxY < 0.0f) 
+            else if (maxY < 0) 
                 Inner_DrawYLabelsDownward(painter, plotOrigin, plotSize, margin, pointSize, textHeight, zeroColor, color, minY, maxY, pinchPan,
                                           minTickVal, maxTickVal, incrTickVal, true);
             else {
                 bool paintedZero =
                 Inner_DrawYLabelsDownward(painter, plotOrigin, plotSize, margin, pointSize, textHeight, zeroColor, color, minY, maxY, pinchPan,
-                                          minTickVal, 0.0f, incrTickVal, true);
+                                          minTickVal, 0, incrTickVal, true);
                 Inner_DrawYLabelsUpward  (painter, plotOrigin, plotSize, margin, pointSize, textHeight, zeroColor, color, minY, maxY, pinchPan,
-                                          0.0f, maxTickVal, incrTickVal, !paintedZero);
+                                          0, maxTickVal, incrTickVal, !paintedZero);
             }
         }
 
-        private (float minTickVal, float maxTickVal, float incrTickVal) MeasureYTicks(float min, float max, float labelSize, SKSize plotSize) {
-            (float minTickVal, float maxTickVal) = Smooth(min, max);
-
-            float minTickLoc = YlocOfYvalInPlotarea(minTickVal, min, max, plotSize);
-            float maxTickLoc = YlocOfYvalInPlotarea(maxTickVal, min, max, plotSize);
-            float labelVal = (plotSize.Height == 0) ? 0.0f : (maxTickVal - minTickVal) / plotSize.Height * labelSize;
-            int numOfTicks = (int)((minTickLoc - maxTickLoc) / labelSize); // y axis inversion
-
-            int multiple = 1; while (multiple * 4 < numOfTicks) multiple++;
-            if (numOfTicks == 3) numOfTicks = 2;
-            else if (numOfTicks > 4) numOfTicks = (multiple - 1) * 4; // set numOfTicks to the biggest multiple of 4 less than numOfTicks
-
-            float incrTickVal = (numOfTicks == 0) ? 0.0f : (maxTickVal - minTickVal) / numOfTicks;
-            incrTickVal = Math.Max(incrTickVal, labelVal);
+        private (decimal minTickVal, decimal maxTickVal, decimal incrTickVal) MeasureYTicks(decimal min, decimal max, SKSize plotSize) {
+            (decimal minTickVal, decimal maxTickVal, decimal divisions) = Subdivide(min, max);
+            if (minTickVal == minDecimal || maxTickVal == maxDecimal) return (0, 0, 0);
+            decimal incrTickVal = (divisions == 0) ? 0 : (maxTickVal - minTickVal) / divisions;
             return (minTickVal, maxTickVal, incrTickVal);
         }
 
-        private bool Inner_DrawYLabelsUpward(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float pointSize, float textHeight, SKColor zeroColor, SKColor color, float min, float max, Swipe pinchPan,
-                                             float minTickVal, float maxTickVal, float incrTickVal, bool paintZero) {
+        private bool Inner_DrawYLabelsUpward(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float pointSize, float textHeight, SKColor zeroColor, SKColor color, decimal min, decimal max, Swipe pinchPan,
+                                             decimal minTickVal, decimal maxTickVal, decimal incrTickVal, bool paintZero) {
             float locEpsilon = 2; // pixels
             float gap = 2 * pointSize; // between the mark and the label
             bool paintedZero = false;
-            float iTickVal = minTickVal;
+            decimal iTickVal = minTickVal;
             float iTickLoc;
             int limit = 100;
             do {
-                iTickLoc = YlocOfYvalInPlotarea(iTickVal, min, max, plotSize);
-                bool isZero = iTickVal == 0.0f;
+                if ((double)iTickVal + (double)incrTickVal > (double)maxDecimal || max == maxDecimal || min == minDecimal) { return paintedZero; } // protect against decimal overflow, and don't draw silly positions
+                iTickLoc = (float)YlocOfYvalInPlotarea(iTickVal, min, max, plotSize);
+                bool isZero = iTickVal == 0;
                 if (iTickLoc >= -locEpsilon && iTickLoc <= plotSize.Height + locEpsilon && (paintZero || !isZero)) {
                     if (isZero) paintedZero = true;
                     var X = plotOrigin.X - margin;
@@ -916,22 +1040,23 @@ namespace Kaemika {
                     Inner_DrawYLabel(painter, Kaemika.Gui.FormatUnit(iTickVal, " ", this.baseUnitY, "g3"), X + gap, Y, margin, pointSize, textHeight, theColor, pinchPan);
                 }
                 iTickVal += incrTickVal; limit--;
-                if (incrTickVal == 0.0f) { if (iTickVal == maxTickVal) return paintedZero; iTickVal = maxTickVal; }
+                if (incrTickVal == 0) { if (iTickVal == maxTickVal) return paintedZero; iTickVal = maxTickVal; }
             } while (iTickLoc >= -locEpsilon && limit > 0);
             return paintedZero;
         }
 
-        private bool Inner_DrawYLabelsDownward(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float pointSize, float textHeight, SKColor zeroColor, SKColor color, float min, float max, Swipe pinchPan,
-                                               float minTickVal, float maxTickVal, float incrTickVal, bool paintZero) {
+        private bool Inner_DrawYLabelsDownward(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float margin, float pointSize, float textHeight, SKColor zeroColor, SKColor color, decimal min, decimal max, Swipe pinchPan,
+                                               decimal minTickVal, decimal maxTickVal, decimal incrTickVal, bool paintZero) {
             float locEpsilon = 2; // pixels
             float gap = 2 * pointSize; // between the mark and the label
             bool paintedZero = false;
-            float iTickVal = maxTickVal;
+            decimal iTickVal = maxTickVal;
             float iTickLoc;
             int limit = 100;
             do {
-                iTickLoc = YlocOfYvalInPlotarea(iTickVal, min, max, plotSize);
-                bool isZero = iTickVal == 0.0f;
+                if ((double)iTickVal - (double)incrTickVal < (double)minDecimal || max == maxDecimal || min == minDecimal) { return paintedZero; } // protect against decimal overflow, and don't draw silly positions
+                iTickLoc = (float)YlocOfYvalInPlotarea(iTickVal, min, max, plotSize);
+                bool isZero = iTickVal == 0;
                 if (iTickLoc >= -locEpsilon && iTickLoc <= plotSize.Height + locEpsilon && (paintZero || !isZero)) {
                     if (isZero) paintedZero = true;
                     var X = plotOrigin.X - margin;
@@ -941,7 +1066,7 @@ namespace Kaemika {
                     Inner_DrawYLabel(painter, Kaemika.Gui.FormatUnit(iTickVal, " ", this.baseUnitY, "g3"), X + gap, Y, margin, pointSize, textHeight, theColor, pinchPan);
                 }
                 iTickVal -= incrTickVal; limit--;
-                if (incrTickVal == 0.0f) { if (iTickVal == minTickVal) return paintedZero; iTickVal = minTickVal; }
+                if (incrTickVal == 0) { if (iTickVal == minTickVal) return paintedZero; iTickVal = minTickVal; }
             } while (iTickLoc <= plotSize.Height + locEpsilon && limit > 0);
             return paintedZero;
         }
@@ -970,15 +1095,17 @@ namespace Kaemika {
                 SKPoint endPoint = list[list.Count - 1].Ypoint[seriesIndex];
                 if (float.IsNaN(endPoint.X) || float.IsInfinity(endPoint.X) || float.IsNaN(endPoint.Y) || float.IsInfinity(endPoint.Y)) return;
                 string name = seriesList[seriesIndex].name;
-                float textHightPP = pinchPan % textHeight;
-                float padding = textHightPP / 4.0f;
-                SKPaint textPaint = painter.TextPaint(painter.fixedFont, textHightPP, seriesList[seriesIndex].color);
+                float padding = textHeight / 4.0f;
+                SKPaint textPaint = painter.TextPaint(painter.fixedFont, textHeight, seriesList[seriesIndex].color);
                 SKRect textBounds = painter.MeasureText(name, textPaint);
                 SKSize tagSize = new SKSize(textBounds.Width + 2*padding, textBounds.Height + 2*padding);
-                SKRect position = PositionSeriesTag(seriesList[seriesIndex], new SKPoint(endPoint.X - 2, endPoint.Y), tagSize);
+                SKRect position = pinchPan % PositionSeriesTag(seriesList[seriesIndex], new SKPoint(endPoint.X - 2, endPoint.Y), tagSize);
+                float textHeightPP = pinchPan % textHeight;
+                float paddingPP = pinchPan % padding;
+                textPaint = painter.TextPaint(painter.fixedFont, textHeightPP, seriesList[seriesIndex].color);
                 painter.DrawRoundRect(position, 2, painter.FillPaint(SKColors.Gray));
-                painter.DrawRoundRect(SKRect.Inflate(position, -padding / 3, -padding / 3), 2, painter.FillPaint(SKColors.White));
-                painter.DrawText(name, new SKPoint(position.Left + padding - textBounds.Left, position.Top + padding - textBounds.Top), textPaint);
+                painter.DrawRoundRect(SKRect.Inflate(position, -paddingPP / 3, -paddingPP / 3), 2, painter.FillPaint(SKColors.White));
+                painter.DrawText(name, new SKPoint(position.Left + paddingPP - textBounds.Left * pinchPan.scale, position.Top + paddingPP - textBounds.Top * pinchPan.scale), textPaint);
             }
         }
 
@@ -1040,7 +1167,7 @@ namespace Kaemika {
 
         public void DrawContent(ChartPainter painter, SKPoint plotOrigin, SKSize plotSize, float pointSize, float margin, float titleHeight, float textHeight, SKColor zeroColor, SKColor axisColor, Swipe pinchPan) {
             lock (mutex) {
-                (float minX, float maxX, float minY, float maxY) = Inner_Bounds();
+                (decimal minX, decimal maxX, decimal minY, decimal maxY) = Inner_Bounds();
                 Inner_DrawTitle(painter, this.sampleName, plotOrigin, plotSize, margin, titleHeight, pinchPan);
                 Inner_DrawXLabels(painter, plotOrigin, plotSize, margin, pointSize, textHeight, zeroColor, axisColor, minX, maxX, pinchPan);
                 Inner_DrawYLabels(painter, plotOrigin, plotSize, margin, pointSize, textHeight, zeroColor, axisColor, minY, maxY, pinchPan);

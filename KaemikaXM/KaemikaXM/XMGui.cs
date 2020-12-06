@@ -160,6 +160,14 @@ namespace Kaemika {
             } else { _ = BeginInvokeOnMainThreadAsync(() => { GuiOutputClear(); return ack; }).Result; }
         }
 
+        // SCORE
+
+        public /* Interface KGuiControl */ void GuiScoreUpdate() {
+            if (MainThread.IsMainThread) {
+                //### MainTabbedPage.theOutputPage.score.Invalidate(); ???
+             } else { _ = BeginInvokeOnMainThreadAsync(() => { GuiScoreUpdate(); return ack; }).Result; }
+        }
+
         // CHART
 
         public /* Interface KGuiControl */ void GuiChartUpdate() {

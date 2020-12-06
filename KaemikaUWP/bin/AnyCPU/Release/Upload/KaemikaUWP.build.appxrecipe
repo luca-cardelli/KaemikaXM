@@ -85,6 +85,9 @@
     <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\QuickGraphStd\bin\Release\netstandard2.0\QuickGraphStd.dll">
       <PackagePath>KaemikaWPF\QuickGraphStd.dll</PackagePath>
     </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\jacobslusser.ScintillaNET.3.6.3\lib\net40\ScintillaNET.dll">
+      <PackagePath>KaemikaWPF\ScintillaNET.dll</PackagePath>
+    </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Dropbox\Luca\Devel\Kaemika\kaemikaxm\packages\SkiaSharp.1.68.1.1\lib\net45\SkiaSharp.dll">
       <PackagePath>KaemikaWPF\SkiaSharp.dll</PackagePath>
     </AppxPackagedFile>

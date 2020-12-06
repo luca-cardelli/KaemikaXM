@@ -43,6 +43,7 @@ namespace GraphSharp {
         public /*Interface KTouchable*/ void OnTouchDoubletapOrMouseClick(Action<SKPoint> action) { data.onTouchDoubletapOrMouseClick = action; }       // Activate Item
         public /*Interface KTouchable*/ void OnTouchSwipeOrMouseDrag(Action<SKPoint, SKPoint> action) { data.onTouchSwipeOrMouseDrag = action; }        // Drag Item
         public /*Interface KTouchable*/ void OnTouchSwipeOrMouseDragEnd(Action<SKPoint, SKPoint> action) { data.onTouchSwipeOrMouseDragEnd = action; }  // Drag Item End
+        public /*Interface KTouchable*/ void OnTouchPinchOrMouseZoom(Action<SKPoint, float> action) { }                                                 // Used on mouse platforms, not used on touch platforms
         public /*Interface KTouchable*/ void DoShow() { this.IsVisible = true; }
         public /*Interface KTouchable*/ void DoHide() { this.IsVisible = false; }
         public /*Interface KTouchable*/ void DoInvalidate() {

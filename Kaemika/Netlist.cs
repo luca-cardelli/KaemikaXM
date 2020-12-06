@@ -209,12 +209,14 @@ namespace Kaemika
         public SpeciesValue target;
         public Flow condition;
         public Flow assignment;
+        public Flow assignmentVariance; // can be null
         public string dimension;
         public SampleValue sample;
-        public TriggerEntry(SpeciesValue target, Flow condition, Flow assignment, string dimension, SampleValue sample) {
+        public TriggerEntry(SpeciesValue target, Flow condition, Flow assignment, Flow assignmentVariance, string dimension, SampleValue sample) {
             this.target = target;
             this.condition = condition;
             this.assignment = assignment;
+            this.assignmentVariance = assignmentVariance;
             this.dimension = dimension;
             this.sample = sample;
         }
@@ -222,9 +224,10 @@ namespace Kaemika
             string s = "trigger ";
             s += target.Format(style) + " @ ";
             s += assignment.TopFormat(style) + " ";
+            s += (assignmentVariance == null) ? "" : " ± " + assignmentVariance.Format(style) + " ";
             s += dimension + " when ";
             s += condition.TopFormat(style);
-            s += (sample.symbol.IsVesselVariant() ? "" : " in " + sample.FormatSymbol(style));
+            s += sample.symbol.IsVesselVariant() ? "" : " in " + sample.FormatSymbol(style);
             return s;
         }
     }
@@ -255,16 +258,18 @@ namespace Kaemika
     public class AmountEntry : ProtocolEntry {
         public SpeciesValue species;
         public NumberValue initial;
+        public NumberValue initialVariance;
         public string dimension;
         public SampleValue sample;
-        public AmountEntry(SpeciesValue species, NumberValue initial, string dimension, SampleValue sample) {
+        public AmountEntry(SpeciesValue species, NumberValue initial, NumberValue initialVariance, string dimension, SampleValue sample) {
             this.species = species;
             this.initial = initial;
+            this.initialVariance = initialVariance;
             this.dimension = dimension;
             this.sample = sample;
         }
         public override string Format(Style style) {
-            return "amount " +  species.Format(style) + " @ " + initial.Format(style) + " " + dimension + " in " + sample.FormatSymbol(style);
+            return "amount " +  species.Format(style) + " @ " + initial.Format(style) + ((initialVariance is NumberValue num && num.value == 0.0) ? "" : " ± " + initialVariance.Format(style)) + " " + dimension + " in " + sample.FormatSymbol(style);
         }
     }
 

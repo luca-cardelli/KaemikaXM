@@ -1,4 +1,6 @@
-﻿namespace KaemikaWPF
+﻿using System.Drawing;
+
+namespace KaemikaWPF
 {
     partial class WinGui
     {
@@ -20,6 +22,10 @@
             base.Dispose(disposing);
         }
 
+        public static Color IntToColor(int rgb) {
+            return Color.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
+        }
+
         #region Windows Form Designer generated code
 
         /// <summary>
@@ -39,7 +45,8 @@
             this.button_Source_Paste = new System.Windows.Forms.Button();
             this.button_Source_Copy = new System.Windows.Forms.Button();
             this.button_Tutorial = new System.Windows.Forms.Button();
-            this.txtInput = new System.Windows.Forms.TextBox();
+            // this.txtInput = new System.Windows.Forms.TextBox(); //EDITOR TextBox
+            this.txtInput = new ScintillaNET.Scintilla(); //EDITOR Scintilla
             this.txtOutput = new System.Windows.Forms.TextBox();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.btnStop = new System.Windows.Forms.Button();
@@ -84,6 +91,7 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
             this.panel1.BackColor = System.Drawing.SystemColors.MenuHighlight;
+            this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle; // .None
             this.panel1.Controls.Add(this.button_FontSizePlus);
             this.panel1.Controls.Add(this.button_FontSizeMinus);
             this.panel1.Controls.Add(this.button_Math);
@@ -92,10 +100,10 @@
             this.panel1.Controls.Add(this.button_Source_Paste);
             this.panel1.Controls.Add(this.button_Source_Copy);
             this.panel1.Controls.Add(this.button_Tutorial);
-            this.panel1.Location = new System.Drawing.Point(0, 0);
+            this.panel1.Location = new System.Drawing.Point(0, 22);
             this.panel1.Margin = new System.Windows.Forms.Padding(0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(50, 681);
+            this.panel1.Size = new System.Drawing.Size(50, 678);
             this.panel1.TabIndex = 1;
             // 
             // button_FontSizePlus
@@ -104,7 +112,7 @@
             this.button_FontSizePlus.FlatAppearance.BorderSize = 0;
             this.button_FontSizePlus.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button_FontSizePlus.Image = global::KaemikaWPF.Properties.Resources.FontSizePlus_W_48x48;
-            this.button_FontSizePlus.Location = new System.Drawing.Point(0, 557);
+            this.button_FontSizePlus.Location = new System.Drawing.Point(-1, 546);
             this.button_FontSizePlus.Name = "button_FontSizePlus";
             this.button_FontSizePlus.Size = new System.Drawing.Size(50, 50);
             this.button_FontSizePlus.TabIndex = 15;
@@ -116,7 +124,7 @@
             this.button_FontSizeMinus.FlatAppearance.BorderSize = 0;
             this.button_FontSizeMinus.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button_FontSizeMinus.Image = global::KaemikaWPF.Properties.Resources.FontSizeMinus_W_48x48;
-            this.button_FontSizeMinus.Location = new System.Drawing.Point(0, 607);
+            this.button_FontSizeMinus.Location = new System.Drawing.Point(-1, 596);
             this.button_FontSizeMinus.Name = "button_FontSizeMinus";
             this.button_FontSizeMinus.Size = new System.Drawing.Size(50, 50);
             this.button_FontSizeMinus.TabIndex = 14;
@@ -127,7 +135,7 @@
             this.button_Math.FlatAppearance.BorderSize = 0;
             this.button_Math.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button_Math.Image = global::KaemikaWPF.Properties.Resources.icons8_keyboard_96_W_48x48;
-            this.button_Math.Location = new System.Drawing.Point(0, 334);
+            this.button_Math.Location = new System.Drawing.Point(-1, 334);
             this.button_Math.Name = "button_Math";
             this.button_Math.Size = new System.Drawing.Size(50, 50);
             this.button_Math.TabIndex = 13;
@@ -138,7 +146,7 @@
             this.button_Export.FlatAppearance.BorderSize = 0;
             this.button_Export.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button_Export.Image = global::KaemikaWPF.Properties.Resources.icons8_share_384_W_48x48;
-            this.button_Export.Location = new System.Drawing.Point(0, 262);
+            this.button_Export.Location = new System.Drawing.Point(-1, 262);
             this.button_Export.Name = "button_Export";
             this.button_Export.Size = new System.Drawing.Size(50, 50);
             this.button_Export.TabIndex = 12;
@@ -149,7 +157,7 @@
             this.button_Parameters.FlatAppearance.BorderSize = 0;
             this.button_Parameters.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button_Parameters.Image = global::KaemikaWPF.Properties.Resources.Parameters_W_48x48;
-            this.button_Parameters.Location = new System.Drawing.Point(0, 406);
+            this.button_Parameters.Location = new System.Drawing.Point(-1, 406);
             this.button_Parameters.Name = "button_Parameters";
             this.button_Parameters.Size = new System.Drawing.Size(50, 50);
             this.button_Parameters.TabIndex = 14;
@@ -160,7 +168,7 @@
             this.button_Source_Paste.FlatAppearance.BorderSize = 0;
             this.button_Source_Paste.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button_Source_Paste.Image = global::KaemikaWPF.Properties.Resources.FileLoad_48x48;
-            this.button_Source_Paste.Location = new System.Drawing.Point(-2, 190);
+            this.button_Source_Paste.Location = new System.Drawing.Point(-3, 190);
             this.button_Source_Paste.Name = "button_Source_Paste";
             this.button_Source_Paste.Size = new System.Drawing.Size(50, 50);
             this.button_Source_Paste.TabIndex = 7;
@@ -171,7 +179,7 @@
             this.button_Source_Copy.FlatAppearance.BorderSize = 0;
             this.button_Source_Copy.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button_Source_Copy.Image = global::KaemikaWPF.Properties.Resources.FileSave_48x48;
-            this.button_Source_Copy.Location = new System.Drawing.Point(-2, 118);
+            this.button_Source_Copy.Location = new System.Drawing.Point(-3, 118);
             this.button_Source_Copy.Name = "button_Source_Copy";
             this.button_Source_Copy.Size = new System.Drawing.Size(50, 50);
             this.button_Source_Copy.TabIndex = 6;
@@ -182,7 +190,7 @@
             this.button_Tutorial.FlatAppearance.BorderSize = 0;
             this.button_Tutorial.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button_Tutorial.Image = global::KaemikaWPF.Properties.Resources.icons8text_48x48;
-            this.button_Tutorial.Location = new System.Drawing.Point(0, 22);
+            this.button_Tutorial.Location = new System.Drawing.Point(-1, 22);
             this.button_Tutorial.Name = "button_Tutorial";
             this.button_Tutorial.Size = new System.Drawing.Size(50, 50);
             this.button_Tutorial.TabIndex = 5;
@@ -197,12 +205,15 @@
             this.txtInput.Font = new System.Drawing.Font("Lucida Sans Unicode", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtInput.Location = new System.Drawing.Point(0, 0);
             this.txtInput.Margin = new System.Windows.Forms.Padding(0);
-            this.txtInput.Multiline = true;
             this.txtInput.Name = "txtInput";
-            this.txtInput.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            //EDITOR TextBox
+            //this.txtInput.Multiline = true;
+            //this.txtInput.ScrollBars = System.Windows.Forms.ScrollBars.Both; 
+            //this.txtInput.WordWrap = false;
+            //EDITOR Scintilla
+            //setup by WinControls.SetTextFont / WinControls.SetEditable
             this.txtInput.Size = new System.Drawing.Size(591, 673);
             this.txtInput.TabIndex = 2;
-            this.txtInput.WordWrap = false;
             // 
             // txtOutput
             // 
@@ -227,7 +238,7 @@
             this.btnStop.FlatAppearance.BorderSize = 0;
             this.btnStop.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnStop.Image = global::KaemikaWPF.Properties.Resources.icons8stop40;
-            this.btnStop.Location = new System.Drawing.Point(-2, 94);
+            this.btnStop.Location = new System.Drawing.Point(-3, 94);
             this.btnStop.Name = "btnStop";
             this.btnStop.Size = new System.Drawing.Size(50, 50);
             this.btnStop.TabIndex = 3;
@@ -239,6 +250,7 @@
             this.panel2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel2.BackColor = System.Drawing.SystemColors.MenuHighlight;
+            this.panel2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle; // .None
             this.panel2.Controls.Add(this.button_Output);
             this.panel2.Controls.Add(this.button_FlipMicrofluidics);
             this.panel2.Controls.Add(this.button_Settings);
@@ -247,10 +259,10 @@
             this.panel2.Controls.Add(this.button_Device);
             this.panel2.Controls.Add(this.btnStop);
             this.panel2.Controls.Add(this.btnEval);
-            this.panel2.Location = new System.Drawing.Point(1234, 0);
+            this.panel2.Location = new System.Drawing.Point(1234, 22);
             this.panel2.Margin = new System.Windows.Forms.Padding(0);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(50, 681);
+            this.panel2.Size = new System.Drawing.Size(50, 678);
             this.panel2.TabIndex = 5;
             // 
             // button_Output
@@ -258,7 +270,7 @@
             this.button_Output.FlatAppearance.BorderSize = 0;
             this.button_Output.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button_Output.Image = global::KaemikaWPF.Properties.Resources.Computation_48x48;
-            this.button_Output.Location = new System.Drawing.Point(0, 310);
+            this.button_Output.Location = new System.Drawing.Point(-1, 310);
             this.button_Output.Name = "button_Output";
             this.button_Output.Size = new System.Drawing.Size(50, 50);
             this.button_Output.TabIndex = 17;
@@ -269,7 +281,7 @@
             this.button_FlipMicrofluidics.FlatAppearance.BorderSize = 0;
             this.button_FlipMicrofluidics.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button_FlipMicrofluidics.Image = global::KaemikaWPF.Properties.Resources.deviceBorder_W_48x48;
-            this.button_FlipMicrofluidics.Location = new System.Drawing.Point(-2, 454);
+            this.button_FlipMicrofluidics.Location = new System.Drawing.Point(-3, 454);
             this.button_FlipMicrofluidics.Name = "button_FlipMicrofluidics";
             this.button_FlipMicrofluidics.Size = new System.Drawing.Size(50, 50);
             this.button_FlipMicrofluidics.TabIndex = 16;
@@ -281,7 +293,7 @@
             this.button_Settings.FlatAppearance.BorderSize = 0;
             this.button_Settings.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button_Settings.Image = global::KaemikaWPF.Properties.Resources.icons8_settings_384_W_48x48;
-            this.button_Settings.Location = new System.Drawing.Point(0, 607);
+            this.button_Settings.Location = new System.Drawing.Point(-1, 596);
             this.button_Settings.Name = "button_Settings";
             this.button_Settings.Size = new System.Drawing.Size(50, 50);
             this.button_Settings.TabIndex = 15;
@@ -292,7 +304,7 @@
             this.button_Noise.FlatAppearance.BorderSize = 0;
             this.button_Noise.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button_Noise.Image = global::KaemikaWPF.Properties.Resources.Noise_None_W_48x48;
-            this.button_Noise.Location = new System.Drawing.Point(0, 166);
+            this.button_Noise.Location = new System.Drawing.Point(-1, 166);
             this.button_Noise.Name = "button_Noise";
             this.button_Noise.Size = new System.Drawing.Size(50, 50);
             this.button_Noise.TabIndex = 11;
@@ -303,7 +315,7 @@
             this.button_EditChart.FlatAppearance.BorderSize = 0;
             this.button_EditChart.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button_EditChart.Image = global::KaemikaWPF.Properties.Resources.icons8combochart96_W_48x48;
-            this.button_EditChart.Location = new System.Drawing.Point(0, 238);
+            this.button_EditChart.Location = new System.Drawing.Point(-1, 238);
             this.button_EditChart.Name = "button_EditChart";
             this.button_EditChart.Size = new System.Drawing.Size(50, 50);
             this.button_EditChart.TabIndex = 13;
@@ -314,7 +326,7 @@
             this.button_Device.FlatAppearance.BorderSize = 0;
             this.button_Device.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button_Device.Image = global::KaemikaWPF.Properties.Resources.icons8device_OFF_48x48;
-            this.button_Device.Location = new System.Drawing.Point(-2, 382);
+            this.button_Device.Location = new System.Drawing.Point(-3, 382);
             this.button_Device.Name = "button_Device";
             this.button_Device.Size = new System.Drawing.Size(50, 50);
             this.button_Device.TabIndex = 4;
@@ -325,7 +337,7 @@
             this.btnEval.FlatAppearance.BorderSize = 0;
             this.btnEval.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnEval.Image = global::KaemikaWPF.Properties.Resources.icons8play40;
-            this.btnEval.Location = new System.Drawing.Point(-2, 22);
+            this.btnEval.Location = new System.Drawing.Point(-3, 22);
             this.btnEval.Name = "btnEval";
             this.btnEval.Size = new System.Drawing.Size(50, 50);
             this.btnEval.TabIndex = 0;
@@ -349,7 +361,7 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.splitContainer_Columns.BackColor = System.Drawing.Color.Crimson;
-            this.splitContainer_Columns.Location = new System.Drawing.Point(50, 4);
+            this.splitContainer_Columns.Location = new System.Drawing.Point(50, 23);
             this.splitContainer_Columns.Name = "splitContainer_Columns";
             // 
             // splitContainer_Columns.Panel1
@@ -380,6 +392,7 @@
             // 
             // splitContainer_Rows.Panel1
             // 
+            this.splitContainer_Rows.Panel1.Controls.Add(this.panel_Splash);
             this.splitContainer_Rows.Panel1.Controls.Add(this.label_Tooltip);
             this.splitContainer_Rows.Panel1.Controls.Add(this.panel_KChart);
             this.splitContainer_Rows.Panel1MinSize = 0;
@@ -417,7 +430,6 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel_KChart.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.panel_KChart.Controls.Add(this.panel_Splash);
             this.panel_KChart.Location = new System.Drawing.Point(0, 0);
             this.panel_KChart.Margin = new System.Windows.Forms.Padding(0);
             this.panel_KChart.Name = "panel_KChart";
@@ -449,6 +461,7 @@
             this.tableLayoutPanel_Parameters.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel_Parameters.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel_Parameters.Size = new System.Drawing.Size(200, 100);
+            this.tableLayoutPanel_Parameters.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.tableLayoutPanel_Parameters.TabIndex = 25;
             // 
             // tableLayoutPanel_Legend
@@ -464,6 +477,7 @@
             this.tableLayoutPanel_Legend.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel_Legend.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel_Legend.Size = new System.Drawing.Size(200, 100);
+            this.tableLayoutPanel_Legend.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.tableLayoutPanel_Legend.TabIndex = 25;
             // 
             // tableLayoutPanel_Tutorial
@@ -477,6 +491,7 @@
             this.tableLayoutPanel_Tutorial.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel_Tutorial.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel_Tutorial.Size = new System.Drawing.Size(200, 100);
+            this.tableLayoutPanel_Tutorial.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.tableLayoutPanel_Tutorial.TabIndex = 19;
             // 
             // tableLayoutPanel_Export
@@ -490,6 +505,7 @@
             this.tableLayoutPanel_Export.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel_Export.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel_Export.Size = new System.Drawing.Size(200, 100);
+            this.tableLayoutPanel_Export.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.tableLayoutPanel_Export.TabIndex = 20;
             // 
             // tableLayoutPanel_Math
@@ -503,6 +519,7 @@
             this.tableLayoutPanel_Math.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel_Math.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel_Math.Size = new System.Drawing.Size(200, 100);
+            this.tableLayoutPanel_Math.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.tableLayoutPanel_Math.TabIndex = 21;
             // 
             // tableLayoutPanel_Output
@@ -517,6 +534,7 @@
             this.tableLayoutPanel_Output.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel_Output.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel_Output.Size = new System.Drawing.Size(200, 100);
+            this.tableLayoutPanel_Output.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.tableLayoutPanel_Output.TabIndex = 22;
             // 
             // tableLayoutPanel_Settings
@@ -531,6 +549,7 @@
             this.tableLayoutPanel_Settings.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel_Settings.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel_Settings.Size = new System.Drawing.Size(200, 100);
+            this.tableLayoutPanel_Settings.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.tableLayoutPanel_Settings.TabIndex = 23;
             // 
             // tableLayoutPanel_Noise
@@ -545,6 +564,7 @@
             this.tableLayoutPanel_Noise.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel_Noise.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel_Noise.Size = new System.Drawing.Size(200, 100);
+            this.tableLayoutPanel_Noise.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.tableLayoutPanel_Noise.TabIndex = 24;
             // 
             // panel_KScore
@@ -563,7 +583,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.LightSkyBlue;
-            this.ClientSize = new System.Drawing.Size(1284, 681);
+            this.ClientSize = new System.Drawing.Size(1284, 700);
             this.Controls.Add(this.tableLayoutPanel_Noise);
             this.Controls.Add(this.tableLayoutPanel_Settings);
             this.Controls.Add(this.tableLayoutPanel_Output);
@@ -574,7 +594,7 @@
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.splitContainer_Columns);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MinimumSize = new System.Drawing.Size(1024, 640);
+            this.MinimumSize = new System.Drawing.Size(1024, 659);
             this.Name = "GuiToWin";
             this.Text = "Kaemika";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.GuiToWin_FormClosing);
@@ -603,7 +623,8 @@
 
         public System.Windows.Forms.Button btnEval;
         public System.Windows.Forms.Panel panel1;
-        public System.Windows.Forms.TextBox txtInput;
+        // public System.Windows.Forms.TextBox txtInput; //EDITOR TextBox
+        public ScintillaNET.Scintilla txtInput; //EDITOR Scintilla
         public System.Windows.Forms.TextBox txtOutput;
         private System.Windows.Forms.ToolTip toolTip1;
         public System.Windows.Forms.Panel panel2;

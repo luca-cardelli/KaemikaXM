@@ -6,9 +6,10 @@ using Kaemika;
 
 namespace KaemikaWPF {
 
-    public class KChartSKControl : SkiaSharp.Views.Desktop.SKControl {
+    public class KChartSKControl : SkiaSharp.Views.Desktop.SKControl {  // ### Add KTouchable interface for gesture handling for charts, see NSScoreView (Mac) and SKScoreView (PC)
 
         private static KChartSKControl chartControl = null; // The only KChartSKControl, same as "this", but accessible from static methods
+        private KTouchClientData touch = null;
 
         public KChartSKControl() : base() {
             chartControl = this;
@@ -19,6 +20,53 @@ namespace KaemikaWPF {
             toolTip.Font = WinGui.winGui.GetFont(8, true);
             toolTip.MouseEnter +=
                 (object sender, EventArgs e) => { UpdateTooltip(new Point(0, 0), ""); };
+
+            /* Initialize Interface KTouchClient with a locally-sourced KTouchClientData closure */
+            touch = new KTouchClientData(
+                invalidateSurface: () => { InvalidateAndUpdate(); },
+                setManualPinchPan: (Swipe pinchPan) => { KChartHandler.SetManualPinchPan(pinchPan); }
+            );
+            touch.onTouchSwipeOrMouseDrag = OnMouseDrag;
+            touch.onTouchSwipeOrMouseDragEnd = OnMouseDragEnd;
+            touch.onTouchDoubletapOrMouseClick = OnMouseClick;
+            touch.onTouchPinchOrMouseZoom = OnMouseZoom;
+            touch.lastPinchPan = Swipe.Id();
+            touch.incrementalScaling = Swipe.Id();
+            touch.incrementalTranslation = Swipe.Id();
+            KChartHandler.RegisterKTouchClientData(touch);
+        }
+
+        private void OnMouseDrag(SKPoint from, SKPoint to) {
+            touch.swiping = true;
+            touch.incrementalTranslation = new Swipe(1, new SKPoint(to.X - from.X, to.Y - from.Y));
+            touch.setManualPinchPan?.Invoke(touch.lastPinchPan * touch.incrementalScaling * touch.incrementalTranslation);
+            touch.invalidateSurface();
+        }
+
+        private void OnMouseDragEnd(SKPoint from, SKPoint to) {
+            if (touch.swiping) {
+                touch.swiping = false;
+                touch.lastPinchPan = touch.lastPinchPan * touch.incrementalScaling * touch.incrementalTranslation;
+                touch.incrementalScaling = Swipe.Id();
+                touch.incrementalTranslation = Swipe.Id();
+                touch.setManualPinchPan?.Invoke(touch.lastPinchPan);
+                touch.invalidateSurface();
+            }
+        }
+
+        private void OnMouseClick(SKPoint p) {
+            touch.lastPinchPan = Swipe.Id();
+            touch.incrementalScaling = Swipe.Id();
+            touch.incrementalTranslation = Swipe.Id();
+            touch.setManualPinchPan?.Invoke(touch.lastPinchPan);
+            touch.invalidateSurface();
+        }
+
+        private void OnMouseZoom(SKPoint scalingOrigin, float scroll) {
+            float scaling = (scroll < 0) ? 0.9f : 1.1f;
+            touch.incrementalScaling = touch.incrementalScaling * new Swipe(scaling, new SKPoint((1 - scaling) * scalingOrigin.X, (1 - scaling) * scalingOrigin.Y)); // scaling around the scaleOrigin
+            touch.setManualPinchPan?.Invoke(touch.lastPinchPan * touch.incrementalScaling * touch.incrementalTranslation);
+            touch.invalidateSurface();
         }
 
         // Static methods, accessing chartControl
@@ -61,16 +109,9 @@ namespace KaemikaWPF {
 
         private DateTime lastTooltipUpdate = DateTime.MinValue;
         public static bool mouseInsideChartControl = false;
+        public static bool mouseDown = false;
+        public static SKPoint mouseDownPoint = new SKPoint(0, 0);
 
-        protected override void OnMouseMove(MouseEventArgs e) {
-            base.OnMouseMove(e);
-            if (DateTime.Now.Subtract(lastTooltipUpdate).TotalSeconds > 0.01) {
-                KChartHandler.ShowEndNames(!shiftKeyDown);
-                if (!shiftKeyDown) UpdateTooltip(new Point(e.X, e.Y), KChartHandler.HitListTooltip(new SKPoint(e.X, e.Y), 10));
-                lastTooltipUpdate = DateTime.Now;
-                if (!KControls.IsSimulating()) Invalidate(); // because of ShowEndNames
-            }
-        }
         protected override void OnMouseEnter(EventArgs e) {
             base.OnMouseEnter(e);
             mouseInsideChartControl = true;
@@ -84,9 +125,35 @@ namespace KaemikaWPF {
             KChartHandler.ShowEndNames(false);
             if (!KControls.IsSimulating()) Invalidate();
         }
-        protected override void OnMouseClick(MouseEventArgs e) {
-            base.OnMouseClick(e);
+        protected override void OnMouseDown(MouseEventArgs e) {
+            base.OnMouseDown(e);
             KGui.kControls.CloseOpenMenu();
+            mouseDown = true;
+            mouseDownPoint = new SKPoint(e.Location.X, e.Location.Y);
+        }
+        protected override void OnMouseUp(MouseEventArgs e) {
+            base.OnMouseUp(e);
+            mouseDown = false;
+            SKPoint mouseUpPoint = new SKPoint(e.Location.X, e.Location.Y);
+            if (mouseUpPoint == mouseDownPoint) touch.onTouchDoubletapOrMouseClick?.Invoke(mouseDownPoint);
+            else touch.onTouchSwipeOrMouseDragEnd?.Invoke(mouseDownPoint, mouseUpPoint);
+        }
+        protected override void OnMouseMove(MouseEventArgs e) {
+            base.OnMouseMove(e);
+            if (DateTime.Now.Subtract(lastTooltipUpdate).TotalSeconds > 0.01) {
+                KChartHandler.ShowEndNames(!shiftKeyDown);
+                if (mouseDown) UpdateTooltip(new Point(0, 0), "");
+                else if (!shiftKeyDown) UpdateTooltip(new Point(e.X, e.Y), KChartHandler.HitListTooltip(Swipe.Inverse(new SKPoint(e.X, e.Y), KChartHandler.GetManualPinchPan()), 10));
+                lastTooltipUpdate = DateTime.Now;
+                if (!KControls.IsSimulating()) Invalidate(); // because of ShowEndNames
+            }
+            if (mouseDown) {
+                touch.onTouchSwipeOrMouseDrag?.Invoke(mouseDownPoint, new SKPoint(e.Location.X, e.Location.Y));
+            }
+        }
+        protected override void OnMouseWheel(MouseEventArgs e) {
+            base.OnMouseWheel(e);
+            touch.onTouchPinchOrMouseZoom?.Invoke(new SKPoint(e.Location.X, e.Location.Y), e.Delta);
         }
 
         private void UpdateTooltip(Point point, string tip) {

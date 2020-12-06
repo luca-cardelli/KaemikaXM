@@ -7,7 +7,7 @@
 
     For more information on package manifest files, see http://go.microsoft.com/fwlink/?LinkID=241727
   -->
-  <Identity Name="39459LucaCardelli.Kaemika" Publisher="CN=48C47D4C-B468-4479-990A-111DBC8FF487" Version="1.0.24.0" ProcessorArchitecture="neutral" />
+  <Identity Name="39459LucaCardelli.Kaemika" Publisher="CN=48C47D4C-B468-4479-990A-111DBC8FF487" Version="1.0.29.0" ProcessorArchitecture="neutral" />
   <Properties>
     <DisplayName>Kaemika</DisplayName>
     <PublisherDisplayName>Luca Cardelli</PublisherDisplayName>
@@ -37,7 +37,7 @@
     <build:Item Name="VisualStudio" Version="16.0" />
     <build:Item Name="VisualStudioEdition" Value="Microsoft Visual Studio Community 2019" />
     <build:Item Name="OperatingSystem" Version="10.0.19041.1 (WinBuild.160101.0800)" />
-    <build:Item Name="Microsoft.Build.AppxPackage.dll" Version="16.0.30608.117" />
+    <build:Item Name="Microsoft.Build.AppxPackage.dll" Version="16.0.30717.112" />
     <build:Item Name="ProjectGUID" Value="135f60cc-e2a5-479b-b275-39c41e197fd9" />
     <build:Item Name="MakePri.exe" Version="10.0.18362.1 (WinBuild.160101.0800)" />
   </build:Metadata>

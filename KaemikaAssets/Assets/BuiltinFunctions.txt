@@ -65,8 +65,8 @@ All of the following are normally-bound variables in the initial environment. Th
 •      exp(n)
 •      floor(n)
 •      log(n)          // base e
-•      max(n)
-•      min(n)
+•      max(n,m)
+•      min(n,m)
 •      sign(n)
 •      sin(n)
 •      sinh(n)
@@ -82,7 +82,7 @@ string concatenation
 
 •      s1 + s2
 
-length of a list
+length of a string
 
 •      s()
 
@@ -258,14 +258,14 @@ when sampled, this returns only elements of X that satisfy gtzero(X), i.e. the p
 •     draw n from X
 •     draw n from [X1,...,Xn]
 
-Statements that draw a number of samples from a random variable or a list of random variables and show a density plot of their distributions. When used as expressions, these return the lists of numbers instead of plotting them
+Statements that draw a number of samples from a random variable or a list of random variables and show a density plot of their distributions. Each Xi can be a multivariate random variable, i.e. it con produce a list of numbers rather than a single number. When used as expressions, these return the lists of numbers instead of plotting them.
 
 •     parameter n <- X
 
 Declares a number n and assigns to it a random number drawn from random variable X. 
 Hence it is equivalent to:
      number n = <-X
-but in addition, these declared numerical parameters can be manipulated in the GUI.
+but in addition, these declared numerical parameters can be manipulated in a special panel that appears in the GUI.
 
 =============
 Distributions
@@ -352,8 +352,8 @@ Covariance of two linear combianations of species.
 Conditional flow, e.g. cond(a<b,a,b) = min(a,b).
 
 More technically, flow-expressions are first *evaluated* to produce *flows* (while ordinary expressions are evaluated to produce *values*). Flows are data structures consisting exclusively of numeric and boolean operators over booleans, numbers, species, and some special entities such as 'time'. The  process of producing flows can involve ordinary function invocation and if-then-else conditional execution, but those do not appear in resulting flows. 
-At a  later stage, flows are *observed*, that is evaluated at multiple time points, during plotting or in the evaluation of reaction rates during simulations. Flows  are exactly the labels that appear in chart legends.
-Flows have the same syntax as expression; the evaluationof expressions to flows or to values is context-dependent.
+At a later stage, flows are *observed*, that is evaluated at multiple time points, during plotting or in the evaluation of reaction rates during simulations. Flows are exactly the labels that appear in chart legends.
+Flows have the same syntax as expression; the evaluation of expressions to flows or to values is context-dependent.
 
 Ex.: Arrhenius equation (temperature-dependante rates):
 
@@ -444,14 +444,17 @@ Those 3 reactions can be given to the mass action compiler, which will generate 
 
 
 Symbolic compilation.
-Within S, constants can be used instead of numerical values for rates and initial conditions. Constants represent unknown numerical values, and are declared by, e.g.:
+Within S, constants can be used instead of numerical values for rates. Constants represent unknown numerical values, and are declared by, e.g.:
 
     constant k,k1,k2,k3
 
 These can be used in place of numbers, e.g. {{k·x/(x+1)}}; they are handled symbolically by massaction(S), and are reflected in S'. With some caveats:
 - constants are assumed to be nonnegative, and massaction(S) may fail if some expressions (e.g. log(k)) cannot be determined to be nonnegative.
 - in particular {{x^k}} will not work, because polynomizing it requires computing k-1.
-- simulations cannot be carried out when rates or initial conditions involve constants, but S' will be generated nonetheless.
+- simulations cannot be carried out when rates involve constants, but S' will be generated nonetheless.
+
+When combined with ODE notation (see "Reactions" in the main menu), the mass action compiler can be used to convert any system of ODEs into mass action reactions.
+See the "LorenzAttractor" in the main menu.
 
 ============
 Optimization

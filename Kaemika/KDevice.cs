@@ -84,7 +84,7 @@ namespace Kaemika {
             if (device == null || (!style.chartOutput) || Exec.IsVesselVariant(sample)) return;
             device.Sample(sample, style);
         }
-        public static void Amount(SampleValue sample, SpeciesValue species, NumberValue initialValue, string dimension, Style style) {
+        public static void Amount(SampleValue sample, AmountEntry amountEntry, Style style) {
             if (device == null || (!style.chartOutput) || Exec.IsVesselVariant(sample)) return;
         }
         public static void Mix(SampleValue outSample, List<SampleValue> inSamples, Style style) {

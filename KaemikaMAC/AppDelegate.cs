@@ -1,15 +1,23 @@
-﻿using AppKit;
+using AppKit;
 using Foundation;
 using Kaemika;
 
 namespace KaemikaMAC
 {
     [Register("AppDelegate")]
-    public class AppDelegate : NSApplicationDelegate
+    public partial class AppDelegate : NSApplicationDelegate
     {
         public AppDelegate()
         {
         }
+
+        partial void AppBarFileOpen (Foundation.NSObject sender){
+            MacGui.macGui.macControls.Load();
+        }
+
+        partial void AppBarFileSaveAs (Foundation.NSObject sender){
+             MacGui.macGui.macControls.Save();
+       }
 
         public override void DidFinishLaunching(NSNotification notification)
         {

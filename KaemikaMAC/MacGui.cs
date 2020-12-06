@@ -64,7 +64,6 @@ namespace KaemikaMAC {
             // Register this Gui for platform-independent access via interface KControls
             macControls = new MacControls();                        // set up platform-specific gui controls 
             KGui.Register(new KControls(macControls));              // bind actions to them (non-platform specific)
-            macControls.RestorePreferences(); //needs kControls initialized
 
             leftPanelClicker.Activated += (object sender, EventArgs e) => { KGui.kControls.CloseOpenMenu(); };
             rightPanelClicker.Activated += (object sender, EventArgs e) =>{ KGui.kControls.CloseOpenMenu(); };
@@ -96,6 +95,7 @@ namespace KaemikaMAC {
 
             // Saved state
 
+            macControls.RestorePreferences(); //needs kControls initialized
             GuiRestoreInput();
 
             // Dark Mode Detection
@@ -360,6 +360,12 @@ namespace KaemikaMAC {
                 KChartHandler.VisibilityRestore(); // this is needed to hide the series in the legend
                 KGui.kControls.SetLegend();
             } else { _ = BeginInvokeOnMainThreadAsync(() => { GuiLegendUpdate(); return ack; }).Result; }
+        }
+
+        public /* Interface KGuiControl */ void GuiScoreUpdate() {
+            if (NSThread.IsMain) {
+                this.kaemikaScore.Invalidate();
+            } else { _ = BeginInvokeOnMainThreadAsync(() => { GuiScoreUpdate(); return ack; }).Result; }
         }
 
         // Output

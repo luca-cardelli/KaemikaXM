@@ -45,16 +45,20 @@ namespace Kaemika {
         public double Covar(Symbol species1, Symbol species2) {
             return this.state.Covar(this.index[species1], this.index[species2]);
         }
-        public void AddDimensionedSpecies(SpeciesValue species, double molarity, string dimension, double volume, Style style) {
+        public void AddDimensionedSpecies(SpeciesValue species, double molarity, double molarityVariance, string dimension, double volume, Style style) {
             if (this.HasSpecies(species.symbol, out int index))
                 throw new Error("Repeated amount of '" + species.Format(style) + "' in sample '" + this.sample.Format(style) + "' with value " + style.FormatDouble(molarity));
             else if (molarity < 0)
                 throw new Error("Amount of '" + species.Format(style) + "' in sample '" + this.sample.Format(style) + "' must be non-negative: " + style.FormatDouble(molarity));
+            else if (molarityVariance < 0)
+                throw new Error("Variance of amount of '" + species.Format(style) + "' in sample '" + this.sample.Format(style) + "' must be non-negative: " + style.FormatDouble(molarityVariance));
             else {
                 this.species.Add(species);
                 RecomputeIndex();
                 this.state = this.state.Extend(1);
                 this.state.SumMean(this.state.size-1, NormalizeDimension(species, molarity, dimension, volume, style));
+                if (this.state.lna)
+                   this.state.SumCovar(this.state.size - 1, this.state.size - 1, NormalizeDimension(species, molarityVariance, dimension, volume, style)); // may normalize variance by volume
             }
         }
         public void SumMean(Symbol species, double x) {
@@ -152,7 +156,7 @@ namespace Kaemika {
         public bool lna;       // whether covariances are included
         private double[] state; // of length size if not lna, of length size+size*size if lna; only allocated if inited=true
         private bool inited;    // whether state is allocated
-        public State(int size, bool lna = false) {
+        public State(int size, bool lna) {
             this.size = size;
             this.lna = lna;
             this.state = new double[0];
@@ -242,6 +246,9 @@ namespace Kaemika {
             for (int i = 0; i < size; i++) m[i] = this.state[i];
             return new Vector(m);
         }
+        public void SetMean(int i, double x) {
+            this.state[i] = x;
+        }
         public void SumMean(int i, double x) {
             this.state[i] += x;
         }
@@ -259,6 +266,9 @@ namespace Kaemika {
                 for (int j = 0; j < size; j++)
                     m[i, j] = this.state[size + (i * size) + j];
             return new Matrix(m);
+        }
+        public void SetCovar(int i, int j, double x) {
+            this.state[size + (i * size) + j] = x;
         }
         public void SumCovar(int i, int j, double x) {
             this.state[size + (i * size) + j] += x;

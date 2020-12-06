@@ -135,6 +135,7 @@ namespace Kaemika {
                 var pointSize = 12.0f;
                 var header = 3 * pointSize;
                 var spacer = 2 * pointSize;
+                var rightMargin = pointSize;
 
                 Colorer colorer = GenColorer();
 
@@ -144,7 +145,7 @@ namespace Kaemika {
                 SKSize scoreSize = KScoreHandler.Measure(colorer, pointSize);
                 var maxChartLegReactHeight = Math.Max(chartSize.Height, Math.Max(header + legendSize.Height, header + reactionsSize.Height));
                 SKSize canvasSize = new SKSize(
-                    Math.Max(chartSize.Width + legendSize.Width + spacer + reactionsSize.Width, scoreSize.Width),
+                    Math.Max(chartSize.Width + legendSize.Width + spacer + reactionsSize.Width + rightMargin, scoreSize.Width + rightMargin),
                     maxChartLegReactHeight + KScore.Yspacing + scoreSize.Height
                     );
 
@@ -352,10 +353,6 @@ namespace Kaemika {
 
             string theEvents = "";
             int eventNo = 1;
-
-            //#### List<TriggerEntry> triggers = new List<TriggerEntry>(); //### this will be a new parameter to Integrate
-            //#### triggers.Add(new TriggerEntry(crn.sample.stateMap.species[0].symbol, new OpFlow(">", true, new List<Flow> { new OpFlow("time", false), new NumberFlow(1.0) }), new NumberFlow(7.0))); //####
-            //#### foreach (TriggerEntry trigger in triggers) {
 
             Dictionary<string, bool> timeDict = new Dictionary<string, bool>(); // just looking for uses of "time"
             SortedList<string, int> noSpecies = new SortedList<string, int>();

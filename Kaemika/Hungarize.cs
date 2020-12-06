@@ -31,7 +31,7 @@ namespace Kaemika {
                 Flow initFlow = Polynomize.Equation.ToFlow(ode.var, posEqs, style).Normalize(style);
                 double init; if (initFlow is NumberFlow num) init = num.value; else throw new Error("Cannot generate a simulatable sample because initial values contain constants (but the symbolic version has been generated assuming constants are nonnegative).");
                 if (init < 0) throw new Error("Negative initial value of Polynomized ODE for: " + Polynomize.Lookup(ode.var, eqs, style).Format(style) + " = " + init + Environment.NewLine + Polynomize.Equation.Format(eqs, style));
-                outSample.stateMap.AddDimensionedSpecies(new SpeciesValue(ode.var.species, -1.0), init, "M", outSample.Volume(), style);
+                outSample.stateMap.AddDimensionedSpecies(new SpeciesValue(ode.var.species, -1.0), init, 0.0, "M", outSample.Volume(), style);
             });
             outReactions.Each(reaction => { netlist.Emit(new ReactionEntry(reaction)); });
 

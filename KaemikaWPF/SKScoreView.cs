@@ -53,11 +53,13 @@ namespace KaemikaWPF {
         private Action<SKPoint> onTouchDoubletapOrMouseClick;
         private Action<SKPoint, SKPoint> onTouchSwipeOrMouseDrag;
         private Action<SKPoint, SKPoint> onTouchSwipeOrMouseDragEnd;
+        public Action<SKPoint, float> onTouchPinchOrMouseZoom;
 
-        public /* KTouchable Interface */ void OnTouchTapOrMouseMove(Action<SKPoint> action) { this.onTouchTapOrMouseMove = action; }
-        public /* KTouchable Interface */ void OnTouchDoubletapOrMouseClick(Action<SKPoint> action) { this.onTouchDoubletapOrMouseClick = action; }
-        public /* KTouchable Interface */ void OnTouchSwipeOrMouseDrag(Action<SKPoint, SKPoint> action) { this.onTouchSwipeOrMouseDrag = action;  }
-        public /* KTouchable Interface */ void OnTouchSwipeOrMouseDragEnd(Action<SKPoint, SKPoint> action) { this.onTouchSwipeOrMouseDragEnd = action; }
+        public /*Interface KTouchable*/ void OnTouchTapOrMouseMove(Action<SKPoint> action) { this.onTouchTapOrMouseMove = action; }
+        public /*Interface KTouchable*/ void OnTouchDoubletapOrMouseClick(Action<SKPoint> action) { this.onTouchDoubletapOrMouseClick = action; }
+        public /*Interface KTouchable*/ void OnTouchSwipeOrMouseDrag(Action<SKPoint, SKPoint> action) { this.onTouchSwipeOrMouseDrag = action;  }
+        public /*Interface KTouchable*/ void OnTouchSwipeOrMouseDragEnd(Action<SKPoint, SKPoint> action) { this.onTouchSwipeOrMouseDragEnd = action; }
+        public /*Interface KTouchable*/ void OnTouchPinchOrMouseZoom(Action<SKPoint, float> action) { this.onTouchPinchOrMouseZoom = action; }
 
         private static SKPoint mouseDownPoint;
         private static SKPoint mouseMovePoint;
@@ -87,7 +89,7 @@ namespace KaemikaWPF {
         protected override void OnMouseUp(MouseEventArgs e) {
             base.OnMouseUp(e);
             SKPoint location = new SKPoint(e.Location.X, e.Location.Y);
-            if (dragging) {
+            if (dragging) { // Mouse drag
                 this.onTouchSwipeOrMouseDragEnd?.Invoke(mouseDownPoint, location);
                 dragging = false;
             } else { // Mouse click

@@ -77,27 +77,27 @@ namespace Kaemika
         private static List<ModelInfoGroup> Setup() {
             var groups = new List<ModelInfoGroup>();
 
-            var group1 = new ModelInfoGroup("Basic Models");
+            var group1 = new ModelInfoGroup("BASIC MODELS");
             foreach (string a in new List<string> { "StartHere", "LotkaVolterra", "Predatorial", "RingOscillator", "Reactions", "EnzymeKinetics", "ApproximateMajority", "2AM Oscillator", "Transporters" }) AddAsset(group1, a);
             groups.Add(group1);
 
-            var group3 = new ModelInfoGroup("Protocols");
+            var group3 = new ModelInfoGroup("PROTOCOLS");
             foreach (string a in new List<string> { "Samples", "Droplets", "MixAndSplit", "PBS", "SerialDilution" }) AddAsset(group3, a);
             groups.Add(group3);
 
-            var group2a = new ModelInfoGroup("Arithmetic");
+            var group2a = new ModelInfoGroup("ARITHMETIC");
             foreach (string a in new List<string> { "A01 Copy", "A02 Addition", "A03 CopyAndAdd", "A04 Multiplication", "A05 Division", "B01 DifferentialSignals", "B02 DifferentialAddition", "B03 DifferentialSubtraction", "B04 DifferentialAbstractions" }) AddAsset(group2a, a);
             groups.Add(group2a);
 
-            var group2 = new ModelInfoGroup("Differential Signals");
+            var group2 = new ModelInfoGroup("DIFFERENTIAL SIGNALS");
             foreach (string a in new List<string> { "SineWave", "SquareWave", "HighPassFilter", "LorenzAttractor", "Derivative1", "Derivative2" }) AddAsset(group2, a);
             groups.Add(group2);
 
-            var group5 = new ModelInfoGroup("PID Controller");
+            var group5 = new ModelInfoGroup("PID CONTROLLER");
             foreach (string a in new List<string> { "PosTestSignal Sine", "PosTestSignal Step", "TestSignal Sine", "TestSignal Step", "Proportional Block", "Integral Block", "Derivative Block", "Addition Block", "Subtraction Block", "DualRailConverter Block", "PIDController Block", "PIDController", "PIDController Optimization" }) AddAsset(group5, a);
             groups.Add(group5);
 
-            var group4 = new ModelInfoGroup("Documentation");
+            var group4 = new ModelInfoGroup("DOCUMENTATION");
             foreach (string a in new List<string> { "KaemikaGrammar", "BuiltinFunctions", "Flows", "Functions" }) AddAsset(group4, a, executable: false);
             groups.Add(group4);
 
